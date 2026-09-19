@@ -1,0 +1,19 @@
+DFP Version Used : PIC18F-K_DFP,1.4.87,Microchip
+*****************************************************
+Connecting to MPLAB PICkit 3...
+Currently loaded firmware on PICkit 3
+Firmware Suite Version.....01.56.09
+Firmware type..............Enhanced Midrange
+Target voltage detected
+Target device PIC18F47K42 found.
+Device Revision ID = a001
+The following memory area(s) will be read:
+program memory: start address = 0x0, end address = 0x1ffff
+configuration memory
+EEData memory
+User Id Memory
+Test memory
+Read complete
+Read successfully.
+Hex file exported to : D:\IT\P_RetroVertical_V3.6\01_Firmware\lecturas_equipos\V3-2\lectura_V3-2_2026-09-19.hex
+Operation Succeeded
