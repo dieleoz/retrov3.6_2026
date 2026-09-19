@@ -122,6 +122,8 @@ Los pasos 6 y 7 calibran los códigos que el P1-P132 permita ajustar (8, b, 3-6)
 
 ## Segundo equipo V3
 
+**19-sep-2026, 15:00: el segundo V3 es un v4.0** (placa "v4.0" con PPS de la V4.1, `01_Firmware/lecturas_equipos/V3-2/IDENTIFICACION.md`): pasa a la V4.6 (rama B, `D:\IT\P_RetroVertical_V4.6\05_Documentacion\SPEC-V4.6-BORRADOR.md` R.5); la rama A (grabarle la V3.6) queda descartada por incompatibilidad de patas.
+
 Tramo propio, **después del banco completo de SLV-002** (ciclo, pasos 5-7) y con la app que salga del ciclo. Mismo firmware
 (3.6.2) y misma app; **campaña, ajuste, acta y fecha propios** (L-23). Se sigue
 [`RUNBOOK.md`](RUNBOOK.md) de la fase 0 a la 11.
