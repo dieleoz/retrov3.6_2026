@@ -14,3 +14,7 @@ registrada, y no en una casilla del operador (P11 §3, QA-3612).
 | D-FW | Grabar firmware aunque se pierda la calibración de la EEPROM | 19-sep-2026 ~12:45 | "graba, todo se puede perder" / "no pasa nada en el firmware" |
 | D-VENC | Calibración vencida: avisa y marca el registro, no bloquea | 19-sep-2026 | respuesta a la pregunta |
 | D-SFT | La fuente del indicador es `D:\onedrive\gdrive\sft` | 19-sep-2026 | respuesta a la pregunta |
+| **REMEDIDA-b** | La re-medida del código b se juzga con RF-CAL-18 (frente a la curva escrita), no frente al certificado | 19-sep-2026 ~15:40 | "ok si de 1 a 4" (punto 1) |
+| **PA-24 ampliada** | La dispensa del b cubre también RF-CAL-15: RMS de tipo I previsto en 11,5 % (> 6 %) | 19-sep-2026 ~15:40 | "ok si de 1 a 4" (punto 2) |
+| **PA-24 margen** | Los límites de P39 (+15 %) y P49 (−10 %) son **techo**, con ±3 puntos de margen: un valor mejor que el aceptado siempre pasa | 19-sep-2026 ~15:40 | "ok si de 1 a 4" (punto 3) |
+| **P81** | P81 sale del ajuste del código 5 y queda solo como patrón de verificación y re-medida | 19-sep-2026 ~15:40 | "ok si de 1 a 4" (punto 4) |
