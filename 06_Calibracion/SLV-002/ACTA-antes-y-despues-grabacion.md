@@ -28,3 +28,19 @@ exposición. En la zona alta el sensor se acerca a su límite y la diferencia de
 **Consecuencia.** La calibración de la V3.6 se hace sobre las lecturas de la V3.6, así que la
 diferencia queda absorbida. Frente al certificado, la V3.6 queda **más cerca** en IV/IX que el original.
 Los valores de "antes" son el acta del estado de llegada.
+
+## G4 — pruebas por Bluetooth tras grabar (19-sep-2026 08:53, app 3.6.2)
+
+- `#V#` → `#V,3.6,2026-09-18,DEF,0000#`. `#GT#` y los 12 `#G` iguales a fábrica.
+- **`#E`: 60 coincidencias exactas de 60** (12 códigos × x = 500, 1000, 2000, 3000, 4000), en dos
+  pasadas. El PIC real calcula como el firmware de 2020 (confirma T-A20 en hardware).
+- Los 13 comandos responden en ~1 s. **`e` funciona** (V3.6).
+- Repetibilidad con `e` sobre P7: 3016 / 3022 / 3027 / 3020 / 3023 → media 3021,6, s = 4,0 cuentas.
+- Prueba 4 (coherencia) dio FALLO: en la primera pasada el equipo se apoyó a mitad de la prueba
+  (códigos 1-8 en oscuro, x ≈ 575); en la segunda, 11/12 dentro y el código 1 a −22,5 cuentas, en la
+  zona cercana al techo de su ecuación, con deriva de `x` de 3004 a 3027 durante la prueba. **Es del
+  criterio de la app, no del equipo.**
+- **Abierto:** P7 por Bluetooth (código 1) = 776 (x ≈ 2993); por pantalla con gatillo, ese mismo día,
+  798 (x ≈ 3271). Por colocación distinta, o porque el gatillo mueve el cabezal. Se cierra alternando
+  gatillo y `e` sin mover el equipo. Importa porque en campo se mide con gatillo y se calibra por
+  Bluetooth.
