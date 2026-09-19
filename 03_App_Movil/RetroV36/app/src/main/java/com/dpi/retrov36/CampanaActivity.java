@@ -106,9 +106,13 @@ public class CampanaActivity extends Base {
         btnOscuro = boton("Preajuste OSCURO: superficie negra mate, 5 × 9", v -> alternarOscuro());
 
         titulo("Enviar");
-        boton("Exportar campaña (un solo ZIP con todo)", v -> exportar());
-        texto("El ZIP lleva las series, las pruebas del equipo, todos los registros de tramas de la campaña y "
-                + "el resumen. Después de exportar no hace falta compartir nada más.");
+        // QA-3615-07: dos ZIP. El ligero (incremental) para enviar a diario; el de soporte, con todo, es el que se
+        // importa en otro telefono.
+        Button lig = boton("Exportar (ZIP ligero)", v -> exportar());
+        Button sop = boton("ZIP de soporte (todo)", v -> exportarSoporte());
+        fila(lig, sop);
+        texto("El ZIP ligero lleva sólo lo nuevo desde el anterior. El ZIP de soporte lleva todo (series, tramas, "
+                + "pruebas, actas y diario) y es el que se importa en otro teléfono.");
 
         titulo("Lista de patrones");
         spColor = new Spinner(this);
@@ -650,6 +654,20 @@ public class CampanaActivity extends Base {
 
     // ------------------------------------------------------ exportar e importar
 
+    private void exportarSoporte() {
+        if (campana == null) {
+            return;
+        }
+        try {
+            Campanas.Exportacion ex = Campanas.exportarSoporte(this, campana.serieActual(), campana.mac);
+            txtResultado.setText("ZIP de soporte:\n" + ex.zip.getName() + "\nmd5 " + ex.md5 + "\nsha256 " + ex.sha256
+                    + "\nCopia: " + ex.copia);
+            compartirZip(ex, "Soporte de " + campana.serieConHistoria() + " (" + campana.mac + ")");
+        } catch (IOException | RuntimeException e) {
+            alerta("ZIP de soporte", "No se pudo preparar: " + e.getMessage());
+        }
+    }
+
     private void exportar() {
         Sesion s = Sesion.get();
         if (campana == null) {
@@ -683,7 +701,7 @@ public class CampanaActivity extends Base {
         i.setClipData(ClipData.newRawUri(zip.getName(), u));
         i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         try {
-            startActivity(Intent.createChooser(i, "Enviar la campaña (un solo ZIP)"));
+            startActivity(Intent.createChooser(i, "Enviar el ZIP"));
         } catch (ActivityNotFoundException e) {
             aviso("No hay ninguna aplicación para compartir el ZIP.");
         }
@@ -732,6 +750,11 @@ public class CampanaActivity extends Base {
                     String nombre = u.getLastPathSegment() == null ? u.toString() : u.getLastPathSegment();
                     String md5 = Resumen.hex(datosF, "MD5");
                     t.append(nombre).append(" (md5 ").append(md5).append("): ");
+                    if (ImportadorCampana.esZip(datosF) && ImportadorCampana.esIncremental(datosF)) {
+                        t.append("es un ZIP ligero (incremental): no trae la campaña entera. Importe el ZIP de soporte "
+                                + "(soporte_…zip)\n");
+                        continue;
+                    }
                     String diario = ImportadorCampana.esZip(datosF) ? ImportadorCampana.diarioDeZip(datosF) : null;
                     List<String> l = ImportadorCampana.esZip(datosF) ? ImportadorCampana.csvDeZip(datosF)
                             : ImportadorCampana.lineas(datosF);
@@ -740,7 +763,7 @@ public class CampanaActivity extends Base {
                                 campana.catalogo(), nombre + " md5 " + md5);
                         t.append("campaña exportada (diario del ZIP): ").append(ir.texto()).append('\n');
                     } else if (l == null) {
-                        t.append("el ZIP no trae campana.csv\n");
+                        t.append("el ZIP no trae campana.csv ni el diario: importe el ZIP de soporte (soporte_…zip)\n");
                     } else if (ImportadorCampana.esCsvDeCampana(l)) {
                         ImportadorCampana.Resultado ir = ImportadorCampana.importar(campana, l, nombre + " md5 " + md5);
                         t.append("campaña exportada: ").append(ir.texto()).append('\n');
@@ -748,6 +771,11 @@ public class CampanaActivity extends Base {
                         antiguas.addAll(l);
                         t.append("CSV de medidas antiguo\n");
                     }
+                }
+                // 3.6.16: lo ya medido cuenta en el banco y lo que Diego manda repetir vuelve a la cola.
+                String bp = aplicarBancoPrevio(campana);
+                if (!bp.isEmpty()) {
+                    t.append("Banco: ").append(bp).append('\n');
                 }
                 if (!antiguas.isEmpty()) {
                     Importador.Resultado ir = Importador.importar(campana, antiguas, tolOrden);

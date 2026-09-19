@@ -30,7 +30,7 @@ public final class TablaCalibracion {
      * Version de las reglas (no del APK): un acta abierta con otra version no se acepta (QA-3614-09). r4 =
      * 3.6.15: decisiones de c836cae (PA-24 ampliada y como techo, REMEDIDA-b, P81 fuera del ajuste del 5).
      */
-    public static final String VERSION = "RF-CAL-37 de SPEC-Calibracion-V3.6.md (1f1c4e3), reglas r4 (c836cae), APK 3.6.15";
+    public static final String VERSION = "RF-CAL-37 de SPEC-Calibracion-V3.6.md (1f1c4e3), reglas r5 (c836cae, 6048453)";
     /** Unico equipo con tabla en este APK. */
     public static final String EQUIPO_CON_TABLA = "SLV-002";
     /** MAC de SLV-002 (Coviandina, V3.6): la tabla y las decisiones de "SLV-002" son de ESTE equipo. */
@@ -193,7 +193,7 @@ public final class TablaCalibracion {
         String regla = d.valor("REMEDIDA-b", equipo);
         boolean reglaOk = "RF-CAL-18".equals(regla) || "CERTIFICADO".equals(regla);
         if (pa24 != null && reglaOk) {
-            t.put('b', new Fila('b', Metodo.ANCLADA, "P49", "RF-CAL-14 (PA-24)", pa24.alcance, regla, '8', false, false,
+            t.put('b', new Fila('b', Metodo.ANCLADA, "P49", "RF-CAL-14/15 (PA-24)", pa24.alcance, regla, '8', false, false,
                     "REFORM §3.4; " + pa24.texto() + "; re-medida: " + d.decision("REMEDIDA-b", equipo).texto(),
                     "Dispensa limitada a su alcance: " + alcanceTexto(pa24.alcance) + ". Re-medida del b por "
                             + regla + ("RF-CAL-18".equals(regla) ? ": sólo comprueba la reproducción de la campaña y "

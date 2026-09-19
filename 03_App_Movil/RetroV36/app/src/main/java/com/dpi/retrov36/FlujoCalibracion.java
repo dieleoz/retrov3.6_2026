@@ -47,6 +47,10 @@ public final class FlujoCalibracion {
          * @return true SOLO si se vio caer el enlace y volver (P12 §5.1): un OK sin apagar devuelve false.
          */
         boolean apagarYEncender() throws IOException, InterruptedException;
+
+        /** 3.6.16 (P14-07, -B02): un acta acaba de quedar ACEPTADA: la pantalla exporta el ZIP de soporte. */
+        default void actaAceptada(Acta a) {
+        }
     }
 
     /** Donde vive el acta en curso (en la app, en disco: Campanas). */
@@ -59,6 +63,11 @@ public final class FlujoCalibracion {
 
         /** true si el codigo k ya tiene un acta ACEPTADA de este equipo (P12 §6.3: el 8 antes que el b y el 5). */
         boolean aceptadoAntes(char k) throws IOException;
+
+        /** 3.6.16 (P14-02): las actas ACEPTADAS de este equipo, de la mas antigua a la mas reciente. */
+        default List<Acta> aceptadas() throws IOException {
+            return new ArrayList<>();
+        }
     }
 
     public interface Reloj {
@@ -165,6 +174,12 @@ public final class FlujoCalibracion {
      * no vuelve a pedir apagar (el equipo se acaba de apagar y encender de verdad).
      */
     private boolean encendidoReciente;
+    /** P14-01: el atajo de T-C41 solo vale dentro de una pulsacion de "Calibrar todo". */
+    private boolean sesionTodo;
+    /** Codigo cuya persistencia dejo el equipo recien encendido (para anotarlo en el acta siguiente). */
+    private char encendidoPor;
+    /** Codigos que se escriben en la pulsacion en curso (T-C41 no los coteja: van a cambiar). */
+    private final Set<Character> escribiendoAhora = new HashSet<>();
 
     public FlujoCalibracion(Canal canal, Operador operador, AlmacenActa almacen, BancoCola cola, Campana campana,
                             List<Patron> catalogo, Decisiones decisiones, Contexto ctx, Reloj reloj) throws IOException {
@@ -242,6 +257,89 @@ public final class FlujoCalibracion {
 
     private Anclas.Valor sRep() {
         return campana == null ? null : Anclas.sRep(cola, campana);
+    }
+
+    /** C-P14-2: la s_rep de la A5 del inicio de la sesion del codigo k (dice de donde sale). */
+    private Anclas.Valor sRep(char k) {
+        if (campana == null) {
+            return null;
+        }
+        int ses = cola == null ? 1 : Anclas.sesionDe(cola, k);
+        return Anclas.sRep(cola, campana, ses > 0 ? ses : 1);
+    }
+
+    // ------------------------------------------------ actas aceptadas (P14-02, QA-3615-05)
+
+    /** El acta ACEPTADA mas reciente con el codigo k conforme y no restaurado; null si ninguna. */
+    private Acta aceptadaVigente(char k) {
+        try {
+            Acta v = null;
+            for (Acta a : almacen.aceptadas()) {
+                Acta.Codigo c = a.codigo(k);
+                if (a.aceptada() && c != null && c.conforme() && c.restaurado == null) {
+                    v = a;
+                }
+            }
+            if (v == null && almacen.aceptadoAntes(k)) {
+                return new Acta("", "", "", 0, 0, 0, "");   // almacen sin actas (Banco, Avanzado): solo se sabe que hay una
+            }
+            return v;
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    /**
+     * QA-3615-05: un codigo con acta ACEPTADA se puede volver a calibrar si alguna serie que uso (ajuste, re-medida u
+     * OSCURO) se ha anulado en el banco despues ("rehacer" avisado). Devuelve la serie anulada, o null.
+     */
+    private String serieAnuladaDe(Acta a, char k) {
+        String ids = a == null ? null : a.dato("series " + k);
+        if (ids == null || campana == null) {
+            return null;
+        }
+        for (String id : ids.trim().split("\\s+")) {
+            Campana.Serie s = campana.serie(id);
+            if (s != null && s.anulada != null) {
+                return id + " (" + s.patron + ")";
+            }
+        }
+        return null;
+    }
+
+    /** true si k tiene un acta ACEPTADA que sigue valiendo (ninguna serie suya anulada). */
+    private boolean aceptadoVigente(char k) {
+        Acta a = aceptadaVigente(k);
+        return a != null && serieAnuladaDe(a, k) == null;
+    }
+
+    /** P14-02: heredados = el 1 y el 2 del acta de las 12:23, mas las curvas de las actas ACEPTADAS en esta app. */
+    private Map<Character, String> heredadosTodos() {
+        Map<Character, String> m = new LinkedHashMap<>(TablaCalibracion.heredados(equipo()));
+        try {
+            for (Acta a : almacen.aceptadas()) {
+                for (Acta.Codigo c : a.certificados()) {
+                    m.put(c.k, c.tramaG);
+                }
+            }
+        } catch (IOException e) {
+            // sin actas: solo los fijos
+        }
+        if (acta != null) {
+            for (Acta.Codigo c : acta.codigos()) {
+                m.remove(c.k);
+            }
+            m.remove(acta.escribiendo());
+        }
+        for (char k : escribiendoAhora) {
+            m.remove(k);
+        }
+        return m;
+    }
+
+    private String origenHeredados() {
+        String o = TablaCalibracion.origenHeredados(equipo());
+        return (o.isEmpty() ? "" : o + " y ") + "las actas ACEPTADAS en esta app";
     }
 
     public List<Previa> previas() {
@@ -347,6 +445,16 @@ public final class FlujoCalibracion {
                 sb.append(sb.length() == 0 ? "" : " ").append(s.id);
             }
         }
+        // QA-3614-03 (P14-B08): tambien los OSCURO de la sesion del codigo, que dan su ancla.
+        if (cola != null) {
+            int ses = Anclas.sesionDe(cola, k);
+            for (BancoCola.Paso p : cola.pasos) {
+                String id = "OSCURO".equals(p.tipo) && p.sesion == ses ? campana.seriePaso(p.orden) : null;
+                if (id != null && !id.isEmpty()) {
+                    sb.append(' ').append(id);
+                }
+            }
+        }
         return sb.toString();
     }
 
@@ -446,22 +554,20 @@ public final class FlujoCalibracion {
                         + falta);
             }
         }
-        if (f.requiereAceptado != 0 && !ignorarOrden) {
-            try {
-                if (!almacen.aceptadoAntes(f.requiereAceptado)) {
-                    return new Plan(k, f, null, Double.NaN, "", "", "va después de un acta ACEPTADA del código "
-                            + f.requiereAceptado + " (P12 §6.3: el " + f.requiereAceptado + " solo y primero)");
-                }
-            } catch (IOException e) {
-                return new Plan(k, f, null, Double.NaN, "", "", "no se pudieron leer las actas anteriores: " + e.getMessage());
-            }
+        if (f.requiereAceptado != 0 && !ignorarOrden && !aceptadoVigente(f.requiereAceptado)) {
+            return new Plan(k, f, null, Double.NaN, "", "", "va después de un acta ACEPTADA (y vigente) del código "
+                    + f.requiereAceptado + ": el " + f.requiereAceptado + " solo y primero");
+        }
+        String proto = protocoloIncumplido(k, f);
+        if (proto != null) {
+            return new Plan(k, f, null, Double.NaN, "", "", proto);
         }
         Anclas.Valor osc = Anclas.oscuro(cola, campana, k);
         if (Double.isNaN(osc.valor)) {
             // Sin el oscuro de la sesion no se comprueba P9-B13 ni se ancla: no se escribe (QA-3612-10).
             return new Plan(k, f, null, Double.NaN, osc.texto, "", "sin oscuro de la sesión: " + osc.texto);
         }
-        Anclas.Valor sr = sRep();
+        Anclas.Valor sr = sRep(k);
         List<Medida> med = medidasDe(k);
         Ecuacion vig = vigente == null ? Fabrica.ecuacion(k) : vigente;
         Asistente.Propuesta p;
@@ -549,11 +655,40 @@ public final class FlujoCalibracion {
     }
 
     private boolean aceptadoSinFallo(char k) {
-        try {
-            return almacen.aceptadoAntes(k);
-        } catch (IOException e) {
-            return false;
+        return aceptadoVigente(k);
+    }
+
+    /** Valor de PROTOCOLO-AJUSTE en decisiones.csv; null = el provisional (PRECISO). */
+    private String protocoloAjuste() {
+        return decisiones.valor("PROTOCOLO-AJUSTE", equipo());
+    }
+
+    /**
+     * C-P14-3 / B3: las series del ajuste y de la re-medida de un codigo que se escribe (8, b, 5) tienen que estar en
+     * el protocolo que exige PROTOCOLO-AJUSTE (provisional: 5 × 4). null si cumplen; si no, el motivo.
+     */
+    private String protocoloIncumplido(char k, TablaCalibracion.Fila f) {
+        if (!Protocolo.CODIGOS_A_ESCRIBIR.contains(k) || campana == null) {
+            return null;
         }
+        int[] req = Protocolo.requerido(protocoloAjuste());
+        Set<String> pats = new java.util.TreeSet<>(patronesAjuste(k));
+        if (!f.remedida.isEmpty()) {
+            pats.add(f.remedida);
+        }
+        StringBuilder mal = new StringBuilder();
+        for (String pt : pats) {
+            String m = Protocolo.incumple(pt, campana.elegida(pt), req);
+            if (m != null) {
+                mal.append(mal.length() == 0 ? "" : ", ").append(m);
+            }
+        }
+        if (mal.length() == 0) {
+            return null;
+        }
+        return "el banco del " + k + " no está en " + req[0] + "×" + req[1] + ": " + mal + ". Repítalo en preciso en el "
+                + "Banco (\"Rehacer patrón\"), o que Diego acepte otro protocolo en decisiones.csv (PROTOCOLO-AJUSTE)"
+                + (protocoloAjuste() == null ? "; 5×4 es la recomendación provisional de P14 §3" : "");
     }
 
     /** Motivo por el que el codigo k de ESTA acta no admite escritura (independiente de otros codigos). */
@@ -586,10 +721,16 @@ public final class FlujoCalibracion {
                     sb.append("\n  Irá después del acta ACEPTADA del código ").append(f.requiereAceptado)
                             .append(" (misma sesión con \"Calibrar todo\")");
                 }
-                if (p.motivoNo == null && aceptadoSinFallo(f.codigo) && (acta == null || acta.codigo(f.codigo) == null)) {
-                    sb.append("\n  Ya tiene un acta ACEPTADA: no se vuelve a escribir en esta sesión");
-                    l.add(new Tarjeta(f.codigo, sb.toString(), false, ""));
-                    continue;
+                Acta vig = aceptadaVigente(f.codigo);
+                if (p.motivoNo == null && vig != null && (acta == null || acta.codigo(f.codigo) == null)) {
+                    String anul = serieAnuladaDe(vig, f.codigo);
+                    if (anul == null) {
+                        sb.append("\n  Ya tiene un acta ACEPTADA: no se vuelve a escribir");
+                        l.add(new Tarjeta(f.codigo, sb.toString(), false, ""));
+                        continue;
+                    }
+                    sb.append("\n  Su acta ACEPTADA usa la serie ").append(anul)
+                            .append(", anulada en el banco: se puede volver a calibrar");
                 }
                 if (p.propuesta != null) {
                     sb.append("\n  ").append(p.propuesta.metodo).append(", ").append(p.patrones);
@@ -646,7 +787,13 @@ public final class FlujoCalibracion {
     }
 
     public boolean puedeCalibrar(Set<Character> seleccion) {
-        return motivoPrevias() == null && ((seleccion != null && !seleccion.isEmpty()) || pendientes() > 0);
+        return motivoPrevias() == null && (acta == null || acta.rechazoPendiente() == null)
+                && ((seleccion != null && !seleccion.isEmpty()) || pendientes() > 0);
+    }
+
+    /** P14-10: hay un rechazo pendiente (la pantalla ofrece "Cerrar sin restaurar"). */
+    public boolean rechazoPendiente() {
+        return acta != null && acta.rechazoPendiente() != null;
     }
 
     public boolean puedePersistencia() {
@@ -737,6 +884,17 @@ public final class FlujoCalibracion {
         if (pv != null) {
             return "No se calibra: " + pv;
         }
+        if (acta != null && acta.rechazoPendiente() != null) {
+            // P14-06: con un rechazo pendiente no se continua la calibracion.
+            return "Hay un rechazo pendiente (" + acta.rechazoPendiente() + "): vuelva a pulsar Rechazar, o ciérrela sin "
+                    + "restaurar con la firma de Diego. No se calibra.";
+        }
+        for (char k : sel) {
+            Acta vig = aceptadaVigente(k);
+            if (vig != null && serieAnuladaDe(vig, k) == null && (acta == null || acta.codigo(k) == null)) {
+                return "El código " + k + " ya tiene un acta ACEPTADA vigente: no se vuelve a escribir.";
+            }
+        }
         Map<Character, Plan> planes = new LinkedHashMap<>();
         for (char k : Fabrica.CODIGOS) {
             if (!sel.contains(k)) {
@@ -786,6 +944,8 @@ public final class FlujoCalibracion {
             }
         }
         // T-C41: los heredados, antes de tocar nada.
+        escribiendoAhora.clear();
+        escribiendoAhora.addAll(planes.keySet());
         String t41 = heredados();
         if (t41 != null) {
             return t41;
@@ -871,7 +1031,7 @@ public final class FlujoCalibracion {
 
     /** Coteja los heredados: null si todos coinciden; si no, el motivo. Anota el resultado. */
     private String cotejarHeredados(StringBuilder t) throws IOException, InterruptedException {
-        Map<Character, String> her = TablaCalibracion.heredados(equipo());
+        Map<Character, String> her = heredadosTodos();
         String mal = null;
         for (Map.Entry<Character, String> e : her.entrySet()) {
             char k = e.getKey();
@@ -880,7 +1040,7 @@ public final class FlujoCalibracion {
             boolean igual = g != null && esperado != null && g.igualFloat32(esperado, Ecuacion.ULP_G);
             t.append("#G,").append(k).append(igual ? " igual al acta; " : " DISTINTO del acta (" + g + "); ");
             if (!igual && mal == null) {
-                mal = "el código " + k + " heredado no coincide con " + TablaCalibracion.origenHeredados(equipo());
+                mal = "el código " + k + " no coincide con " + origenHeredados();
             }
         }
         return mal;
@@ -891,18 +1051,23 @@ public final class FlujoCalibracion {
         if (acta.dato("heredados (T-C41)") != null) {
             return null;
         }
-        Map<Character, String> her = TablaCalibracion.heredados(equipo());
+        Map<Character, String> her = heredadosTodos();
         if (her.isEmpty()) {
             acta.dato("heredados (T-C41)", "sin códigos heredados de otra acta");
             return null;
         }
-        // P12 §6.2: T-C41 empieza apagando y encendiendo el equipo; tiene que verse caer el enlace. En una
-        // sesion de "Calibrar todo", la persistencia del acta anterior ya fue ese apagado.
-        if (encendidoReciente) {
+        // P12 §6.2: T-C41 empieza apagando y encendiendo el equipo; tiene que verse caer el enlace. Dentro de una
+        // pulsacion de "Calibrar todo" (P14-01), la persistencia del acta anterior ya fue ese apagado, y se anota.
+        if (sesionTodo && encendidoReciente) {
             operador.progreso("T-C41: el equipo se apagó y encendió en la persistencia anterior de esta sesión");
+            acta.dato("T-C41 apagado", "el de la persistencia del acta del código " + encendidoPor
+                    + " (misma pulsación de Calibrar todo, sin escrituras en medio)");
         } else if (!operador.apagarYEncender()) {
             acta.dato("heredados (T-C41) FALLA", "no se vio caer y volver el enlace al apagar y encender");
             return "T-C41: hay que apagar y encender el equipo antes de empezar y no se vio caer el enlace. No se calibra.";
+        }
+        else {
+            acta.dato("T-C41 apagado", "propio");
         }
         String e0 = entrar();
         if (e0 != null) {
@@ -927,10 +1092,10 @@ public final class FlujoCalibracion {
         }
         if (mal != null) {
             acta.dato("heredados (T-C41) FALLA", t + " -> " + mal);
-            return "T-C41 FALLA: " + mal + ". No se calibra: hay que reabrir "
-                    + TablaCalibracion.origenHeredados(equipo()) + ".";
+            return "T-C41 FALLA: " + mal + ". No se calibra: el equipo no tiene lo que dicen " + origenHeredados()
+                    + "; avise a Diego.";
         }
-        acta.dato("heredados (T-C41)", "OK frente a " + TablaCalibracion.origenHeredados(equipo()) + ": " + t);
+        acta.dato("heredados (T-C41)", "OK frente a " + origenHeredados() + ": " + t);
         return null;
     }
 
@@ -1011,7 +1176,9 @@ public final class FlujoCalibracion {
             acta.dato("oscuro " + k, p.origenOscuro);
         }
         acta.dato("patrones " + k, p.patrones);
-        acta.dato("series " + k, seriesDe(k, p.fila));   // QA-3614-03: que series usa este codigo
+        acta.dato("series " + k, seriesDe(k, p.fila));   // QA-3614-03: que series usa este codigo (y su OSCURO)
+        Anclas.Valor srk = sRep(k);
+        acta.dato("s_rep " + k, srk == null ? "" : srk.texto);   // C-P14-2: de donde sale
         acta.dato("protocolo banco " + k, protocoloDe(k, p.fila));   // B3: con que protocolo se midio el banco
         acta.dato("rango " + k, rango(k, p));
         String metodo = p.propuesta.metodo + "; tabla " + p.fila.texto();
@@ -1051,8 +1218,12 @@ public final class FlujoCalibracion {
         acta.dato("#V# posterior", Ops.texto(ops.leerV()));
         if (r.ok) {
             acta.restaurado(k, r.texto);
-            return "Código " + k + " restaurado tras dos re-medidas no conformes (PA-12): " + r.texto
-                    + ". La secuencia se detiene.";
+            boolean alguno = false;
+            for (Acta.Codigo x : acta.codigos()) {
+                alguno |= x.conforme();
+            }
+            return "Código " + k + " restaurado tras dos re-medidas no conformes: " + r.texto + ". La secuencia se detiene."
+                    + (alguno ? "" : " El acta no tiene ningún código conforme: pulse Rechazar.");
         }
         acta.restauracionFallida(k, r.texto);
         return "RESTAURACIÓN NO VERIFICADA del código " + k + ": " + r.texto
@@ -1063,6 +1234,8 @@ public final class FlujoCalibracion {
      * Re-medida (RF-CAL-39 con P10-C1): K x M, 'e' y el codigo alternados. Colocaciones no validas
      * se registran y se repiten. Una repeticion como maximo; si falla, restaurar (verificado).
      */
+    public static final int MAX_NO_VALIDAS = 10;
+
     private String remedida(char k) throws IOException, InterruptedException {
         TablaCalibracion.Fila f = fila(k);
         Patron pat = campana.patron(f.remedida);
@@ -1072,7 +1245,8 @@ public final class FlujoCalibracion {
         }
         double xBanco = banco.media();
         int kBanco = Math.max(1, banco.colocaciones().size());
-        Anclas.Valor sr = sRep();
+        Anclas.Valor sr = sRep(k);
+        int noValidas = 0;
         while (true) {
             Acta.Codigo c = acta.codigo(k);
             if (c.conforme()) {
@@ -1118,6 +1292,11 @@ public final class FlujoCalibracion {
                 }
                 if (falla != null) {
                     acta.intento(k, reloj.ahoraIso(), "NO_VALIDA", falla);
+                    if (++noValidas >= MAX_NO_VALIDAS) {
+                        // O-14: sin limite, un operador que pulsa OK sin corregir no acaba nunca.
+                        return "Demasiadas colocaciones no válidas seguidas (" + MAX_NO_VALIDAS + "): se para la re-medida del "
+                                + "código " + k + ". Revise el patrón y el apoyo, y vuelva a pulsar Calibrar.";
+                    }
                     int r = operador.preguntar("Colocación no válida", falla + "\nVuelva a colocar " + pat.nombre
                             + " y pulse OK.", "OK", "Parar aquí");
                     if (r != 0) {
@@ -1184,14 +1363,13 @@ public final class FlujoCalibracion {
             mal = h;
         }
         acta.persistencia(mal == null, t.toString() + (mal == null ? "" : " -> " + mal));
-        encendidoReciente = mal == null;
         acta.dato("#V# posterior", Ops.texto(v));
         return (mal == null ? "Persistencia OK: " : "Persistencia FALLA (" + mal + "): ") + t;
     }
 
     /** Codigos cuyo bit de mascara tiene que estar: heredados y certificados. */
     private List<Character> requeridos() {
-        List<Character> l = new ArrayList<>(TablaCalibracion.heredados(equipo()).keySet());
+        List<Character> l = new ArrayList<>(heredadosTodos().keySet());
         for (Acta.Codigo c : acta.certificados()) {
             if (!l.contains(c.k)) {
                 l.add(c.k);
@@ -1236,17 +1414,25 @@ public final class FlujoCalibracion {
             return "Verificación final FALLA: " + mal + ". El acta no se acepta y no se graba la fecha.";
         }
         String hoy = reloj.hoy();
-        Cliente.Respuesta r = ops.escribir("#SC," + hoy + "#");
-        Cliente.Respuesta g = ops.pedir("#GC#");
-        String leida = g.valida() ? Calibracion.fechaDe(g.trama) : null;
-        if (!Tramas.esOk(r.trama) || !hoy.equals(leida)) {
-            return "#SC no quedó grabada (#SC -> " + r.describir() + ", #GC# -> " + g.describir()
-                    + "): el acta NO se cierra. Reintente.";
+        // P14-04: #SC una vez. Si el equipo ya tiene la fecha de hoy (otra acta de esta sesion), no se reescribe.
+        Cliente.Respuesta g0 = ops.pedir("#GC#");
+        String antes = g0.valida() ? Calibracion.fechaDe(g0.trama) : null;
+        if (hoy.equals(antes)) {
+            acta.dato("#SC", "no se reescribe: el equipo ya tiene la fecha de hoy (" + g0.describir() + ")");
+        } else {
+            Cliente.Respuesta r = ops.escribir("#SC," + hoy + "#");
+            Cliente.Respuesta g = ops.pedir("#GC#");
+            String leida = g.valida() ? Calibracion.fechaDe(g.trama) : null;
+            if (!Tramas.esOk(r.trama) || !hoy.equals(leida)) {
+                return "#SC no quedó grabada (#SC -> " + r.describir() + ", #GC# -> " + g.describir()
+                        + "): el acta NO se cierra. Reintente.";
+            }
         }
         acta.aceptar(reloj.ahoraIso(), hoy, true, true);
         almacen.cerrar(acta);
         Acta cerrada = acta;
         acta = null;
+        operador.actaAceptada(cerrada);
         return "Acta ACEPTADA; fecha " + hoy + " (vence " + Calibracion.vencimiento(hoy) + "). " + cerrada.equipo;
     }
 
@@ -1266,6 +1452,7 @@ public final class FlujoCalibracion {
             if (e0 != null) {
                 return e0 + " No se ha rechazado.";
             }
+            encendidoReciente = false;   // P14-01: restaurar es escribir
             if (acta.escribiendo() != 0) {
                 // QA-3613-01: el codigo con un #S sin resolver tambien se restaura.
                 char k = acta.escribiendo();
@@ -1295,13 +1482,46 @@ public final class FlujoCalibracion {
         if (fallos.length() > 0) {
             // QA-3613-01 / P13-05: con una restauracion NO verificada el acta no se cierra: el equipo puede
             // tener una curva sin acta. Queda abierta, con la restauracion fallida anotada, para reintentarlo.
-            return "NO se rechaza: RESTAURACIÓN NO VERIFICADA del código " + fallos + " (" + t + "). El acta sigue "
-                    + "abierta: vuelva a pulsar Rechazar o Continuar para reintentarlo, y avise a Diego si no se resuelve.";
+            // P14-05/06: queda un RECHAZO PENDIENTE: no se escribe nada mas ni se continua; solo Rechazar otra vez o
+            // cerrar sin restaurar con la firma de Diego (P14-10). El motivo queda anotado.
+            acta.rechazoPendiente(reloj.ahoraIso(), (motivo == null ? "" : motivo) + " | " + t);
+            return "NO se rechaza: RESTAURACIÓN NO VERIFICADA del código " + fallos + " (" + t + "). El acta queda con un "
+                    + "rechazo pendiente: vuelva a pulsar Rechazar para reintentarlo; si no se resuelve, avise a Diego "
+                    + "(\"Cerrar sin restaurar\", con su firma).";
         }
         acta.rechazar(reloj.ahoraIso(), (motivo == null ? "" : motivo) + (t.length() == 0 ? "" : " | " + t));
         almacen.cerrar(acta);
         acta = null;
         return "Acta rechazada. " + t;
+    }
+
+    /**
+     * P14-10: salida terminal de un rechazo pendiente. Cierra el acta como RECHAZADA SIN RESTAURAR, firmada por
+     * Diego, con los codigos en estado desconocido. Solo con un rechazo pendiente.
+     */
+    public String cerrarSinRestaurar(String firmante, String motivo) throws IOException {
+        if (acta == null || acta.rechazoPendiente() == null) {
+            return "Solo se cierra sin restaurar un acta con un rechazo pendiente.";
+        }
+        if (firmante == null || !firmante.toLowerCase(Locale.ROOT).contains("diego")) {
+            return "Cerrar sin restaurar lo firma Diego: escriba su nombre.";
+        }
+        StringBuilder desconocidos = new StringBuilder();
+        if (acta.escribiendo() != 0) {
+            desconocidos.append(acta.escribiendo()).append(' ');
+        }
+        for (Acta.Codigo c : acta.codigos()) {
+            if (c.restaurado == null) {
+                desconocidos.append(c.k).append(' ');
+            }
+        }
+        acta.rechazar(reloj.ahoraIso(), "RECHAZADA SIN RESTAURAR, firmado por " + firmante.trim() + ": "
+                + (motivo == null ? "" : motivo) + " | códigos en estado desconocido: " + desconocidos.toString().trim()
+                + " | " + acta.rechazoPendiente());
+        almacen.cerrar(acta);
+        acta = null;
+        return "Acta cerrada SIN RESTAURAR (firmado por " + firmante.trim() + "). Códigos en estado desconocido: "
+                + desconocidos.toString().trim() + ": avise a Diego antes de calibrar otra vez.";
     }
 
     // ------------------------------------------------------ una sola sesion (3.6.15)
@@ -1316,6 +1536,19 @@ public final class FlujoCalibracion {
      * primer codigo que no acabe ACEPTADO, y lo dice.
      */
     public String calibrarTodo(Set<Character> seleccion, String nombre, String nota) throws IOException, InterruptedException {
+        sesionTodo = true;
+        encendidoReciente = false;
+        try {
+            return calibrarTodoInterno(seleccion, nombre, nota);
+        } finally {
+            sesionTodo = false;          // P14-01: el atajo de T-C41 no sobrevive a la pulsacion
+            encendidoReciente = false;
+            escribiendoAhora.clear();
+        }
+    }
+
+    private String calibrarTodoInterno(Set<Character> seleccion, String nombre, String nota)
+            throws IOException, InterruptedException {
         List<Character> orden = new ArrayList<>();
         for (char k : ORDEN_SESION) {
             if (seleccion != null && seleccion.contains(k)) {
@@ -1323,32 +1556,50 @@ public final class FlujoCalibracion {
             }
         }
         StringBuilder hecho = new StringBuilder();
+        StringBuilder saltados = new StringBuilder();
         if (acta != null) {
-            // Primero se termina el acta a medias.
+            if (acta.rechazoPendiente() != null) {
+                return "Hay un rechazo pendiente (" + acta.rechazoPendiente() + "): vuelva a pulsar Rechazar. No se calibra.";
+            }
+            // Primero se termina el acta a medias (QA-3615-04: y se dice).
+            char k0 = acta.codigos().isEmpty() ? acta.escribiendo() : acta.codigos().get(0).k;
             String r = calibrar(new HashSet<Character>(), "", "");
             if (acta != null && acta.motivoNoAceptable(false) == null) {
-                String a = persistirYAceptar();
+                String a = persistirConfirmarYAceptar(k0);
                 if (a != null) {
                     return a;
                 }
+                hecho.append(k0).append(" ACEPTADO; ");
             } else if (acta != null) {
-                return "El acta en curso no está lista: " + r;
+                return "El acta en curso no está lista: " + r + (acta.motivoNoAceptable(false) != null
+                        && acta.motivoNoAceptable(false).contains("ningún código ha quedado conforme")
+                        ? " Pulse Rechazar." : "");
+            }
+            orden.remove(Character.valueOf(k0));
+        }
+        for (char k : new ArrayList<>(orden)) {
+            if (aceptadoVigente(k)) {
+                orden.remove(Character.valueOf(k));        // QA-3615-04: ya aceptado; se dice, no se para
+                saltados.append(k).append(' ');
             }
         }
         if (orden.isEmpty()) {
-            return hecho.length() == 0 ? "Nada que calibrar." : "Sesión completa: " + hecho;
+            return (hecho.length() == 0 ? "Nada que calibrar." : "Sesión completa: " + hecho)
+                    + (saltados.length() == 0 ? "" : " Ya aceptados antes: " + saltados.toString().trim() + ".");
         }
         if (nombre == null || nombre.trim().isEmpty() || nota == null || nota.trim().isEmpty()) {
             return "Escriba el nombre y la nota de la conformidad.";
         }
-        // Todo se comprueba antes de empezar: nada de descubrir a mitad de la sesion que el 5 no se puede.
+        // Lo que se puede comprobar antes de empezar (no el T-C41, el PIN ni la bateria, que se ven al hacerlo).
         for (char k : orden) {
-            if (aceptadoSinFallo(k)) {
-                return "El código " + k + " ya tiene un acta ACEPTADA: desmárquelo.";
-            }
             Plan p = plan(k, null, true);
             if (!p.escribible()) {
                 return "El código " + k + " no se escribe: " + p.motivoNo + ". No se ha empezado la sesión.";
+            }
+            TablaCalibracion.Fila f = fila(k);
+            if (f.requiereAceptado != 0 && !aceptadoVigente(f.requiereAceptado) && !orden.contains(f.requiereAceptado)) {
+                return "El código " + k + " va después del acta ACEPTADA del " + f.requiereAceptado + ": márquelo también. "
+                        + "No se ha empezado la sesión.";
             }
         }
         for (char k : orden) {
@@ -1356,26 +1607,45 @@ public final class FlujoCalibracion {
             Set<Character> uno = new HashSet<>();
             uno.add(k);
             String r = calibrar(uno, nombre, nota);
+            String previo = hecho.length() == 0 ? "" : "Hecho: " + hecho.toString().trim() + " ";
             if (acta == null || acta.motivoNoAceptable(false) != null) {
-                return (hecho.length() == 0 ? "" : "Hecho: " + hecho + ". ") + "Código " + k + ": " + r;
+                return previo + "Código " + k + ": " + r;
             }
-            String a = persistirYAceptar();
+            String a = persistirConfirmarYAceptar(k);
             if (a != null) {
-                return (hecho.length() == 0 ? "" : "Hecho: " + hecho + ". ") + "Código " + k + ": " + a;
+                return previo + "Código " + k + ": " + a;
             }
             hecho.append(k).append(" ACEPTADO; ");
         }
-        return "Sesión completa: " + hecho;
+        return "Sesión completa: " + hecho + (saltados.length() == 0 ? "" : " Ya aceptados antes: "
+                + saltados.toString().trim() + ".");
     }
 
-    /** null si la persistencia y la aceptacion salen bien; si no, el texto. */
-    private String persistirYAceptar() throws IOException, InterruptedException {
+    /**
+     * P14-04: persistencia, y el acta a la vista de quien la acepta: "Aceptar", "Rechazar" o "Parar aquí". null si
+     * queda ACEPTADA; si no, el texto.
+     */
+    private String persistirConfirmarYAceptar(char k) throws IOException, InterruptedException {
         String p = persistencia();
         if (!p.startsWith("Persistencia OK")) {
             return p;
         }
+        int q = operador.preguntar("Acta del código " + k, acta.texto() + "\n¿Acepta esta acta? Se graba la fecha de "
+                + "calibración (una vez al día).", "Aceptar", "Rechazar", "Parar aquí");
+        if (q == 1) {
+            String r = rechazar("rechazada al revisar el acta del código " + k);
+            return "Acta del código " + k + " rechazada al revisarla: " + r;
+        }
+        if (q != 0) {
+            return "Parado: el acta del código " + k + " espera a que la acepte o la rechace.";
+        }
         String a = aceptar();
-        return a.startsWith("Acta ACEPTADA") ? null : a;
+        if (a.startsWith("Acta ACEPTADA")) {
+            encendidoReciente = sesionTodo;      // el siguiente T-C41 puede usar este apagado
+            encendidoPor = k;
+            return null;
+        }
+        return a;
     }
 
     /**
@@ -1388,6 +1658,16 @@ public final class FlujoCalibracion {
             return "BLOQUEO: hay un acta de calibración en curso: acéptela o recházela en \"Calibrar\" antes de rehacer.";
         }
         BancoCola.Paso p = cola.paso(orden);
+        if (p != null && ("OSCURO".equals(p.tipo) || "A5".equals(p.tipo))) {
+            // P14-B08: el OSCURO y la A5 dan el ancla y la s_rep de los codigos de su sesion.
+            for (char k : Fabrica.CODIGOS) {
+                if (Anclas.sesionDe(cola, k) == p.sesion && almacen.aceptadoAntes(k)) {
+                    return "AVISO: el " + p.tipo + " de la sesión " + p.sesion + " dio el ancla o la s_rep del código " + k
+                            + ", que ya tiene un acta ACEPTADA. Si lo rehace, habrá que volver a calibrar el " + k + ".";
+                }
+            }
+            return null;
+        }
         if (p != null && p.codigo.length() == 1 && almacen.aceptadoAntes(p.codigo.charAt(0))) {
             return "AVISO: el código " + p.codigo + " ya tiene un acta ACEPTADA que usó este banco. Si rehace " + p.patron
                     + ", esa calibración queda apoyada en una serie anulada y habrá que volver a calibrar el " + p.codigo + ".";
@@ -1404,6 +1684,17 @@ public final class FlujoCalibracion {
      */
     public static String renombrarSerie(Canal canal, Campana c, String pin, String nueva, String repetida, String operador,
                                         String fecha) throws IOException, InterruptedException {
+        return renombrarSerie(canal, c, pin, nueva, repetida, operador, fecha, false);
+    }
+
+    /**
+     * 3.6.16: el RENOMBRA se escribe ANTES del #SN (QA-3615-01): si la app muere o el enlace cae entre medias, la
+     * campana ya reconoce la serie nueva. Si el #GN# confirma que no cambio, se revierte (RENOMBRA_REVIERTE). Si
+     * el equipo ya tiene la serie nueva (un cambio a medias de la 3.6.15), se adopta sin #SN. No se renombra con
+     * un acta en curso (P14-S06), ni a una serie de SLV-002 un equipo con otra MAC (QA-3615-09).
+     */
+    public static String renombrarSerie(Canal canal, Campana c, String pin, String nueva, String repetida, String operador,
+                                        String fecha, boolean actaEnCurso) throws IOException, InterruptedException {
         String n = nueva == null ? "" : nueva.trim();
         String mal = Calibracion.motivoSerieInvalida(n);
         if (mal != null) {
@@ -1415,27 +1706,51 @@ public final class FlujoCalibracion {
         if (operador == null || operador.trim().isEmpty()) {
             return "Falta el nombre de quien cambia la serie.";
         }
+        if (c == null) {
+            return "Sin campaña de este equipo: no se cambia.";
+        }
+        if (actaEnCurso) {
+            return "Hay un acta de calibración en curso: acéptela o recházela antes de cambiar la serie.";
+        }
+        for (String s : TablaCalibracion.SERIES_SLV002) {
+            if (s.equalsIgnoreCase(n) && !TablaCalibracion.MAC_SLV002.equalsIgnoreCase(c.mac)) {
+                return "La serie " + n + " es de otro equipo (MAC " + TablaCalibracion.MAC_SLV002 + "): no se graba.";
+            }
+        }
         Ops ops = new Ops(canal);
         Cliente.Respuesta g0 = ops.pedir("#GN#");
         String anterior = g0.valida() ? Calibracion.serieDe(g0.trama) : null;
         if (anterior == null) {
             return "No se pudo leer la serie actual (#GN#): no se cambia.";
         }
-        if (c == null || !c.esSerie(anterior) && !Calibracion.NONE.equals(anterior)) {
+        if (anterior.equals(n)) {
+            // Cambio a medias (el #SN entro y el RENOMBRA no): el equipo ya tiene la serie nueva; se adopta.
+            if (!c.esSerie(n)) {
+                c.renombrar(c.serieActual(), n, fecha, operador.trim() + " (recuperado: el equipo ya decía " + n + ")");
+            }
+            return "El equipo ya tiene la serie " + n + ": queda anotada en la campaña (" + c.serieConHistoria() + ").";
+        }
+        if (!c.esSerie(anterior) && !Calibracion.NONE.equals(anterior)) {
             return "La serie actual del equipo (" + anterior + ") no es de la campaña abierta: no se cambia.";
         }
         String e = pin == null ? null : ops.entrar(pin);
         if (e != null) {
             return e;
         }
+        c.renombrar(anterior, n, fecha, operador.trim());      // antes del #SN (QA-3615-01)
         Cliente.Respuesta r = ops.escribir("#SN," + n + "#");
         Cliente.Respuesta g = ops.pedir("#GN#");
         String leida = g.valida() ? Calibracion.serieDe(g.trama) : null;
-        if (!Tramas.esOk(r.trama) || !n.equals(leida)) {
-            return "#SN -> " + r.describir() + ", #GN# -> " + g.describir() + ": la serie NO quedó cambiada.";
+        if (Tramas.esOk(r.trama) && n.equals(leida)) {
+            return "Serie cambiada: " + anterior + " -> " + n + " (verificada con #GN#). La campaña sigue siendo la misma.";
         }
-        c.renombrar(anterior, n, fecha, operador.trim());
-        return "Serie cambiada: " + anterior + " -> " + n + " (verificada con #GN#). La campaña sigue siendo la misma.";
+        if (anterior.equals(leida)) {
+            c.revertirRenombrado(n, anterior, fecha, "#SN -> " + r.describir() + ", #GN# -> " + g.describir());
+            return "#SN -> " + r.describir() + ", #GN# -> " + g.describir() + ": la serie NO quedó cambiada (sigue "
+                    + anterior + ").";
+        }
+        return "#SN -> " + r.describir() + ", #GN# -> " + g.describir() + ": no se pudo verificar. La campaña reconoce "
+                + "las dos series; vuelva a entrar en Pruebas para leer la serie del equipo.";
     }
 
     /**

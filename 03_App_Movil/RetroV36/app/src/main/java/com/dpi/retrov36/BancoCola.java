@@ -27,7 +27,8 @@ public final class BancoCola {
      */
     public static final List<String> MD5_PERMITIDOS = Collections.unmodifiableList(
             Arrays.asList("9ddb7882fa6c32c50c90fcdd72ba8960",     // completo (1f1c4e3)
-                    "2e266bbf89ec7dfb716e5ddd2d59d8f4",               // representativo (6ef92ee, RF-APP-49)
+                    "2e266bbf89ec7dfb716e5ddd2d59d8f4",               // representativo v1 (6ef92ee, RF-APP-49)
+                    "70ef3b868db85ef75743936a6218935e",               // representativo v2 (3.6.16: sin la bateria por color)
                     "d86eddf7fbdfdd4ae11ee2080d220e6c"));             // verificacion anual (6ef92ee)
     public static final String ASSET = "cola_banco_P1-P132.csv";
 
@@ -37,7 +38,7 @@ public final class BancoCola {
      */
     public enum Tipo {
         COMPLETO("cola_banco_P1-P132.csv", "Banco completo P1-P132"),
-        REPRESENTATIVO("cola_banco_representativo.csv", "Banco representativo"),
+        REPRESENTATIVO("cola_banco_representativo_v2.csv", "Banco representativo"),
         VERIFICACION_ANUAL("cola_verificacion_anual.csv", "Verificación anual");
 
         public final String asset;
@@ -221,6 +222,24 @@ public final class BancoCola {
             return s.isEmpty() ? def : Integer.parseInt(s);
         } catch (NumberFormatException e) {
             return def;
+        }
+    }
+
+    /** Segundos estimados de un paso (PLAN-Banco-Representativo.md:55): 1,5 s por disparo, 11 s por recolocacion,
+     * 20 s por cambio de patron, 10 s por bateria, 20 s por exportacion y 10 min de calentamiento. */
+    public static double segundos(Paso p, int[] km) {
+        switch (p.tipo) {
+            case "CALENTAMIENTO":
+                return 600;
+            case "BATERIA":
+                return 10;
+            case "EXPORTAR":
+                return 20;
+            default:
+                if (!p.esMedida()) {
+                    return 0;
+                }
+                return 20 + km[0] * (km[1] + Math.max(1, p.asentamiento)) * 1.5 + (km[0] - 1) * 11;
         }
     }
 

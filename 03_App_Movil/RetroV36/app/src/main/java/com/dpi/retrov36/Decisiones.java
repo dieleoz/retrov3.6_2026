@@ -73,6 +73,8 @@ public final class Decisiones {
         public final List<Alcance> alcance;
         /** Patrones que la decision saca del ajuste ("EXCLUYE P81" en el alcance). */
         public final List<String> excluidos;
+        /** Patrones que la decision manda repetir ("REPITE P34" en el alcance). */
+        public List<String> repetidos = new ArrayList<>();
         /** Lo que decidio, con sus palabras (puede ir vacio). */
         public final String palabras;
 
@@ -119,7 +121,7 @@ public final class Decisiones {
             return l;
         }
         for (String p : t.split(";")) {
-            if (EXC.matcher(p).matches()) {
+            if (EXC.matcher(p).matches() || REP.matcher(p).matches()) {
                 continue;
             }
             Matcher m = ALC.matcher(p);
@@ -132,12 +134,22 @@ public final class Decisiones {
     }
 
     private static final Pattern EXC = Pattern.compile("\\s*EXCLUYE\\s+(P\\d+[a-z]?)\\s*");
+    private static final Pattern REP = Pattern.compile("\\s*REPITE\\s+(P\\d+[a-z]?)\\s*");
 
     static List<String> excluidos(String t) {
+        return lista(t, EXC);
+    }
+
+    /** "REPITE Pxx": patrones que Diego manda volver a medir (TIPO-I-REPETIR, 6048453). */
+    static List<String> repetidos(String t) {
+        return lista(t, REP);
+    }
+
+    private static List<String> lista(String t, Pattern pat) {
         List<String> l = new ArrayList<>();
         if (t != null) {
             for (String p : t.split(";")) {
-                Matcher m = EXC.matcher(p);
+                Matcher m = pat.matcher(p);
                 if (m.matches()) {
                     l.add(m.group(1));
                 }
@@ -187,9 +199,11 @@ public final class Decisiones {
                 d.rechazadas.add(t + " (" + e.getMessage() + ")");
                 continue;
             }
-            d.validas.put(clave(id, equipo), new Decision(id, equipo, valor, fecha, firmante, doc,
+            Decision dec = new Decision(id, equipo, valor, fecha, firmante, doc,
                     Collections.unmodifiableList(alc), Collections.unmodifiableList(excluidos(c.size() > 6 ? c.get(6) : "")),
-                    c.size() > 7 ? c.get(7).trim() : ""));
+                    c.size() > 7 ? c.get(7).trim() : "");
+            dec.repetidos = Collections.unmodifiableList(repetidos(c.size() > 6 ? c.get(6) : ""));
+            d.validas.put(clave(id, equipo), dec);
         }
         return d;
     }

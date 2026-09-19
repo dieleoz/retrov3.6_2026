@@ -46,6 +46,11 @@ public class CalibrarActivity extends Base {
     private Button btnPersistencia;
     private Button btnAceptar;
     private Button btnRechazar;
+    private Button btnCerrar;
+    /** Ultimos ZIP exportados en esta accion: se comparten juntos al final (un solo selector). */
+    private volatile Campanas.Exportacion ultimoZip;
+    private volatile Campanas.Exportacion ultimoSoporte;
+    private volatile String errorZip;
     private TextView txtProgreso;
     private TextView txtActa;
     private final Map<Character, CheckBox> casillas = new LinkedHashMap<>();
@@ -77,6 +82,7 @@ public class CalibrarActivity extends Base {
                 () -> flujo.persistencia(), true));
         btnAceptar = boton("Aceptar y grabar fecha", v -> confirmarAceptar());
         btnRechazar = boton("Rechazar", v -> rechazar());
+        btnCerrar = boton("Cerrar sin restaurar (firma de Diego)", v -> cerrarSinRestaurar());
         titulo("Acta");
         txtActa = texto("");
         txtActa.setTypeface(Typeface.MONOSPACE);
@@ -96,14 +102,6 @@ public class CalibrarActivity extends Base {
         ctx.nombreBT = s.nombre;
         ctx.mac = s.mac;
         ctx.app = "RTV " + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")";
-    }
-
-    private String asset(String n) {
-        try (InputStream in = getAssets().open(n)) {
-            return new String(ImportadorCampana.leer(in), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            return null;
-        }
     }
 
     private void construir() {
@@ -154,6 +152,11 @@ public class CalibrarActivity extends Base {
             public boolean aceptadoAntes(char k) throws IOException {
                 return Campanas.aceptadoAntes(yo, k);
             }
+
+            @Override
+            public List<Acta> aceptadas() throws IOException {
+                return Campanas.aceptadas(yo);
+            }
         };
         FlujoCalibracion.Reloj reloj = new FlujoCalibracion.Reloj() {
             @Override
@@ -182,6 +185,13 @@ public class CalibrarActivity extends Base {
             public int preguntar(String titulo, String mensaje, String... op) throws InterruptedException {
                 return CalibrarActivity.this.preguntar(titulo, mensaje, op[0], op.length > 1 ? op[1] : null,
                         op.length > 2 ? op[2] : null);
+            }
+
+            @Override
+            public void actaAceptada(Acta a) {
+                // P14-04 / QA-3615: cada acta aceptada deja su ZIP en disco (y la copia en Download/RTV/) en el
+                // momento; se comparten una sola vez al acabar la accion.
+                exportarSinCompartir();
             }
 
             @Override
@@ -308,6 +318,16 @@ public class CalibrarActivity extends Base {
         btnPersistencia.setEnabled(libre && flujo.puedePersistencia());
         btnAceptar.setEnabled(libre && flujo.puedeAceptar());
         btnRechazar.setEnabled(libre && flujo.puedeRechazar());
+        boolean pend = flujo != null && flujo.rechazoPendiente();
+        btnCerrar.setEnabled(libre && pend);
+        btnCerrar.setVisibility(pend ? android.view.View.VISIBLE : android.view.View.GONE);
+        if (pend) {
+            // P14-05/06: con un rechazo pendiente no se escribe nada ni se continua.
+            btnTodo.setEnabled(false);
+            btnCalibrar.setEnabled(false);
+            btnPersistencia.setEnabled(false);
+            btnAceptar.setEnabled(false);
+        }
     }
 
     // ---------------------------------------------------------------- acciones
@@ -364,11 +384,13 @@ public class CalibrarActivity extends Base {
             if (flujo.necesitaPin()) {
                 Sesion.get().pinAdmin = null;   // QA-3613-02: cualquier fallo de #L vuelve a pedir el PIN
             }
-            if (fin != null && (("Aceptar".equals(titulo) && fin.startsWith("Acta ACEPTADA"))
-                    || fin.contains(" ACEPTADO; "))) {
-                String err = exportarTrasAceptar();
+            if (fin != null && "Aceptar".equals(titulo) && fin.startsWith("Acta ACEPTADA") && ultimoZip == null) {
+                exportarSinCompartir();
+            }
+            if (ultimoZip != null || errorZip != null) {
+                String err = compartirAlFinal();
                 if (err != null) {
-                    fin = fin + "\nATENCIÓN: el ZIP no se pudo exportar (" + err + "). Expórtelo a mano en Campaña.";
+                    fin = fin + "\nATENCIÓN: el ZIP no se pudo exportar (" + err + "). Pulse ZIP de soporte en el Banco o en Campaña.";
                 }
             }
             final String f = fin;
@@ -413,24 +435,57 @@ public class CalibrarActivity extends Base {
                 .setNegativeButton("Cancelar", null).show();
     }
 
-    /** P12 §6 (3.6.14): el ZIP se exporta al aceptar el acta (con la copia en Download/RTV/). */
-    /** null si se exporto; si no, el motivo, que se ensena al operador (QA-3614-10, P13-06). */
-    private String exportarTrasAceptar() {
+    /**
+     * P12 §6 / RF-APP-51: al aceptar cada acta se exportan el ZIP ligero y el de soporte (con su copia en
+     * Download/RTV/), sin compartir todavia. Se sobrescriben: el ultimo lleva todo lo anterior.
+     */
+    private void exportarSinCompartir() {
         try {
             Sesion s = Sesion.get();
-            Campanas.Exportacion ex = Campanas.exportarConHuellas(this, s.serie(), s.mac);
-            // RF-APP-51: al aceptar un acta, tambien el ZIP de soporte, sin preguntar.
-            Campanas.Exportacion sop = Campanas.exportarSoporte(this, s.serie(), s.mac);
-            enUi(() -> {
-                compartirZip(ex, "Acta aceptada de " + s.serie() + ": ZIP de la campaña");
-                compartirZip(sop, "Acta aceptada de " + s.serie() + ": ZIP de soporte");
-            });
-            String err = ex.copia != null && ex.copia.contains("SIN COPIA") ? ex.copia : null;
-            return err != null ? err : sop.copia != null && sop.copia.contains("SIN COPIA") ? sop.copia : null;
+            ultimoZip = Campanas.exportarConHuellas(this, s.serie(), s.mac);
+            ultimoSoporte = Campanas.exportarSoporte(this, s.serie(), s.mac);
+            errorZip = ultimoZip.copia != null && ultimoZip.copia.contains("SIN COPIA") ? ultimoZip.copia
+                    : ultimoSoporte.copia != null && ultimoSoporte.copia.contains("SIN COPIA") ? ultimoSoporte.copia : null;
         } catch (IOException | RuntimeException e) {
             Registro.nota("no se pudo exportar el ZIP al aceptar: " + e.getMessage());
-            return e.getMessage();
+            errorZip = e.getMessage();
         }
+    }
+
+    /** QA-3615: un solo selector de compartir por accion, con los dos ZIP. null si todo se exporto. */
+    private String compartirAlFinal() {
+        final Campanas.Exportacion ex = ultimoZip;
+        final Campanas.Exportacion sop = ultimoSoporte;
+        String err = errorZip;
+        ultimoZip = null;
+        ultimoSoporte = null;
+        errorZip = null;
+        if (ex != null && sop != null) {
+            final String serie = Sesion.get().serie();
+            enUi(() -> compartirZips(ex, sop, "Actas aceptadas de " + serie));
+        }
+        return err;
+    }
+
+    /** "Cerrar sin restaurar": solo con un rechazo pendiente y la firma de Diego (P14-06/-10). */
+    private void cerrarSinRestaurar() {
+        LinearLayout caja = new LinearLayout(this);
+        caja.setOrientation(LinearLayout.VERTICAL);
+        final EditText firma = new EditText(this);
+        firma.setSingleLine(true);
+        firma.setHint("Firmante (Diego)");
+        caja.addView(firma);
+        final EditText mot = new EditText(this);
+        mot.setSingleLine(true);
+        mot.setHint("Motivo");
+        caja.addView(mot);
+        new AlertDialog.Builder(this).setTitle("Cerrar sin restaurar").setView(caja)
+                .setMessage("El acta queda RECHAZADA y lo que no se pudo restaurar se queda en el equipo tal cual, "
+                        + "anotado en el acta. Solo con la firma de Diego.")
+                .setPositiveButton("Cerrar", (d, w) -> accion("Cerrar sin restaurar",
+                        () -> flujo.cerrarSinRestaurar(firma.getText().toString().trim(), mot.getText().toString().trim()),
+                        false))
+                .setNegativeButton("Cancelar", null).show();
     }
 
     /** Mientras el flujo escribe o re-mide, Atras no sale. */

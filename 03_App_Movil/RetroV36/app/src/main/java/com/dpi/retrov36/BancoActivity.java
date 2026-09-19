@@ -87,6 +87,8 @@ public class BancoActivity extends Base {
     }
     private Button btnRehacerAnterior;
     private Button btnBanco;
+    /** "Quedan N patrones, unos M min" y lo que se dio por hecho al abrir (3.6.16). */
+    private String resumenPrevio = "";
     private Button btnRehacerPatron;
     private android.widget.CheckBox chkConfirmar;
 
@@ -256,11 +258,19 @@ public class BancoActivity extends Base {
 
     /** La cola de un tipo de banco, o null si no viaja en este APK o su md5 no esta admitido. */
     private BancoCola colaDe(BancoCola.Tipo t) {
-        try (InputStream in = getAssets().open(t.asset)) {
-            return BancoCola.cargar(ImportadorCampana.leer(in));
-        } catch (IOException | RuntimeException e) {
-            return null;
-        }
+        return colaApk(t);
+    }
+
+    /** PROTOCOLO-AJUSTE de decisiones.csv para este equipo (null = el provisional, PRECISO). */
+    private String protocoloAjuste() {
+        return campana == null ? null : decisionesApk().valor("PROTOCOLO-AJUSTE",
+                TablaCalibracion.canonico(campana.historialSeries(), campana.mac));
+    }
+
+    /** TIPO-I-REPETIR de decisiones.csv para este equipo: esos patrones se miden en preciso, 5 x 4. */
+    private java.util.List<String> repetir() {
+        return campana == null ? new java.util.ArrayList<String>() : repetirApk(decisionesApk(),
+                TablaCalibracion.canonico(campana.historialSeries(), campana.mac));
     }
 
     /** 3.6.15: selector de banco (completo / representativo / verificacion anual), solo antes del primer paso. */
@@ -268,17 +278,14 @@ public class BancoActivity extends Base {
         if (campana == null) {
             return;
         }
-        if (!campana.pasos().isEmpty()) {
-            alerta("Tipo de banco", "El banco ya empezó con " + BancoCola.Tipo.de(campana.colaTipo()).nombre
-                    + ": no se cambia a mitad.");
-            return;
-        }
+        final boolean conPasos = !campana.pasos().isEmpty();
         final BancoCola.Tipo[] ts = BancoCola.Tipo.values();
         String[] items = new String[ts.length];
         for (int i = 0; i < ts.length; i++) {
             items[i] = ts[i].nombre + (colaDe(ts[i]) == null ? " (no disponible en este APK)" : "");
         }
-        new AlertDialog.Builder(this).setTitle("Tipo de banco").setItems(items, (d, w) -> {
+        new AlertDialog.Builder(this).setTitle("Tipo de banco" + (conPasos ? " (cambia a mitad: lo ya medido se vuelve "
+                + "a contar)" : "")).setItems(items, (d, w) -> {
             if (colaDe(ts[w]) == null) {
                 alerta("Tipo de banco", ts[w].nombre + " no viaja en este APK todavía.");
                 return;
@@ -344,6 +351,11 @@ public class BancoActivity extends Base {
             return;
         }
         btnBanco.setText("Banco: " + tipo.nombre);
+        if (!campana.colaMd5().isEmpty() && !campana.colaMd5().equals(cola.md5)) {
+            // P14-B03: la cola de la campana y la del APK no son la misma version (los pasos conservan su orden).
+            Registro.nota("banco: la campaña empezó con la cola md5 " + campana.colaMd5() + " y el APK trae " + cola.md5);
+        }
+        resumenPrevio = aplicarBancoPrevio(campana);
         Registro.nota("banco: cola " + tipo.name() + " md5 " + cola.md5 + ", " + cola.pasos.size() + " pasos");
         pintar();
     }
@@ -373,7 +385,9 @@ public class BancoActivity extends Base {
                 campana.bateriaBloqueaEscrituras() ? "\nBATERÍA: escrituras bloqueadas (n = 0 o sin respuesta)." : "")
                 + (salt.isEmpty() ? "" : "\nSaltados: " + nombres(salt))
                 + (campana.cerrada() ? "\nCampaña CERRADA: no se mide nada más en ella (abra una nueva en Campaña, Avanzado)." : "")
-                + (enCurso != null ? "\n" + enCurso.texto() : ""));
+                + (enCurso != null ? "\n" + enCurso.texto() : "")
+                + "\n" + BancoPrevio.textoPendiente(cola, campana.pasos(), prefRapido(), protocoloAjuste(), repetir())
+                + (resumenPrevio.isEmpty() ? "" : "\nAl abrir: " + resumenPrevio));
         if (paso == null) {
             txtPaso.setText("Banco completo.");
         } else {
@@ -381,9 +395,13 @@ public class BancoActivity extends Base {
                     : "REHACER".equals(est.get(paso.orden)) ? " (A REHACER: " + motivoRehacer(paso.orden) + ")" : "";
             txtPaso.setText("Sesión " + paso.sesion + " · paso " + paso.orden + reintento + "\n" + paso.instruccion()
                     + (paso.esMedida() ? String.format(Locale.US, "\n%d colocaciones × %d disparos + %d de asentamiento%s",
-                    Protocolo.efectivo(paso, prefRapido())[0], Protocolo.efectivo(paso, prefRapido())[1], paso.asentamiento,
+                    Protocolo.efectivo(paso, prefRapido(), protocoloAjuste(), repetir())[0],
+                    Protocolo.efectivo(paso, prefRapido(), protocoloAjuste(), repetir())[1], paso.asentamiento,
                     "OSCURO".equals(paso.tipo) || "A5".equals(paso.tipo) ? " (A5 y OSCURO: siempre K = 5)"
-                            : prefRapido() ? " (rápido)" : " (preciso)") : "")
+                            : Protocolo.aRepetir(paso, repetir()) ? " (preciso: Diego manda repetirlo, TIPO-I-REPETIR)"
+                            : Protocolo.deAjuste(paso) && !"RAPIDO".equals(protocoloAjuste())
+                            ? " (preciso: patrón de lo que se escribe, PROTOCOLO-AJUSTE)"
+                            : prefRapido() ? " (rápido; con 1 colocación la reproducibilidad no se evalúa)" : " (preciso)") : "")
                     + (paso.esMedida() && !paso.codigo.isEmpty() ? "\nCódigo " + paso.codigo + ", uso " + paso.uso : "")
                     + (paso.nota.isEmpty() ? "" : "\nNota: " + paso.nota)
                     + (paso.ajusteApp.isEmpty() ? "" : "\n" + paso.ajusteApp));
@@ -529,14 +547,14 @@ public class BancoActivity extends Base {
         final int mEf;
         final String protocolo;
 
-        Medicion(BancoCola.Paso p, Campana c, boolean rapido) {
+        Medicion(BancoCola.Paso p, Campana c, boolean rapido, String protocoloAjuste, java.util.List<String> repetir) {
             this.p = p;
             this.campana = c;
             this.nombre = "OSCURO".equals(p.tipo) ? Campana.OSCURO.nombre : p.patron;
-            int[] km = Protocolo.efectivo(p, rapido);
+            int[] km = Protocolo.efectivo(p, rapido, protocoloAjuste, repetir);
             this.kEf = km[0];
             this.mEf = km[1];
-            this.protocolo = Protocolo.texto(km, rapido && !"OSCURO".equals(p.tipo) && !"A5".equals(p.tipo));
+            this.protocolo = Protocolo.texto(km, rapido && km[0] == Protocolo.K_DEFECTO);
         }
 
         String texto() {
@@ -607,7 +625,7 @@ public class BancoActivity extends Base {
             aviso(enCurso.texto());
             return;
         }
-        Medicion m = new Medicion(p, campana, prefRapido());
+        Medicion m = new Medicion(p, campana, prefRapido(), protocoloAjuste(), repetir());
         enCurso = m;
         fijarOrientacion(true);
         pantallaEncendida(true);

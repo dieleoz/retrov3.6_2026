@@ -276,7 +276,50 @@ public final class Campana {
         anadirSerie(anterior);
         anadirSerie(nueva);
         serieActual = nueva;
+        renombrados.add(new String[]{fecha == null ? "" : fecha, anterior, nueva, operador == null ? "" : operador});
         evento("RENOMBRA", fecha, anterior, nueva, operador == null ? "" : operador, mac);
+    }
+
+    /**
+     * 3.6.16 (QA-3615-01): el #SN no quedo verificado; la serie vuelve a la anterior. El nombre nuevo queda en el
+     * historial (es de esta misma MAC), pero ya no es la serie actual.
+     */
+    public void revertirRenombrado(String nueva, String anterior, String fecha, String motivo) throws IOException {
+        comprobarAbierta();
+        serieActual = anterior;
+        evento("RENOMBRA_REVIERTE", fecha, nueva, anterior, motivo == null ? "" : motivo);
+    }
+
+    /** RENOMBRA de este diario: {fecha, anterior, nueva, operador}. */
+    private final List<String[]> renombrados = new ArrayList<>();
+
+    public List<String[]> renombrados() {
+        return new ArrayList<>(renombrados);
+    }
+
+    /** true si el historial ya tiene el RENOMBRA anterior -> nueva. */
+    public boolean tieneRenombrado(String anterior, String nueva) {
+        for (String[] r : renombrados) {
+            if (r[1].equalsIgnoreCase(anterior) && r[2].equalsIgnoreCase(nueva)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 3.6.16 (QA-3615-02, P14-S01): copia los RENOMBRA de otro diario del MISMO equipo (otra campana de esta MAC,
+     * archivada, o un ZIP importado) que aqui no esten. Devuelve cuantos copio.
+     */
+    public int copiarRenombrados(List<String[]> otros, String origen) throws IOException {
+        int n = 0;
+        for (String[] r : otros) {
+            if (!tieneRenombrado(r[1], r[2])) {
+                renombrar(r[1], r[2], r[0], r[3] + (origen == null || origen.isEmpty() ? "" : " (copiado de " + origen + ")"));
+                n++;
+            }
+        }
+        return n;
     }
 
     /**
@@ -457,10 +500,17 @@ public final class Campana {
     }
 
     /** Elige el tipo de banco: solo antes del primer paso (los ordenes de las colas no son intercambiables). */
+    /**
+     * Elige el tipo de banco. 3.6.16 (peticion de Diego): se puede cambiar a mitad. Los ordenes de una cola no valen
+     * en otra, asi que el cambio deja los pasos SIN estado (los PASO anteriores siguen en el diario, sin borrarse) y
+     * lo ya medido se vuelve a contar desde las series (BancoPrevio).
+     */
     public void elegirCola(String tipo, String md5) throws IOException {
         comprobarAbierta();
-        if (!pasos.isEmpty() && !tipo.equals(colaTipo)) {
-            throw new IllegalStateException("el banco ya empezó con " + colaTipo + ": cierre la campaña o abra otra");
+        if (!tipo.equals(colaTipo)) {
+            pasos.clear();
+            seriePaso.clear();
+            historialPasos.clear();
         }
         colaTipo = tipo;
         colaMd5 = md5 == null ? "" : md5;
@@ -877,6 +927,52 @@ public final class Campana {
         return sb.toString();
     }
 
+    /** Tope del resumen.txt del ZIP ligero (RF-APP-50: el resumen incremental cabe en 10 kB). */
+    public static final int TOPE_RESUMEN_CORTO = 8000;
+
+    /**
+     * Resumen corto para el ZIP ligero (3.6.16, RF-APP-50): una linea por patron medido, las anuladas contadas, el
+     * oscuro, la A5 y lo que falta. El detalle por serie va en el ZIP de soporte. Nunca pasa de TOPE_RESUMEN_CORTO
+     * bytes en UTF-8.
+     */
+    public String resumenCorto() {
+        StringBuilder sb = new StringBuilder();
+        if (!mac.isEmpty()) {
+            sb.append("Equipo: serie ").append(equipo).append(", MAC ").append(mac).append('\n');
+        }
+        sb.append(cerrada ? "Estado: CERRADA el " + fechaCierre + "\n" : "Estado: abierta\n");
+        sb.append("Banco: ").append(colaTipo).append(colaMd5.isEmpty() ? "" : ", cola md5 " + colaMd5).append('\n');
+        sb.append("Avance: ").append(avance()).append("\n\n");
+        sb.append("patron serie   n    media      s  (solo los medidos; detalle en el ZIP de soporte)\n");
+        StringBuilder falta = new StringBuilder();
+        for (Patron p : catalogo.values()) {
+            Serie el = elegida(p.nombre);
+            if (el == null) {
+                if (estado(p.nombre) != Estado.MEDIDO) {
+                    falta.append(p.nombre).append(' ');
+                }
+                continue;
+            }
+            sb.append(String.format(Locale.US, "%-6s %-6s %2d %8.1f %6.2f%s\n", p.nombre, el.id, el.validos().length,
+                    el.media(), el.desviacion(), el.aceptada ? "" : " no aceptada"));
+        }
+        int an = seriesAnuladas().size();
+        if (an > 0) {
+            sb.append(an).append(" series ANULADAS (motivos en el diario y en el ZIP de soporte)\n");
+        }
+        Serie so = serieOscuro();
+        sb.append(so == null ? "Oscuro: sin medir\n" : String.format(Locale.US, "Oscuro: %s, x = %.1f\n", so.id, so.media()));
+        sb.append(A5.evaluar(this).texto).append('\n');
+        sb.append("Falta medir: ").append(falta.length() == 0 ? "nada" : falta.toString().trim()).append('\n');
+        byte[] b = sb.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        if (b.length <= TOPE_RESUMEN_CORTO) {
+            return sb.toString();
+        }
+        String corte = "\n... (recortado a " + TOPE_RESUMEN_CORTO + " bytes; el resumen completo va en el ZIP de soporte)\n";
+        String s = new String(java.util.Arrays.copyOf(b, TOPE_RESUMEN_CORTO - 200), java.nio.charset.StandardCharsets.UTF_8);
+        return s.substring(0, Math.max(0, s.length() - 1)) + corte;
+    }
+
     public String resumen() {
         StringBuilder sb = new StringBuilder();
         if (!mac.isEmpty()) {
@@ -1127,8 +1223,17 @@ public final class Campana {
                 anadirSerie(c.get(2));
                 anadirSerie(c.get(3));
                 serieActual = c.get(3);
+                renombrados.add(new String[]{c.get(1), c.get(2), c.get(3), c.size() > 4 ? c.get(4) : ""});
+                return true;
+            case "RENOMBRA_REVIERTE":
+                serieActual = c.get(3);
                 return true;
             case "COLA":
+                if (!c.get(1).equals(colaTipo)) {
+                    pasos.clear();
+                    seriePaso.clear();
+                    historialPasos.clear();
+                }
                 colaTipo = c.get(1);
                 colaMd5 = c.size() > 2 ? c.get(2) : "";
                 colaElegida = true;

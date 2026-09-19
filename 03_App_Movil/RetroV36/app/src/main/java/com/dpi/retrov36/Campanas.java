@@ -107,6 +107,9 @@ public final class Campanas {
             escritor.flush();
         }
         c.escribirEn(escritor);
+        // 3.6.16 (P14-S01, QA-3615-01/02): los RENOMBRA de cualquier otra campana de esta MAC (tambien las
+        // archivadas) pasan a esta: "Nueva campana" tras renombrar sigue reconociendo la serie nueva.
+        sincronizarAlias(c, dir, mac.trim(), fichero);
         abierta = c;
         claveAbierta = k;
         serieAbierta = serie.trim();
@@ -116,6 +119,30 @@ public final class Campanas {
         return c;
     }
 
+    private static void sincronizarAlias(Campana c, File dir, String mac, File propio) {
+        File[] fs = dir.listFiles();
+        if (fs == null || c.cerrada()) {
+            return;
+        }
+        String m = "_" + limpio(mac);
+        for (File f : fs) {
+            String n = f.getName();
+            if (!n.startsWith("campana_") || !n.contains(m) || !n.endsWith(".csv") || f.equals(propio)) {
+                continue;
+            }
+            try (InputStreamReader r = new InputStreamReader(new FileInputStream(f), StandardCharsets.UTF_8)) {
+                Campana otra = new Campana(new java.util.ArrayList<Patron>(), "", mac);
+                otra.leerDiario(r);
+                int k = c.copiarRenombrados(otra.renombrados(), n);
+                if (k > 0) {
+                    Registro.nota("campana: " + k + " RENOMBRA copiados de " + n);
+                }
+            } catch (IOException | RuntimeException e) {
+                Registro.nota("campana: no se pudieron leer los RENOMBRA de " + n + ": " + e.getMessage());
+            }
+        }
+    }
+
     /** RF-APP-49: true si este equipo (MAC) tiene otra campana ademas de la abierta (su primer banco ya se hizo). */
     public static synchronized boolean hayOtraCampanaDeEsteEquipo(Context ctx) {
         File dir = new File(ctx.getFilesDir(), "campanas");
@@ -123,10 +150,11 @@ public final class Campanas {
         if (fs == null || macAbierta == null) {
             return false;
         }
-        String fin = "_" + limpio(macAbierta) + ".csv";
+        // QA-3615-10: tambien cuentan las archivadas ("..._archivada_<sello>.csv").
+        String m = "_" + limpio(macAbierta);
         for (File f : fs) {
             String n = f.getName();
-            if (n.startsWith("campana_") && n.endsWith(fin) && !n.equals("campana_" + claveAbierta + ".csv")) {
+            if (n.startsWith("campana_") && n.contains(m) && n.endsWith(".csv") && !n.equals("campana_" + claveAbierta + ".csv")) {
                 return true;
             }
         }
@@ -356,6 +384,31 @@ public final class Campanas {
         return false;
     }
 
+    /** P14-02 (3.6.16): las actas ACEPTADAS archivadas de este equipo, por orden de nombre (sello de fecha). */
+    public static synchronized List<Acta> aceptadas(Context ctx) throws IOException {
+        List<Acta> l = new ArrayList<>();
+        File curso = ficheroActaEnCurso(ctx);
+        File dir = curso.getParentFile();
+        String prefijo = curso.getName().replace("_curso.csv", "_");
+        File[] fs = dir == null ? null : dir.listFiles();
+        if (fs == null) {
+            return l;
+        }
+        java.util.Arrays.sort(fs);
+        for (File f : fs) {
+            if (!f.getName().startsWith(prefijo) || !f.getName().endsWith("_diario.csv")) {
+                continue;
+            }
+            try (InputStreamReader r = new InputStreamReader(new FileInputStream(f), StandardCharsets.UTF_8)) {
+                Acta a = Acta.leer(r);
+                if (a != null && a.aceptada()) {
+                    l.add(a);
+                }
+            }
+        }
+        return l;
+    }
+
     private static void archivarActa(File f) throws IOException {
         String sello = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
         File dest = new File(f.getParentFile(), f.getName().replace("_curso.csv", "_" + sello + "_diario.csv"));
@@ -531,7 +584,7 @@ public final class Campanas {
         List<PaquetesZip.Pieza> salida = new ArrayList<>(inc.piezas);
         salida.add(new PaquetesZip.Pieza("indice.sha256", PaquetesZip.utf8(inc.indice)));
         String resumen = cabeceraResumen(c, "ZIP LIGERO E INCREMENTAL: lo nuevo desde " + (zipAnt.isEmpty() ? "el principio" : zipAnt)
-                + ". Las tramas y campana.csv van en el ZIP de soporte.") + c.resumen() + PaquetesZip.listaHashes(salida);
+                + ". Las tramas y campana.csv van en el ZIP de soporte.") + c.resumenCorto() + PaquetesZip.listaHashes(salida);
         salida.add(0, new PaquetesZip.Pieza("resumen.txt", PaquetesZip.utf8(resumen)));
         try (FileOutputStream out = new FileOutputStream(zip)) {
             PaquetesZip.escribir(out, salida);

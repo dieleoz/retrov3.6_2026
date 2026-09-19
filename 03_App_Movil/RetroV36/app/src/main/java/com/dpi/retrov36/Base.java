@@ -155,6 +155,59 @@ public abstract class Base extends AppCompatActivity implements EnlaceSerie.Oyen
         return f;
     }
 
+    /** Texto de un asset del APK (UTF-8), o null. */
+    protected String asset(String n) {
+        try (java.io.InputStream in = getAssets().open(n)) {
+            return new String(ImportadorCampana.leer(in), java.nio.charset.StandardCharsets.UTF_8);
+        } catch (java.io.IOException e) {
+            return null;
+        }
+    }
+
+    protected Decisiones decisionesApk() {
+        return Decisiones.leer(asset(Decisiones.ASSET));
+    }
+
+    /** Patrones de TIPO-I-REPETIR para el equipo (vacio sin decision). */
+    protected static List<String> repetirApk(Decisiones d, String equipo) {
+        Decisiones.Decision r = d.decision("TIPO-I-REPETIR", equipo);
+        return r == null ? new ArrayList<String>() : r.repetidos;
+    }
+
+    protected BancoPrevio.Grupos gruposApk() {
+        return BancoPrevio.Grupos.leer(asset("grupos_patrones_equivalentes.csv"));
+    }
+
+    /** La cola de un tipo de banco, o null si no viaja en este APK o su md5 no esta admitido. */
+    protected BancoCola colaApk(BancoCola.Tipo t) {
+        try (java.io.InputStream in = getAssets().open(t.asset)) {
+            return BancoCola.cargar(ImportadorCampana.leer(in));
+        } catch (java.io.IOException | RuntimeException e) {
+            return null;
+        }
+    }
+
+    /** Banco mas corto (3.6.16): lo ya medido cuenta y lo que Diego manda repetir vuelve a la cola. */
+    protected String aplicarBancoPrevio(Campana c) {
+        if (c == null) {
+            return "";
+        }
+        BancoCola q = colaApk(BancoCola.Tipo.de(c.colaTipo()));
+        if (q == null) {
+            return "";
+        }
+        try {
+            String eq = TablaCalibracion.canonico(c.historialSeries(), c.mac);
+            Decisiones d = decisionesApk();
+            BancoPrevio.Resultado r = BancoPrevio.aplicar(c, q, gruposApk(), d, eq, Sesion.ahoraIso());
+            return (r.hechos + r.repetir == 0 ? "" : r.hechos + " pasos ya medidos cuentan como hechos; " + r.repetir
+                    + " a repetir en preciso. ") + BancoPrevio.textoPendiente(q, c.pasos(), true,
+                    d.valor("PROTOCOLO-AJUSTE", eq), repetirApk(d, eq)) + ".";
+        } catch (java.io.IOException | RuntimeException e) {
+            return "No se pudo revisar lo ya medido: " + e.getMessage();
+        }
+    }
+
     protected void enUi(Runnable r) {
         runOnUiThread(r);
     }
@@ -249,7 +302,35 @@ public abstract class Base extends AppCompatActivity implements EnlaceSerie.Oyen
         i.setClipData(ClipData.newRawUri(ex.zip.getName(), u));
         i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         try {
-            startActivity(Intent.createChooser(i, "Enviar la campaña (un solo ZIP)"));
+            startActivity(Intent.createChooser(i, "Enviar el ZIP"));
+        } catch (ActivityNotFoundException e) {
+            aviso("No hay ninguna aplicación para compartir el ZIP.");
+        }
+    }
+
+    /** Los dos ZIP (ligero y de soporte) en un solo selector (ACTION_SEND_MULTIPLE). */
+    protected void compartirZips(Campanas.Exportacion ex, Campanas.Exportacion sop, String texto) {
+        ArrayList<Uri> us = new ArrayList<>();
+        try {
+            us.add(FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".ficheros", ex.zip));
+            us.add(FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".ficheros", sop.zip));
+        } catch (IllegalArgumentException e) {
+            aviso("No se pudo compartir el ZIP: " + e.getMessage());
+            return;
+        }
+        Intent i = new Intent(Intent.ACTION_SEND_MULTIPLE);
+        i.setType("application/zip");
+        i.putParcelableArrayListExtra(Intent.EXTRA_STREAM, us);
+        i.putExtra(Intent.EXTRA_SUBJECT, ex.zip.getName());
+        i.putExtra(Intent.EXTRA_TEXT, texto + "\n" + ex.zip.getName() + "\nmd5 " + ex.md5 + "\nsha256 " + ex.sha256
+                + "\n" + sop.zip.getName() + "\nmd5 " + sop.md5 + "\nsha256 " + sop.sha256
+                + "\nCopias: " + ex.copia + "; " + sop.copia);
+        ClipData cd = ClipData.newRawUri(ex.zip.getName(), us.get(0));
+        cd.addItem(new ClipData.Item(us.get(1)));
+        i.setClipData(cd);
+        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try {
+            startActivity(Intent.createChooser(i, "Enviar la campaña (ZIP ligero y de soporte)"));
         } catch (ActivityNotFoundException e) {
             aviso("No hay ninguna aplicación para compartir el ZIP.");
         }

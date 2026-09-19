@@ -295,6 +295,9 @@ public final class Acta {
             case "INVALIDA":
                 invalidada = c.get(1);
                 break;
+            case "RECHAZO_PENDIENTE":
+                rechazoPendiente = c.get(2);
+                break;
             case "ACEPTADA":
                 cierre = "ACEPTADA " + c.get(1);
                 fechaGrabada = c.get(2).isEmpty() ? null : c.get(2);
@@ -358,6 +361,9 @@ public final class Acta {
     public String motivoNoEscribir(char k) {
         if (cerrada()) {
             return "el acta está cerrada (" + cierre + "): abra otra";
+        }
+        if (rechazoPendiente != null) {
+            return "hay un rechazo pendiente (" + rechazoPendiente + "): vuelva a pulsar Rechazar";
         }
         if (invalidada()) {
             return "el acta está invalidada (" + invalidada + "): recházela y abra otra";
@@ -529,6 +535,21 @@ public final class Acta {
         eventoSinFallo("RESTAURA_FALLA", String.valueOf(k), texto);
     }
 
+    /**
+     * P14-05/06/10: un rechazo cuya restauracion no se verifico deja el acta ABIERTA con este estado: no se escribe
+     * ningun codigo ni se acepta; solo se puede volver a rechazar o cerrar sin restaurar con la firma de Diego.
+     */
+    private String rechazoPendiente;
+
+    public String rechazoPendiente() {
+        return rechazoPendiente;
+    }
+
+    public void rechazoPendiente(String fecha, String motivo) {
+        rechazoPendiente = motivo == null || motivo.isEmpty() ? "restauración no verificada" : motivo;
+        eventoSinFallo("RECHAZO_PENDIENTE", fecha, rechazoPendiente);
+    }
+
     /** P10-C5: un #F (o cualquier cambio fuera del flujo) con el acta abierta la invalida. */
     public void invalidar(String motivo) {
         if (cerrada()) {
@@ -620,6 +641,9 @@ public final class Acta {
     public String motivoNoAceptable(boolean exigirVerificaciones, boolean exigirFinal) {
         if (cerrada()) {
             return "el acta ya está cerrada (" + cierre + ")";
+        }
+        if (rechazoPendiente != null) {
+            return "hay un rechazo pendiente (" + rechazoPendiente + "): no se acepta";
         }
         if (invalidada()) {
             return "el acta está invalidada: " + invalidada;
@@ -762,6 +786,9 @@ public final class Acta {
         }
         if (invalidada != null) {
             sb.append("INVALIDADA: ").append(invalidada).append('\n');
+        }
+        if (rechazoPendiente != null && cierre == null) {
+            sb.append("RECHAZO PENDIENTE: ").append(rechazoPendiente).append('\n');
         }
         sb.append('\n').append("Estado: ").append(cierre == null ? "PENDIENTE" : cierre).append('\n');
         if (cierre != null && cierre.startsWith("ACEPTADA")) {

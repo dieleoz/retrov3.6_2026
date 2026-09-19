@@ -60,9 +60,9 @@ public class Version3615Test {
     @Test
     public void lasTresColasCarganConSuMd5() throws Exception {
         assertEquals(180, cola(BancoCola.Tipo.COMPLETO).pasos.size());
-        assertEquals(94, cola(BancoCola.Tipo.REPRESENTATIVO).pasos.size());
+        assertEquals("3.6.16: v2, sin la bateria por color", 80, cola(BancoCola.Tipo.REPRESENTATIVO).pasos.size());
         assertEquals(35, cola(BancoCola.Tipo.VERIFICACION_ANUAL).pasos.size());
-        assertEquals("2e266bbf89ec7dfb716e5ddd2d59d8f4", cola(BancoCola.Tipo.REPRESENTATIVO).md5);
+        assertEquals("70ef3b868db85ef75743936a6218935e", cola(BancoCola.Tipo.REPRESENTATIVO).md5);
         assertEquals("d86eddf7fbdfdd4ae11ee2080d220e6c", cola(BancoCola.Tipo.VERIFICACION_ANUAL).md5);
         byte[] otra = Files.readAllBytes(new File("src/main/assets/" + BancoCola.Tipo.COMPLETO.asset).toPath());
         otra[otra.length - 2] ^= 1;
@@ -114,6 +114,14 @@ public class Version3615Test {
                 if ("OSCURO".equals(p.tipo) || "A5".equals(p.tipo)) {
                     assertEquals(t + " " + p.orden, 5, r[0]);
                     assertEquals(5, pr[0]);
+                } else if (Protocolo.deAjuste(p)) {
+                    // 3.6.16 (PROTOCOLO-AJUSTE, 6048453): lo que se escribe va a 5 x 4 tambien en rapido.
+                    assertEquals(t + " " + p.orden, 5, r[0]);
+                    assertEquals(4, r[1]);
+                    assertEquals(5, pr[0]);
+                    assertEquals(4, pr[1]);
+                    // con RAPIDO firmado, vuelve a 1 x 4
+                    assertEquals(1, Protocolo.efectivo(p, true, "RAPIDO")[0]);
                 } else {
                     assertEquals(1, r[0]);
                     assertEquals(4, r[1]);

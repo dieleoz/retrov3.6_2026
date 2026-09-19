@@ -25,10 +25,14 @@ public final class RehacerBanco {
     static boolean sesionTerminada(BancoCola cola, Map<Integer, String> est, int sesion) {
         for (BancoCola.Paso p : cola.pasos) {
             String e = est.get(p.orden);
-            if (e == null || "REHACER".equals(e)) {
+            if (e == null) {
                 continue;
             }
-            if (p.sesion > sesion || (p.sesion == sesion && "EXPORTAR".equals(p.tipo))) {
+            // QA-3614-05: el EXPORTAR de la sesion cuenta aunque este en REHACER (el propio rehacer lo pone asi).
+            if (p.sesion == sesion && "EXPORTAR".equals(p.tipo)) {
+                return true;
+            }
+            if (!"REHACER".equals(e) && p.sesion > sesion) {
                 return true;
             }
         }

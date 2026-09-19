@@ -87,20 +87,36 @@ public final class Anclas {
     }
 
     public static Valor sRep(BancoCola cola, Campana c) {
+        return sRep(cola, c, 1);
+    }
+
+    /**
+     * 3.6.16 (C-P14-2): s_rep de la A5 del INICIO de la sesion dada (la del codigo que se calibra). El texto dice
+     * de donde sale cada valor: patron, serie y s entre colocaciones relativa. Si esa sesion no tiene A5 del inicio,
+     * la de la sesion 1, y se dice.
+     */
+    public static Valor sRep(BancoCola cola, Campana c, int sesion) {
         List<Double> rel = new ArrayList<>();
+        StringBuilder det = new StringBuilder();
         if (cola != null) {
             for (BancoCola.Paso p : cola.pasos) {
-                if ("A5".equals(p.tipo) && "A5-INICIO".equals(p.bloque) && p.sesion == 1) {
+                if ("A5".equals(p.tipo) && "A5-INICIO".equals(p.bloque) && p.sesion == sesion) {
                     Campana.Serie s = seriePaso(c, p);
                     if (s != null && s.colocaciones().size() >= 2) {
-                        rel.add(Veredicto.sEntre(s.colocaciones()) / s.media());
+                        double r = Veredicto.sEntre(s.colocaciones()) / s.media();
+                        rel.add(r);
+                        det.append(String.format(Locale.US, "; %s %s %.2f %%", p.patron, s.id, 100 * r));
                     }
                 }
             }
             if (!rel.isEmpty()) {
                 double v = Estadistica.media(Estadistica.aVector(rel));
-                return new Valor(v, String.format(Locale.US, "s_rep %.2f %% (A5 del inicio del banco, %d patrones)",
-                        100 * v, rel.size()));
+                return new Valor(v, String.format(Locale.US, "s_rep %.2f %% (A5 del inicio del banco, %d patrones, sesión %d%s)",
+                        100 * v, rel.size(), sesion, det));
+            }
+            if (sesion != 1) {
+                Valor v1 = sRep(cola, c, 1);
+                return new Valor(v1.valor, v1.texto + " [la sesión " + sesion + " no tiene A5 del inicio medida]");
             }
         }
         A5.Resultado a = A5.evaluar(c);

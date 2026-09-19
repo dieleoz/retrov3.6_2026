@@ -561,7 +561,10 @@ public class AdminActivity extends Base {
         if (difiere) {
             caja.addView(distinta);
         }
-        final boolean yaTiene = ses.serieEquipo != null && !Calibracion.NONE.equals(ses.serieEquipo);
+        // P14-S03: con una campana de este equipo abierta, siempre por "Cambiar serie" (RENOMBRA), nunca por "Alta".
+        Campana abiertaC = Campanas.abierta();
+        final boolean yaTiene = (ses.serieEquipo != null && !Calibracion.NONE.equals(ses.serieEquipo))
+                || (abiertaC != null && abiertaC.mac.equalsIgnoreCase(ses.mac == null ? "" : ses.mac));
         if (yaTiene) {
             caja.addView(operador);
         }
@@ -588,8 +591,8 @@ public class AdminActivity extends Base {
                             Sesion s2 = Sesion.get();
                             Campana c = Campanas.abrir(this, s2.serie(), s2.mac);
                             String t = FlujoCalibracion.renombrarSerie(Cliente.instancia(), c, null, serie, rep2, quien,
-                                    Sesion.ahoraIso());
-                            if (t.startsWith("Serie cambiada")) {
+                                    Sesion.ahoraIso(), Campanas.actaEnCurso(this) != null);
+                            if (t.startsWith("Serie cambiada") || t.startsWith("El equipo ya tiene la serie")) {
                                 s2.serieEquipo = serie;
                                 Campanas.abrir(this, serie, s2.mac);   // misma campana, por el RENOMBRA
                             }

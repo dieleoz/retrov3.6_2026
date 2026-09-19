@@ -1,10 +1,12 @@
-# Decisiones de Diego que cambian lo que la app puede escribir (3.6.15, Decisiones.java).
+# Decisiones de Diego que cambian lo que la app puede escribir (3.6.16, Decisiones.java).
 # Una linea por decision y equipo: id,equipo,valor,fecha,firmante,documento,alcance,texto
 # Solo vale con fecha AAAA-MM-DD, firmante Diego y el documento que la sostiene. La firma es el commit.
 # alcance: lo unico que se dispensa, "criterio patron|tipo cifra% margen" separados por ';'. La cifra es un
 # TECHO con margen (mismo signo y |dev| <= |cifra| + margen): decision de Diego, c836cae (P13-02).
-# "EXCLUYE Pxx" saca un patron del ajuste (P81 del 5, c836cae).
+# "EXCLUYE Pxx" saca un patron del ajuste (P81 del 5, c836cae); "REPITE Pxx" lo manda volver a medir (6048453).
 id,equipo,valor,fecha,firmante,documento,alcance,texto
-PA-24,SLV-002,SI,2026-09-19,Diego,"06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (8af526d; ampliada y margen en c836cae)","RF-CAL-14 P39 +15 3; RF-CAL-14 P49 -10 3; RF-CAL-15 I 11.5 3","Codigo b (rojo tipo I): se escribe con recta anclada en oscuro pese a incumplir RF-CAL-14 (P39 +15 %, P49 -10 %) y RF-CAL-15 (RMS de tipo I 11,5 %); las cifras son techo con +-3 puntos. Diego, ~14:10: Si, escribirla: mucho mejor que fabrica; ~15:40: ok si de 1 a 4"
+PA-24,SLV-002,SI,2026-09-19,Diego,"06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (8af526d; ampliada y margen en c836cae; RF-CAL-15 estricto en 6048453)","RF-CAL-14 P39 +15 3; RF-CAL-14 P49 -10 3; RF-CAL-15 I 11.5 0","Codigo b (rojo tipo I): se escribe con recta anclada en oscuro pese a incumplir RF-CAL-14 (P39 +15 %, P49 -10 %, techo con +-3) y RF-CAL-15 (RMS de tipo I 11,5 % estricto, sin margen: fila RF-CAL-15-b). Diego: Si, escribirla: mucho mejor que fabrica; ok si de 1 a 4; ok si a todo"
 PA-14,SLV-002,SI,2026-09-19,Diego,"06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (8af526d, 37f827d; P81 en c836cae)",EXCLUYE P81,"Codigo 5 (azul intenso): recta anclada en oscuro con la cobertura relajada; P81 sale del ajuste y queda solo de verificacion y re-medida. Diego, ~14:10, confirmado ~14:15: Si, relajar la regla y ajustarlo con una recta que pase por el negro, como el amarillo; ~15:40: ok si de 1 a 4"
 REMEDIDA-b,SLV-002,RF-CAL-18,2026-09-19,Diego,"06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (c836cae)",,"La re-medida del codigo b se juzga con RF-CAL-18 (frente a la curva escrita), no frente al certificado. Diego, ~15:40: ok si de 1 a 4"
+PROTOCOLO-AJUSTE,SLV-002,PRECISO,2026-09-19,Diego,"06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (6048453)",,"Los patrones de AJUSTE de los codigos que se escriben (8, b, 5), P81 y las re-medidas se miden en preciso, 5 x 4; el resto, 1 x 4. Diego, ~17:10: ok si a todo"
+TIPO-I-REPETIR,SLV-002,SI,2026-09-19,Diego,"06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (6048453)","REPITE P34; REPITE P37; REPITE P43; REPITE P44; REPITE P38; REPITE P39; REPITE P49","P34, P37, P43, P44, P38, P39 y P49 se repiten en preciso; los demas tipo I medidos a las 15:10 (3 x 3) valen. Diego, ~17:10: ok si a todo"

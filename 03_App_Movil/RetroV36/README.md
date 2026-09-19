@@ -4,7 +4,7 @@
 V3.6 no se puede probar: el firmware V3.6 no existe todavía en ningún equipo. Lo que sí debe funcionar
 es la medida contra un V3 2020 (SLV-002), y eso tampoco se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 3615`, `versionName 3.6.15` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.15 → 3615) (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 3616`, `versionName 3.6.16` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.16 → 3616) (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -29,7 +29,7 @@ no se versionan.
 
 ### Tests JVM
 
-`app/src/test/`: 16 clases, 198 tests en la 3.6.15, entre ellas `FlujoCalibracionTest` (el flujo "Calibrar este equipo" de
+`app/src/test/`: 17 clases, 225 tests en la 3.6.16, entre ellas `FlujoCalibracionTest` (el flujo "Calibrar este equipo" de
 extremo a extremo contra `EquipoSimulado`).
 `./gradlew testDebugUnitTest` **no arranca en esta máquina**: el ejecutor de Gradle 6.5 no encuentra su
 clase `GradleWorkerMain` porque la carpeta de usuario lleva `ñ` (`C:\Users\Diego.Zuñiga`). Se compilan
@@ -42,7 +42,7 @@ cd app && "$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;bui
   org.junit.runner.JUnitCore com.dpi.retrov36.CalculoTest com.dpi.retrov36.ReceptorTest \
   com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest com.dpi.retrov36.CoherenciaRealTest com.dpi.retrov36.CampanaTest com.dpi.retrov36.Version367Test com.dpi.retrov36.Version368Test com.dpi.retrov36.Version369Test com.dpi.retrov36.Version3610Test \
   com.dpi.retrov36.Version3611Test com.dpi.retrov36.Version3612Test com.dpi.retrov36.FlujoCalibracionTest \
-  com.dpi.retrov36.TS00Test com.dpi.retrov36.BancoRehacerTest com.dpi.retrov36.Version3615Test
+  com.dpi.retrov36.TS00Test com.dpi.retrov36.BancoRehacerTest com.dpi.retrov36.Version3615Test com.dpi.retrov36.Version3616Test
 ```
 
 `FabricaTest` compara las 12 ecuaciones de la app con el **texto** de
@@ -115,6 +115,84 @@ Reglas que salen de ahí, en el código:
   envía sólo `1`-`8`, `a`-`d` y `9`.
 - Tras 3 peticiones seguidas sin un solo byte, la app aconseja apagar y encender el equipo y lo anota
   en el registro.
+
+## Cambios de la 3.6.16 (REVISION-Arquitectura-P14-V3.6.md, QA-App-3.6.15.md, decisiones de 6048453)
+
+**Nada de esto se ha probado contra un equipo.** El flujo corre contra `EquipoSimulado`.
+
+- **P14-04: ningún acta se acepta sin verla.** "Calibrar todo" enseña el acta de cada código tras su persistencia, con
+  "Aceptar", "Rechazar" o "Parar aquí". `#SC` se graba **una vez al día**: antes se lee `#GC#`. Cada acta aceptada
+  deja su ZIP ligero y su ZIP de soporte en disco en ese momento. Al acabar la pulsación, los dos se comparten
+  **en un solo selector**.
+- **Rechazo pendiente (P14-05, -06, -10).** Si una restauración no se verifica, el acta queda con un
+  `RECHAZO_PENDIENTE` en el diario. Mientras siga así, no se escribe ningún código, ni con "Continuar" ni con
+  "Calibrar todo", y no se acepta. Se sale volviendo a pulsar Rechazar o con **"Cerrar sin restaurar (firma de
+  Diego)"**, que cierra el acta como RECHAZADA SIN RESTAURAR y deja escritos los códigos en estado desconocido.
+- **P14-01 y P14-02.**
+  - El atajo del T-C41, que aprovecha el apagado de la persistencia anterior, vale sólo dentro de una pulsación.
+  - Un rechazo o una restauración lo anulan.
+  - El acta dice qué apagado usó.
+  - Los códigos de las actas aceptadas, como el 8 antes del b y el 5, se revalidan con `#G` y `#E` en el T-C41.
+- **Serie (QA-3615-01, -02; P14-S01, S02).**
+  - El `RENOMBRA` se escribe antes del `#SN`.
+  - Tras un corte, repetir el cambio adopta la serie que ya tenga el equipo.
+  - Si el `#GN#` dice que no entró, se anota `RENOMBRA_REVIERTE`.
+  - No se renombra con un acta en curso.
+  - El `RENOMBRA` viaja al importar. Una campaña nueva de la misma MAC copia los `RENOMBRA` de las otras, también
+    de las archivadas.
+- **Decisiones de Diego (6048453)**, en `decisiones.csv` como definitivas:
+  - `PROTOCOLO-AJUSTE` = PRECISO: los patrones de AJUSTE y RE-MEDIDA del 8, el b y el 5, P81 y toda re-medida van
+    a 5 × 4. El resto sigue a 1 × 4.
+  - RF-CAL-15 del b a 11,5 % estricto, sin ±3.
+  - `TIPO-I-REPETIR`: se repiten a 5 × 4 P34, P37, P43, P44, P38, P39 y P49.
+  - Una serie cumple el protocolo con K ≥ 5 y M ≥ 4, así que un 5 × 9 de la 3.6.11 vale.
+- **Banco más corto.**
+  - Al abrir el Banco o importar, lo ya medido y válido cuenta como HECHO (elegida, aceptada, no anulada), también
+    por un patrón equivalente de su grupo (`grupos_patrones_equivalentes.csv`). No cuenta lo que se escribe medido
+    fuera de protocolo ni lo que Diego manda repetir.
+  - Lo que se manda repetir y estaba HECHO fuera de protocolo vuelve a la cola, con su serie ANULADA y el motivo.
+  - Cola representativa **v2** (`cola_banco_representativo_v2.csv`, md5 `70ef3b86…`, 80 pasos): sin la batería por
+    color; los controles son sólo A5 y OSCURO.
+  - Antes de empezar, la pantalla dice "Quedan N patrones, unos M min".
+  - La cola se puede cambiar a mitad. Los pasos quedan sin estado, porque sus órdenes no valen en otra cola. Las
+    series se quedan y se vuelven a contar.
+- **QA-3615-03.** La importación adopta el tipo de banco del ZIP si el destino no tiene cola. Si las colas no
+  coinciden, trae las series y no los pasos, y lo avisa.
+- **QA-3615-04 a -07.**
+  - Al retomar, el acta a medias se enseña, se acepta y sale en el mensaje ("Hecho: 8 ACEPTADO"). Los códigos ya
+    aceptados se saltan y se dicen.
+  - Si se rehace una serie de un código aceptado, el código vuelve a tener casilla.
+  - Tras dos re-medidas no conformes, la app dice "pulse Rechazar".
+  - Los textos de exportación ya distinguen el ZIP ligero del de soporte, y el ligero no se importa.
+- **RF-APP-50.** El `resumen.txt` del ZIP ligero es corto: una línea por patrón medido y un tope de 8000 B. Con el
+  ZIP de las 15:10 ocupa 2,2 kB frente a los 21,6 kB del completo.
+- **C-P14-3.** La s_rep de cada código sale de la A5 del inicio de **su** sesión. Si esa sesión no tiene A5, sale de
+  la sesión 1, y el texto lo dice.
+- `TablaCalibracion.VERSION` = reglas r5 (c836cae, 6048453), sin la versión del APK (P14-11).
+- **Con el ZIP de las 15:10** (`Version3616Test.elZipDeLas1510EnLasDosColas`, en rápido): el banco completo deja 106
+  patrones y unos 116 min; el representativo v2, 51 patrones y unos 82 min. Los minutos incluyen el calentamiento
+  y los controles.
+- Sin hacer:
+  - la capa V4.6;
+  - las enmiendas documentales de 32.4, RF-CAL-10 y RF-CAL-35;
+  - QA-3615-09 y -10 (P3).
+- Pruebas: 225 en total. Son nuevas `Version3616Test` y 17 de `FlujoCalibracionTest`.
+- Entrega: `RTV-V3.6.16.apk` y `RTV-V3.6.16-3616.apk`.
+
+### Casos de rehacer (para el TDD)
+
+| Caso | Qué hace la app | Test |
+| :--- | :--- | :--- |
+| R1. Rehacer con un acta en curso | BLOQUEO hasta aceptarla o rechazarla | `FlujoCalibracionTest.rehacerConActaEnCursoSeBloqueaYConActaAceptadaSeAvisa` |
+| R2. Rehacer un patrón de un código con acta ACEPTADA | AVISO. La serie queda ANULADA, el código recupera la casilla y se recalibra (QA-3615-05) | `FlujoCalibracionTest.rehacerUnaSerieDelOchoAceptadoPermiteRecalibrarlo` |
+| R3. Rehacer el OSCURO o la A5 de la sesión de un código ACEPTADO | AVISO de que habrá que recalibrarlo (P14-B08) | `FlujoCalibracionTest.rehacerElOscuroDeUnCodigoAceptadoAvisa` |
+| R4. Rehacer el OSCURO o la A5 de una sesión terminada | No se deja | `Version3615Test.noSeRehaceUnOscuroDeUnaSesionTerminada` |
+| R5. Rehacer después de exportar | Vuelve a pedir el ZIP | `Version3615Test.trasExportarRehacerVuelveAPedirElZip` |
+| R6. "No, rehacer" | No deja la serie aceptada | `Version3615Test.noRehacerNoDejaLaSerieAceptada` |
+| R7. Serie de un acta en curso anulada | El acta no se acepta | `FlujoCalibracionTest.unaSerieAnuladaEnElBancoImpideAceptar` |
+| R8. Importar dos ZIP, el segundo con la anulación | Se conserva la anulación con su fecha, y se elige la serie buena | `Version3615Test.importarDosZipSucesivosConservaLaAnulacion` |
+| R9. TIPO-I-REPETIR ya HECHO fuera de protocolo | Vuelve a la cola una sola vez, con la serie ANULADA y el motivo. A 5 × 4 no se vuelve a pedir | `Version3616Test.loQueDiegoMandaRepetirVuelveALaCola` |
+| R10. Cambiar de cola a mitad | Los pasos quedan sin estado; las series se quedan y se recuentan | `Version3616Test.cambiarDeColaDejaLosPasosSinEstadoYSeReproduce` |
 
 ## Cambios de la 3.6.15 ("la APK que hace todo": QA-App-3.6.14, P13, decisiones de c836cae y 31d3b74)
 

@@ -40,6 +40,7 @@ public final class ImportadorCampana {
         public int disparos;
         public int pasos;
         public int anuladas;
+        public int renombrados;
         public final List<String> avisos = new ArrayList<>();
         public String texto() {
             return series + " series importadas (" + disparos + " disparos), " + yaEstaban + " ya estaban"
@@ -49,6 +50,19 @@ public final class ImportadorCampana {
     }
 
     /** Diario de campana dentro de un ZIP (diario_*.csv); null si no lo trae. */
+    /** QA-3615-07: true si el ZIP es un incremental (ligero): trae indice.sha256 y no se puede importar. */
+    public static boolean esIncremental(byte[] zip) throws IOException {
+        try (ZipInputStream z = new ZipInputStream(new ByteArrayInputStream(zip))) {
+            ZipEntry e;
+            while ((e = z.getNextEntry()) != null) {
+                if ("indice.sha256".equals(e.getName()) || e.getName().contains(".desde_")) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public static String diarioDeZip(byte[] zip) throws IOException {
         try (ZipInputStream z = new ZipInputStream(new ByteArrayInputStream(zip))) {
             ZipEntry e;
@@ -98,6 +112,13 @@ public final class ImportadorCampana {
                         + sid + "): no se importa nada");
             }
         }
+        // QA-3615-03 / P14-B01: el tipo de banco viaja. Un diario sin COLA pero con PASO es de la cola completa
+        // (3.6.10 a 3.6.14). Si no casa con la cola de esta campana, no se importa nada.
+        // Si la cola no casa, se traen las series (que no dependen de la cola) y NO los PASO, cuyos ordenes son de la
+        // otra cola; lo ya medido se cuenta despues con BancoPrevio.
+        String tipoOrigen = todo.colaElegida() ? todo.colaTipo() : todo.pasos().isEmpty() ? null : "COMPLETO";
+        boolean destinoConCola = c.colaElegida() || !c.pasos().isEmpty();
+        boolean pasosValen = tipoOrigen != null && (!destinoConCola || tipoOrigen.equals(c.colaTipo()));
         Set<String> vistas = claves(c);
         Map<String, String> idPorClave = new java.util.HashMap<>();
         for (Campana.Serie s : c.series()) {
@@ -105,6 +126,15 @@ public final class ImportadorCampana {
         }
         Map<String, String> nuevoId = new java.util.HashMap<>();
         Resultado r = new Resultado();
+        if (tipoOrigen != null && !destinoConCola) {
+            c.elegirCola(tipoOrigen, todo.colaMd5());
+        }
+        if (tipoOrigen != null && !pasosValen) {
+            r.avisos.add("el ZIP es de un banco " + tipoOrigen + " y esta campaña de un banco " + c.colaTipo()
+                    + ": se traen las series, no los pasos; lo ya medido cuenta al abrir el Banco");
+        }
+        // QA-3615-02: el historial de series (RENOMBRA) viaja: otro telefono reconoce la serie nueva.
+        r.renombrados = c.copiarRenombrados(todo.renombrados(), origen);
         compararFirmware(c, firmwares(todo.series()), r);
         for (Campana.Serie s : todo.series()) {
             if (vistas.contains(clave(s))) {
@@ -163,7 +193,7 @@ public final class ImportadorCampana {
         // tenga estado aqui, salvo SALTADO frente a HECHO. BATERIA no se trae: una lectura de otro dia
         // no debe bloquear ni desbloquear las escrituras de hoy.
         Map<Integer, String> aqui = c.pasos();          // efectivo: HECHO con la serie anulada = REHACER
-        Map<Integer, String> alli = todo.pasos();
+        Map<Integer, String> alli = pasosValen ? todo.pasos() : new java.util.HashMap<Integer, String>();
         for (Map.Entry<Integer, String> e : alli.entrySet()) {
             String est = aqui.get(e.getKey());
             boolean mejor = "HECHO".equals(e.getValue()) && ("SALTADO".equals(est) || "REHACER".equals(est));

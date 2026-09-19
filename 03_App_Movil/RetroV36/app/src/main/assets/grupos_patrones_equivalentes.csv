@@ -1,0 +1,134 @@
+grupo,codigo_equipo,color,tipo,patron,valor_certificado,x_esperada,origen_x,resolucion_R,representante,uso_representativo,motivo
+G01,1,blanco,IV,P56,347,1717,estimada: recta por el oscuro,18.6,si,AJUSTE,extremo bajo del tipo IV (G01)
+G02,1,blanco,IV,P3,378,1674,medida,20.5,,,
+G03,1,blanco,IV,P2,414,2058.6,medida,20.5,,,
+G03,1,blanco,IV,P52,421,1962,estimada: recta por el oscuro,21.2,,,
+G03,1,blanco,IV,P58,432,1999,estimada: recta por el oscuro,21.6,,,
+G04,1,blanco,IV,P51,439,2022,estimada: recta por el oscuro,21.9,si,AJUSTE,extremo alto del tipo IV (G04)
+G05,1,blanco,IX,P27,471,2111.1,medida,23.1,,,
+G05,1,blanco,IX,P28,484,2277.9,medida,23.1,si,RE-MEDIDA,extremo bajo del tipo IX (G05)
+G06,1,blanco,IX,P118,508,2251,estimada: recta por el oscuro,24.4,si,VERIFICACION,"verificacion independiente (G06, centro del rango)"
+G07,1,blanco,IX,P73,614,2603,estimada: recta por el oscuro,28.2,si,AJUSTE,extremo alto del tipo IX (G07)
+G08,1,blanco,XI,P1,762,2960.9,medida,33.8,,,
+G08,1,blanco,XI,P103,763,3097,estimada: recta por el oscuro,33.5,,,
+G08,1,blanco,XI,P7,768,3122.4,medida,33.7,si,AJUSTE,extremo bajo del tipo XI (G08)
+G08,1,blanco,XI,P6,772,3168.4,medida,33.8,,,
+G08,1,blanco,XI,P88,773,3130,estimada: recta por el oscuro,33.9,,,
+G09,1,blanco,XI,P4,828,3315.8,medida,35.9,si,AJUSTE,extremo alto del tipo XI (G09)
+G10,2,amarillo,IV,P61,207,1132,estimada: recta por el oscuro,14.9,si,AJUSTE,extremo bajo del tipo IV (G10)
+G11,2,amarillo,IV,P62,280,1331,estimada: recta por el oscuro,17.5,,,
+G12,2,amarillo,IV,P22,334,1497,medida,19.3,,,
+G13,2,amarillo,IV,P21,375,1562.4,medida,21.1,si,VERIFICACION,"verificacion independiente (G13, centro del rango)"
+G14,2,amarillo,IV,P29,442,1677,medida,24.0,,,
+G14,2,amarillo,IV,P30,448,1654.2,medida,24.5,si,AJUSTE,extremo alto del tipo IV (G14)
+G15,2,amarillo,IV,P24,593,1982.7,medida,29.8,,,
+G16,2,amarillo,IX,P121,320,1441,estimada: recta por el oscuro,18.9,si,AJUSTE,extremo bajo del tipo IX (G16)
+G17,2,amarillo,IX,P122,352,1528,estimada: recta por el oscuro,20.1,,,
+G18,2,amarillo,IX,P77,391,1635,estimada: recta por el oscuro,21.5,,,
+G19,2,amarillo,IX,P76,433,1750,estimada: recta por el oscuro,23.0,,,
+G20,2,amarillo,IX,P31,573,2085.8,medida,28.2,,,
+G20,2,amarillo,IX,P25,576,2157.4,medida,28.0,si,RE-MEDIDA,extremo alto del tipo IX (G20)
+G20,2,amarillo,IX,P26,583,2208.8,medida,28.2,,,
+G21,2,amarillo,XI,P107,478,1873,estimada: recta por el oscuro,24.6,,,
+G21,2,amarillo,XI,P106,493,1914,estimada: recta por el oscuro,25.1,si,AJUSTE,extremo bajo del tipo XI (G21)
+G22,2,amarillo,XI,P91,516,1977,estimada: recta por el oscuro,26.0,,,
+G22,2,amarillo,XI,P92,522,1994,estimada: recta por el oscuro,26.2,,,
+G23,2,amarillo,XI,P10,680,2504.3,medida,31.6,,,
+G23,2,amarillo,XI,P9,705,2483.9,medida,32.8,,,
+G24,2,amarillo,XI,P23,714,2735.4,medida,32.3,,,
+G24,2,amarillo,XI,P8,721,2532.9,medida,33.3,,,
+G24,2,amarillo,XI,P5,740,2459.3,medida,34.5,,,
+G25,2,amarillo,XI,P20,782,2787.7,medida,35.2,si,AJUSTE,extremo alto del tipo XI (G25)
+G26,3,verde,IV,P65,51,649,estimada: recta por el oscuro,14.2,,,
+G26,3,verde,IV,P64,54,654,estimada: recta por el oscuro,14.3,si,AJUSTE,extremo bajo del tipo IV (G26)
+G27,3,verde,IV,P63,121,764,estimada: recta por el oscuro,16.7,si,AJUSTE,extremo alto del tipo IV (G27)
+G28,3,verde,IX,P124,51,649,estimada: recta por el oscuro,14.2,si,AJUSTE,extremo bajo del tipo IX (G28)
+G28,3,verde,IX,P125,51,649,estimada: recta por el oscuro,14.2,,,
+G28,3,verde,IX,P79,51,649,estimada: recta por el oscuro,14.2,,,
+G28,3,verde,IX,P80,51,649,estimada: recta por el oscuro,14.2,,,
+G29,3,verde,IX,P78,97,725,estimada: recta por el oscuro,15.8,si,VERIFICACION,"verificacion independiente (G29, centro del rango)"
+G30,3,verde,IX,P123,115,754,estimada: recta por el oscuro,16.5,si,RE-MEDIDA,extremo alto del tipo IX (G30)
+G31,3,verde,XI,P109,51,649,estimada: recta por el oscuro,14.2,si,AJUSTE,extremo bajo del tipo XI (G31)
+G31,3,verde,XI,P110,51,649,estimada: recta por el oscuro,14.2,,,
+G31,3,verde,XI,P94,51,649,estimada: recta por el oscuro,14.2,,,
+G31,3,verde,XI,P95,51,649,estimada: recta por el oscuro,14.2,,,
+G32,3,verde,XI,P93,85,705,estimada: recta por el oscuro,15.4,,,
+G32,3,verde,XI,P108,96,723,estimada: recta por el oscuro,15.8,,,
+G33,3,verde,XI,P15,164,843.2,medida,17.9,,,
+G33,3,verde,XI,P13,168,830.9,medida,18.9,,,
+G33,3,verde,XI,P16,170,846.7,medida,18.4,si,AJUSTE,extremo alto del tipo XI (G33)
+G33,3,verde,XI,P14,173,849.1,medida,18.6,,,
+G34,4,cafe,IV,P68,36,767,estimada: recta por el oscuro del rojo intenso (sin datos propios),4.9,si,VERIFICACION,solo verificar (cafe)
+G35,4,cafe,IX,P128,38,778,estimada: recta por el oscuro del rojo intenso (sin datos propios),5.0,,,
+G36,4,cafe,IX,P83,55,873,estimada: recta por el oscuro del rojo intenso (sin datos propios),5.6,,,
+G37,4,cafe,XI,P113,60,901,estimada: recta por el oscuro del rojo intenso (sin datos propios),5.8,,,
+G38,4,cafe,XI,P98,68,945,estimada: recta por el oscuro del rojo intenso (sin datos propios),6.1,si,VERIFICACION,solo verificar (cafe)
+G39,4,lila,IV,P69,139,1342,estimada: recta por el oscuro del rojo intenso (sin datos propios),8.6,si,VERIFICACION,solo verificar (lila)
+G40,4,lila,IX,P129,157,1442,estimada: recta por el oscuro del rojo intenso (sin datos propios),9.3,,,
+G41,4,lila,IX,P84,177,1554,estimada: recta por el oscuro del rojo intenso (sin datos propios),10.0,,,
+G42,4,lila,XI,P99,188,1616,estimada: recta por el oscuro del rojo intenso (sin datos propios),10.4,,,
+G43,4,lila,XI,P114,202,1694,estimada: recta por el oscuro del rojo intenso (sin datos propios),10.9,si,VERIFICACION,solo verificar (lila)
+G44,4,rojo,IV,P60,68,945,estimada: recta por el oscuro,6.1,si,AJUSTE,extremo bajo del tipo IV (G44)
+G45,4,rojo,IV,P54,121,1241,estimada: recta por el oscuro,8.0,,,
+G45,4,rojo,IV,P59,122,1247,estimada: recta por el oscuro,8.0,,,
+G46,4,rojo,IV,P11,194,1722.9,medida,10.4,si,RE-MEDIDA,patron de re-medida (RF-CAL-37)
+G47,4,rojo,IV,P57,218,1783,estimada: recta por el oscuro,11.5,,,
+G47,4,rojo,IV,P12,227,1761.9,medida,12.0,si,AJUSTE,extremo alto del tipo IV (G47)
+G48,4,rojo,IX,P120,110,1180,estimada: recta por el oscuro,7.6,si,AJUSTE,extremo bajo del tipo IX (G48)
+G49,4,rojo,IX,P119,138,1336,estimada: recta por el oscuro,8.6,,,
+G49,4,rojo,IX,P75,138,1336,estimada: recta por el oscuro,8.6,,,
+G50,4,rojo,IX,P74,169,1510,estimada: recta por el oscuro,9.7,si,AJUSTE,extremo alto del tipo IX (G50)
+G51,4,rojo,XI,P55,146,1381,estimada: recta por el oscuro,8.9,si,AJUSTE,extremo bajo del tipo XI (G51)
+G52,4,rojo,XI,P90,162,1470,estimada: recta por el oscuro,9.5,,,
+G52,4,rojo,XI,P105,164,1482,estimada: recta por el oscuro,9.5,,,
+G53,4,rojo,XI,P104,173,1532,estimada: recta por el oscuro,9.9,si,VERIFICACION,"verificacion independiente (G53, centro del rango)"
+G54,4,rojo,XI,P89,183,1588,estimada: recta por el oscuro,10.2,,,
+G55,4,rojo,XI,P53,279,2124,estimada: recta por el oscuro,13.7,si,AJUSTE,extremo alto del tipo XI (G55)
+G56,5,azul,IV,P66,89,837,estimada: recta por el oscuro,9.9,,,
+G56,5,azul,IV,P67,95,856,estimada: recta por el oscuro,10.1,si,AJUSTE,extremo bajo del tipo IV (G56)
+G57,5,azul,IX,P126,91,843,estimada: recta por el oscuro,9.9,,,
+G57,5,azul,IX,P81,92,846,estimada: recta por el oscuro,10.0,si,VERIFICACION,re-medida del 5; fuera del ajuste por decision de Diego (P81)
+G57,5,azul,IX,P127,97,862,estimada: recta por el oscuro,10.1,si,AJUSTE,extremo bajo del tipo IX (G57)
+G57,5,azul,IX,P82,98,865,estimada: recta por el oscuro,10.2,,,
+G58,5,azul,XI,P17,83,828.4,medida,9.4,,,
+G58,5,azul,XI,P18,84,813.4,medida,9.9,si,AJUSTE,extremo bajo del tipo XI (G58)
+G58,5,azul,XI,P19,85,823.6,medida,9.7,si,VERIFICACION,"verificacion independiente (G58, centro del rango)"
+G59,5,azul,XI,P111,93,849,estimada: recta por el oscuro,10.0,,,
+G59,5,azul,XI,P96,95,856,estimada: recta por el oscuro,10.1,,,
+G59,5,azul,XI,P112,101,874,estimada: recta por el oscuro,10.3,si,AJUSTE,extremo alto del tipo XI (G59)
+G59,5,azul,XI,P97,102,877,estimada: recta por el oscuro,10.3,,,
+G60,6,naranja,IV,P70,80,1050,estimada: fabrica invertida,6.2,,,
+G60,6,naranja,IV,P71,84,1070,estimada: fabrica invertida,6.4,si,AJUSTE,extremo bajo del tipo IV (G60)
+G61,6,naranja,IV,P72,93,1116,estimada: fabrica invertida,6.8,si,AJUSTE,extremo alto del tipo IV (G61)
+G62,6,naranja,IX,P130,98,1140,estimada: fabrica invertida,7.0,,,
+G62,6,naranja,IX,P131,102,1159,estimada: fabrica invertida,7.2,si,AJUSTE,extremo bajo del tipo IX (G62)
+G63,6,naranja,IX,P132,117,1228,estimada: fabrica invertida,7.8,,,
+G63,6,naranja,IX,P85,118,1232,estimada: fabrica invertida,7.8,,,
+G63,6,naranja,IX,P86,124,1259,estimada: fabrica invertida,8.1,si,RE-MEDIDA,patron de re-medida (RF-CAL-37)
+G64,6,naranja,IX,P87,131,1289,estimada: fabrica invertida,8.4,si,AJUSTE,extremo alto del tipo IX (G64)
+G65,6,naranja,XI,P100,143,1339,estimada: fabrica invertida,8.9,,,
+G65,6,naranja,XI,P101,146,1351,estimada: fabrica invertida,9.0,si,AJUSTE,extremo bajo del tipo XI (G65)
+G65,6,naranja,XI,P115,147,1355,estimada: fabrica invertida,9.1,,,
+G66,6,naranja,XI,P117,154,1383,estimada: fabrica invertida,9.4,si,VERIFICACION,"verificacion independiente (G66, centro del rango)"
+G66,6,naranja,XI,P116,158,1399,estimada: fabrica invertida,9.5,,,
+G67,6,naranja,XI,P102,173,1457,estimada: fabrica invertida,10.2,si,AJUSTE,extremo alto del tipo XI (G67)
+G68,7,blanco,I,P35,96,1114.7,medida,7.0,si,VERIFICACION,solo verificar (7)
+G69,8,amarillo,I,P44,64,898.6,medida,6.2,si,AJUSTE,codigo de 3-4 puntos: no se reduce
+G70,8,amarillo,I,P37,82,992.4,medida,6.8,si,AJUSTE,codigo de 3-4 puntos: no se reduce
+G70,8,amarillo,I,P34,86,958.3,medida,7.5,si,AJUSTE,codigo de 3-4 puntos: no se reduce
+G71,8,amarillo,I,P43,122,1151.3,medida,8.6,si,RE-MEDIDA,codigo de 3-4 puntos: no se reduce
+G72,a,verde,I,P40,6,624.7,medida,2.3,si,VERIFICACION,solo verificar (a)
+G72,a,verde,I,P45,7,615.6,medida,3.1,,,
+G73,b,rojo,I,P39,46,734.3,medida,7.2,si,AJUSTE,codigo de 3-4 puntos: no se reduce
+G73,b,rojo,I,P38,52,743.9,medida,7.8,si,AJUSTE,codigo de 3-4 puntos: no se reduce
+G74,b,rojo,I,P49,81,797.2,medida,10.0,si,RE-MEDIDA,codigo de 3-4 puntos: no se reduce
+G75,c,azul,I,P42,7,592.6,medida,5.5,,,
+G75,c,azul,I,P32a,9,630.9,medida,3.1,,,
+G75,c,azul,I,P46,9,644.3,medida,2.6,,,
+G75,c,azul,I,P47,9,606.3,medida,4.8,,,
+G75,c,azul,I,P48,9,605.4,medida,4.9,,,
+G75,c,azul,I,P36,10,638.8,medida,3.1,si,VERIFICACION,solo verificar (c)
+G76,d,naranja,I,P32b,68,802.8,medida,8.3,,,
+G76,d,naranja,I,P50,71,907.1,medida,6.8,,,
+G76,d,naranja,I,P33,72,849.8,medida,7.7,,,
+G76,d,naranja,I,P41,73,898.7,medida,7.1,si,VERIFICACION,solo verificar (d)

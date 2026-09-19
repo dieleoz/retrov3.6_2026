@@ -105,6 +105,18 @@ public class FlujoCalibracionTest {
             return false;
         }
 
+        @Override
+        public List<Acta> aceptadas() throws IOException {
+            List<Acta> l = new ArrayList<>();
+            for (String d : diariosCerrados) {
+                Acta a = Acta.leer(new StringReader(d));
+                if (a != null && a.aceptada()) {
+                    l.add(a);
+                }
+            }
+            return l;
+        }
+
         /** Tras matar la app: la memoria se pierde, el disco no. */
         Almacen reabrir() {
             Almacen n = new Almacen();
@@ -180,6 +192,7 @@ public class FlujoCalibracionTest {
     private BancoCola cola;
     private EquipoSimulado sim;
     private Campana campana;
+    private StringWriter diarioCampana;
     private Almacen almacen;
     private Operador operador;
     private FlujoCalibracion.Contexto ctx;
@@ -221,7 +234,8 @@ public class FlujoCalibracionTest {
     /** Otra campana, con o sin OSCURO y A5 (T-S06, T-S19). */
     private void rehacerCampana(boolean oscuro, boolean a5) throws IOException {
         campana = new Campana(catalogo, "SLV-002", MAC);
-        campana.escribirEn(new StringWriter());
+        diarioCampana = new StringWriter();
+        campana.escribirEn(diarioCampana);
         xPatron.clear();
         medirBanco(oscuro, a5);
     }
@@ -426,7 +440,7 @@ public class FlujoCalibracionTest {
         Acta.Codigo c = f.acta().codigo('b');
         String t = c.intentos.get(c.intentos.size() - 1).texto;
         assertTrue(t, t.contains("RF-CAL-18 frente a la curva escrita"));
-        assertTrue(t, t.contains("INCUMPLE, dispensado por RF-CAL-14 (PA-24) (alcance RF-CAL-14 P49 -10.0 % ±3.0)"));
+        assertTrue(t, t.contains("INCUMPLE, dispensado por RF-CAL-14/15 (PA-24) (alcance RF-CAL-14 P49 -10.0 % ±3.0)"));
         assertTrue(f.acta().conformidades().toString().contains("código b"));
         f.persistencia();
         assertTrue(f.aceptar().contains("ACEPTADA"));
@@ -920,7 +934,7 @@ public class FlujoCalibracionTest {
         assertTrue(almacen.cerradas.get(2).contains("Código 5"));
         // T-C41 una vez y una persistencia por codigo: el T-C41 de b y 5 aprovecha la persistencia anterior.
         assertEquals(apagados + 4, sim.apagados);
-        assertEquals(3, sim.cuantas("#SC,"));
+        assertEquals("3.6.16: #SC una sola vez al dia (se lee #GC# antes)", 1, sim.cuantas("#SC,"));
         assertTrue(almacen.cerradas.get(2).contains("patrones 5"));
         assertFalse(almacen.cerradas.get(2).contains("P81 (n ="));      // P81 fuera del ajuste del 5
         assertNull(f.acta());
@@ -932,12 +946,13 @@ public class FlujoCalibracionTest {
         FlujoCalibracion f = flujo();
         operador.respuestas.put("Re-medida del código b", 1);          // "Parar aquí" en el b
         String r = f.calibrarTodo(sel('8', 'b', '5'), "Diego", "x");
-        assertTrue(r, r.startsWith("Hecho: 8 ACEPTADO; . Código b: Parado"));
+        assertTrue(r, r.startsWith("Hecho: 8 ACEPTADO; ") && r.contains("Código b: Parado"));
         assertEquals(1, almacen.cerradas.size());
         assertEquals(0, sim.cuantas("#S,5,"));
         // "Calibrar todo" otra vez: termina el b y sigue con el 5.
         String r2 = f.calibrarTodo(sel('5'), "Diego", "x");
-        assertTrue(r2, r2.startsWith("Sesión completa: 5 ACEPTADO;"));
+        // QA-3615-04: el b que quedo a medias se termina, se acepta y se dice.
+        assertTrue(r2, r2.startsWith("Sesión completa: b ACEPTADO; 5 ACEPTADO;"));
         assertEquals(3, almacen.cerradas.size());
     }
 
@@ -1072,5 +1087,251 @@ public class FlujoCalibracionTest {
         for (FlujoCalibracion.Tarjeta t : f.tarjetas(null)) {
             assertFalse(t.k + ": " + t.texto, t.casilla);
         }
+    }
+
+    // ------------------------------------------------------------------ 3.6.16
+
+    /** P14-04: "Calibrar todo" ensena cada acta y no acepta ninguna sin "Aceptar". */
+    @Test
+    public void p1404CadaActaSeEnsenaYSeConfirma() throws Exception {
+        FlujoCalibracion f = flujo();
+        String r = f.calibrarTodo(sel('8', 'b', '5'), "Diego", "x");
+        assertTrue(r, r.startsWith("Sesión completa: 8 ACEPTADO; b ACEPTADO; 5 ACEPTADO;"));
+        assertTrue(operador.titulos.contains("Acta del código 8"));
+        assertTrue(operador.titulos.contains("Acta del código b"));
+        assertTrue(operador.titulos.contains("Acta del código 5"));
+        assertTrue(operador.titulos.indexOf("Acta del código 8") < operador.titulos.indexOf("Acta del código b"));
+    }
+
+    @Test
+    public void p1404RechazarAlRevisarRestauraYNoGrabaFecha() throws Exception {
+        FlujoCalibracion f = flujo();
+        operador.respuestas.put("Acta del código 8", 1);
+        String r = f.calibrarTodo(sel('8', 'b'), "Diego", "x");
+        assertTrue(r, r.contains("Acta del código 8 rechazada al revisarla"));
+        assertEquals(0, sim.cuantas("#SC,"));
+        assertEquals(0, sim.cuantas("#S,b,"));
+        assertFalse(ajustado('8'));
+        assertNull(f.acta());
+        assertTrue(almacen.cerradas.get(0), almacen.cerradas.get(0).contains("RECHAZADA"));
+    }
+
+    @Test
+    public void p1404PararAquiDejaElActaSinAceptar() throws Exception {
+        FlujoCalibracion f = flujo();
+        operador.respuestas.put("Acta del código 8", 2);
+        String r = f.calibrarTodo(sel('8', 'b'), "Diego", "x");
+        assertTrue(r, r.contains("Parado: el acta del código 8 espera"));
+        assertEquals(0, sim.cuantas("#SC,"));
+        assertNotNull(f.acta());
+        assertTrue(almacen.cerradas.isEmpty());
+        // QA-3615-04: al retomar, el acta a medias se ensena, se acepta y SE DICE en el mensaje.
+        String r2 = f.calibrarTodo(sel('8', 'b'), "Diego", "x");
+        assertTrue(r2, r2.startsWith("Sesión completa: 8 ACEPTADO; b ACEPTADO;"));
+    }
+
+    /** QA-3615-04: retomar con el 8 ya aceptado lo dice y no se para. */
+    @Test
+    public void unCodigoYaAceptadoSeSaltaYSeDice() throws Exception {
+        calibrarYAceptar8();
+        FlujoCalibracion f = flujo();
+        String r = f.calibrarTodo(sel('8', 'b'), "Diego", "x");
+        assertTrue(r, r.startsWith("Sesión completa: b ACEPTADO;") && r.contains("Ya aceptados antes: 8"));
+        assertEquals(1, sim.cuantas("#S,b,"));
+        assertEquals(0, sim.cuantas("#S,8,"));
+    }
+
+    /** P14-05/06/10: con la restauracion fallida queda un rechazo pendiente que bloquea todo hasta cerrarlo. */
+    @Test
+    public void unRechazoPendienteBloqueaYSoloDiegoLoCierra() throws Exception {
+        FlujoCalibracion f = flujo();
+        f.calibrar(sel('8'), "Diego", "x");
+        sim.inyectar("#F,8#", EquipoSimulado.Falla.OK_SIN_HACER, 10);
+        String r = f.rechazar("prueba");
+        assertTrue(r, r.startsWith("NO se rechaza") && r.contains("rechazo pendiente"));
+        assertTrue(f.rechazoPendiente());
+        int s0 = sim.cuantas("#S,");
+        // no se escribe nada mas, ni con "Continuar" ni con "Calibrar todo", ni se acepta
+        assertFalse(f.puedeCalibrar(sel('b')));
+        assertTrue(f.calibrar(sel('b'), "Diego", "x").contains("rechazo pendiente"));
+        assertTrue(f.calibrarTodo(sel('b', '5'), "Diego", "x").contains("rechazo pendiente"));
+        assertTrue(f.calibrar(new HashSet<Character>(), "Diego", "x").contains("rechazo pendiente"));
+        assertFalse(f.puedeAceptar());
+        assertEquals(s0, sim.cuantas("#S,"));
+        // sobrevive a matar la app (esta en el diario)
+        almacen = almacen.reabrir();
+        FlujoCalibracion g = flujo();
+        assertTrue(g.rechazoPendiente());
+        // salida terminal: solo con la firma de Diego
+        assertTrue(g.cerrarSinRestaurar("Operador", "x").contains("lo firma Diego"));
+        assertNotNull(g.acta());
+        String c = g.cerrarSinRestaurar("Diego Zúñiga", "el #F no entra; se revisa en taller");
+        assertTrue(c, c.startsWith("Acta cerrada SIN RESTAURAR") && c.contains("8"));
+        assertNull(g.acta());
+        assertTrue(almacen.cerradas.get(0).contains("RECHAZADA SIN RESTAURAR, firmado por Diego"));
+        assertEquals(0, sim.cuantas("#SC,"));
+        assertTrue(g.cerrarSinRestaurar("Diego", "x").startsWith("Solo se cierra"));
+    }
+
+    /** P14-01: el atajo de T-C41 no sobrevive a un rechazo con restauracion ni a otra pulsacion. */
+    @Test
+    public void p1401ElAtajoDeTC41NoSobreviveAUnRechazo() throws Exception {
+        FlujoCalibracion f = flujo();
+        operador.respuestas.put("Acta del código b", 1);
+        String r = f.calibrarTodo(sel('8', 'b'), "Diego", "x");
+        assertTrue(r, r.contains("Acta del código b rechazada al revisarla"));
+        String actaB = almacen.cerradas.get(1);
+        assertTrue(actaB, actaB.contains("el de la persistencia del acta del código 8"));
+        int ap = sim.apagados;
+        String r2 = f.calibrarTodo(sel('b'), "Diego", "x");
+        assertTrue(r2, r2.startsWith("Sesión completa: b ACEPTADO;"));
+        assertTrue("T-C41 propio: se apaga otra vez", sim.apagados >= ap + 2);
+        assertTrue(almacen.cerradas.get(2), almacen.cerradas.get(2).contains("T-C41 apagado: propio"));
+    }
+
+    /** P14-02: el 8 aceptado se revalida en el T-C41 del b; si alguien lo toco, el b no se escribe. */
+    @Test
+    public void p1402ElOchoAceptadoSeRevalidaAntesDelB() throws Exception {
+        calibrarYAceptar8();
+        FlujoCalibracion.fabricaDesdeAvanzado(sim, almacen, "1234", false, '8');
+        FlujoCalibracion f = flujo();
+        String r = f.calibrar(sel('b'), "Diego", "x");
+        assertTrue(r, r.contains("T-C41 FALLA"));
+        assertEquals(0, sim.cuantas("#S,b,"));
+    }
+
+    /** QA-3615-05: tras un acta ACEPTADA, si se anula (rehace) una serie suya, el codigo se puede recalibrar. */
+    @Test
+    public void rehacerUnaSerieDelOchoAceptadoPermiteRecalibrarlo() throws Exception {
+        calibrarYAceptar8();
+        FlujoCalibracion f = flujo();
+        assertFalse(tarjeta(f, '8').casilla);
+        BancoCola.Paso p43 = null;
+        for (BancoCola.Paso p : cola.pasos) {
+            if ("P43".equals(p.patron) && "PATRON".equals(p.tipo)) {
+                p43 = p;
+            }
+        }
+        RehacerBanco.rehacer(campana, cola, p43.orden, "papel equivocado", "t");
+        double x = xPatron.get("P43");
+        serie(p43, "P43", new double[]{x, x, x, x, x}, true, "OK");
+        FlujoCalibracion g = flujo();
+        assertTrue(tarjeta(g, '8').texto, tarjeta(g, '8').casilla);
+        String r = g.calibrarTodo(sel('8'), "Diego", "recalibrar tras rehacer P43");
+        assertTrue(r, r.startsWith("Sesión completa: 8 ACEPTADO;"));
+        assertEquals(1, sim.cuantas("#S,8,"));
+    }
+
+    /** P14-B08: rehacer el OSCURO de la sesion de un codigo ACEPTADO avisa de que habra que recalibrarlo. */
+    @Test
+    public void rehacerElOscuroDeUnCodigoAceptadoAvisa() throws Exception {
+        int osc = -1;
+        for (BancoCola.Paso p : cola.pasos) {
+            if ("OSCURO".equals(p.tipo) && p.sesion == Anclas.sesionDe(cola, '8') && osc < 0) {
+                osc = p.orden;
+            }
+        }
+        assertNull(FlujoCalibracion.bloqueoRehacer(almacen, cola, osc));
+        calibrarYAceptar8();
+        String t = FlujoCalibracion.bloqueoRehacer(almacen, cola, osc);
+        assertTrue(t, t != null && t.startsWith("AVISO") && t.contains("código 8"));
+    }
+
+    /** QA-3615-06: tras dos re-medidas no conformes se dice que hay que rechazar, tambien al retomar. */
+    @Test
+    public void trasDosReMedidasNoConformesSeDiceRechazar() throws Exception {
+        operador.factor = 0.85;
+        FlujoCalibracion f = flujo();
+        String r = f.calibrarTodo(sel('8'), "Diego", "x");
+        assertTrue(r, r.contains("pulse Rechazar"));
+        String r2 = f.calibrarTodo(sel('8'), "Diego", "x");
+        assertTrue(r2, r2.contains("Pulse Rechazar") || r2.contains("pulse Rechazar"));
+    }
+
+    /** QA-3615-01: un cambio de serie cortado a mitad se recupera en la app (el RENOMBRA va antes del #SN). */
+    @Test
+    public void renombrarCortadoDespuesDelSNSeRecupera() throws Exception {
+        sim.inyectar("#SN,", EquipoSimulado.Falla.CORTE_DESPUES, 1);
+        try {
+            FlujoCalibracion.renombrarSerie(sim, campana, "1234", "SLV-002-2026", "SLV-002-2026", "Diego", "t");
+            fail("corte");
+        } catch (IOException e) {
+            // corte tras entrar el #SN
+        }
+        sim.conectado = true;
+        assertEquals("SLV-002-2026", sim.serie);
+        assertTrue(campana.esSerie("SLV-002-2026"));
+        FlujoCalibracion f = flujo();
+        assertEquals("SLV-002-2026", ctx.serieGN);
+        assertNull(f.motivoPrevias());
+        String t = FlujoCalibracion.renombrarSerie(sim, campana, "1234", "SLV-002-2026", "SLV-002-2026", "Diego", "t");
+        assertTrue(t, t.startsWith("El equipo ya tiene la serie SLV-002-2026"));
+        assertTrue(f.calibrarTodo(sel('8'), "Diego", "x").startsWith("Sesión completa: 8 ACEPTADO;"));
+    }
+
+    @Test
+    public void renombrarCortadoAntesDelSNSeRepite() throws Exception {
+        sim.inyectar("#SN,", EquipoSimulado.Falla.CORTE_ANTES, 1);
+        try {
+            FlujoCalibracion.renombrarSerie(sim, campana, "1234", "SLV-002-2026", "SLV-002-2026", "Diego", "t");
+            fail("corte");
+        } catch (IOException e) {
+            // corte antes de entrar
+        }
+        sim.conectado = true;
+        assertEquals("SLV-002", sim.serie);
+        assertTrue(campana.esSerie("SLV-002") && campana.esSerie("SLV-002-2026"));
+        FlujoCalibracion f = flujo();
+        assertNull(f.motivoPrevias());
+        String t = FlujoCalibracion.renombrarSerie(sim, campana, "1234", "SLV-002-2026", "SLV-002-2026", "Diego", "t");
+        assertTrue(t, t.startsWith("Serie cambiada: SLV-002 -> SLV-002-2026"));
+    }
+
+    @Test
+    public void conUnActaEnCursoNoSeRenombra() throws Exception {
+        String t = FlujoCalibracion.renombrarSerie(sim, campana, "1234", "SLV-002-2026", "SLV-002-2026", "Diego", "t", true);
+        assertTrue(t, t.contains("acta de calibración en curso"));
+        assertEquals(0, sim.cuantas("#SN,"));
+    }
+
+    /** QA-3615-02: el renombrado viaja con la importacion y el otro telefono calibra. */
+    @Test
+    public void elRenombradoViajaYOtroTelefonoCalibra() throws Exception {
+        FlujoCalibracion.renombrarSerie(sim, campana, "1234", "SLV-002-2026", "SLV-002-2026", "Diego", "t");
+        Campana otra = new Campana(catalogo, "SLV-002-2026", MAC);
+        otra.escribirEn(new StringWriter());
+        ImportadorCampana.Resultado r = ImportadorCampana.importarDiario(otra, diarioCampana.toString(), catalogo, "otro teléfono");
+        assertTrue(r.texto(), r.renombrados >= 1);
+        assertTrue(otra.esSerie("SLV-002"));
+        assertEquals("SLV-002", TablaCalibracion.canonico(otra.historialSeries(), MAC));
+        campana = otra;
+        FlujoCalibracion f = flujo();
+        assertNull(f.motivoPrevias());
+        assertTrue(tarjeta(f, 'b').casilla);
+        assertTrue(f.calibrarTodo(sel('8'), "Diego", "x").startsWith("Sesión completa: 8 ACEPTADO;"));
+    }
+
+    /** P14-S01/S02: una campana nueva tras renombrar recibe los RENOMBRA (Campanas.sincronizarAlias) y sigue siendo SLV-002. */
+    @Test
+    public void unaCampanaNuevaTrasRenombrarSigueSiendoSlv002() throws Exception {
+        FlujoCalibracion.renombrarSerie(sim, campana, "1234", "SLV-002-2026", "SLV-002-2026", "Diego", "t");
+        Campana nueva = new Campana(catalogo, "SLV-002-2026", MAC);
+        nueva.escribirEn(new StringWriter());
+        assertFalse(nueva.esSerie("SLV-002"));
+        assertEquals(1, nueva.copiarRenombrados(campana.renombrados(), "campana_anterior.csv"));
+        assertEquals(0, nueva.copiarRenombrados(campana.renombrados(), "campana_anterior.csv"));
+        assertTrue(nueva.esSerie("SLV-002"));
+        assertEquals("SLV-002", TablaCalibracion.canonico(nueva.historialSeries(), MAC));
+    }
+
+    @Test
+    public void laFechaSeGrabaUnaVezAlDia() throws Exception {
+        calibrarYAceptar8();
+        assertEquals(1, sim.cuantas("#SC,"));
+        FlujoCalibracion f = flujo();
+        assertTrue(f.calibrarTodo(sel('b', '5'), "Diego", "x").startsWith("Sesión completa: b ACEPTADO; 5 ACEPTADO;"));
+        assertEquals("el #GC# ya dice hoy: no se vuelve a grabar", 0, sim.cuantas("#SC,"));
+        assertEquals(2, sim.cuantas("#GC#"));
+        assertEquals(10, FlujoCalibracion.MAX_NO_VALIDAS);
     }
 }
