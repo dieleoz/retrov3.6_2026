@@ -62,6 +62,24 @@ public final class Bateria {
                 + (bloqueo ? ": bloqueadas las escrituras." : ""), false, bloqueo);
     }
 
+    /** Aviso de bateria baja con #GB# (V4.6), en %. */
+    public static final int AVISO_PCT = 20;
+
+    /**
+     * RTV 1.0.0-rc2: "#GB,<0-100>#" de la V4.6 (Calibracion.c: el porcentaje de getBattery(), el que va a la pantalla).
+     * Sin respuesta o 0 % bloquea las escrituras (RF-APP-43); por debajo del 20 %, aviso. La medida nunca se bloquea.
+     */
+    public static Lectura interpretarPorcentaje(Integer n, String trama) {
+        if (n == null) {
+            return new Lectura(null, "Batería: sin respuesta a " + trama + ". Se bloquean las escrituras; la medida sigue.",
+                    true, true);
+        }
+        boolean bloqueo = n == 0;
+        boolean aviso = n < AVISO_PCT;
+        return new Lectura(n, "Batería " + n + " %" + (bloqueo ? ": bloqueadas las escrituras; la medida sigue."
+                : aviso ? ": BAJA, cámbiela pronto." : ""), aviso, bloqueo);
+    }
+
     /** @param n null = sin respuesta. */
     public static Lectura interpretar(Integer n) {
         if (n == null) {

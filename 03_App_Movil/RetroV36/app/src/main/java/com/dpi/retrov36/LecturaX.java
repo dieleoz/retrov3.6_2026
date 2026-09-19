@@ -64,7 +64,8 @@ public final class LecturaX {
         }
         String tx = p.tramaX(clave);
         if (tx != null && tx.length() > 1) {
-            Cliente.Respuesta r = Cliente.instancia().pedir(tx, p.tipoX(), Cliente.TIMEOUT_ADMIN_MS + 1000);
+            // #X mide (1000 muestras con la luz del codigo): la misma espera que @LEERV.
+            Cliente.Respuesta r = Cliente.instancia().pedir(tx, p.tipoX(), Tramas.TIMEOUT_LEERV_MS);
             Double x = r.valida() ? p.valorX(r.trama, clave) : null;
             String metodo = tx + " directa";
             if (x == null) {

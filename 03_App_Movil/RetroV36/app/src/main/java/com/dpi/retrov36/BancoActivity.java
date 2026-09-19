@@ -286,7 +286,16 @@ public class BancoActivity extends Base {
             return;
         }
         final boolean conPasos = !campana.pasos().isEmpty();
-        final BancoCola.Tipo[] ts = BancoCola.Tipo.values();
+        // RTV 1.0.0-rc2: el selector solo ofrece las colas del firmware conectado.
+        final boolean v46 = Sesion.get().protocolo != null
+                && Sesion.get().protocolo.firmware() == Protocolo.Firmware.F46;
+        List<BancoCola.Tipo> tl = new ArrayList<>();
+        for (BancoCola.Tipo t : BancoCola.Tipo.values()) {
+            if (t.esV46() == v46) {
+                tl.add(t);
+            }
+        }
+        final BancoCola.Tipo[] ts = tl.toArray(new BancoCola.Tipo[0]);
         String[] items = new String[ts.length];
         for (int i = 0; i < ts.length; i++) {
             items[i] = ts[i].nombre + (colaDe(ts[i]) == null ? " (no disponible en este APK)" : "");
@@ -397,6 +406,14 @@ public class BancoActivity extends Base {
         // 3.6.17 (peticion de Diego): REPRESENTATIVO por defecto si el equipo ya tiene series medidas; el completo
         // solo si se elige a mano en el selector.
         BancoCola.Tipo def = BancoPrevio.tipoPorDefecto(campana, Campanas.hayOtraCampanaDeEsteEquipo(this));
+        // RTV 1.0.0-rc2: con la V4.6, su propia cola y ninguna otra; con la V3.6, nunca la de la V4.6.
+        boolean v46 = s.protocolo != null && s.protocolo.firmware() == Protocolo.Firmware.F46;
+        if (v46 || BancoCola.Tipo.de(campana.colaTipo()).esV46()) {
+            def = v46 ? BancoCola.Tipo.REPRESENTATIVO_V46 : BancoPrevio.tipoPorDefecto(campana, true);
+            if (!def.name().equals(campana.colaTipo())) {
+                cambiarCola(def, false);
+            }
+        }
         boolean empezado = !campana.pasos().isEmpty();
         grupos = gruposApk();
         if (!campana.cerrada() && (!campana.colaElegida() || !def.name().equals(campana.colaTipo()))) {
@@ -725,6 +742,14 @@ public class BancoActivity extends Base {
         lanzar(m, null);
     }
 
+    /**
+     * RTV 1.0.0-rc2: la clave con la que se lee x en este paso. En la V4.6 "#X,<clave>#" mide con la luz de esa
+     * clave, asi que sale de la columna codigo_equipo de la cola; en la V3.6 'e' no la usa.
+     */
+    static char claveX(BancoCola.Paso p) {
+        return p.claveX();
+    }
+
     /** Lanza la colocacion m.k en el hilo de trabajo. notaForzada != null: "medir igualmente". */
     private static void lanzar(Medicion m, String notaForzada) {
         m.pendiente = null;
@@ -743,7 +768,7 @@ public class BancoActivity extends Base {
                 double xa = Double.NaN;
                 for (int i = 0; i < Math.max(1, p.asentamiento) && !m.cancelada; i++) {
                     progreso("Colocación " + m.k + " de " + m.kEf + ": asentamiento (se descarta)...");
-                    LecturaX.Lectura l = LecturaX.leer(s);
+                    LecturaX.Lectura l = LecturaX.leer(s, claveX(p));
                     Registro.nota("banco: disparo de asentamiento, descartado: " + l.codigo + " -> "
                             + (l.respuesta.valida() ? l.respuesta.trama : l.respuesta.describir()));
                     xa = l.x;
@@ -762,7 +787,7 @@ public class BancoActivity extends Base {
                 for (int i = 0; i < m.mEf && !m.cancelada; i++) {
                     progreso("Midiendo " + m.nombre + ": colocación " + m.k + " de " + m.kEf + ", disparo " + (i + 1)
                             + " de " + m.mEf + "...");
-                    LecturaX.Lectura l = LecturaX.leer(s);
+                    LecturaX.Lectura l = LecturaX.leer(s, claveX(p));
                     if (!l.valida()) {
                         Registro.nota("banco: disparo no válido: " + l.error);
                         continue;

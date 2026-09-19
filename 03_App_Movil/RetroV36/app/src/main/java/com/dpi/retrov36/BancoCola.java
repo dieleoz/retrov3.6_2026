@@ -29,7 +29,8 @@ public final class BancoCola {
             Arrays.asList("9ddb7882fa6c32c50c90fcdd72ba8960",     // completo (1f1c4e3)
                     "2e266bbf89ec7dfb716e5ddd2d59d8f4",               // representativo v1 (6ef92ee, RF-APP-49)
                     "70ef3b868db85ef75743936a6218935e",               // representativo v2 (3.6.16: sin la bateria por color)
-                    "d86eddf7fbdfdd4ae11ee2080d220e6c"));             // verificacion anual (6ef92ee)
+                    "d86eddf7fbdfdd4ae11ee2080d220e6c",               // verificacion anual (6ef92ee)
+                    "c46154fa4559f8e8f2df5b230537eb66"));             // representativo V4.6 (RTV 1.0.0-rc2)
     public static final String ASSET = "cola_banco_P1-P132.csv";
 
     /**
@@ -39,7 +40,19 @@ public final class BancoCola {
     public enum Tipo {
         COMPLETO("cola_banco_P1-P132.csv", "Banco completo P1-P132"),
         REPRESENTATIVO("cola_banco_representativo_v2.csv", "Banco representativo"),
-        VERIFICACION_ANUAL("cola_verificacion_anual.csv", "Verificación anual");
+        VERIFICACION_ANUAL("cola_verificacion_anual.csv", "Verificación anual"),
+        /**
+         * RTV 1.0.0-rc2: la representativa v2 para la V4.6. Mismos patrones y claves (el orden de claves de la V3.6
+         * es el de la STONE de la v4.0, revision P2 §0); x con "#X,<clave>#"; A5 con la clave de su color (otros
+         * papeles); cada OSCURO dos veces, con la luz alta (clave 1) y la baja (clave 3), porque la V4.6 enciende una
+         * luz por color (Optical_Capture.c:62-75); sin x_esperada (la x de la V4.6 es otra magnitud, §4.3).
+         */
+        REPRESENTATIVO_V46("cola_banco_representativo_v46.csv", "Banco representativo V4.6");
+
+        /** true si la cola es de la V4.6 (solo con ese firmware; nunca con la V3.6). */
+        public boolean esV46() {
+            return this == REPRESENTATIVO_V46;
+        }
 
         public final String asset;
         public final String nombre;
@@ -114,6 +127,11 @@ public final class BancoCola {
          * QA-3610-01): x medida +/-20 %; recta por el oscuro +/-30 %; fabrica invertida, cafe y lila (y
          * cualquier origen que no se reconozca): NaN = sin comprobacion de rango, solo "no esta en oscuro".
          */
+        /** RTV 1.0.0-rc2: clave de "#X,<clave>#" (V4.6) para leer x en este paso: su codigo_equipo, o '1'. */
+        public char claveX() {
+            return codigo.length() == 1 && Fabrica.esCodigo(codigo.charAt(0)) ? codigo.charAt(0) : '1';
+        }
+
         public double toleranciaX() {
             if (Double.isNaN(xEsperada) || xEsperada <= 0) {
                 return Double.NaN;

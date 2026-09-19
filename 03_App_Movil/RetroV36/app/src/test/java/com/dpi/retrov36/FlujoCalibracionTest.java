@@ -1393,7 +1393,7 @@ public class FlujoCalibracionTest {
         assertTrue(ctx.es362);
         PerfilFirmware conCola = new PerfilFirmware(Protocolo.Firmware.F46, 0, 4095, "cola_banco_P1-P132.csv", "E",
                 "por_fijar", "prueba");
-        ctx.protocolo = new ProtocoloV46(conCola);
+        ctx.protocolo = new ProtocoloV46(conCola, true);
         v46.recibidas.clear();
         FlujoCalibracion f = new FlujoCalibracion(v46, operador, almacen, cola, campana, catalogo, decisiones, ctx, reloj);
         f.pin("1234");

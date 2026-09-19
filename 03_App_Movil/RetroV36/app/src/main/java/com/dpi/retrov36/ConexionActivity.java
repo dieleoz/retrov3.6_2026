@@ -140,7 +140,11 @@ public class ConexionActivity extends Base {
         btnPruebas.setEnabled(con);
         btnMuestras.setEnabled(con);
         btnGuardar.setEnabled(Campanas.abierta() != null || (s.mac != null && !s.mac.isEmpty() && s.serieConocida()));
-        btnGrabar.setEnabled(con);
+        Protocolo pr = s.protocolo;
+        btnGrabar.setEnabled(con && (pr == null || pr.calibra()));
+        btnGrabar.setText("Calibrar" + (pr != null && !pr.calibra() ? "\n(" + pr.motivoNoCalibra() + ")" : ""));
+        btnMuestras.setEnabled(con && (pr == null || pr.mideBanco()));
+        btnMuestras.setText("Tomar muestras" + (pr != null && !pr.mideBanco() ? "\n(" + pr.motivoNoBanco() + ")" : ""));
         btnMedir.setEnabled(con);
         btnBotones.setEnabled(con && s.administra());
         // RF-APP-U07: con un firmware que no calibra, los botones se deshabilitan y dicen por que.

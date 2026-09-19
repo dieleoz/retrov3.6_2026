@@ -10,14 +10,24 @@ package com.dpi.retrov36;
  */
 public final class ProtocoloV46 implements Protocolo {
 
+    public static final String MOTIVO_CALIBRAR = "Calibración V4.6: próxima versión";
+
     private final PerfilFirmware perfil;
+    /** RTV 1.0.0-rc2: la calibracion de la V4.6 no se ofrece todavia (solo en el simulador, A-5). */
+    private final boolean calibracion;
 
     public ProtocoloV46() {
         this(PerfilFirmware.de(Firmware.F46));
     }
 
     public ProtocoloV46(PerfilFirmware perfil) {
+        this(perfil, false);
+    }
+
+    /** @param calibracion true solo en el simulador: el flujo "Calibrar todo" contra EquipoSimuladoV46. */
+    public ProtocoloV46(PerfilFirmware perfil, boolean calibracion) {
         this.perfil = perfil;
+        this.calibracion = calibracion;
     }
 
     @Override
@@ -102,23 +112,22 @@ public final class ProtocoloV46 implements Protocolo {
 
     @Override
     public boolean calibra() {
-        return !perfil.colaBanco.isEmpty();
+        return calibracion && mideBanco();
     }
 
     @Override
     public String motivoNoCalibra() {
-        return calibra() ? "" : "V4.6: falta la cola del banco de la V4.6 en firmwares.csv (RF-APP-U09); "
-                + "hasta entonces sólo medir.";
+        return calibra() ? "" : MOTIVO_CALIBRAR;
     }
 
     @Override
     public boolean mideBanco() {
-        return calibra();
+        return !perfil.colaBanco.isEmpty();
     }
 
     @Override
     public String motivoNoBanco() {
-        return motivoNoCalibra();
+        return mideBanco() ? "" : "V4.6: falta la cola del banco de la V4.6 en firmwares.csv (RF-APP-U09).";
     }
 
     @Override

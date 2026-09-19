@@ -51,7 +51,9 @@ public final class Pruebas {
 
     private Pruebas() {
         lista.add(new Prueba(1, "Enlace SPP abierto, nombre y MAC"));
-        lista.add(new Prueba(2, "Detección de versión (#V#, 9, 6, @LEERV,BLA,1@; nunca e)"));
+        // La sonda sale de la constante, no de un literal: en la 3.6.17 era "@LEERV,BLA,1@" y este rótulo se
+        // quedó atrás cuando la RTV 1.0 la pasó a tipo 2 (Tramas.java:29). Así no puede volver a desviarse.
+        lista.add(new Prueba(2, "Detección de versión (#V#, 9, 6, " + Tramas.SONDA_V4 + "; nunca e)"));
         lista.add(new Prueba(3, "Cada código de medida responde en menos de 2,5 s"));
         lista.add(new Prueba(4, "Coherencia de fórmulas: las 12 dan la misma x"));
         lista.add(new Prueba(5, "Solo V3.6: #GT#, #G,k# de los 12 juegos, marca y máscara, #E en 5 puntos"));

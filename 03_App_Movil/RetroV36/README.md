@@ -1,10 +1,12 @@
 # RTV — app única del Retrorreflectómetro Vertical (V3, V3.6, V4 y V4.6)
 
-**Estado, 18-sep-2026: compila y pasa sus tests JVM. No se ha probado contra ningún equipo.** El modo
-V3.6 no se puede probar: el firmware V3.6 no existe todavía en ningún equipo. Lo que sí debe funcionar
-es la medida contra un V3 2020 (SLV-002), y eso tampoco se ha comprobado aún con esta app.
+**Estado, 19-sep-2026 (RTV 1.0.0-rc2): compila y pasa 299 tests JVM. NADA de esto se ha probado contra
+un equipo físico ni en un teléfono.** El modo V3.6 no se puede probar: el firmware V3.6 no existe todavía
+en ningún equipo. La V4.6 tampoco existe grabada: se prueba contra `EquipoSimuladoV46`. Lo que sí debe
+funcionar es la medida contra un V3 2020 (SLV-002) y contra un V4 original (`@LEERV`), y ninguna de las
+dos se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36` (no cambia), etiqueta "RTV", `versionCode 10000`, `versionName 1.0.0` (RTV 1.0.0, sucede a 3.6.16; decisión VERSION de Diego). Antes: `versionCode 3616`, `versionName 3.6.16` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.16 → 3616) (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36` (no cambia), etiqueta "RTV", `versionCode 10001`, `versionName 1.0.0-rc2` (RTV 1.0.0, sucede a 3.6.16; decisión VERSION de Diego). La **rc1** se compiló con `10000`/`1.0.0` y es **anterior** a la mezcla de la 3.6.17 (`3dcaf41`): ese par no se reutiliza. Antes: `versionCode 3616`, `versionName 3.6.16` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.16 → 3616) (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -29,8 +31,9 @@ no se versionan.
 
 ### Tests JVM
 
-`app/src/test/`: 23 clases, 267 tests en la 3.6.17, entre ellas `FlujoCalibracionTest` (el flujo "Calibrar este equipo" de
-extremo a extremo contra `EquipoSimulado`).
+`app/src/test/`: 25 clases, **299 tests** en la RTV 1.0.0-rc2 (267 en la 3.6.17 + `RtvUnicaTest` 19 + `RupturaRtv10Test` 12,
+más T-U15 en `FlujoCalibracionTest`), entre ellas `FlujoCalibracionTest` (el flujo "Calibrar este equipo" de
+extremo a extremo contra `EquipoSimulado`) y `RupturaRtv10Test` (ruptura frente a la 3.6.17 y cobertura de la rc2).
 `./gradlew testDebugUnitTest` **no arranca en esta máquina**: el ejecutor de Gradle 6.5 no encuentra su
 clase `GradleWorkerMain` porque la carpeta de usuario lleva `ñ` (`C:\Users\Diego.Zuñiga`). Se compilan
 con Gradle y se ejecutan con JUnit a mano:
@@ -44,7 +47,8 @@ cd app && "$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;bui
   com.dpi.retrov36.Version3611Test com.dpi.retrov36.Version3612Test com.dpi.retrov36.FlujoCalibracionTest \
   com.dpi.retrov36.TS00Test com.dpi.retrov36.BancoRehacerTest com.dpi.retrov36.Version3615Test com.dpi.retrov36.Version3616Test com.dpi.retrov36.Version3617Test \
   com.dpi.retrov36.RupturaSerieTest com.dpi.retrov36.RupturaFlujoTest com.dpi.retrov36.RupturaE2ETest \
-  com.dpi.retrov36.RupturaEquivTest com.dpi.retrov36.RupturaBancoTest
+  com.dpi.retrov36.RupturaEquivTest com.dpi.retrov36.RupturaBancoTest \
+  com.dpi.retrov36.RtvUnicaTest com.dpi.retrov36.RupturaRtv10Test
 ```
 
 `FabricaTest` compara las 12 ecuaciones de la app con el **texto** de

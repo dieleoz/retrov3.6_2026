@@ -1,9 +1,9 @@
 # Lo que difiere entre firmwares y es dato (RTV 1.0, RF-APP-U09; PerfilFirmware.java).
 # coherencia_def: G = #G a 1 ulp contra la fabrica de 2020 (V3.6); E = #E contra el literal de fabrica (V4.6, RF-FW-33).
-# bateria_unidad: n9 = la n de la orden 9 (Bateria.java); por_fijar = #GB# de la V4.6, unidad sin fijar (PROTOCOLO-V4.6 §4.4).
-# cola_banco vacia = sin banco ni calibracion con ese firmware. La cola de la V4.6 no existe todavia (A-5: solo simulador).
+# bateria_unidad: n9 = la n de la orden 9 (Bateria.java); pct = #GB# de la V4.6, 0-100 % (el de la pantalla, 0x00CF).
+# cola_banco vacia = sin banco con ese firmware. Con la V4.6 hay banco (rc2) y la calibracion queda para la siguiente.
 firmware,x_min,x_max,cola_banco,coherencia_def,bateria_unidad,nota
 F36,600,4300,cola_banco_P1-P132.csv,G,n9,PROTOCOLO-V3.6.md rev. 1.1
 F2020,500,4300,cola_banco_P1-P132.csv,-,n9,sin e ni #; x por inversion del 6
 V4_ORIGINAL,,,,-,-,solo @LEERV: medir y verificar (RF-APP-U07)
-F46,0,4095,,E,por_fijar,PROTOCOLO-V4.6-BORRADOR.md §4; x en float (§4.3); limites de #S por fijar (L-19)
+F46,0,4095,cola_banco_representativo_v46.csv,E,pct,PROTOCOLO-V4.6-BORRADOR.md §4 y candidato 4927ad55 (Calibracion.c); x en float (§4.3); #GB# en % (Bateria.c getBattery); limites de #S por fijar (L-19)

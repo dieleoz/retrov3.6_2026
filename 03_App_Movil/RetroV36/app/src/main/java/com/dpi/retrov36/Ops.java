@@ -51,7 +51,7 @@ public final class Ops {
             return null;
         }
         Cliente.Respuesta r = canal.pedir(t, protocolo.tipoX(),
-                protocolo.tipoX() == Tramas.Tipo.ADMIN ? TIMEOUT_ESCRITURA_MS : TIMEOUT_MEDIDA_MS);
+                protocolo.tipoX() == Tramas.Tipo.ADMIN ? Tramas.TIMEOUT_LEERV_MS : TIMEOUT_MEDIDA_MS);
         return r.valida() ? protocolo.valorX(r.trama, k) : null;
     }
 
@@ -136,7 +136,9 @@ public final class Ops {
         }
         Cliente.Respuesta r = canal.pedir(t, protocolo.tipoBateria(), TIMEOUT_MEDIDA_MS);
         Integer n = r.valida() ? protocolo.valorBateria(r.trama) : null;
-        return "n9".equals(protocolo.perfil().bateriaUnidad) ? Bateria.interpretar(n) : Bateria.interpretarSinUnidad(n, t);
+        String u = protocolo.perfil().bateriaUnidad;
+        return "n9".equals(u) ? Bateria.interpretar(n) : "pct".equals(u) ? Bateria.interpretarPorcentaje(n, t)
+                : Bateria.interpretarSinUnidad(n, t);
     }
 
     /** Resultado de una restauracion: ok solo si la relectura #G coincide con lo que habia. */

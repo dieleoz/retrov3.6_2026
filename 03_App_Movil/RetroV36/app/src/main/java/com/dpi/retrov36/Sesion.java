@@ -151,8 +151,8 @@ public final class Sesion {
 
     /** true si se sabe la serie (#GN# de la V4.6; si no, del nombre "..._<serie>", tecleada o de equipos.csv). */
     public boolean serieConocida() {
-        if (serieDeV46()) {
-            return serieEquipo != null && !Calibracion.NONE.equals(serieEquipo);
+        if (serieDeV46() && serieEquipo != null && !Calibracion.NONE.equals(serieEquipo)) {
+            return true;
         }
         if (!serieManual.isEmpty() || !serieDeclaradaPerfil.isEmpty()) {
             return true;
@@ -163,8 +163,10 @@ public final class Sesion {
     }
 
     public String serie() {
-        if (serieDeV46()) {
-            return serieConocida() ? serieEquipo : "";
+        // RTV 1.0.0-rc2: con la V4.6 manda #GN#; recien grabada (#GN,NONE#) vale la declarada (nombre BT o tecleada),
+        // marcada "serie declarada, no leida del equipo", para poder medir el banco antes de dar de alta la serie.
+        if (serieDeV46() && serieEquipo != null && !Calibracion.NONE.equals(serieEquipo)) {
+            return serieEquipo;
         }
         if (!serieManual.isEmpty()) {
             return serieManual;
