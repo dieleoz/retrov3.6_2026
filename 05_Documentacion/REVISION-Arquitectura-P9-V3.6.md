@@ -1,8 +1,13 @@
 # Revisión de arquitectura P9 — V3.6 (firmware 3.6.2, app 3.6.6)
 
-**Nada de lo que aprueba este documento está medido en SLV-002 con la 3.6.2**: la 3.6.2 no está
-grabada. Todo lo que sigue sale de leer el fuente, de las pruebas en simulador archivadas, de la
+**Nada de lo que aprueba este documento está medido en SLV-002 con la 3.6.2**: está grabada desde las
+10:37 (r2), pero sin ninguna prueba en el equipo todavía. Todo lo que sigue sale de leer el fuente, de las pruebas en simulador archivadas, de la
 campaña del 19-sep (commit `5d184bf`) y de cálculos hechos en esta revisión, que se indican como tales.
+
+**r2 (19-sep-2026, 10:45).** La 3.6.2 **ya está grabada** en SLV-002 desde las 10:37:50 (commit `78924ae`,
+por decisión de Diego, antes de este veredicto), sin calibración escrita. La pregunta (a) pasa a ser si
+se mantiene o se revierte a la 3.6.1 (§1 y §8.1). Y se añade §4 ter: la reproducibilidad entre
+colocaciones frente a los criterios de aceptación de la SPEC de calibración.
 
 **r1 (19-sep-2026, tras el primer commit de este documento).** Durante la revisión llegó el commit
 `5d184bf`: campaña completa de SLV-002, `06_Calibracion/SLV-002/campanas/campana_SLV-002_20260919_103300.zip`
@@ -34,7 +39,7 @@ Rutas de firmware relativas a `01_Firmware/RetroVertical_V3.6.X/`; de app, a
 
 | Decisión | Veredicto | En una frase |
 | :--- | :--- | :--- |
-| **(a) Grabar la 3.6.2 en SLV-002** | **APROBADO CON CONDICIONES** (P9-A1 a P9-A5) | Por fuente, la ruta de medida es la de la 3.6.0/3.6.1 y la ecuación es la de 2020; la EEPROM nueva no solapa nada; configuración igual. Las condiciones son de orden y de comprobación tras grabar |
+| **(a) La 3.6.2 grabada en SLV-002 (10:37, `78924ae`): ¿se mantiene o se revierte?** | **SE MANTIENE. APROBADO CON CONDICIONES** (P9-A3 y P9-A5 pendientes; A1, A2 y A4 cumplidas) | Por fuente, la ruta de medida es la de la 3.6.1 y la ecuación es la de 2020; la EEPROM nueva no solapa nada; configuración igual; el equipo estaba en `DEF` y no se ha perdido nada. Revertir costaría otro borrado sin ganar nada. Criterio de reversión en P9-A5 |
 | **(b) Escribir la calibración con la app 3.6.6** | **APROBADO CON CONDICIONES** (P9-B1 a P9-B13). **Hoy no se puede escribir:** bloquean P9-B1, B3, B5, B6 y B13 | La herramienta sirve: escritura, relectura, `#E` y restauración son correctas y seguras. Lo que falta es grabar y verificar la 3.6.2, decisiones de Diego y un límite que la app no comprueba (la curva en oscuro, §4 bis) |
 | **(c) Pasar a la propuesta de app de producción (P10)** | **APROBADO CON CONDICIONES** (P9-P1 a P9-P9) | Se puede escribir la propuesta. La APK de producción (P11) no se entrega hasta cerrar P8 con la 3.6.2 verificada en SLV-002 |
 
@@ -284,6 +289,43 @@ elegidas, 459 disparos):
 
 ---
 
+## 4 ter. Reproducibilidad entre colocaciones y criterios de aceptación (r2)
+
+El coordinador aporta que la reproducibilidad entre colocaciones es del 2-4 %, frente a una `s` del
+0,3 % dentro de la serie. **La segunda cifra la confirmo; la primera, sólo en parte.**
+
+- **Dentro de la serie:** `s` de 1,7 a 9,8 cuentas en las 51 series elegidas (§4 bis), ~0,2-0,3 % en
+  x ≈ 2500-3300. Confirmado.
+- **2-4 % "entre colocaciones":** lo que hay medido es **entre sesiones** (09:00 con la 3.6.0 frente a
+  10:15 con la 3.6.1): P7 −3,4 %, P5 −3/−5 %, P6 **+1,7 %**, P20 −0,5 %, P23 ≈ 0 (cifras de las 09:00 en
+  `MATRIZ-SPEC-codigo-V3.6.md:144` y `SPEC-V3.6.md` C-39; las de las 10:15, del `resumen.txt`). Signos
+  mezclados: no es una deriva común. Pero **dentro de una sesión, P5 girado de 0° a 90° da 2456,8 y
+  2459,3 (0,1 %)**, y P23 repetido da 2733,3 y 2735,4 (0,1 %). Así que el 2-4 % mezcla colocación,
+  tiempo, temperatura del equipo y quizá identidad del patrón, y **no está separado**. Contradicción
+  abierta; la cierra P9-A5 (5 colocaciones independientes en una sesión) más una repetición a otra hora.
+
+Sea cual sea su origen, un 2-4 % entre medidas independientes **invalida la forma de los criterios
+propuestos de SPEC-Calibracion §5 que usan la `s` de la serie**:
+
+| Criterio (propuesto) | Qué pasa con 2-4 % entre medidas | Consecuencia |
+| :--- | :--- | :--- |
+| RF-CAL-18: re-medida tras escribir, \|R_medida − R_predicha\| ≤ máx(2 ; 2·s_R) | P4: `s` = 7,5 cuentas, pendiente 0,298 → `s_R` ≈ 2,2 → tolerancia ≈ 4,5 unidades; un 3 % de 828 son 25 | **Falla por construcción** con una curva perfecta. Tiene que usar `s_rep` |
+| RF-CAL-13: dos series con recolocación, medias a menos de máx(3·s ; 1 %) | 3·s ≈ 0,9 % en x ≈ 2500 | Fallaría en casi todos los patrones si el 2-4 % es de colocación |
+| RF-CAL-16: "no empeorar" por tipo | Blanco XI: 2,8 % frente a 2,6 % de fábrica (§4 bis) | Diferencia muy por debajo del ruido entre medidas: necesita margen de significación, o bloquea por azar |
+| RF-CAL-15: RMS por tipo ≤ 6 % | Cada punto del ajuste es **una** colocación: lleva ±2-4 % | Parte del 10,0 % y 8,2 % de IV es ruido de colocación; con 2 patrones IV en blanco no se distingue curva mala de colocación mala |
+| RF-CAL-14: residuo ≤ 10 % | Cabe | Vale como está |
+| RF-CAL-12: `s` ≤ 15 | Mide ruido de disparo, no de colocación | Vale como filtro de serie, no dice nada de la exactitud |
+
+Y dos consecuencias para el ajuste mismo, que **se dicen, no se deciden** (C-CAL-08, Diego):
+
+- Con una colocación por patrón, la curva hereda el ruido de colocación de cada punto. Con 8 puntos
+  (blanco) y 14 (amarillo), eso es del orden de 1-1,5 % en la curva, comparable al sesgo por tipo que se
+  quiere juzgar.
+- La rampa de C-38 (~6,5 cuentas, ~0,3 %) es **diez veces menor** que la dispersión entre medidas: el
+  asentamiento importa mucho menos que la colocación.
+
+---
+
 ## 5. Pregunta 3 — ¿Está lista la app 3.6.6 para escribir la calibración (P8)?
 
 ### 5.1 Lo revisado en el código
@@ -306,7 +348,7 @@ elegidas, 459 disparos):
 
 Estado r1, tras la campaña de `5d184bf`. Tachado = resuelto por los datos.
 
-1. **La 3.6.2 grabada y verificada** (P9-A1 a P9-A5). C-36 ya está cerrada para la 3.6.1 (§2.2).
+1. **La 3.6.2, ya grabada, verificada en el equipo** (P9-A3 y P9-A5). C-36 cerrada para la 3.6.1 (§2.2).
 2. ~~Campaña incompleta~~ **Resuelto:** 50 patrones, 51 series elegidas, ZIP con huellas en git. La
    campaña se hizo con la app 3.6.5, que no tiene evento `CIERRE`; la congela el SHA-256 del commit. Queda
    un riesgo de uso: `medidasParaAjuste` cae a las medidas sueltas de la sesión si la campaña abierta no
@@ -397,11 +439,11 @@ Bluetooth.
 
 | N.º | Condición | Comprobación |
 | :--- | :--- | :--- |
-| **P9-A1** | Antes de conectar el PICkit: `#V#`, 12 `#G`, `#GT#` y `#GC#` con la app o un terminal, archivados en `01_Firmware/lecturas_equipos/SLV-002/` | `#V#` con fecha `2026-09-19` y `#GC#` → `#ERR,FORMATO#`: sigue en la 3.6.1 y en `DEF` (nadie ha escrito nada desde las 09:56). Cualquier `CAL` en la máscara: se para, porque grabar lo borraría |
-| **P9-A2** | Se graba sólo el `.hex` de md5 `9d5d5e39…`, con su md5 recalculado en la misma sesión y el registro de IPE guardado | Registro con *Program Succeeded* y memoria de programa hasta ≈ `0x1DB7F` (último byte `0x1DB67`), no `0x1d07f` (3.6.1). El "Verify failed" posterior es CP (§2.3) |
+| P9-A1 | ~~Antes de grabar: `#V#`, 12 `#G`, `#GT#`~~ **Cumplida en lo sustancial (r2)** | `pruebas.txt` del ZIP de `5d184bf`: a las 09:56 `#V,3.6,2026-09-19,DEF,0000#` y prueba 5 (`#GT#`, 12 `#G`, `#E`) en OK; en los tres registros de tramas de la campaña (hasta las 10:33) no hay ninguna `#S`, `#ST`, `#F`, `#FT`, `#P` ni `#L` (búsqueda de esta revisión). Estaba en `DEF` al grabar: no se perdió calibración. Queda sin cubrir el hueco 10:33-10:37 |
+| P9-A2 | ~~Se graba sólo el `.hex` `9d5d5e39…` con registro de IPE~~ **Cumplida (r2)** | `01_Firmware/lecturas_equipos/SLV-002/grabacion_V3.6.2_2026-09-19.log`: *Program Succeeded* a las 10:37:50, memoria de programa hasta **`0x1db7f`**, lo que corresponde a la 3.6.2 (último byte `0x1DB67`) y no a la 3.6.1 (`0x1d07f`). El "Verify failed" es CP |
 | **P9-A3** | Tras desconectar el PICkit, apagar y encender (tras la 3.6.1 el equipo estuvo mudo hasta apagarlo, §2.2), G4 abreviada (T-C37 adaptada). **Si algo falla, no se escribe nada** | `#V,3.6,2026-09-19,DEF,0000#`; `#GC,NONE#` y `#GN,NONE#` (esto distingue la 3.6.2); 12 `#G` = fábrica a `ULP_G`; `#GT#` = fábrica; `#E` 60/60 contra la tabla de fábrica; `#L,2026#` → `#OK#`; `#FT#` → `#OK#` y `#V#` sigue en `DEF,0000`; `#S,2,<fábrica>#` → `#ERR,FORMATO#` (rechazada antes de tocar RAM, `:698`); `#Q#` |
-| **P9-A4** | **Orden:** la 3.6.2 se graba **antes** del primer `#S`. Grabar después de calibrar borra la calibración | Acta: hora de grabación anterior a la de la primera trama `#S` del registro de la app |
-| **P9-A5** | Puente de medida **en la misma sesión**: con `e`, asentamiento y 9 disparos, tres patrones de la campaña (uno por debajo de x ≈ 1600, uno hacia 2100, uno por encima de 3000; p. ej. P22, P28 y P4) **justo antes de grabar (3.6.1) y justo después (3.6.2)**, sin mover el montaje más que para recolocar | Diferencia de medias ≤ 2 % por patrón (en una misma sesión se han visto +1,3 % en P23 y 0,1 % en P5 a 0°/90°). No se compara con la campaña de las 10:15: entre sesiones hay hasta −5 % (C-CAL-14, §4 bis). Fuera: se para y se investiga |
+| P9-A4 | ~~Orden: la 3.6.2 antes del primer `#S`~~ **Cumplida (r2)** | Grabada a las 10:37 sin calibración escrita. Queda como regla para el segundo equipo: grabar después de calibrar borra la calibración |
+| **P9-A5** | **Puente de medida y reproducibilidad, a la vez** (r2; ya no se puede medir "antes" en la misma sesión). Con la 3.6.2, tras P9-A3: P22, P28 y P4 (x ≈ 1500, 2280, 3320), **5 colocaciones independientes cada uno** (levantar y volver a apoyar), asentamiento + 9 disparos con `e` | Da `s_rep` entre colocaciones (§4 ter). Puente: la media de las 5 colocaciones de cada patrón, frente a la serie de la campaña de las 10:15-10:33, dentro de `2·s_rep` o del 4 %, lo que sea mayor. **Criterio de reversión a la 3.6.1:** los tres patrones desplazados en el mismo sentido más allá de ese margen, o un fallo de P9-A3 que no se explique por el equipo |
 | P9-A6 | Documental: CAMBIOS §8.4 retira "md5 de la lectura ICSP"; `fuente.md5` se verifica contra el blob (`git show <commit>:<ruta> \| md5sum`) o se declara el md5 del fichero con el fin de línea del árbol | Revisión del documento. No bloquea grabar |
 
 ### 8.2 Para escribir la calibración con la app 3.6.6 (b)
@@ -412,7 +454,7 @@ Bluetooth.
 | P9-B2 | ~~Campaña completa, cerrada y exportada~~ **Cumplida (r1)** con `5d184bf` | El acta cita el SHA-256 `3aae14a9…` del ZIP. La app 3.6.5 no tiene evento `CIERRE`: lo congela el commit |
 | **P9-B3** | Protocolo de disparos fijo (C-38): el mismo asentamiento + 9 de la campaña en la re-medida de verificación y en campo, porque la rampa de ~6,5 cuentas es común (§4 bis) | Firma de Diego en el acta |
 | P9-B4 | ~~C-46 comprobada sobre los datos~~ **Cumplida (r1)**: máximo 17 cuentas | §4 bis |
-| **P9-B5** | Criterios de SPEC-Calibracion §5 calculados desde `campana.csv` **antes** de escribir (RF-CAL-14 a 17), y umbrales aprobados (P-CAL-01) | Hoja de cálculo o script en `06_Calibracion/SLV-002/` y firma de Diego |
+| **P9-B5** | Criterios de SPEC-Calibracion §5 calculados desde `campana.csv` **antes** de escribir (RF-CAL-14 a 17), y umbrales aprobados (P-CAL-01). **Los que dependen de dispersión, contra `s_rep` de P9-A5, no contra la `s` de la serie** (§4 ter) | Hoja de cálculo o script en `06_Calibracion/SLV-002/` y firma de Diego |
 | **P9-B6** | Método de medida decidido (C-CAL-08) y P24 resuelto (C-40) | Decisión escrita |
 | **P9-B7** | El ajuste se hace con la campaña (no con medidas sueltas de sesión) | El informe del asistente lista exactamente los patrones y `n` de las series elegidas del ZIP |
 | P9-B8 | Un código cada vez (RF-CAL-24): `#S`, `#G`, `#E`, re-medida con el código escrito (RF-CAL-18), y sólo entonces el siguiente. Al final, apagar, encender y repetir `#V#`, `#G` y `#E` de lo escrito (persistencia real, T-C23) | Acta, bloque "Escritura" y "Después" |
