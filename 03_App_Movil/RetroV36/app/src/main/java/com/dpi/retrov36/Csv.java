@@ -45,8 +45,44 @@ public final class Csv {
             if (i > 0) {
                 sb.append(',');
             }
-            sb.append(Medida.csv(campos[i] == null ? "" : String.valueOf(campos[i])));
+            // QA-3614-02: un campo nunca lleva salto de linea (el diario se lee linea a linea).
+            sb.append(Medida.csv(unaLinea(campos[i] == null ? "" : String.valueOf(campos[i]))));
         }
         return sb.toString();
+    }
+
+    /** Sustituye los saltos de linea por un espacio (textos libres: motivos, notas). */
+    public static String unaLinea(String s) {
+        return s == null ? null : s.replaceAll("[\\r\\n]+", " ");
+    }
+
+    /**
+     * Lee una linea logica de un diario: si una linea deja unas comillas abiertas (diario escrito por la
+     * 3.6.14 con un salto dentro de un motivo, QA-3614-02), se le une la siguiente. null al final.
+     */
+    public static String lineaLogica(java.io.BufferedReader br) throws java.io.IOException {
+        String l = br.readLine();
+        if (l == null) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder(l);
+        while (comillasAbiertas(sb)) {
+            String m = br.readLine();
+            if (m == null) {
+                break;
+            }
+            sb.append(' ').append(m);
+        }
+        return sb.toString();
+    }
+
+    private static boolean comillasAbiertas(CharSequence s) {
+        int n = 0;
+        for (int i = 0; i < s.length(); i++) {
+            if (s.charAt(i) == '"') {
+                n++;
+            }
+        }
+        return n % 2 == 1;
     }
 }

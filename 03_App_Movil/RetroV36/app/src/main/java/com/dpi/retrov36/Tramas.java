@@ -37,7 +37,11 @@ public final class Tramas {
     private static final Pattern P_MEDIDA = Pattern.compile("::(\\d+)");
     private static final Pattern P_BATERIA = Pattern.compile(":([^:]{1,8}):");
     private static final Pattern P_ADMIN = Pattern.compile("#([^#]+)#");
-    private static final Pattern P_LEERV = Pattern.compile("@LEERV,[^@]*@");
+    /**
+     * RF-APP-U05 (SPEC-App-Unica-V36-V46.md): solo "@LEERV,<entero>@". El eco de la propia sonda
+     * ("@LEERV,BLA,1@") y "@LEERV,127,45@" no son respuesta.
+     */
+    private static final Pattern P_LEERV = Pattern.compile("@LEERV,-?\\d{1,6}@");
 
     /**
      * 'e' solo a un equipo identificado como V3.6. En SLV-002 (V3 2020 sin 'e')

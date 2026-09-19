@@ -2,7 +2,10 @@ package com.dpi.retrov36;
 
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -50,6 +53,7 @@ public class BancoActivity extends Base {
         txtResultado.setTypeface(Typeface.MONOSPACE);
         // 3.6.14 (peticion de Diego): rehacer un patron antes de exportar. Nada se borra: la serie queda
         // ANULADA en el diario con su motivo y el paso vuelve a la cola.
+        btnBanco = boton("Banco: completo", v -> elegirBanco());
         btnRehacerAnterior = boton("Rehacer el paso anterior", v -> rehacerAnterior());
         btnRehacerPatron = boton("Rehacer patrón…", v -> elegirPasoARehacer());
         fila(btnRehacerAnterior, btnRehacerPatron);
@@ -59,12 +63,30 @@ public class BancoActivity extends Base {
         chkConfirmar.setOnCheckedChangeListener((v, c) -> getSharedPreferences("rtv", MODE_PRIVATE).edit()
                 .putBoolean(PREF_CONFIRMAR, c).apply());
         raiz.addView(chkConfirmar);
-        boton("Exportar ahora (un solo ZIP + copia en Download/RTV/)", v -> exportar(null));
+        final android.widget.CheckBox chkRapido = new android.widget.CheckBox(this);
+        chkRapido.setText("Modo rápido: 1 colocación × 4 disparos (A5 y OSCURO siempre K = 5). Sin marcar: preciso, "
+                + "el K × M de la cola");
+        chkRapido.setChecked(prefRapido());
+        chkRapido.setOnCheckedChangeListener((v, c) -> {
+            getSharedPreferences("rtv", MODE_PRIVATE).edit().putBoolean(PREF_RAPIDO, c).apply();
+            pintar();
+        });
+        raiz.addView(chkRapido);
+        Button exp = boton("Exportar (ZIP ligero)", v -> exportar(null));
+        Button sop = boton("ZIP de soporte", v -> exportarSoporte());
+        fila(exp, sop);
         cargar();
     }
 
     private static final String PREF_CONFIRMAR = "confirmar_patron";
+    private static final String PREF_RAPIDO = "banco_rapido";
+
+    /** 3.6.15 (PROTOCOLO-MIN): modo rapido 1 x 4, activo por defecto; "preciso" = el K x M de la cola. */
+    private boolean prefRapido() {
+        return getSharedPreferences("rtv", MODE_PRIVATE).getBoolean(PREF_RAPIDO, true);
+    }
     private Button btnRehacerAnterior;
+    private Button btnBanco;
     private Button btnRehacerPatron;
     private android.widget.CheckBox chkConfirmar;
 
@@ -83,35 +105,125 @@ public class BancoActivity extends Base {
     private void rehacerAnterior() {
         Integer o = campana == null ? null : campana.ultimoPasoRehacible();
         if (o != null) {
-            pedirMotivoYRehacer(o);
+            comprobarYRehacer(o);
         }
     }
 
+    /** QA-3614 §6: lista filtrable (patron, color, tipo, sesion, paso), la mas reciente arriba. */
     private void elegirPasoARehacer() {
         if (campana == null) {
             return;
         }
-        final List<Integer> l = campana.pasosRehacibles();
-        if (l.isEmpty()) {
+        if (campana.pasosRehacibles().isEmpty()) {
             aviso("No hay pasos hechos que rehacer.");
             return;
         }
-        String[] items = new String[l.size()];
-        for (int i = 0; i < items.length; i++) {
-            items[i] = describirPaso(l.get(l.size() - 1 - i));   // el mas reciente arriba
-        }
-        new AlertDialog.Builder(this).setTitle("Rehacer patrón")
-                .setItems(items, (d, w) -> pedirMotivoYRehacer(l.get(l.size() - 1 - w)))
-                .setNegativeButton("Cancelar", null).show();
+        LinearLayout caja = new LinearLayout(this);
+        caja.setOrientation(LinearLayout.VERTICAL);
+        final EditText filtro = new EditText(this);
+        filtro.setSingleLine(true);
+        filtro.setHint("Filtrar: P37, amarillo, sesión 2…");
+        caja.addView(filtro);
+        final android.widget.ListView lista = new android.widget.ListView(this);
+        caja.addView(lista, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(360)));
+        final List<Integer> vis = new ArrayList<>();
+        final ArrayAdapter<String> ad = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<String>());
+        lista.setAdapter(ad);
+        final Runnable refiltrar = () -> {
+            vis.clear();
+            vis.addAll(RehacerBanco.filtrar(campana, cola, filtro.getText().toString()));
+            ad.clear();
+            for (int o : vis) {
+                ad.add(RehacerBanco.linea(campana, cola, o));
+            }
+            ad.notifyDataSetChanged();
+        };
+        refiltrar.run();
+        filtro.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence c, int a, int b, int d) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence c, int a, int b, int d) {
+                refiltrar.run();
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable e) {
+            }
+        });
+        final AlertDialog d = new AlertDialog.Builder(this).setTitle("Rehacer patrón").setView(caja)
+                .setNegativeButton("Cancelar", null).create();
+        lista.setOnItemClickListener((parent, view, pos, id) -> {
+            d.dismiss();
+            comprobarYRehacer(vis.get(pos));
+        });
+        d.show();
     }
 
-    /** Motivo obligatorio; la serie queda ANULADA con el y el paso vuelve a la cola. */
+    /**
+     * QA-3614-03 y -05: no se rehace con un acta en curso, ni un OSCURO o una A5 de una sesion terminada; con
+     * un acta ACEPTADA del codigo del paso, se avisa y se pide confirmacion.
+     */
+    private void comprobarYRehacer(int orden) {
+        String no = RehacerBanco.motivoNoRehacer(campana, cola, orden);
+        if (no != null) {
+            alerta("No se rehace", no);
+            return;
+        }
+        String b;
+        try {
+            b = FlujoCalibracion.bloqueoRehacer(almacenActas(), cola, orden);
+        } catch (IOException e) {
+            b = "BLOQUEO: no se pudieron leer las actas: " + e.getMessage();
+        }
+        if (b != null && b.startsWith("BLOQUEO")) {
+            alerta("No se rehace", b.substring("BLOQUEO: ".length()));
+            return;
+        }
+        if (b != null) {
+            new AlertDialog.Builder(this).setTitle("Atención").setMessage(b.substring("AVISO: ".length()))
+                    .setPositiveButton("Rehacer igualmente", (d, w) -> pedirMotivoYRehacer(orden))
+                    .setNegativeButton("Cancelar", null).show();
+            return;
+        }
+        pedirMotivoYRehacer(orden);
+    }
+
+    private FlujoCalibracion.AlmacenActa almacenActas() {
+        final BancoActivity yo = this;
+        return new FlujoCalibracion.AlmacenActa() {
+            @Override
+            public Acta enCurso() throws IOException {
+                return Campanas.actaEnCurso(yo);
+            }
+
+            @Override
+            public void adjuntar(Acta a) {
+            }
+
+            @Override
+            public void cerrar(Acta a) {
+            }
+
+            @Override
+            public boolean aceptadoAntes(char k) throws IOException {
+                return Campanas.aceptadoAntes(yo, k);
+            }
+        };
+    }
+
+    /** Motivo obligatorio y de una linea; la serie queda ANULADA con el y el paso vuelve a la cola. */
     private void pedirMotivoYRehacer(int orden) {
         final EditText e = new EditText(this);
-        e.setHint("Motivo (obligatorio): p. ej. papel equivocado: pedía P45, puse P40");
-        new AlertDialog.Builder(this).setTitle("Rehacer: " + describirPaso(orden)).setView(e)
-                .setMessage("La serie queda ANULADA en el diario con este motivo (no se borra), sale del ajuste y "
-                        + "el paso vuelve a la cola para medirse otra vez.")
+        e.setSingleLine(true);   // QA-3614-02
+        e.setHint("Motivo: papel equivocado: pedía P45, puse P40");
+        BancoCola.Paso pp = cola.paso(orden);
+        boolean ajuste = pp != null && "PATRON".equals(pp.tipo);
+        new AlertDialog.Builder(this).setTitle("Rehacer " + RehacerBanco.corto(campana, cola, orden)).setView(e)
+                .setMessage("La serie queda ANULADA en el diario con este motivo (no se borra), sale "
+                        + (ajuste ? "del ajuste" : "del ancla y de la s_rep") + " y el paso vuelve a la cola.")
                 .setPositiveButton("Rehacer", (d, w) -> {
                     String m = e.getText().toString().trim();
                     if (m.isEmpty()) {
@@ -120,8 +232,8 @@ public class BancoActivity extends Base {
                         return;
                     }
                     try {
-                        campana.rehacer(orden, m, Sesion.ahoraIso());
-                        Registro.nota("banco: " + describirPaso(orden) + " a rehacer: " + m);
+                        RehacerBanco.rehacer(campana, cola, orden, m, Sesion.ahoraIso());
+                        Registro.nota("banco: " + RehacerBanco.linea(campana, cola, orden) + " a rehacer: " + m);
                     } catch (IOException | RuntimeException ex) {
                         alerta("Rehacer", "No se pudo: " + ex.getMessage());
                     }
@@ -131,16 +243,71 @@ public class BancoActivity extends Base {
                 .setNegativeButton("Cancelar", null).show();
     }
 
-    private void cargar() {
-        try (InputStream in = getAssets().open(BancoCola.ASSET)) {
-            cola = BancoCola.cargar(ImportadorCampana.leer(in));
+    private String motivoRehacer(int orden) {
+        String sid = null;
+        for (Campana.Serie x : campana.seriesAnuladas()) {
+            if (cola.paso(orden) != null && (x.patron.equals(cola.paso(orden).patron)
+                    || (Campana.OSCURO.nombre.equals(x.patron) && "OSCURO".equals(cola.paso(orden).tipo)))) {
+                sid = x.anulada;
+            }
+        }
+        return sid == null ? "vuelve a la cola" : sid;
+    }
+
+    /** La cola de un tipo de banco, o null si no viaja en este APK o su md5 no esta admitido. */
+    private BancoCola colaDe(BancoCola.Tipo t) {
+        try (InputStream in = getAssets().open(t.asset)) {
+            return BancoCola.cargar(ImportadorCampana.leer(in));
         } catch (IOException | RuntimeException e) {
-            txtPaso.setText("Cola no admitida: " + e.getMessage() + ". No se mide nada.");
-            Registro.nota("banco: cola no admitida: " + e.getMessage());
-            btnOk.setEnabled(false);
-            btnSaltar.setEnabled(false);
+            return null;
+        }
+    }
+
+    /** 3.6.15: selector de banco (completo / representativo / verificacion anual), solo antes del primer paso. */
+    private void elegirBanco() {
+        if (campana == null) {
             return;
         }
+        if (!campana.pasos().isEmpty()) {
+            alerta("Tipo de banco", "El banco ya empezó con " + BancoCola.Tipo.de(campana.colaTipo()).nombre
+                    + ": no se cambia a mitad.");
+            return;
+        }
+        final BancoCola.Tipo[] ts = BancoCola.Tipo.values();
+        String[] items = new String[ts.length];
+        for (int i = 0; i < ts.length; i++) {
+            items[i] = ts[i].nombre + (colaDe(ts[i]) == null ? " (no disponible en este APK)" : "");
+        }
+        new AlertDialog.Builder(this).setTitle("Tipo de banco").setItems(items, (d, w) -> {
+            if (colaDe(ts[w]) == null) {
+                alerta("Tipo de banco", ts[w].nombre + " no viaja en este APK todavía.");
+                return;
+            }
+            try {
+                campana.elegirCola(ts[w].name(), colaDe(ts[w]).md5);
+            } catch (IOException | RuntimeException e) {
+                alerta("Tipo de banco", e.getMessage());
+            }
+            cargar();
+        }).setNegativeButton("Cancelar", null).show();
+    }
+
+    /** RF-APP-51: ZIP de soporte, aparte (es el que se importa en otro telefono). */
+    private void exportarSoporte() {
+        if (campana == null) {
+            return;
+        }
+        try {
+            Campanas.Exportacion ex = Campanas.exportarSoporte(this, campana.serieActual(), campana.mac);
+            txtResultado.setText("ZIP de soporte: " + ex.zip.getName() + "\nmd5 " + ex.md5 + "\nsha256 " + ex.sha256
+                    + "\nCopia: " + ex.copia);
+            compartirZip(ex, "Soporte de " + campana.serieConHistoria() + " (" + campana.mac + ")");
+        } catch (IOException | RuntimeException e) {
+            alerta("ZIP de soporte", "No se pudo preparar: " + e.getMessage());
+        }
+    }
+
+    private void cargar() {
         Sesion s = Sesion.get();
         if (s.mac == null || s.mac.isEmpty() || !s.serieConocida()) {
             txtPaso.setText("Conecte con el equipo (y, si hace falta, dé su serie en Campaña) antes de medir el banco.");
@@ -154,7 +321,30 @@ public class BancoActivity extends Base {
             alerta("Campaña", "No se pudo abrir la campaña: " + e.getMessage());
             return;
         }
-        Registro.nota("banco: cola md5 " + cola.md5 + ", " + cola.pasos.size() + " pasos");
+        if (!campana.colaElegida() && campana.pasos().isEmpty()) {
+            // RF-APP-49: completo la primera vez en un equipo; representativo despues (otra campana de esta MAC).
+            BancoCola.Tipo def = Campanas.hayOtraCampanaDeEsteEquipo(this) ? BancoCola.Tipo.REPRESENTATIVO
+                    : BancoCola.Tipo.COMPLETO;
+            BancoCola cd = colaDe(def);
+            if (cd != null) {
+                try {
+                    campana.elegirCola(def.name(), cd.md5);
+                } catch (IOException | RuntimeException e) {
+                    Registro.nota("banco: no se pudo anotar la cola: " + e.getMessage());
+                }
+            }
+        }
+        BancoCola.Tipo tipo = BancoCola.Tipo.de(campana.colaTipo());
+        cola = colaDe(tipo);
+        if (cola == null) {
+            txtPaso.setText("Cola no admitida (" + tipo.nombre + "). No se mide nada.");
+            Registro.nota("banco: cola no admitida: " + tipo.asset);
+            btnOk.setEnabled(false);
+            btnSaltar.setEnabled(false);
+            return;
+        }
+        btnBanco.setText("Banco: " + tipo.nombre);
+        Registro.nota("banco: cola " + tipo.name() + " md5 " + cola.md5 + ", " + cola.pasos.size() + " pasos");
         pintar();
     }
 
@@ -187,10 +377,13 @@ public class BancoActivity extends Base {
         if (paso == null) {
             txtPaso.setText("Banco completo.");
         } else {
-            String reintento = "SALTADO".equals(est.get(paso.orden)) ? " (saltado antes)" : "";
+            String reintento = "SALTADO".equals(est.get(paso.orden)) ? " (saltado antes)"
+                    : "REHACER".equals(est.get(paso.orden)) ? " (A REHACER: " + motivoRehacer(paso.orden) + ")" : "";
             txtPaso.setText("Sesión " + paso.sesion + " · paso " + paso.orden + reintento + "\n" + paso.instruccion()
-                    + (paso.esMedida() ? String.format(Locale.US, "\n%d colocaciones × %d disparos + %d de asentamiento",
-                    paso.k, paso.m, paso.asentamiento) : "")
+                    + (paso.esMedida() ? String.format(Locale.US, "\n%d colocaciones × %d disparos + %d de asentamiento%s",
+                    Protocolo.efectivo(paso, prefRapido())[0], Protocolo.efectivo(paso, prefRapido())[1], paso.asentamiento,
+                    "OSCURO".equals(paso.tipo) || "A5".equals(paso.tipo) ? " (A5 y OSCURO: siempre K = 5)"
+                            : prefRapido() ? " (rápido)" : " (preciso)") : "")
                     + (paso.esMedida() && !paso.codigo.isEmpty() ? "\nCódigo " + paso.codigo + ", uso " + paso.uso : "")
                     + (paso.nota.isEmpty() ? "" : "\nNota: " + paso.nota)
                     + (paso.ajusteApp.isEmpty() ? "" : "\n" + paso.ajusteApp));
@@ -203,8 +396,8 @@ public class BancoActivity extends Base {
         btnSaltar.setEnabled(abierta && paso != null && libre && paso.saltable());
         Integer ult = campana.ultimoPasoRehacible();
         btnRehacerAnterior.setEnabled(abierta && libre && ult != null);
-        btnRehacerAnterior.setText(ult == null ? "Rehacer el paso anterior" : "Rehacer el paso anterior ("
-                + describirPaso(ult) + ")");
+        // QA-3614 §6: texto corto.
+        btnRehacerAnterior.setText(ult == null ? "Rehacer anterior" : "Rehacer " + RehacerBanco.corto(campana, cola, ult));
         btnRehacerPatron.setEnabled(abierta && libre && ult != null);
     }
 
@@ -331,15 +524,24 @@ public class BancoActivity extends Base {
         /** El operador confirmo "¿Era Pxx?" (preferencia de la 3.6.14). */
         boolean confirmado;
 
-        Medicion(BancoCola.Paso p, Campana c) {
+        /** Protocolo efectivo de este paso (3.6.15, PROTOCOLO-MIN): K colocaciones x M disparos. */
+        final int kEf;
+        final int mEf;
+        final String protocolo;
+
+        Medicion(BancoCola.Paso p, Campana c, boolean rapido) {
             this.p = p;
             this.campana = c;
             this.nombre = "OSCURO".equals(p.tipo) ? Campana.OSCURO.nombre : p.patron;
+            int[] km = Protocolo.efectivo(p, rapido);
+            this.kEf = km[0];
+            this.mEf = km[1];
+            this.protocolo = Protocolo.texto(km, rapido && !"OSCURO".equals(p.tipo) && !"A5".equals(p.tipo));
         }
 
         String texto() {
             return "Serie en curso: " + nombre + (serie == null ? "" : " (" + serie.id + ")") + ", paso " + p.orden
-                    + ", colocación " + Math.min(k, p.k) + " de " + p.k;
+                    + ", colocación " + Math.min(k, kEf) + " de " + kEf;
         }
     }
 
@@ -405,7 +607,7 @@ public class BancoActivity extends Base {
             aviso(enCurso.texto());
             return;
         }
-        Medicion m = new Medicion(p, campana);
+        Medicion m = new Medicion(p, campana, prefRapido());
         enCurso = m;
         fijarOrientacion(true);
         pantallaEncendida(true);
@@ -430,7 +632,7 @@ public class BancoActivity extends Base {
             if (notaForzada == null) {
                 double xa = Double.NaN;
                 for (int i = 0; i < Math.max(1, p.asentamiento) && !m.cancelada; i++) {
-                    progreso("Colocación " + m.k + " de " + p.k + ": asentamiento (se descarta)...");
+                    progreso("Colocación " + m.k + " de " + m.kEf + ": asentamiento (se descarta)...");
                     LecturaX.Lectura l = LecturaX.leer(s);
                     Registro.nota("banco: disparo de asentamiento, descartado: " + l.codigo + " -> "
                             + (l.respuesta.valida() ? l.respuesta.trama : l.respuesta.describir()));
@@ -447,9 +649,9 @@ public class BancoActivity extends Base {
             }
             if (ausente == null && !m.cancelada) {
                 List<Double> xs = new ArrayList<>();
-                for (int i = 0; i < p.m && !m.cancelada; i++) {
-                    progreso("Midiendo " + m.nombre + ": colocación " + m.k + " de " + p.k + ", disparo " + (i + 1)
-                            + " de " + p.m + "...");
+                for (int i = 0; i < m.mEf && !m.cancelada; i++) {
+                    progreso("Midiendo " + m.nombre + ": colocación " + m.k + " de " + m.kEf + ", disparo " + (i + 1)
+                            + " de " + m.mEf + "...");
                     LecturaX.Lectura l = LecturaX.leer(s);
                     if (!l.valida()) {
                         Registro.nota("banco: disparo no válido: " + l.error);
@@ -480,7 +682,7 @@ public class BancoActivity extends Base {
         } else if (ausente != null) {
             m.pendiente = "AUSENTE";
             m.detalle = ausente;
-        } else if (m.k < p.k) {
+        } else if (m.k < m.kEf) {
             m.k++;
             m.pendiente = "LEVANTAR";
         } else {
@@ -547,7 +749,7 @@ public class BancoActivity extends Base {
                 rechazo(m);
                 return;
             case "LEVANTAR":
-                dialogo(new AlertDialog.Builder(this).setTitle("Levante y apoye (" + m.k + " de " + m.p.k + ")")
+                dialogo(new AlertDialog.Builder(this).setTitle("Levante y apoye (" + m.k + " de " + m.kEf + ")")
                         .setMessage("Levante el equipo y vuelva a apoyarlo sobre " + m.nombre + ". Pulse OK cuando esté apoyado.")
                         .setPositiveButton("OK", (d, w) -> {
                             dialogoAbierto = false;
@@ -573,6 +775,7 @@ public class BancoActivity extends Base {
      */
     private void rechazo(Medicion m) {
         final EditText nota = new EditText(this);
+        nota.setSingleLine(true);   // QA-3614-02: ningun texto libre con salto de linea
         nota.setHint("Nota (obligatoria para medir igualmente)");
         dialogo(new AlertDialog.Builder(this).setTitle("¿Está el patrón?").setMessage(m.detalle).setView(nota)
                 .setPositiveButton("Repetir colocación", (d, w) -> {
@@ -651,7 +854,8 @@ public class BancoActivity extends Base {
             m.veredicto = v;
         }
         final Veredicto.Resultado v = m.veredicto;
-        final String nota = "banco paso " + p.orden + ", código " + p.codigo + ", uso " + p.uso + notas;
+        final String nota = "banco paso " + p.orden + ", código " + p.codigo + ", uso " + p.uso + ", protocolo "
+                + m.protocolo + notas;
         if ("OK".equals(v.veredicto) && prefConfirmar() && "PATRON".equals(p.tipo) && !m.confirmado) {
             // 3.6.14: confirmacion opcional antes de aceptar un OK ("¿Era P45?").
             dialogo(new AlertDialog.Builder(this).setTitle("¿Era " + p.patron + "?")
@@ -665,7 +869,8 @@ public class BancoActivity extends Base {
                     .setNegativeButton("No, rehacer", (x, w) -> {
                         dialogoAbierto = false;
                         final EditText e = new EditText(this);
-                        e.setHint("Motivo (obligatorio): p. ej. papel equivocado: pedía " + p.patron + ", puse P40");
+                        e.setSingleLine(true);
+                        e.setHint("Motivo: papel equivocado: pedía " + p.patron + ", puse P40");
                         dialogo(new AlertDialog.Builder(this).setTitle("Rehacer " + p.patron).setView(e)
                                 .setPositiveButton("Rehacer", (x2, w2) -> {
                                     dialogoAbierto = false;
@@ -675,10 +880,11 @@ public class BancoActivity extends Base {
                                         veredicto(m);
                                         return;
                                     }
-                                    cerrarSerie(s, "OK", true, nota);
-                                    anotar(p, "HECHO", s.id, "OK");
+                                    // QA-3614-06: la serie NO se acepta y el paso no se da por hecho; se anula en
+                                    // seguida. Si la app muere entre medias, la serie no esta aceptada y el paso se repite.
+                                    cerrarSerie(s, "OK", false, nota + "; el operador dice que no era " + p.patron);
                                     try {
-                                        campana.rehacer(p.orden, mot, Sesion.ahoraIso());
+                                        campana.anular(s, mot, Sesion.ahoraIso());
                                     } catch (IOException | RuntimeException ex) {
                                         alerta("Rehacer", ex.getMessage());
                                     }
@@ -749,6 +955,7 @@ public class BancoActivity extends Base {
     private void aceptarConNota(Medicion m, String ver, String nota) {
         final Campana.Serie s = m.serie;
         final EditText e = new EditText(this);
+        e.setSingleLine(true);   // QA-3614-02: ningun texto libre con salto de linea
         e.setHint("Nota obligatoria");
         dialogo(new AlertDialog.Builder(this).setTitle("Aceptar " + s.id).setView(e)
                 .setPositiveButton("Aceptar", (d, w) -> {

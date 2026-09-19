@@ -318,7 +318,8 @@ public final class Pruebas {
             d.append("Versión V3 2020 (responde ::n a 6). Se medirá con 6 invertido; nunca con e.");
             return d.toString();
         }
-        Cliente.Respuesta r4 = c.pedir(Tramas.SONDA_V4, Tramas.Tipo.LEERV, 3000);
+        // RF-APP-U04: el V4.1 espera 1 s mas antes de medir (V4.1:Serial.c:182-188): 5 s de espera.
+        Cliente.Respuesta r4 = c.pedir(Tramas.SONDA_V4, Tramas.Tipo.LEERV, 5000);
         d.append(Tramas.SONDA_V4).append(" -> ").append(r4.describir()).append('\n');
         if (r4.valida()) {
             s.version = Sesion.Version.V4;

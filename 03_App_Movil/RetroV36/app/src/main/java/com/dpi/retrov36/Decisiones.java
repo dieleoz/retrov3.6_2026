@@ -46,8 +46,16 @@ public final class Decisiones {
             this.margen = margen;
         }
 
+        /**
+         * P13-02 (decision de Diego del 19-sep ~15:40, c836cae): la cifra es un TECHO con margen, no una
+         * ventana: mismo signo y |dev| <= |cifra| + margen. Un valor mejor que el aceptado siempre pasa.
+         */
         public boolean cubre(String crit, String pat, double dev) {
-            return criterio.equals(crit) && patron.equals(pat) && Math.abs(dev - desviacion) <= margen + 1e-9;
+            if (!criterio.equals(crit) || !patron.equals(pat)) {
+                return false;
+            }
+            boolean mismoSigno = desviacion >= 0 ? dev >= 0 : dev <= 0;
+            return mismoSigno && Math.abs(dev) <= Math.abs(desviacion) + margen + 1e-9;
         }
 
         public String texto() {
@@ -63,11 +71,14 @@ public final class Decisiones {
         public final String firmante;
         public final String documento;
         public final List<Alcance> alcance;
+        /** Patrones que la decision saca del ajuste ("EXCLUYE P81" en el alcance). */
+        public final List<String> excluidos;
         /** Lo que decidio, con sus palabras (puede ir vacio). */
         public final String palabras;
 
         Decision(String id, String equipo, String valor, String fecha, String firmante, String documento,
-                 List<Alcance> alcance, String palabras) {
+                 List<Alcance> alcance, List<String> excluidos, String palabras) {
+            this.excluidos = excluidos;
             this.id = id;
             this.equipo = equipo;
             this.valor = valor;
@@ -82,6 +93,9 @@ public final class Decisiones {
             StringBuilder a = new StringBuilder();
             for (Alcance x : alcance) {
                 a.append(a.length() == 0 ? "" : "; ").append(x.texto());
+            }
+            for (String x : excluidos) {
+                a.append(a.length() == 0 ? "" : "; ").append("excluye ").append(x);
             }
             return id + " (" + equipo + ") = " + valor + ", decidida por " + firmante + " el " + fecha + " ("
                     + documento + ")" + (a.length() == 0 ? "" : ", alcance: " + a) + (palabras.isEmpty() ? "" : ": " + palabras);
@@ -105,11 +119,29 @@ public final class Decisiones {
             return l;
         }
         for (String p : t.split(";")) {
+            if (EXC.matcher(p).matches()) {
+                continue;
+            }
             Matcher m = ALC.matcher(p);
             if (!m.matches()) {
                 throw new IllegalArgumentException("alcance no entendido: " + p.trim());
             }
             l.add(new Alcance(m.group(1), m.group(2), Double.parseDouble(m.group(3)), Double.parseDouble(m.group(4))));
+        }
+        return l;
+    }
+
+    private static final Pattern EXC = Pattern.compile("\\s*EXCLUYE\\s+(P\\d+[a-z]?)\\s*");
+
+    static List<String> excluidos(String t) {
+        List<String> l = new ArrayList<>();
+        if (t != null) {
+            for (String p : t.split(";")) {
+                Matcher m = EXC.matcher(p);
+                if (m.matches()) {
+                    l.add(m.group(1));
+                }
+            }
         }
         return l;
     }
@@ -156,7 +188,8 @@ public final class Decisiones {
                 continue;
             }
             d.validas.put(clave(id, equipo), new Decision(id, equipo, valor, fecha, firmante, doc,
-                    Collections.unmodifiableList(alc), c.size() > 7 ? c.get(7).trim() : ""));
+                    Collections.unmodifiableList(alc), Collections.unmodifiableList(excluidos(c.size() > 6 ? c.get(6) : "")),
+                    c.size() > 7 ? c.get(7).trim() : ""));
         }
         return d;
     }

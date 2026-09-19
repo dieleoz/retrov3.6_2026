@@ -153,7 +153,7 @@ public class AdminActivity extends Base {
         titulo("Serie y fecha de calibración (firmware 3.6.2)");
         txtCal = texto("");
         edSerie = campo("Serie del equipo (1-12 caracteres, sin # ni ,)", InputType.TYPE_CLASS_TEXT);
-        btnSerie = boton("Grabar serie (#SN) y verificar (#GN)", v -> grabarSerie());
+        btnSerie = boton("Alta / Cambiar serie (#SN, verificada con #GN)", v -> grabarSerie());
         btnFT = boton("Restaurar temperatura de fábrica (#FT#)", v -> restaurarTemperatura());
 
         titulo("Volver a fábrica");
@@ -549,17 +549,26 @@ public class AdminActivity extends Base {
         LinearLayout caja = new LinearLayout(this);
         caja.setOrientation(LinearLayout.VERTICAL);
         final EditText repite = new EditText(this);
+        repite.setSingleLine(true);
         repite.setHint("Repita la serie");
         caja.addView(repite);
+        final EditText operador = new EditText(this);
+        operador.setSingleLine(true);
+        operador.setHint("Quién cambia la serie (queda en el diario)");
         final android.widget.CheckBox distinta = new android.widget.CheckBox(this);
         final boolean difiere = ses.nombre == null || !ses.nombre.contains(serie);
         distinta.setText("La serie no coincide con el nombre Bluetooth (" + ses.nombre + "): es correcta");
         if (difiere) {
             caja.addView(distinta);
         }
-        boolean yaTiene = ses.serieEquipo != null && !Calibracion.NONE.equals(ses.serieEquipo);
-        new AlertDialog.Builder(this).setTitle("Alta de la serie")
-                .setMessage((yaTiene ? "ATENCIÓN: el equipo ya tiene serie (" + ses.serieEquipo + "); se sustituye.\n\n" : "")
+        final boolean yaTiene = ses.serieEquipo != null && !Calibracion.NONE.equals(ses.serieEquipo);
+        if (yaTiene) {
+            caja.addView(operador);
+        }
+        new AlertDialog.Builder(this).setTitle(yaTiene ? "Cambiar serie" : "Alta de la serie")
+                .setMessage((yaTiene ? "Serie actual: " + ses.serieEquipo + ". Nueva: " + serie + ". La campaña, el banco, las "
+                        + "actas y las decisiones de " + ses.serieEquipo + " siguen valiendo para este equipo (misma MAC); "
+                        + "el cambio queda en el diario (RENOMBRA).\n\n" : "")
                         + "Se grabará la serie \"" + serie + "\" en la EEPROM del equipo (actual: "
                         + ses.serieEquipo + ").\n\nTrama: #SN," + serie + "#")
                 .setView(caja)
@@ -570,6 +579,22 @@ public class AdminActivity extends Base {
                     }
                     if (difiere && !distinta.isChecked()) {
                         alerta("Serie", "Confirme que la serie es correcta aunque difiera del nombre Bluetooth.");
+                        return;
+                    }
+                    if (yaTiene) {
+                        final String quien = operador.getText().toString().trim();
+                        final String rep2 = repite.getText().toString().trim();
+                        op("Cambiar serie", true, () -> {
+                            Sesion s2 = Sesion.get();
+                            Campana c = Campanas.abrir(this, s2.serie(), s2.mac);
+                            String t = FlujoCalibracion.renombrarSerie(Cliente.instancia(), c, null, serie, rep2, quien,
+                                    Sesion.ahoraIso());
+                            if (t.startsWith("Serie cambiada")) {
+                                s2.serieEquipo = serie;
+                                Campanas.abrir(this, serie, s2.mac);   // misma campana, por el RENOMBRA
+                            }
+                            return t;
+                        });
                         return;
                     }
                     op("Grabar serie", true, () -> {

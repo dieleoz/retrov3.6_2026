@@ -78,10 +78,11 @@ public class CampanaActivity extends Base {
         boton("Calibrar este equipo", v -> startActivity(new android.content.Intent(this, CalibrarActivity.class)));
         texto("No desinstale la app: se borrarían las series. Para actualizar, instale la versión nueva encima. "
                 + "Cada exportación deja una copia en Download/RTV/.");
+        // 3.6.15 (PROTOCOLO-MIN de Diego): por defecto 1 colocacion x 4 disparos; A5 y OSCURO, K = 5.
         edK = campo("Colocaciones K", InputType.TYPE_CLASS_NUMBER);
-        edK.setText("3");
+        edK.setText(String.valueOf(Protocolo.K_DEFECTO));
         edN = campo("Disparos por colocación M", InputType.TYPE_CLASS_NUMBER);
-        edN.setText("3");
+        edN.setText(String.valueOf(Protocolo.M_DEFECTO));
         fila(edK, edN);
         edTol = campo("Tolerancia de orden (%)", InputType.TYPE_CLASS_NUMBER);
         edTol.setText("3");
@@ -376,12 +377,12 @@ public class CampanaActivity extends Base {
         modoA5 = false;
         if (modoOscuro) {
             seriesOscuroAlEntrar = campana.seriesDe(Campana.OSCURO.nombre).size();
-            edK.setText("5");
+            edK.setText(String.valueOf(Protocolo.K_CONTROL));
             edN.setText("9");
             Registro.nota("campana: preajuste OSCURO activado");
         } else {
-            edK.setText("3");
-            edN.setText("3");
+            edK.setText(String.valueOf(Protocolo.K_DEFECTO));
+            edN.setText(String.valueOf(Protocolo.M_DEFECTO));
         }
         pintar();
     }
@@ -395,8 +396,8 @@ public class CampanaActivity extends Base {
             txtResultado.setText(A5.evaluar(campana).texto);
             Registro.nota("campana: preajuste A5 activado");
         } else {
-            edK.setText("3");
-            edN.setText("3");
+            edK.setText(String.valueOf(Protocolo.K_DEFECTO));
+            edN.setText(String.valueOf(Protocolo.M_DEFECTO));
         }
         pintar();
     }
@@ -775,6 +776,9 @@ public class CampanaActivity extends Base {
                 .setPositiveButton("Cerrar campaña", (d, w) -> {
                     try {
                         Campanas.cerrarCampana(this, campana.equipo, campana.mac);
+                        // RF-APP-51: al cerrar la campana, el ZIP de soporte sin preguntar.
+                        Campanas.Exportacion sop = Campanas.exportarSoporte(this, campana.serieActual(), campana.mac);
+                        compartirZip(sop, "Soporte de " + campana.serieConHistoria() + " al cerrar la campaña");
                     } catch (IOException | RuntimeException e) {
                         alerta("Campaña", "No se pudo cerrar: " + e.getMessage());
                     }

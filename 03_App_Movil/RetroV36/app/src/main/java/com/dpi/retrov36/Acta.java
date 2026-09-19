@@ -208,7 +208,7 @@ public final class Acta {
         BufferedReader br = new BufferedReader(r);
         String l;
         Acta a = null;
-        while ((l = br.readLine()) != null) {
+        while ((l = Csv.lineaLogica(br)) != null) {
             if (l.trim().isEmpty() || l.startsWith("#")) {
                 continue;
             }

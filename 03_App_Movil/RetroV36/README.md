@@ -4,7 +4,7 @@
 V3.6 no se puede probar: el firmware V3.6 no existe todavía en ningún equipo. Lo que sí debe funcionar
 es la medida contra un V3 2020 (SLV-002), y eso tampoco se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 3614`, `versionName 3.6.14` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.14 → 3614) (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 3615`, `versionName 3.6.15` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.15 → 3615) (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -29,7 +29,7 @@ no se versionan.
 
 ### Tests JVM
 
-`app/src/test/`: 15 clases, 169 tests en la 3.6.14, entre ellas `FlujoCalibracionTest` (el flujo "Calibrar este equipo" de
+`app/src/test/`: 16 clases, 198 tests en la 3.6.15, entre ellas `FlujoCalibracionTest` (el flujo "Calibrar este equipo" de
 extremo a extremo contra `EquipoSimulado`).
 `./gradlew testDebugUnitTest` **no arranca en esta máquina**: el ejecutor de Gradle 6.5 no encuentra su
 clase `GradleWorkerMain` porque la carpeta de usuario lleva `ñ` (`C:\Users\Diego.Zuñiga`). Se compilan
@@ -42,7 +42,7 @@ cd app && "$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;bui
   org.junit.runner.JUnitCore com.dpi.retrov36.CalculoTest com.dpi.retrov36.ReceptorTest \
   com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest com.dpi.retrov36.CoherenciaRealTest com.dpi.retrov36.CampanaTest com.dpi.retrov36.Version367Test com.dpi.retrov36.Version368Test com.dpi.retrov36.Version369Test com.dpi.retrov36.Version3610Test \
   com.dpi.retrov36.Version3611Test com.dpi.retrov36.Version3612Test com.dpi.retrov36.FlujoCalibracionTest \
-  com.dpi.retrov36.TS00Test com.dpi.retrov36.BancoRehacerTest
+  com.dpi.retrov36.TS00Test com.dpi.retrov36.BancoRehacerTest com.dpi.retrov36.Version3615Test
 ```
 
 `FabricaTest` compara las 12 ecuaciones de la app con el **texto** de
@@ -115,6 +115,45 @@ Reglas que salen de ahí, en el código:
   envía sólo `1`-`8`, `a`-`d` y `9`.
 - Tras 3 peticiones seguidas sin un solo byte, la app aconseja apagar y encender el equipo y lo anota
   en el registro.
+
+## Cambios de la 3.6.15 ("la APK que hace todo": QA-App-3.6.14, P13, decisiones de c836cae y 31d3b74)
+
+**Nada de esto se ha probado contra un equipo.** El flujo corre contra `EquipoSimulado` (T-S00 132/132).
+
+- **Una sola sesión: "Calibrar todo (8 → b → 5 …)".** Con los códigos marcados, en orden 8, b, 5, 3, 4, 6: para cada
+  uno escribe, re-mide, hace la persistencia y **acepta su acta**, y sigue solo con el siguiente (un acta por
+  código). El 8 queda ACEPTADO antes de tocar el b o el 5. Todo se comprueba antes de empezar. El T-C41 del
+  segundo código y los siguientes aprovecha el apagado de la persistencia anterior. Se para en el primer código
+  que no acabe aceptado, y lo dice. "Continuar / un código" sigue para retomar un acta a medias.
+- **Decisiones de Diego (c836cae) en `decisiones.csv`:** REMEDIDA-b = RF-CAL-18; PA-24 con RF-CAL-15 (RMS de tipo I
+  11,5 %); las cifras de PA-24 son **techo** con ±3 puntos (P13-02: mismo signo y |dev| ≤ |cifra| + margen);
+  **P81 fuera del ajuste del 5** ("EXCLUYE P81"). El b ya se escribe (P13-01).
+- **Serie SLV-002 → SLV-002-2026 (SERIE-2, 31d3b74).** Avanzado, "Alta / Cambiar serie": la nueva dos veces, `#SN`,
+  verificada con `#GN#`, y un evento `RENOMBRA` en el diario (anterior, nueva, fecha, operador). La identidad es la
+  **MAC + el historial de series**: la campaña, el banco, las actas y las decisiones de "SLV-002" siguen valiendo; el
+  acta dice "SLV-002-2026 (antes SLV-002)"; un ZIP medido bajo SLV-002 se importa si la MAC coincide. Otra MAC que
+  se llame SLV-002 no recibe ni la tabla ni las decisiones de SLV-002.
+- **Banco (RF-APP-49 a 53):** selector completo / representativo / verificación anual (tres assets con su md5;
+  completo la primera vez en un equipo, representativo después; no se cambia a mitad; la anual no calibra). ZIP
+  **ligero e incremental** (lo nuevo desde el anterior, con `indice.sha256` y el hash del ZIP anterior; resumen con
+  md5 y SHA-256 de cada pieza; DEFLATE 9) y **ZIP de soporte** aparte, con todo (es el que se importa en otro
+  teléfono); el de soporte se genera solo al aceptar un acta y al cerrar la campaña.
+- **Protocolo (PROTOCOLO-MIN):** por defecto 1 colocación × 4 disparos en la campaña y en el banco ("rápido"); "preciso"
+  = el K × M de la cola; **A5 y OSCURO siempre K = 5**. La re-medida de cada código sigue en 5 × 4 (P12 y P13): es
+  más que 1 × 4 y así se queda. El acta anota el protocolo del banco de cada código.
+- **QA-3614:** -01 importar encima conserva la anulación y elige la serie buena; -02 ningún texto libre lleva salto
+  de línea y un diario viejo con uno se lee; -03 rehacer se bloquea con un acta en curso y avisa con un acta
+  aceptada; el acta guarda los id de serie y no se acepta si alguno se anuló; -04 rehacer tras exportar vuelve a
+  pedir el ZIP; -05 no se rehace un OSCURO o una A5 de una sesión terminada; -06 "No, rehacer" no deja la serie
+  aceptada; -07 la importación conserva la fecha de la anulación; -09 un acta abierta con otras reglas no se
+  acepta; -10 un fallo al exportar al aceptar se enseña. QA-3613-01 / P13-05: un rechazo con una restauración no
+  verificada **no se cierra** y lo dice. Rehacer: botón corto, lista filtrable y el paso devuelto marcado.
+- **SPEC-App-Unica:** `@LEERV,<entero>@` estricta (el eco de la sonda no es respuesta); sonda de 5 s; una campaña sin
+  MAC no casa con ningún equipo.
+- Pruebas: `FlujoCalibracionTest` (49), `Version3615Test` (18), `TS00Test`, `BancoRehacerTest`. 198 en total.
+- Sin hacer: la capa de protocolo V4.6 (espera al arquitecto); las enmiendas documentales de 32.4, RF-CAL-10 y
+  RF-CAL-35 que pide el plan del banco representativo.
+- Entrega: `RTV-V3.6.15.apk` y `RTV-V3.6.15-3615.apk`.
 
 ## Cambios de la 3.6.14 (rehacer en el banco; QA-App-3.6.13; REVISION-Arquitectura-P12-V3.6.md)
 

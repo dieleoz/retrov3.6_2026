@@ -31,6 +31,13 @@ import java.util.Map;
  *   PASO,orden,estado,serie_id,fecha,nota   (3.6.10: estado del paso de la cola del banco:
  *                                             HECHO o SALTADO; reanudar = primer paso sin estado)
  *   BATERIA,fecha,n,texto            (3.6.10: respuesta a la orden 9; n vacio = sin respuesta)
+ *   ANULA,id,fecha,motivo            (3.6.14: la serie queda anulada, fuera del ajuste, la A5 y la s_rep;
+ *                                     un paso HECHO cuya serie esta anulada vale REHACER)
+ *   PASO,...,REHACER,...             (3.6.14: el paso vuelve a la cola; 3.6.15: tambien el EXPORTAR de su
+ *                                     sesion, para que se vuelva a exportar)
+ *   RENOMBRA,fecha,anterior,nueva,operador,mac  (3.6.15: la serie del equipo cambia; identidad = MAC + historial)
+ *   COLA,tipo                        (3.6.15: tipo de banco, antes del primer paso)
+ * Ningun campo lleva salto de linea (3.6.15, QA-3614-02); un diario viejo con uno se lee uniendo lineas.
  * El formato es compatible hacia atras: un diario de la 3.6.5 se lee igual.
  */
 public final class Campana {
@@ -78,6 +85,8 @@ public final class Campana {
          * se borra del diario.
          */
         public String anulada;
+        /** Fecha de la anulacion (QA-3614-07: la importacion la conserva). */
+        public String anuladaFecha = "";
 
         Serie(String id, String fecha, String equipo, String mac, String firmware, String patron,
               int orientacion, char codigo) {
@@ -153,6 +162,11 @@ public final class Campana {
     private final List<String> exportaciones = new ArrayList<>();
     /** Numero de series que habia en la ultima exportacion (aviso de no desinstalar). */
     private int seriesAlExportar;
+    private String colaTipo = "COMPLETO";
+    private String colaMd5 = "";
+    private boolean colaElegida;
+    /** QA-3614-04: una anulacion tambien deja el ZIP entregado viejo. */
+    private int anuladasDesdeExportar;
     /** Estado de cada paso de la cola del banco (orden -> HECHO / SALTADO). */
     private final Map<Integer, String> pasos = new LinkedHashMap<>();
     private final Map<Integer, String> seriePaso = new LinkedHashMap<>();
@@ -170,9 +184,14 @@ public final class Campana {
     public final String equipo;
     public final String mac;
 
+    /** Lector sin atar a un equipo (importar y contar diarios): acepta series de cualquier MAC. */
     public Campana(List<Patron> patrones) {
         this(patrones, "", "");
+        atada = false;
     }
+
+    /** false solo en el lector sin atar; una campana de equipo sin MAC no casa con ninguno (R-U06). */
+    private boolean atada = true;
 
     public Campana(List<Patron> patrones, String equipo, String mac) {
         for (Patron p : patrones) {
@@ -180,11 +199,95 @@ public final class Campana {
         }
         this.equipo = equipo == null ? "" : equipo;
         this.mac = mac == null ? "" : mac;
+        if (!this.equipo.isEmpty()) {
+            historial.add(this.equipo);
+        }
     }
 
-    /** true si la MAC es la de este equipo (o la campana no esta atada). */
+    // ------------------------------------------------------------- series del equipo (3.6.15)
+
+    /**
+     * Series que ha tenido este equipo (la identidad es la MAC + este historial). Un RENOMBRA anade la anterior
+     * y la nueva: una campana de "SLV-002" sigue valiendo para el mismo equipo renombrado a "SLV-002-2026".
+     */
+    private final List<String> historial = new ArrayList<>();
+    private String serieActual;
+
+    public List<String> historialSeries() {
+        return new ArrayList<>(historial);
+    }
+
+    public boolean esSerie(String s) {
+        if (s == null) {
+            return false;
+        }
+        for (String h : historial) {
+            if (h.equalsIgnoreCase(s.trim())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** true si el diario tiene un RENOMBRA a 'serie' (para encontrar la campana de un equipo renombrado). */
+    public static boolean diarioRenombraA(Reader r, String serie) throws IOException {
+        BufferedReader br = new BufferedReader(r);
+        String l;
+        while ((l = Csv.lineaLogica(br)) != null) {
+            if (l.startsWith("RENOMBRA,")) {
+                List<String> c = Csv.partir(l);
+                if (c.size() > 3 && c.get(3).equalsIgnoreCase(serie.trim())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** La ultima serie grabada (tras el ultimo RENOMBRA), o la de la campana. */
+    public String serieActual() {
+        return serieActual != null ? serieActual : equipo;
+    }
+
+    /** "SLV-002-2026 (antes SLV-002)". */
+    public String serieConHistoria() {
+        StringBuilder antes = new StringBuilder();
+        for (String h : historial) {
+            if (!h.equalsIgnoreCase(serieActual())) {
+                antes.append(antes.length() == 0 ? "" : ", ").append(h);
+            }
+        }
+        return serieActual() + (antes.length() == 0 ? "" : " (antes " + antes + ")");
+    }
+
+    private void anadirSerie(String s) {
+        if (s != null && !s.trim().isEmpty() && !esSerie(s)) {
+            historial.add(s.trim());
+        }
+    }
+
+    /** RENOMBRA,fecha,anterior,nueva,operador,mac: la serie del equipo cambia (#SN verificada con #GN). */
+    public void renombrar(String anterior, String nueva, String fecha, String operador) throws IOException {
+        comprobarAbierta();
+        String mal = Calibracion.motivoSerieInvalida(nueva);
+        if (mal != null) {
+            throw new IllegalArgumentException("serie no válida: " + mal);
+        }
+        anadirSerie(anterior);
+        anadirSerie(nueva);
+        serieActual = nueva;
+        evento("RENOMBRA", fecha, anterior, nueva, operador == null ? "" : operador, mac);
+    }
+
+    /**
+     * true si la MAC es la de este equipo. RF-APP-U12 / R-U06 (3.6.15): una campana de equipo con la MAC
+     * vacia no casa con ninguno; solo el lector sin atar (constructor de un argumento) acepta cualquiera.
+     */
     public boolean esDeEsteEquipo(String otraMac) {
-        return mac.isEmpty() || mac.equalsIgnoreCase(otraMac == null ? "" : otraMac.trim());
+        if (!atada) {
+            return true;
+        }
+        return !mac.isEmpty() && mac.equalsIgnoreCase(otraMac == null ? "" : otraMac.trim());
     }
 
     /** A partir de aqui, cada operacion se anade al diario. */
@@ -322,12 +425,13 @@ public final class Campana {
     public void anotarExportacion(String fecha, String nombre, String md5, String sha256) throws IOException {
         exportaciones.add(fecha + "  " + nombre + "  md5 " + md5 + "  sha256 " + sha256);
         seriesAlExportar = series.size();
+        anuladasDesdeExportar = 0;
         evento("EXPORTA", fecha, nombre, md5, sha256);
     }
 
     /** Series que no han salido en ninguna exportacion (aviso de no desinstalar, RF-APP-40). */
     public int seriesSinExportar() {
-        return series.size() - seriesAlExportar;
+        return series.size() - seriesAlExportar + anuladasDesdeExportar;
     }
 
     /** Estado de los pasos del banco (copia). */
@@ -345,6 +449,32 @@ public final class Campana {
 
     public String seriePaso(int orden) {
         return seriePaso.get(orden);
+    }
+
+    /** Tipo de banco de la campana (3.6.15; evento COLA). Por defecto, el completo. */
+    public String colaTipo() {
+        return colaTipo;
+    }
+
+    /** Elige el tipo de banco: solo antes del primer paso (los ordenes de las colas no son intercambiables). */
+    public void elegirCola(String tipo, String md5) throws IOException {
+        comprobarAbierta();
+        if (!pasos.isEmpty() && !tipo.equals(colaTipo)) {
+            throw new IllegalStateException("el banco ya empezó con " + colaTipo + ": cierre la campaña o abra otra");
+        }
+        colaTipo = tipo;
+        colaMd5 = md5 == null ? "" : md5;
+        colaElegida = true;
+        evento("COLA", tipo, colaMd5);
+    }
+
+    /** true si la campana ya tiene su tipo de banco (evento COLA). */
+    public boolean colaElegida() {
+        return colaElegida;
+    }
+
+    public String colaMd5() {
+        return colaMd5;
     }
 
     /** Anota el estado de un paso del banco (HECHO o SALTADO). */
@@ -440,11 +570,13 @@ public final class Campana {
         if (motivo == null || motivo.trim().isEmpty()) {
             throw new IllegalArgumentException("anular una serie exige un motivo");
         }
-        s.anulada = motivo.trim();
+        s.anulada = Csv.unaLinea(motivo).trim();
+        s.anuladaFecha = fecha == null ? "" : fecha;
+        anuladasDesdeExportar++;
         if (s.id.equals(elegidas.get(s.patron))) {
             elegidas.remove(s.patron);
         }
-        evento("ANULA", s.id, fecha == null ? "" : fecha, s.anulada);
+        evento("ANULA", s.id, s.anuladaFecha, s.anulada);
     }
 
     /**
@@ -751,6 +883,7 @@ public final class Campana {
             sb.append("Equipo: serie ").append(equipo).append(", MAC ").append(mac).append('\n');
         }
         sb.append(cerrada ? "Estado: CERRADA el " + fechaCierre + " (solo lectura)\n" : "Estado: abierta\n");
+        sb.append("Banco: ").append(colaTipo).append(colaMd5.isEmpty() ? "" : ", cola md5 " + colaMd5).append('\n');
         sb.append("Avance: ").append(avance()).append("\n\n");
         sb.append("patron  cert  tipo color     estado     series  elegida  n   media x    s\n");
         for (Patron p : catalogo.values()) {
@@ -898,7 +1031,7 @@ public final class Campana {
         try {
             BufferedReader br = new BufferedReader(r);
             String l;
-            while ((l = br.readLine()) != null) {
+            while ((l = Csv.lineaLogica(br)) != null) {
                 if (l.trim().isEmpty() || l.startsWith("#")) {
                     continue;
                 }
@@ -983,11 +1116,22 @@ public final class Campana {
             case "EXPORTA":
                 exportaciones.add(c.get(1) + "  " + c.get(2) + "  md5 " + c.get(3) + "  sha256 " + c.get(4));
                 seriesAlExportar = series.size();
+                anuladasDesdeExportar = 0;
                 return true;
             case "PASO":
                 pasos.put(Integer.parseInt(c.get(1)), c.get(2));
                 seriePaso.put(Integer.parseInt(c.get(1)), c.size() > 3 ? c.get(3) : "");
                 historialPasos.add(Integer.parseInt(c.get(1)));
+                return true;
+            case "RENOMBRA":
+                anadirSerie(c.get(2));
+                anadirSerie(c.get(3));
+                serieActual = c.get(3);
+                return true;
+            case "COLA":
+                colaTipo = c.get(1);
+                colaMd5 = c.size() > 2 ? c.get(2) : "";
+                colaElegida = true;
                 return true;
             case "ANULA": {
                 Serie s = serie(c.get(1));
@@ -995,6 +1139,8 @@ public final class Campana {
                     return false;
                 }
                 s.anulada = c.size() > 3 ? c.get(3) : "";
+                s.anuladaFecha = c.size() > 2 ? c.get(2) : "";
+                anuladasDesdeExportar++;
                 if (s.id.equals(elegidas.get(s.patron))) {
                     elegidas.remove(s.patron);
                 }

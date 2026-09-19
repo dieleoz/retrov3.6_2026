@@ -39,10 +39,11 @@ public final class ImportadorCampana {
         public int yaEstaban;
         public int disparos;
         public int pasos;
+        public int anuladas;
         public final List<String> avisos = new ArrayList<>();
         public String texto() {
             return series + " series importadas (" + disparos + " disparos), " + yaEstaban + " ya estaban"
-                    + (pasos > 0 ? ", " + pasos + " pasos del banco" : "") + "."
+                    + (pasos > 0 ? ", " + pasos + " pasos del banco" : "") + (anuladas > 0 ? ", " + anuladas + " anuladas" : "") + "."
                     + (avisos.isEmpty() ? "" : " Avisos: " + String.join("; ", avisos));
         }
     }
@@ -75,7 +76,7 @@ public final class ImportadorCampana {
             throw new IllegalArgumentException(malas + " líneas del diario no se entienden: no se importa nada");
         }
         for (Campana.Serie s : todo.series()) {
-            if (!c.esDeEsteEquipo(s.mac) || (!c.equipo.isEmpty() && !c.equipo.equalsIgnoreCase(s.equipo))) {
+            if (!c.esDeEsteEquipo(s.mac) || !mismaSerie(c, todo, s.equipo)) {
                 throw new IllegalArgumentException("la campaña es de otro equipo (" + s.equipo + ", " + s.mac
                         + "); la abierta es de " + c.equipo + " (" + c.mac + "): no se importa nada");
             }
@@ -105,12 +106,17 @@ public final class ImportadorCampana {
         Map<String, String> nuevoId = new java.util.HashMap<>();
         Resultado r = new Resultado();
         compararFirmware(c, firmwares(todo.series()), r);
-        Set<String> yaElegidos = elegidosDe(c);
-        List<Campana.Serie> elegidas = new ArrayList<>();
         for (Campana.Serie s : todo.series()) {
             if (vistas.contains(clave(s))) {
                 r.yaEstaban++;
-                nuevoId.put(s.id, idPorClave.get(clave(s)));
+                String id = idPorClave.get(clave(s));
+                nuevoId.put(s.id, id);
+                // QA-3614-01: la serie ya estaba, pero en el origen se anulo despues: se anula aqui tambien.
+                Campana.Serie aqui = c.serie(id);
+                if (s.anulada != null && aqui != null && aqui.anulada == null) {
+                    c.anular(aqui, s.anulada, s.anuladaFecha);
+                    r.anuladas++;
+                }
                 continue;
             }
             Campana.Serie n = c.nuevaSerie(s.fecha, s.equipo, s.mac, s.firmware, s.patronOriginal, s.orientacion, s.codigo);
@@ -130,27 +136,38 @@ public final class ImportadorCampana {
             String org = "importada de " + origen + ", serie " + s.id;
             c.cerrar(n, s.veredicto, s.aceptada, s.nota.isEmpty() ? org : s.nota + " | " + org);
             if (s.anulada != null) {
-                c.anular(n, s.anulada, "importada");   // 3.6.14: la anulada se trae anulada, con su motivo
-            }
-            if (todo.elegida(s.patron) == s) {
-                if (yaElegidos.contains(s.patron)) {
-                    r.avisos.add(s.patron + ": se mantiene la serie elegida por el operador");
-                } else {
-                    elegidas.add(n);
-                }
+                // La anulada se trae anulada, con su motivo y su fecha (QA-3614-07).
+                c.anular(n, s.anulada, s.anuladaFecha);
+                r.anuladas++;
             }
             r.series++;
         }
-        for (Campana.Serie s : elegidas) {
-            c.elegir(s);
+        // Elegidas, DESPUES de aplicar las anulaciones (QA-3614-01): si la elegida de aqui quedo anulada, manda la
+        // elegida del origen; si aqui hay una elegida viva distinta, se mantiene la del operador y se avisa.
+        for (Campana.Serie s : todo.series()) {
+            if (todo.elegida(s.patron) != s) {
+                continue;
+            }
+            Campana.Serie n = c.serie(nuevoId.get(s.id));
+            Campana.Serie actual = c.elegida(s.patron);
+            if (n == null || n == actual || n.anulada != null) {
+                continue;
+            }
+            if (actual == null) {
+                c.elegir(n);
+            } else {
+                r.avisos.add(s.patron + ": se mantiene la serie elegida por el operador (" + actual.id + ")");
+            }
         }
         // QA-3610-09: se traen los PASO del banco (con la serie renumerada). No pisan un paso que ya
         // tenga estado aqui, salvo SALTADO frente a HECHO. BATERIA no se trae: una lectura de otro dia
         // no debe bloquear ni desbloquear las escrituras de hoy.
-        Map<Integer, String> aqui = c.pasos();
-        for (Map.Entry<Integer, String> e : todo.pasos().entrySet()) {
+        Map<Integer, String> aqui = c.pasos();          // efectivo: HECHO con la serie anulada = REHACER
+        Map<Integer, String> alli = todo.pasos();
+        for (Map.Entry<Integer, String> e : alli.entrySet()) {
             String est = aqui.get(e.getKey());
-            if (est == null || ("SALTADO".equals(est) && "HECHO".equals(e.getValue()))) {
+            boolean mejor = "HECHO".equals(e.getValue()) && ("SALTADO".equals(est) || "REHACER".equals(est));
+            if (est == null || mejor || ("REHACER".equals(e.getValue()) && "HECHO".equals(est))) {
                 String sid = todo.seriePaso(e.getKey());
                 String nid = sid == null || sid.isEmpty() ? "" : nuevoId.get(sid);
                 c.anotarPaso(e.getKey(), e.getValue(), nid == null ? "" : nid, "", "importado de " + origen);
@@ -158,6 +175,24 @@ public final class ImportadorCampana {
             }
         }
         return r;
+    }
+
+    /**
+     * 3.6.15: la serie de lo importado es la del equipo si esta en el historial de la campana (RENOMBRA), o si
+     * el propio diario importado la renombra a una serie del historial. La MAC se exige aparte, siempre.
+     */
+    static boolean mismaSerie(Campana c, Campana origen, String serie) {
+        if (c.equipo.isEmpty() || c.esSerie(serie)) {
+            return true;
+        }
+        if (origen != null && origen.esSerie(serie)) {
+            for (String h : origen.historialSeries()) {
+                if (c.esSerie(h)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static Set<String> elegidosDe(Campana c) {
@@ -275,7 +310,7 @@ public final class ImportadorCampana {
             }
             String equipo = campo(f, col, "serie");
             String mac = campo(f, col, "mac");
-            if (!c.esDeEsteEquipo(mac) || (!c.equipo.isEmpty() && !c.equipo.equalsIgnoreCase(equipo))) {
+            if (!c.esDeEsteEquipo(mac) || !mismaSerie(c, null, equipo)) {
                 throw new IllegalArgumentException("la campaña es de otro equipo (" + equipo + ", " + mac
                         + "); la abierta es de " + c.equipo + " (" + c.mac + "): no se importa nada");
             }

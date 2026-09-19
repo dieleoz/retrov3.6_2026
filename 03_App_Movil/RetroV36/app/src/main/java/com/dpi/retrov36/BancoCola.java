@@ -26,8 +26,37 @@ public final class BancoCola {
      * 1f1c4e3 (todos los OSCURO, P81 y los tres del b a K = 5, P10-C3). La 5ba94658 ya no se admite.
      */
     public static final List<String> MD5_PERMITIDOS = Collections.unmodifiableList(
-            Arrays.asList("9ddb7882fa6c32c50c90fcdd72ba8960"));
+            Arrays.asList("9ddb7882fa6c32c50c90fcdd72ba8960",     // completo (1f1c4e3)
+                    "2e266bbf89ec7dfb716e5ddd2d59d8f4",               // representativo (6ef92ee, RF-APP-49)
+                    "d86eddf7fbdfdd4ae11ee2080d220e6c"));             // verificacion anual (6ef92ee)
     public static final String ASSET = "cola_banco_P1-P132.csv";
+
+    /**
+     * 3.6.15 (RF-APP-49): tipos de banco, cada uno con su asset y su md5 en MD5_PERMITIDOS
+     * (06_Calibracion/PLAN-Banco-Representativo.md, 6ef92ee). La verificacion anual no calibra.
+     */
+    public enum Tipo {
+        COMPLETO("cola_banco_P1-P132.csv", "Banco completo P1-P132"),
+        REPRESENTATIVO("cola_banco_representativo.csv", "Banco representativo"),
+        VERIFICACION_ANUAL("cola_verificacion_anual.csv", "Verificación anual");
+
+        public final String asset;
+        public final String nombre;
+
+        Tipo(String asset, String nombre) {
+            this.asset = asset;
+            this.nombre = nombre;
+        }
+
+        public static Tipo de(String s) {
+            for (Tipo t : values()) {
+                if (t.name().equals(s)) {
+                    return t;
+                }
+            }
+            return COMPLETO;
+        }
+    }
     /** P10-C3. */
     public static final int K_FORZADO = 5;
 

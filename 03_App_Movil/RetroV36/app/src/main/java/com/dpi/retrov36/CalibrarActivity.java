@@ -41,6 +41,7 @@ public class CalibrarActivity extends Base {
     private EditText edNombre;
     private EditText edNota;
     private Button btnCalibrar;
+    private Button btnTodo;
     private Button btnBateria;
     private Button btnPersistencia;
     private Button btnAceptar;
@@ -62,7 +63,12 @@ public class CalibrarActivity extends Base {
         edNombre = campo("Nombre del superadministrador (se recuerda)", InputType.TYPE_CLASS_TEXT);
         edNombre.setText(getSharedPreferences(PREFS, MODE_PRIVATE).getString(PREF_NOMBRE, ""));
         edNota = campo("Nota de la conformidad", InputType.TYPE_CLASS_TEXT);
-        btnCalibrar = boton("Calibrar", v -> accion("Calibrar", this::calibrar, true));
+        edNombre.setSingleLine(true);
+        edNota.setSingleLine(true);
+        // 3.6.15: una sola sesion. "Calibrar todo" escribe, re-mide, hace la persistencia y acepta el acta de cada
+        // codigo marcado, en orden (8, b, 5, 3, 4, 6), y sigue solo con el siguiente.
+        btnTodo = boton("Calibrar todo (8 → b → 5 …)", v -> accion("Calibrar", this::calibrarTodo, true));
+        btnCalibrar = boton("Continuar / un código", v -> accion("Calibrar", this::calibrar, true));
         btnBateria = boton("Leer batería (9)", v -> accion("Batería", () -> flujo.leerBateria(), false));
         fila(btnCalibrar, btnBateria);
         txtProgreso = texto("");
@@ -104,7 +110,15 @@ public class CalibrarActivity extends Base {
         refrescarContexto();
         Sesion s = Sesion.get();
         BancoCola cola = null;
-        try (InputStream in = getAssets().open(BancoCola.ASSET)) {
+        String tipoCola = "COMPLETO";
+        try {
+            if (s.mac != null && !s.mac.isEmpty() && s.serieConocida()) {
+                tipoCola = Campanas.abrir(this, s.serie(), s.mac).colaTipo();
+            }
+        } catch (IOException | RuntimeException e) {
+            // se ve abajo al abrir la campana
+        }
+        try (InputStream in = getAssets().open(BancoCola.Tipo.de(tipoCola).asset)) {
             cola = BancoCola.cargar(ImportadorCampana.leer(in));
         } catch (IOException | RuntimeException e) {
             Registro.nota("calibrar: cola no admitida: " + e.getMessage());
@@ -280,15 +294,16 @@ public class CalibrarActivity extends Base {
         pintarBotones();
         Acta a = flujo.acta();
         txtActa.setText(a == null ? "Sin acta en curso." : a.texto() + "\nPara aceptar: "
-                + (a.motivoNoAceptableSalvoVerificacionFinal() == null ? "listo (la verificación final se hace al pulsar)"
-                : a.motivoNoAceptableSalvoVerificacionFinal()));
+                + (flujo.motivoNoAceptar() == null ? "listo (la verificación final se hace al pulsar)"
+                : flujo.motivoNoAceptar()));
     }
 
     private void pintarBotones() {
         boolean libre = !ocupado && flujo != null;
         Set<Character> sel = seleccion();
         btnCalibrar.setEnabled(libre && flujo.puedeCalibrar(sel));
-        btnCalibrar.setText(sel.isEmpty() && libre && flujo.pendientes() > 0 ? "Continuar la calibración a medias" : "Calibrar");
+        btnCalibrar.setText(sel.isEmpty() && libre && flujo.pendientes() > 0 ? "Continuar la calibración a medias" : "Continuar / un código");
+        btnTodo.setEnabled(libre && flujo.motivoPrevias() == null && (!sel.isEmpty() || flujo.pendientes() > 0));
         btnBateria.setEnabled(libre && ctx.conectado);
         btnPersistencia.setEnabled(libre && flujo.puedePersistencia());
         btnAceptar.setEnabled(libre && flujo.puedeAceptar());
@@ -299,6 +314,10 @@ public class CalibrarActivity extends Base {
 
     private interface Accion {
         String hacer() throws IOException, InterruptedException;
+    }
+
+    private String calibrarTodo() throws IOException, InterruptedException {
+        return flujo.calibrarTodo(seleccionAlPulsar, edNombreAlPulsar, edNotaAlPulsar);
     }
 
     private String calibrar() throws IOException, InterruptedException {
@@ -345,8 +364,12 @@ public class CalibrarActivity extends Base {
             if (flujo.necesitaPin()) {
                 Sesion.get().pinAdmin = null;   // QA-3613-02: cualquier fallo de #L vuelve a pedir el PIN
             }
-            if ("Aceptar".equals(titulo) && fin != null && fin.startsWith("Acta ACEPTADA")) {
-                exportarTrasAceptar();
+            if (fin != null && (("Aceptar".equals(titulo) && fin.startsWith("Acta ACEPTADA"))
+                    || fin.contains(" ACEPTADO; "))) {
+                String err = exportarTrasAceptar();
+                if (err != null) {
+                    fin = fin + "\nATENCIÓN: el ZIP no se pudo exportar (" + err + "). Expórtelo a mano en Campaña.";
+                }
             }
             final String f = fin;
             Registro.nota("calibrar (" + titulo + "): " + f);
@@ -379,6 +402,7 @@ public class CalibrarActivity extends Base {
         LinearLayout caja = new LinearLayout(this);
         caja.setOrientation(LinearLayout.VERTICAL);
         final EditText e = new EditText(this);
+        e.setSingleLine(true);
         e.setHint("Motivo");
         caja.addView(e);
         new AlertDialog.Builder(this).setTitle("Rechazar el acta").setView(caja)
@@ -390,13 +414,22 @@ public class CalibrarActivity extends Base {
     }
 
     /** P12 §6 (3.6.14): el ZIP se exporta al aceptar el acta (con la copia en Download/RTV/). */
-    private void exportarTrasAceptar() {
+    /** null si se exporto; si no, el motivo, que se ensena al operador (QA-3614-10, P13-06). */
+    private String exportarTrasAceptar() {
         try {
             Sesion s = Sesion.get();
             Campanas.Exportacion ex = Campanas.exportarConHuellas(this, s.serie(), s.mac);
-            enUi(() -> compartirZip(ex, "Acta aceptada de " + s.serie() + ": ZIP de la campaña"));
+            // RF-APP-51: al aceptar un acta, tambien el ZIP de soporte, sin preguntar.
+            Campanas.Exportacion sop = Campanas.exportarSoporte(this, s.serie(), s.mac);
+            enUi(() -> {
+                compartirZip(ex, "Acta aceptada de " + s.serie() + ": ZIP de la campaña");
+                compartirZip(sop, "Acta aceptada de " + s.serie() + ": ZIP de soporte");
+            });
+            String err = ex.copia != null && ex.copia.contains("SIN COPIA") ? ex.copia : null;
+            return err != null ? err : sop.copia != null && sop.copia.contains("SIN COPIA") ? sop.copia : null;
         } catch (IOException | RuntimeException e) {
             Registro.nota("no se pudo exportar el ZIP al aceptar: " + e.getMessage());
+            return e.getMessage();
         }
     }
 

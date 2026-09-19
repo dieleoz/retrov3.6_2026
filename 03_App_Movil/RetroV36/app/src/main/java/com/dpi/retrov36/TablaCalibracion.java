@@ -26,9 +26,44 @@ import java.util.Map;
  */
 public final class TablaCalibracion {
 
-    public static final String VERSION = "RF-CAL-37 de SPEC-Calibracion-V3.6.md (1f1c4e3), APK 3.6.14";
+    /**
+     * Version de las reglas (no del APK): un acta abierta con otra version no se acepta (QA-3614-09). r4 =
+     * 3.6.15: decisiones de c836cae (PA-24 ampliada y como techo, REMEDIDA-b, P81 fuera del ajuste del 5).
+     */
+    public static final String VERSION = "RF-CAL-37 de SPEC-Calibracion-V3.6.md (1f1c4e3), reglas r4 (c836cae), APK 3.6.15";
     /** Unico equipo con tabla en este APK. */
     public static final String EQUIPO_CON_TABLA = "SLV-002";
+    /** MAC de SLV-002 (Coviandina, V3.6): la tabla y las decisiones de "SLV-002" son de ESTE equipo. */
+    public static final String MAC_SLV002 = "00:21:13:05:19:3B";
+    /** Series de ese equipo: SLV-002 y, desde la decision SERIE-2 de Diego (31d3b74), SLV-002-2026. */
+    public static final java.util.List<String> SERIES_SLV002 = java.util.Arrays.asList("SLV-002", "SLV-002-2026");
+
+    /**
+     * 3.6.15: nombre con el que se buscan la tabla, las decisiones y los heredados. Si el equipo (por MAC) es el
+     * de SLV-002 y su historial de series incluye un nombre de SLV-002, es "SLV-002" (alias SLV-002-2026). Un
+     * equipo con otra MAC que se llame SLV-002 NO recibe la tabla ni las decisiones de SLV-002.
+     */
+    public static String canonico(java.util.List<String> historial, String mac) {
+        if (mac != null && MAC_SLV002.equalsIgnoreCase(mac.trim())) {
+            for (String h : historial) {
+                for (String a : SERIES_SLV002) {
+                    if (a.equalsIgnoreCase(h)) {
+                        return EQUIPO_CON_TABLA;
+                    }
+                }
+            }
+        }
+        for (String h : historial) {
+            boolean deSlv = false;
+            for (String a : SERIES_SLV002) {
+                deSlv |= a.equalsIgnoreCase(h);
+            }
+            if (!deSlv) {
+                return h;
+            }
+        }
+        return historial.isEmpty() ? "" : historial.get(historial.size() - 1) + " (MAC distinta de SLV-002)";
+    }
 
     public enum Metodo { GRADO1, ANCLADA, GRADO1_O_ANCLADA, NO_REESCRIBIR, SOLO_VERIFICAR }
 
@@ -48,6 +83,8 @@ public final class TablaCalibracion {
         public final boolean solo;
         /** true: exige todos los pasos PATRON del codigo hechos, no solo AJUSTE y RE-MEDIDA. */
         public final boolean todosLosPasos;
+        /** Patrones que una decision saca del ajuste (P81 del 5). */
+        public List<String> excluidos = Collections.emptyList();
         public final String origen;
         /** Aviso que la tarjeta y el acta muestran siempre. */
         public final String aviso;
@@ -136,12 +173,17 @@ public final class TablaCalibracion {
         t.put('3', Fila.simple('3', Metodo.GRADO1_O_ANCLADA, "P123", "PA-16", ""));
         t.put('4', Fila.simple('4', Metodo.GRADO1_O_ANCLADA, "P11", "PA-16", ""));
         Decisiones.Decision pa14 = d.decision("PA-14", equipo);
-        t.put('5', pa14 != null
+        Fila f5 = pa14 != null
                 ? new Fila('5', Metodo.ANCLADA, "P81", "", Collections.<Decisiones.Alcance>emptyList(), "", '8', false, true,
                 "PA-14: " + pa14.texto(), "PA-14: recta anclada con la cobertura de RF-APP-42 (el ancla cuenta como un "
-                + "nivel: rango 0-102); exige sus 13 pasos del banco hechos; tras el acta ACEPTADA del 8")
+                + "nivel); exige sus 13 pasos del banco hechos; tras el acta ACEPTADA del 8"
+                + (pa14.excluidos.isEmpty() ? "" : "; fuera del ajuste: " + pa14.excluidos + " (solo verificación y re-medida)"))
                 : Fila.simple('5', Metodo.SOLO_VERIFICAR, "P81", "PA-14 sin decidir",
-                "código 5 de fábrica, fuera de tolerancia, sin decisión (PA-14 sin decidir)"));
+                "código 5 de fábrica, fuera de tolerancia, sin decisión (PA-14 sin decidir)");
+        if (pa14 != null) {
+            f5.excluidos = pa14.excluidos;
+        }
+        t.put('5', f5);
         t.put('6', Fila.simple('6', Metodo.GRADO1_O_ANCLADA, "P86", "PA-16", ""));
         t.put('7', Fila.simple('7', Metodo.SOLO_VERIFICAR, "", "§12.1", ""));
         t.put('8', new Fila('8', Metodo.ANCLADA, "P43", "", Collections.<Decisiones.Alcance>emptyList(), "", (char) 0,

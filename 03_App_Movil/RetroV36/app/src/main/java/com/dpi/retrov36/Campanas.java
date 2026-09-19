@@ -18,6 +18,8 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -61,15 +63,22 @@ public final class Campanas {
             throw new IOException("equipo sin identificar (serie y MAC): no se abre campaña");
         }
         app = ctx.getApplicationContext();
-        String k = clave(serie, mac);
-        if (abierta != null && k.equals(claveAbierta)) {
-            return abierta;
-        }
-        cerrar();
         File dir = new File(ctx.getFilesDir(), "campanas");
         if (!dir.isDirectory() && !dir.mkdirs()) {
             throw new IOException("no se pudo crear " + dir);
         }
+        String k = clave(serie, mac);
+        if (!new File(dir, "campana_" + k + ".csv").exists()) {
+            // 3.6.15: el equipo se renombro (RENOMBRA): su campana sigue siendo la de la serie anterior, misma MAC.
+            String alias = claveRenombrada(dir, serie.trim(), mac.trim());
+            if (alias != null) {
+                k = alias;
+            }
+        }
+        if (abierta != null && k.equals(claveAbierta)) {
+            return abierta;
+        }
+        cerrar();
         fichero = new File(dir, "campana_" + k + ".csv");
         Campana c = new Campana(Sesion.get().patrones(ctx), serie.trim(), mac.trim());
         inicioMs = System.currentTimeMillis();
@@ -105,6 +114,44 @@ public final class Campanas {
         Registro.nota("campana abierta: " + fichero.getName() + ", " + c.series().size() + " series"
                 + (lineasMalas > 0 ? ", " + lineasMalas + " lineas del diario no entendidas" : ""));
         return c;
+    }
+
+    /** RF-APP-49: true si este equipo (MAC) tiene otra campana ademas de la abierta (su primer banco ya se hizo). */
+    public static synchronized boolean hayOtraCampanaDeEsteEquipo(Context ctx) {
+        File dir = new File(ctx.getFilesDir(), "campanas");
+        File[] fs = dir.listFiles();
+        if (fs == null || macAbierta == null) {
+            return false;
+        }
+        String fin = "_" + limpio(macAbierta) + ".csv";
+        for (File f : fs) {
+            String n = f.getName();
+            if (n.startsWith("campana_") && n.endsWith(fin) && !n.equals("campana_" + claveAbierta + ".csv")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Clave de una campana de esta MAC cuyo diario renombra el equipo a 'serie'; null si ninguna. */
+    static String claveRenombrada(File dir, String serie, String mac) throws IOException {
+        File[] fs = dir.listFiles();
+        if (fs == null) {
+            return null;
+        }
+        String fin = "_" + limpio(mac) + ".csv";
+        for (File f : fs) {
+            String n = f.getName();
+            if (!n.startsWith("campana_") || !n.endsWith(fin)) {
+                continue;
+            }
+            try (InputStreamReader r = new InputStreamReader(new FileInputStream(f), StandardCharsets.UTF_8)) {
+                if (Campana.diarioRenombraA(r, serie)) {
+                    return n.substring("campana_".length(), n.length() - ".csv".length());
+                }
+            }
+        }
+        return null;
     }
 
     public static synchronized Campana abierta() {
@@ -405,6 +452,60 @@ public final class Campanas {
         return new Exportacion(zip, md5, sha, copia);
     }
 
+    /** Lee un fichero entero. */
+    private static byte[] leerTodo(File f) throws IOException {
+        try (FileInputStream in = new FileInputStream(f)) {
+            return ImportadorCampana.leer(in);
+        }
+    }
+
+    /**
+     * Piezas de la campana abierta. completo = false: las del ZIP ligero (diario, actas, pruebas; RF-APP-50);
+     * true: todo lo de soporte (tambien campana.csv y las tramas; RF-APP-51). Sin resumen.txt.
+     */
+    private static List<PaquetesZip.Pieza> piezas(Campana c, boolean completo) throws IOException {
+        List<PaquetesZip.Pieza> l = new ArrayList<>();
+        l.add(new PaquetesZip.Pieza("diario_" + fichero.getName(), leerTodo(fichero)));
+        File[] actas = fichero.getParentFile().listFiles();
+        if (actas != null) {
+            java.util.Arrays.sort(actas);
+            for (File a : actas) {
+                if (a.getName().startsWith("acta_" + claveAbierta + "_")) {
+                    l.add(new PaquetesZip.Pieza("actas/" + a.getName(), leerTodo(a)));
+                }
+            }
+        }
+        File fp = ficheroPruebas();
+        l.add(new PaquetesZip.Pieza("pruebas.txt", fp != null && fp.exists() ? leerTodo(fp)
+                : PaquetesZip.utf8("No se hicieron \"Pruebas del equipo\" con esta campaña abierta.\n")));
+        if (completo) {
+            l.add(new PaquetesZip.Pieza("campana.csv", PaquetesZip.utf8(c.exportarCsv())));
+            File dir = new File(app.getFilesDir(), "registros");
+            File[] logs = dir.listFiles();
+            if (logs != null) {
+                java.util.Arrays.sort(logs);
+                for (File f : logs) {
+                    if (f.getName().startsWith("rtv36_") && f.getName().endsWith(".txt")
+                            && f.lastModified() >= inicioMs - 60_000) {
+                        l.add(new PaquetesZip.Pieza("tramas/" + f.getName(), leerTodo(f)));
+                    }
+                }
+            }
+        }
+        return l;
+    }
+
+    private static String cabeceraResumen(Campana c, String que) {
+        return "Campaña de calibración - app RTV " + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")\n"
+                + que + "\nEquipo: serie " + c.serieConHistoria() + ", MAC " + macAbierta
+                + "\nFirmware: " + Sesion.get().firmware() + "\n" + Sesion.get().datosCalibracion()
+                + "\nBanco: " + c.colaTipo() + "\nFecha de exportación: " + Sesion.ahoraIso() + "\n\n";
+    }
+
+    /**
+     * ZIP ligero e incremental (RF-APP-50, 52 y 53): solo lo nuevo desde la exportacion anterior de este equipo,
+     * con indice.sha256 y resumen.txt (siempre). Sin tramas ni campana.csv: van en el ZIP de soporte.
+     */
     public static synchronized File exportar(Context ctx, String serie, String mac) throws IOException {
         Campana c = abrir(ctx, serie, mac);
         File dir = new File(ctx.getFilesDir(), "registros");
@@ -412,46 +513,81 @@ public final class Campanas {
             throw new IOException("no se pudo crear " + dir);
         }
         String sello = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
-        File zip = new File(dir, "campana_" + limpio(serie) + "_" + sello + ".zip");
+        File zip = new File(dir, "campana_" + limpio(c.serieActual()) + "_" + sello + ".zip");
         for (int i = 2; zip.exists(); i++) {
-            zip = new File(dir, "campana_" + limpio(serie) + "_" + sello + "_" + i + ".zip");
+            zip = new File(dir, "campana_" + limpio(c.serieActual()) + "_" + sello + "_" + i + ".zip");
         }
-        try (ZipOutputStream z = new ZipOutputStream(new FileOutputStream(zip))) {
-            texto(z, "campana.csv", c.exportarCsv());
-            texto(z, "resumen.txt", "Campaña de calibración - app RTV " + BuildConfig.VERSION_NAME + " ("
-                    + BuildConfig.VERSION_CODE + ")\nEquipo: serie " + serieAbierta + ", MAC " + macAbierta
-                    + "\nFirmware: " + Sesion.get().firmware() + "\n" + Sesion.get().datosCalibracion()
-                    + "\nFecha de exportación: " + Sesion.ahoraIso()
-                    + "\n\nEste ZIP es el único envío: lleva las series (campana.csv), las pruebas del equipo "
-                    + "(pruebas.txt), todos los registros de tramas de la campaña (tramas/) y el diario.\n\n"
-                    + c.resumen());
-            fichero(z, "diario_" + fichero.getName(), fichero);
-            File[] actas = fichero.getParentFile().listFiles();
-            if (actas != null) {
-                for (File a : actas) {
-                    if (a.getName().startsWith("acta_" + claveAbierta + "_")) {
-                        fichero(z, "actas/" + a.getName(), a);
-                    }
-                }
-            }
-            File fp = ficheroPruebas();
-            if (fp != null && fp.exists()) {
-                fichero(z, "pruebas.txt", fp);
-            } else {
-                texto(z, "pruebas.txt", "No se hicieron \"Pruebas del equipo\" con esta campaña abierta.\n");
-            }
-            File[] logs = dir.listFiles();
-            if (logs != null) {
-                for (File f : logs) {
-                    if (f.getName().startsWith("rtv36_") && f.getName().endsWith(".txt")
-                            && f.lastModified() >= inicioMs - 60_000) {
-                        fichero(z, "tramas/" + f.getName(), f);
-                    }
-                }
+        File est = new File(fichero.getParentFile(), "indice_" + claveAbierta + ".txt");
+        String estado = est.exists() ? new String(leerTodo(est), StandardCharsets.UTF_8) : "";
+        String zipAnt = "";
+        String shaAnt = "";
+        if (estado.startsWith("zip ")) {
+            String[] cab = estado.substring(0, estado.indexOf('\n')).split(" ");
+            zipAnt = cab.length > 1 ? cab[1] : "";
+            shaAnt = cab.length > 2 ? cab[2] : "";
+            estado = estado.substring(estado.indexOf('\n') + 1);
+        }
+        PaquetesZip.Incremental inc = PaquetesZip.incremental(piezas(c, false), PaquetesZip.leerEstado(estado), zipAnt, shaAnt);
+        List<PaquetesZip.Pieza> salida = new ArrayList<>(inc.piezas);
+        salida.add(new PaquetesZip.Pieza("indice.sha256", PaquetesZip.utf8(inc.indice)));
+        String resumen = cabeceraResumen(c, "ZIP LIGERO E INCREMENTAL: lo nuevo desde " + (zipAnt.isEmpty() ? "el principio" : zipAnt)
+                + ". Las tramas y campana.csv van en el ZIP de soporte.") + c.resumen() + PaquetesZip.listaHashes(salida);
+        salida.add(0, new PaquetesZip.Pieza("resumen.txt", PaquetesZip.utf8(resumen)));
+        try (FileOutputStream out = new FileOutputStream(zip)) {
+            PaquetesZip.escribir(out, salida);
+        }
+        String sha = PaquetesZip.sha256(leerTodo(zip));
+        try (OutputStreamWriter w = new OutputStreamWriter(new FileOutputStream(est), StandardCharsets.UTF_8)) {
+            w.write("zip " + zip.getName() + " " + sha + "\n" + PaquetesZip.estadoTexto(inc.estado));
+        }
+        File dirInd = new File(fichero.getParentFile(), "indices_" + claveAbierta);
+        if (dirInd.isDirectory() || dirInd.mkdirs()) {
+            try (OutputStreamWriter w = new OutputStreamWriter(new FileOutputStream(new File(dirInd,
+                    zip.getName().replace(".zip", ".sha256"))), StandardCharsets.UTF_8)) {
+                w.write(inc.indice);
             }
         }
-        Registro.nota("campana exportada: " + zip.getName());
+        Registro.nota("campana exportada (incremental): " + zip.getName());
         return zip;
+    }
+
+    /**
+     * ZIP de soporte (RF-APP-51): todo lo de hoy entero (tramas, campana.csv, diario, pruebas, actas y resumen) y
+     * los indices de todos los incrementales. Se comparte aparte y se copia en Download/RTV/. Es el que se importa.
+     */
+    public static synchronized Exportacion exportarSoporte(Context ctx, String serie, String mac) throws IOException {
+        Campana c = abrir(ctx, serie, mac);
+        File dir = new File(ctx.getFilesDir(), "registros");
+        if (!dir.isDirectory() && !dir.mkdirs()) {
+            throw new IOException("no se pudo crear " + dir);
+        }
+        String sello = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+        File zip = new File(dir, "soporte_" + limpio(c.serieActual()) + "_" + sello + ".zip");
+        List<PaquetesZip.Pieza> salida = piezas(c, true);
+        File dirInd = new File(fichero.getParentFile(), "indices_" + claveAbierta);
+        File[] inds = dirInd.listFiles();
+        if (inds != null) {
+            java.util.Arrays.sort(inds);
+            for (File f : inds) {
+                salida.add(new PaquetesZip.Pieza("indices/" + f.getName(), leerTodo(f)));
+            }
+        }
+        String resumen = cabeceraResumen(c, "ZIP DE SOPORTE: todo, entero (es el que se importa en otro teléfono).")
+                + c.resumen() + PaquetesZip.listaHashes(salida);
+        salida.add(0, new PaquetesZip.Pieza("resumen.txt", PaquetesZip.utf8(resumen)));
+        try (FileOutputStream out = new FileOutputStream(zip)) {
+            PaquetesZip.escribir(out, salida);
+        }
+        String md5 = Resumen.hex(zip, "MD5");
+        String sha = Resumen.hex(zip, "SHA-256");
+        String copia;
+        try {
+            copia = copiarADescargas(ctx, zip);
+        } catch (IOException | RuntimeException e) {
+            copia = "SIN COPIA en Download/RTV/: " + e.getMessage();
+        }
+        Registro.nota("ZIP de soporte: " + zip.getName() + " md5 " + md5 + " sha256 " + sha + "; " + copia);
+        return new Exportacion(zip, md5, sha, copia);
     }
 
     private static void texto(ZipOutputStream z, String nombre, String contenido) throws IOException {

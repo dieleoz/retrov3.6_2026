@@ -1,10 +1,10 @@
-# Decisiones de Diego que cambian lo que la app puede escribir (3.6.14, Decisiones.java).
+# Decisiones de Diego que cambian lo que la app puede escribir (3.6.15, Decisiones.java).
 # Una linea por decision y equipo: id,equipo,valor,fecha,firmante,documento,alcance,texto
 # Solo vale con fecha AAAA-MM-DD, firmante Diego y el documento que la sostiene. La firma es el commit.
-# alcance: lo unico que se dispensa, "criterio patron desviacion% margen" separados por ';'. El margen
-# de 3 puntos lo fijo la app 3.6.14 (P12 §5.2 pide un margen explicito); Diego lo puede cambiar aqui.
-# REMEDIDA-b (QA-3612-06): regla de la re-medida del b (RF-CAL-18 o CERTIFICADO). NO esta: hasta que
-# Diego la confirme y figure aqui, el b no se escribe.
+# alcance: lo unico que se dispensa, "criterio patron|tipo cifra% margen" separados por ';'. La cifra es un
+# TECHO con margen (mismo signo y |dev| <= |cifra| + margen): decision de Diego, c836cae (P13-02).
+# "EXCLUYE Pxx" saca un patron del ajuste (P81 del 5, c836cae).
 id,equipo,valor,fecha,firmante,documento,alcance,texto
-PA-24,SLV-002,SI,2026-09-19,Diego,"06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (8af526d)","RF-CAL-14 P39 +15 3; RF-CAL-14 P49 -10 3","Codigo b (rojo tipo I): se escribe con recta anclada en oscuro pese a incumplir RF-CAL-14 (P39 +15 %, P49 -10 %). Diego, ~14:10: Si, escribirla: mucho mejor que fabrica"
-PA-14,SLV-002,SI,2026-09-19,Diego,"06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (8af526d, 37f827d)",,"Codigo 5 (azul intenso): se ajusta con recta anclada en oscuro, con la regla de cobertura relajada para este caso. Diego, ~14:10, confirmado ~14:15: Si, relajar la regla y ajustarlo con una recta que pase por el negro, como el amarillo"
+PA-24,SLV-002,SI,2026-09-19,Diego,"06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (8af526d; ampliada y margen en c836cae)","RF-CAL-14 P39 +15 3; RF-CAL-14 P49 -10 3; RF-CAL-15 I 11.5 3","Codigo b (rojo tipo I): se escribe con recta anclada en oscuro pese a incumplir RF-CAL-14 (P39 +15 %, P49 -10 %) y RF-CAL-15 (RMS de tipo I 11,5 %); las cifras son techo con +-3 puntos. Diego, ~14:10: Si, escribirla: mucho mejor que fabrica; ~15:40: ok si de 1 a 4"
+PA-14,SLV-002,SI,2026-09-19,Diego,"06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (8af526d, 37f827d; P81 en c836cae)",EXCLUYE P81,"Codigo 5 (azul intenso): recta anclada en oscuro con la cobertura relajada; P81 sale del ajuste y queda solo de verificacion y re-medida. Diego, ~14:10, confirmado ~14:15: Si, relajar la regla y ajustarlo con una recta que pase por el negro, como el amarillo; ~15:40: ok si de 1 a 4"
+REMEDIDA-b,SLV-002,RF-CAL-18,2026-09-19,Diego,"06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (c836cae)",,"La re-medida del codigo b se juzga con RF-CAL-18 (frente a la curva escrita), no frente al certificado. Diego, ~15:40: ok si de 1 a 4"
