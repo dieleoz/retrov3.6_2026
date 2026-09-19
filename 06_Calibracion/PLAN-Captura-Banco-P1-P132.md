@@ -7,12 +7,13 @@ una estimación y se dice en cada fila. La cobertura por código se ha calculado
 (`Asistente.coberturaValores`, `Asistente.java:75-98`). Que un código cumpla la regla no significa que
 se pueda escribir: eso lo deciden el ajuste con lo medido y Diego.
 
-- **Fuente del catálogo:** `06_Calibracion/patrones_certificados_P1-P132.csv` (md5
-  `a74222c06ce7bf18d95bb3d3851a173d`), sacado de `Datos certificados papeles reflectivos sept 2026.xlsx`
+- **Fuente del catálogo:** `06_Calibracion/patrones_certificados_P1-P132.csv` (md5 del blob en git,
+  con LF: `07ab9cd89e8fc202683289eec8fcf2d0`; la copia de un árbol con `core.autocrlf=true` lleva CRLF
+  y da `a74222c06ce7bf18d95bb3d3851a173d`), sacado de `Datos certificados papeles reflectivos sept 2026.xlsx`
   (commit `bba4dbe`). Son 133 patrones, porque P32 está repetido en la fuente (P32a azul 9 y P32b
   naranja 68).
 - **Cola para la app:** `06_Calibracion/cola_banco_P1-P132.csv`, generada junto a este documento (md5
-  `5ba9465852fd721751c496183f2dff95`). Tiene 180 filas: 133 patrones y 47 pasos de control. El acta
+  `5ba9465852fd721751c496183f2dff95`, del blob con LF). Tiene 180 filas: 133 patrones y 47 pasos de control. El acta
   del banco debe citar ese md5.
 - **`x` medida:** media de la serie elegida en `resumen.txt` del ZIP
   `06_Calibracion/SLV-002/campanas/campana_SLV-002_20260919_122727.zip` (md5 `ce1f35fc…`), líneas

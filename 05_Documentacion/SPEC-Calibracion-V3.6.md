@@ -701,7 +701,7 @@ que hizo la app.**
 
 ### 12.1 Catálogo P1-P132 y cobertura por código
 
-El catálogo nuevo (`06_Calibracion/patrones_certificados_P1-P132.csv`, md5 `a74222c0…`) tiene 133
+El catálogo nuevo (`06_Calibracion/patrones_certificados_P1-P132.csv`, md5 del blob `07ab9cd8…`) tiene 133
 patrones y añade, por primera vez, IV, IX y XI de todos los colores intensos (IV/IX/XI): rojo 6/4/6,
 verde 3/6/10, azul 2/4/7 y naranja 3/6/6, más café 1/2/2 y lila 1/2/2. **La app no lo lleva**: carga
 `assets/patrones_certificados_P1-P31.csv` por nombre fijo (`Sesion.java:229`). Esta tabla sustituye a
