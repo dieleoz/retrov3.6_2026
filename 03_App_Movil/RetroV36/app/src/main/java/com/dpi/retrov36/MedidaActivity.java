@@ -81,6 +81,11 @@ public class MedidaActivity extends Base {
         Sesion s = Sesion.get();
         boolean con = EnlaceSerie.instancia().estaConectado();
         btnMedir.setEnabled(con && !midiendo && !Pruebas.get().enCurso());
+        // P9-B3: el asentamiento no cambia mientras dura una calibracion.
+        edAsentamiento.setEnabled(!s.calibrando());
+        if (s.calibrando()) {
+            edAsentamiento.setText(String.valueOf(s.acta.asentamiento));
+        }
         btnParar.setEnabled(midiendo);
         if (!midiendo) {
             if (!con) {

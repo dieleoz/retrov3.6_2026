@@ -39,6 +39,9 @@ public class CampanaActivity extends Base {
     private static final int PIDE_CSV = 301;
     /** Patrones que el operador salto en esta sesion (van al final de la cola). */
     private static final List<String> SALTADOS = new ArrayList<>();
+    /** Preajuste P9-A5: P22, P28 y P4 a 5 colocaciones x 3 disparos (medida puente). */
+    private static boolean modoA5;
+    private Button btnA5;
 
     private Campana campana;
     private TextView txtAvance;
@@ -85,6 +88,8 @@ public class CampanaActivity extends Base {
         fila(btnOk, btnSaltar);
         txtResultado = texto("");
         txtResultado.setTypeface(Typeface.MONOSPACE);
+
+        btnA5 = boton("Preajuste A5 (arquitecto): P22, P28, P4 a 5 × 3", v -> alternarA5());
 
         titulo("Enviar");
         boton("Exportar campaña (un solo ZIP con todo)", v -> exportar());
@@ -212,8 +217,23 @@ public class CampanaActivity extends Base {
         txtAvance.setText("Equipo " + campana.equipo + " (" + campana.mac + ")\n" + Sesion.get().datosCalibracion()
                 + "\nAvance: " + campana.avance());
         List<Cola.Paso> cola = Cola.construir(campana, tol(), SALTADOS);
+        if (modoA5) {
+            cola = new ArrayList<>();
+            for (String n : A5.PATRONES) {
+                if (A5.ultimaA5(campana, n) == null && campana.patron(n) != null) {
+                    cola.add(new Cola.Paso(n, 0, "medida puente P9-A5, " + A5.COLOCACIONES + " × " + A5.DISPAROS));
+                }
+            }
+            btnA5.setText("Salir del preajuste A5");
+        } else {
+            btnA5.setText("Preajuste A5 (arquitecto): P22, P28, P4 a 5 × 3");
+        }
         paso = cola.isEmpty() ? null : cola.get(0);
-        if (paso == null) {
+        if (paso == null && modoA5) {
+            A5.Resultado r = A5.evaluar(campana);
+            txtColoque.setText("A5 completo: " + r.veredicto);
+            txtResultado.setText(r.texto);
+        } else if (paso == null) {
             txtColoque.setText("Campaña completa: no queda nada en la cola. Pulse \"Exportar campaña\".");
         } else {
             Patron p = campana.patron(paso.patron);
@@ -223,6 +243,15 @@ public class CampanaActivity extends Base {
         }
         boolean con = EnlaceSerie.instancia().estaConectado();
         boolean abiertaC = !campana.cerrada();
+        Acta acta = Sesion.get().acta;
+        boolean fijo = Sesion.get().calibrando();
+        if (fijo) {
+            // P9-B3: mientras dura la calibracion, el protocolo es el del acta.
+            edK.setText(String.valueOf(acta.colocaciones));
+            edN.setText(String.valueOf(acta.disparos));
+        }
+        edK.setEnabled(!fijo && !modoA5);
+        edN.setEnabled(!fijo && !modoA5);
         btnOk.setEnabled(abiertaC && paso != null && !midiendo && con);
         btnSaltar.setEnabled(abiertaC && paso != null && !midiendo);
         btnCerrar.setEnabled(abiertaC && !midiendo);
@@ -312,6 +341,20 @@ public class CampanaActivity extends Base {
     }
 
     // ---------------------------------------------------------------- guiado
+
+    private void alternarA5() {
+        modoA5 = !modoA5;
+        if (modoA5) {
+            edK.setText(String.valueOf(A5.COLOCACIONES));
+            edN.setText(String.valueOf(A5.DISPAROS));
+            txtResultado.setText(A5.evaluar(campana).texto);
+            Registro.nota("campana: preajuste A5 activado");
+        } else {
+            edK.setText("3");
+            edN.setText("3");
+        }
+        pintar();
+    }
 
     private void saltar() {
         if (paso != null) {
@@ -485,6 +528,14 @@ public class CampanaActivity extends Base {
         String cab = serie.id + " " + p.nombre + " (" + p.color + " " + p.tipo + ", cert " + Campana.fmt(p.valor)
                 + ", " + serie.orientacion + "°)\n";
         Registro.nota("campana: veredicto " + serie.id + " " + v.veredicto + "\n" + v.texto);
+        if (modoA5 && A5.PATRONES.length > 0 && java.util.Arrays.asList(A5.PATRONES).contains(serie.patron)) {
+            // Medida puente: se guarda como A5, sin aceptar (no entra en el ajuste ni cambia la elegida).
+            cerrar(serie, A5.VEREDICTO, false, "puente P9-A5");
+            A5.Resultado r = A5.evaluar(campana);
+            txtResultado.setText(cab + v.texto + "\n" + r.texto);
+            pintar();
+            return;
+        }
         if ("OK".equals(v.veredicto)) {
             cerrar(serie, "OK", true, "");
             txtResultado.setText(cab + v.texto + "Aceptada. Siguiente patrón.");

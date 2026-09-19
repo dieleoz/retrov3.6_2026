@@ -184,14 +184,67 @@ public final class Campana {
         return series;
     }
 
+    /** Series de un patron, SIN las de la medida puente A5 (esas no son de la campana de ajuste). */
     public List<Serie> seriesDe(String patron) {
         List<Serie> l = new ArrayList<>();
         for (Serie s : series) {
-            if (s.patron.equals(patron)) {
+            if (s.patron.equals(patron) && !esA5(s)) {
                 l.add(s);
             }
         }
         return l;
+    }
+
+    public static boolean esA5(Serie s) {
+        return A5.VEREDICTO.equals(s.veredicto);
+    }
+
+    public List<Serie> seriesA5(String patron) {
+        List<Serie> l = new ArrayList<>();
+        for (Serie s : series) {
+            if (s.patron.equals(patron) && esA5(s)) {
+                l.add(s);
+            }
+        }
+        return l;
+    }
+
+    /**
+     * Protocolo de disparos de la campana (P9-B3): K x M mas frecuente entre las series
+     * elegidas. {1, 9} si no hay ninguna (el de la campana del 19-sep).
+     */
+    public int[] protocolo() {
+        Map<String, Integer> cuenta = new LinkedHashMap<>();
+        for (Patron p : catalogo.values()) {
+            Serie s = elegida(p.nombre);
+            if (s == null) {
+                continue;
+            }
+            List<double[]> g = s.colocaciones();
+            int m = 0;
+            for (double[] v : g) {
+                m = Math.max(m, v.length);
+            }
+            int m0 = 0;
+            for (Disparo d : s.disparos) {
+                if (d.colocacion == 1) {
+                    m0++;
+                }
+            }
+            String k = Math.max(1, g.size()) + "x" + Math.max(m, m0);
+            cuenta.put(k, cuenta.containsKey(k) ? cuenta.get(k) + 1 : 1);
+        }
+        String mejor = null;
+        for (Map.Entry<String, Integer> e : cuenta.entrySet()) {
+            if (mejor == null || e.getValue() > cuenta.get(mejor)) {
+                mejor = e.getKey();
+            }
+        }
+        if (mejor == null) {
+            return new int[]{1, 9};
+        }
+        String[] p = mejor.split("x");
+        return new int[]{Integer.parseInt(p[0]), Integer.parseInt(p[1])};
     }
 
     public Serie serie(String id) {
@@ -569,6 +622,7 @@ public final class Campana {
             }
         }
         sb.append(desvioPorPosicion());
+        sb.append('\n').append(A5.evaluar(this).texto);
         if (!exportaciones.isEmpty()) {
             sb.append("\nExportaciones anteriores (el ZIP no puede llevar su propio hash):\n");
             for (String e : exportaciones) {

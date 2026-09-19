@@ -4,7 +4,7 @@
 V3.6 no se puede probar: el firmware V3.6 no existe todavía en ningún equipo. Lo que sí debe funcionar
 es la medida contra un V3 2020 (SLV-002), y eso tampoco se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 367`, `versionName 3.6.7` (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 368`, `versionName 3.6.8` (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -23,7 +23,7 @@ export JAVA_HOME="D:/@Proyect/Baliza/7 sw apk/jdk-11/jdk-11.0.24+8"
 
 ### Tests JVM
 
-`app/src/test/`: `CalculoTest`, `ReceptorTest`, `AsistenteTest`, `FabricaTest` (78 tests).
+`app/src/test/`: `CalculoTest`, `ReceptorTest`, `AsistenteTest`, `FabricaTest` (84 tests).
 `./gradlew testDebugUnitTest` **no arranca en esta máquina**: el ejecutor de Gradle 6.5 no encuentra su
 clase `GradleWorkerMain` porque la carpeta de usuario lleva `ñ` (`C:\Users\Diego.Zuñiga`). Se compilan
 con Gradle y se ejecutan con JUnit a mano:
@@ -33,7 +33,7 @@ con Gradle y se ejecutan con JUnit a mano:
 mkdir -p libtest   # copiar aquí (fuera de build/: clean lo borra) junit-4.13.2.jar y hamcrest-core-1.3.jar de ~/.gradle/caches
 cd app && "$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;build/intermediates/javac/debugUnitTest/classes;../libtest/junit-4.13.2.jar;../libtest/hamcrest-core-1.3.jar" \
   org.junit.runner.JUnitCore com.dpi.retrov36.CalculoTest com.dpi.retrov36.ReceptorTest \
-  com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest com.dpi.retrov36.CoherenciaRealTest com.dpi.retrov36.CampanaTest com.dpi.retrov36.Version367Test
+  com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest com.dpi.retrov36.CoherenciaRealTest com.dpi.retrov36.CampanaTest com.dpi.retrov36.Version367Test com.dpi.retrov36.Version368Test
 ```
 
 `FabricaTest` compara las 12 ecuaciones de la app con el **texto** de
@@ -106,6 +106,28 @@ Reglas que salen de ahí, en el código:
   envía sólo `1`-`8`, `a`-`d` y `9`.
 - Tras 3 peticiones seguidas sin un solo byte, la app aconseja apagar y encender el equipo y lo anota
   en el registro.
+
+## Cambios de la 3.6.8 (condiciones (b) de REVISION-Arquitectura-P9-V3.6.md)
+
+- **P9-B13, oscuro:** antes de `#S`, la curva nueva en la `x` de oscuro (575 por defecto, editable) frente a
+  fábrica; bloquea si R > máx(fábrica + 10 ; 25) (umbral del coordinador, editable; el documento no fija
+  cifra) y lo explica con cifras. El informe da también R en el patrón más bajo y declara que por debajo no
+  está calibrado. Con las curvas del §4 bis: blanco grado 2 (219) bloqueado; **amarillo grado 1 (84 frente
+  a 21) también, con el umbral por defecto**.
+- **`#SC` sólo al aceptar el acta** (lo señala la revisión r2 de la 3.6.7): `Acta` reúne los códigos escritos
+  (curva = `#G` tras `#S`, P9-B9), su `#E`, el oscuro y la re-medida; se acepta sólo con todas las
+  re-medidas conformes y entonces se graba `#SC` una vez. Rechazada, no se graba fecha. El acta se guarda y
+  va en el ZIP (`actas/`).
+- **P9-B8:** un código cada vez: no se escribe otro sin la re-medida conforme del anterior.
+- **P9-B3:** el protocolo (K × M + asentamiento) es el de la campaña (el más frecuente entre las series
+  elegidas; 1 × 9 en la del 19-sep), queda fijo mientras el acta está abierta y sale escrito en ella.
+- **P9-B5 / RF-CAL-18:** la re-medida usa `'e'` y el código en cada disparo; tolerancia máx(2 ; 2·s_rep) con
+  la s ENTRE colocaciones. RF-CAL-13: la campaña K × M ya juzga por s entre colocaciones. RF-CAL-15/16:
+  sesgo y RMS por tipo, nueva frente a fábrica, con margen de s_rep (informativo).
+- **P9-B7:** el informe del ajuste dice de dónde salen los puntos (campaña o medidas sueltas).
+- **P9-A5:** preajuste "A5 (arquitecto)" en la campaña: P22, P28, P4 a 5 × 3 (el documento dice
+  asentamiento + 9). Muestra s_rep, el puente frente a la campaña (máx(2·s_rep ; 4 %)) y el criterio de
+  reversión a la 3.6.1. Las series A5 no entran en el ajuste.
 
 ## Cambios de la 3.6.7
 

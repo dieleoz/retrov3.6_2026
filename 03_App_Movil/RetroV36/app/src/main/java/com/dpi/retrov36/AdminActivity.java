@@ -48,6 +48,16 @@ public class AdminActivity extends Base {
     private volatile boolean ocupado;
     private Asistente.Propuesta propuesta;
     private TextView txtCal;
+    private TextView txtActa;
+    private EditText edXosc;
+    private EditText edOscMargen;
+    private EditText edOscMin;
+    private EditText edSrep;
+    private Spinner spRemedida;
+    private Button btnRemedida;
+    private Button btnAceptar;
+    private Button btnRechazar;
+    private List<Patron> patronesRemedida = new ArrayList<>();
     private EditText edSerie;
     private Button btnSerie;
     private Button btnFT;
@@ -106,6 +116,28 @@ public class AdminActivity extends Base {
         fila(ajustar, btnEscribir);
         txtAjuste = texto("");
         txtAjuste.setTypeface(Typeface.MONOSPACE);
+
+        titulo("Acta de calibración");
+        texto("Un código cada vez: #S, #G, #E y re-medida de verificación; al final se acepta el acta y sólo "
+                + "entonces se graba la fecha de calibración (#SC). El protocolo de disparos queda fijo mientras dura.");
+        edXosc = campo("x de oscuro (P9-B13)", InputType.TYPE_CLASS_NUMBER);
+        edXosc.setText(String.format(Locale.US, "%.0f", Asistente.X_OSCURO));
+        edOscMargen = campo("Margen sobre fábrica en oscuro", InputType.TYPE_CLASS_NUMBER);
+        edOscMargen.setText(String.format(Locale.US, "%.0f", Asistente.OSCURO_MARGEN));
+        edOscMin = campo("Mínimo en oscuro", InputType.TYPE_CLASS_NUMBER);
+        edOscMin.setText(String.format(Locale.US, "%.0f", Asistente.OSCURO_MINIMO));
+        fila(edXosc, edOscMargen, edOscMin);
+        edSrep = campo("s_rep entre colocaciones (%) para criterios (P9-B5)", InputType.TYPE_CLASS_NUMBER
+                | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        edSrep.setText(String.format(Locale.US, "%.1f", 100 * Asistente.S_REP_REL));
+        spRemedida = new Spinner(this);
+        panel.addView(spRemedida);
+        btnRemedida = boton("Re-medida de verificación del último código escrito", v -> remedida());
+        btnAceptar = boton("Aceptar acta y grabar fecha (#SC)", v -> aceptarActa());
+        btnRechazar = boton("Rechazar acta (no se graba fecha)", v -> rechazarActa());
+        fila(btnAceptar, btnRechazar);
+        txtActa = texto("");
+        txtActa.setTypeface(Typeface.MONOSPACE);
 
         titulo("Serie y fecha de calibración (firmware 3.6.2)");
         txtCal = texto("");
@@ -181,6 +213,30 @@ public class AdminActivity extends Base {
         boolean v362 = s.es362();
         txtCal.setText(s.datosCalibracion() + (v362 ? "" : "\nGrabar serie y restaurar temperatura exigen la 3.6.2."));
         btnSerie.setEnabled(ab && !ocupado && v362);
+        Acta acta = s.acta;
+        txtActa.setText(acta == null ? "Sin acta: se abre con el primer #S." : acta.texto()
+                + (acta.cerrada() ? "" : "\nPara aceptar: " + (acta.motivoNoAceptable() == null ? "listo"
+                : acta.motivoNoAceptable())));
+        Acta.Codigo ult = acta == null || acta.codigos().isEmpty() ? null : acta.codigos().get(acta.codigos().size() - 1);
+        btnRemedida.setEnabled(ab && !ocupado && ult != null && !acta.cerrada());
+        btnAceptar.setEnabled(ab && !ocupado && acta != null && acta.motivoNoAceptable() == null);
+        btnRechazar.setEnabled(ab && !ocupado && acta != null && !acta.cerrada());
+        if (ult != null) {
+            List<String> et = new ArrayList<>();
+            patronesRemedida = new ArrayList<>();
+            List<Patron> cat = catalogo();
+            if (cat != null) {
+                for (Patron p : cat) {
+                    if (Asistente.deCodigo(p, ult.k)) {
+                        patronesRemedida.add(p);
+                        et.add(p.toString());
+                    }
+                }
+            }
+            if (spRemedida.getCount() != et.size()) {
+                spRemedida.setAdapter(adaptador(et));
+            }
+        }
         btnFT.setEnabled(ab && !ocupado && v362);
     }
 
@@ -402,7 +458,24 @@ public class AdminActivity extends Base {
         }
     }
 
+    /** Lee los parametros del oscuro y de s_rep de la pantalla. */
+    private boolean leerParametros() {
+        try {
+            Asistente.X_OSCURO = Double.parseDouble(edXosc.getText().toString().trim());
+            Asistente.OSCURO_MARGEN = Double.parseDouble(edOscMargen.getText().toString().trim());
+            Asistente.OSCURO_MINIMO = Double.parseDouble(edOscMin.getText().toString().trim());
+            Asistente.S_REP_REL = Double.parseDouble(edSrep.getText().toString().trim().replace(',', '.')) / 100.0;
+            return true;
+        } catch (NumberFormatException e) {
+            alerta("Parámetros", "Revise x de oscuro, margen, mínimo y s_rep.");
+            return false;
+        }
+    }
+
     private void ajustar() {
+        if (!leerParametros()) {
+            return;
+        }
         char k = codigoAjuste();
         int grado = rgGrado.getCheckedRadioButtonId() == rgGrado.getChildAt(1).getId() ? 2 : 1;
         Sesion s = Sesion.get();
@@ -416,7 +489,7 @@ public class AdminActivity extends Base {
             return;
         }
         propuesta = Asistente.proponer(k, grado, s.medidasParaAjuste(), s.ecuacionVigente(k), cat);
-        txtAjuste.setText(propuesta.informe);
+        txtAjuste.setText("Puntos: " + s.origenAjuste() + "\n" + propuesta.informe);
         Registro.nota("asistente: " + propuesta.informe);
         refrescar();
     }
@@ -527,6 +600,15 @@ public class AdminActivity extends Base {
 
     private void escribir(char k, Tramas.TramaS ts) {
         op("Escribir código " + k, true, () -> {
+            Sesion ses = Sesion.get();
+            if (ses.acta == null || ses.acta.cerrada()) {
+                ses.acta = nuevaActa();
+                Registro.nota("acta abierta:\n" + ses.acta.texto());
+            }
+            String no = ses.acta.motivoNoEscribir(k);
+            if (no != null) {
+                return "No se escribe: " + no;
+            }
             String copia = leerTodo("copia antes de escribir el codigo " + k);
             Registro.nota("copia previa: " + copia);
             Ecuacion anterior = Sesion.get().leidas[Fabrica.indice(k)];
@@ -550,9 +632,16 @@ public class AdminActivity extends Base {
             } else if (e != null && e.igualFloat32(ts.enviada, Ecuacion.ULP_S)) {
                 String porE = comprobarPorE(k, ts.enviada);
                 if (porE == null) {
+                    Acta acta = Sesion.get().acta;
+                    String tramaG = "#G," + k + "," + Tramas.coeficiente(e.c3) + "," + Tramas.coeficiente(e.c2) + ","
+                            + Tramas.coeficiente(e.c1) + "," + Tramas.coeficiente(e.c0) + "#";
+                    Ecuacion fab = Fabrica.ecuacion(k);
+                    String osc = String.format(Locale.US, "Oscuro (x = %.0f): R %.1f (fábrica %.1f), valor que acepta Diego (P9-B13)",
+                            Asistente.X_OSCURO, e.evaluar(Asistente.X_OSCURO), fab.evaluar(Asistente.X_OSCURO));
+                    acta.escrito(k, tramaG, e, osc);
                     salida = "#S OK y " + estado + " (" + Ecuacion.ULP_S + " ulp); #E en 5 puntos coincide con la curva "
-                            + "enviada (±1). " + grabarFechaHoy() + " Mida ahora al menos un patrón con el código " + k
-                            + " para verificar.";
+                            + "enviada (±1). Ahora: re-medida de verificación del código " + k + " (RF-CAL-18). "
+                            + "No se escribe otro código antes (P9-B8). La fecha de calibración se graba al aceptar el acta.";
                 } else {
                     salida = "#S OK pero " + porE + ". Se restaura el estado anterior: " + restaurar(k, anterior);
                 }
@@ -568,13 +657,153 @@ public class AdminActivity extends Base {
         });
     }
 
+    // ------------------------------------------------------------------ acta (3.6.8)
+
+    /** Acta nueva con el protocolo de la campana de este equipo (P9-B3). */
+    private Acta nuevaActa() {
+        Sesion s = Sesion.get();
+        int[] pr = {1, 9};
+        Campana c = Campanas.abierta();
+        if (c != null && c.esDeEsteEquipo(s.mac)) {
+            pr = c.protocolo();
+        }
+        return new Acta(s.serie(), s.mac, s.firmware(), pr[0], pr[1], s.disparosAsentamiento, Sesion.ahoraIso());
+    }
+
+    /**
+     * RF-CAL-18: re-medida del ultimo codigo escrito sobre un patron de su clase, con el
+     * protocolo fijo del acta. En cada disparo: 'e' (x) y el codigo (R).
+     */
+    private void remedida() {
+        final Sesion s = Sesion.get();
+        final Acta acta = s.acta;
+        if (acta == null || acta.codigos().isEmpty() || !leerParametros()) {
+            return;
+        }
+        final Acta.Codigo cod = acta.codigos().get(acta.codigos().size() - 1);
+        int pos = spRemedida.getSelectedItemPosition();
+        if (pos < 0 || pos >= patronesRemedida.size()) {
+            alerta("Re-medida", "Elija un patrón de la clase del código " + cod.k + ".");
+            return;
+        }
+        final Patron p = patronesRemedida.get(pos);
+        new AlertDialog.Builder(this).setTitle("Re-medida del código " + cod.k)
+                .setMessage("Coloque " + p + ". Protocolo del acta: " + acta.colocaciones + " colocaciones × "
+                        + acta.disparos + " disparos, " + acta.asentamiento + " de asentamiento.")
+                .setPositiveButton("OK", (d, w) -> {
+                    ocupado = true;
+                    refrescar();
+                    Cliente.instancia().ejecutar(() -> colocacionRemedida(acta, cod, p, 1,
+                            new ArrayList<double[]>(), new ArrayList<double[]>()));
+                })
+                .setNegativeButton("Cancelar", null).show();
+    }
+
+    private void colocacionRemedida(Acta acta, Acta.Codigo cod, Patron p, int k, List<double[]> rs, List<double[]> xs) {
+        Sesion s = Sesion.get();
+        String error = null;
+        try {
+            for (int i = 0; i < acta.asentamiento; i++) {
+                Cliente.Respuesta a = Cliente.instancia().pedir("e", Tramas.Tipo.MEDIDA, Cliente.TIMEOUT_MEDIDA_MS);
+                Registro.nota("re-medida: disparo de asentamiento, descartado: " + a.describir());
+            }
+            List<Double> r = new ArrayList<>();
+            List<Double> x = new ArrayList<>();
+            for (int i = 0; i < acta.disparos; i++) {
+                Cliente.Respuesta re = Cliente.instancia().pedir("e", Tramas.Tipo.MEDIDA, Cliente.TIMEOUT_MEDIDA_MS);
+                Cliente.Respuesta rk = Cliente.instancia().pedir(String.valueOf(cod.k), Tramas.Tipo.MEDIDA,
+                        Cliente.TIMEOUT_MEDIDA_MS);
+                Integer vx = re.valida() ? Tramas.valorMedida(re.trama) : null;
+                Integer vr = rk.valida() ? Tramas.valorMedida(rk.trama) : null;
+                if (vx != null && vx > 0 && vr != null) {
+                    x.add((double) vx);
+                    r.add((double) vr);
+                } else {
+                    Registro.nota("re-medida: par no válido: e -> " + re.describir() + ", " + cod.k + " -> " + rk.describir());
+                }
+            }
+            xs.add(Estadistica.aVector(x));
+            rs.add(Estadistica.aVector(r));
+        } catch (IOException | InterruptedException | RuntimeException e) {
+            error = EnlaceSerie.descripcion(e);
+        }
+        final String ferr = error;
+        enUi(() -> {
+            if (ferr == null && k < acta.colocaciones) {
+                new AlertDialog.Builder(this).setTitle("Colocación " + (k + 1) + " de " + acta.colocaciones)
+                        .setMessage("Levante el equipo y vuelva a apoyarlo sobre " + p.nombre + ". Pulse OK cuando esté apoyado.")
+                        .setCancelable(false)
+                        .setPositiveButton("OK", (d, w) -> Cliente.instancia().ejecutar(
+                                () -> colocacionRemedida(acta, cod, p, k + 1, rs, xs)))
+                        .show();
+                return;
+            }
+            ocupado = false;
+            if (ferr != null) {
+                alerta("Re-medida", "Interrumpida: " + ferr + ". No cuenta; repítala.");
+            } else {
+                Acta.Remedida rm = Acta.evaluarRemedida(p.nombre, rs, xs, cod.leida, Asistente.S_REP_REL);
+                acta.remedida(cod.k, rm);
+                Registro.nota("re-medida código " + cod.k + ": " + rm.texto);
+                alerta("Re-medida del código " + cod.k, rm.texto);
+            }
+            refrescar();
+        });
+    }
+
+    private void aceptarActa() {
+        final Acta acta = Sesion.get().acta;
+        if (acta == null || acta.motivoNoAceptable() != null) {
+            return;
+        }
+        new AlertDialog.Builder(this).setTitle("Aceptar el acta")
+                .setMessage(acta.texto() + "\nAl aceptar se graba la fecha de calibración de hoy (#SC), una sola vez.")
+                .setPositiveButton("Aceptar y grabar fecha", (d, w) -> op("Aceptar acta", true, () -> {
+                    String t = grabarFechaHoy();
+                    acta.aceptar(Sesion.ahoraIso(), ultimaFechaGrabada);
+                    guardarActa(acta);
+                    return t;
+                }))
+                .setNegativeButton("Cancelar", null).show();
+    }
+
+    private void rechazarActa() {
+        final Acta acta = Sesion.get().acta;
+        if (acta == null || acta.cerrada()) {
+            return;
+        }
+        final EditText e = new EditText(this);
+        e.setHint("Motivo");
+        new AlertDialog.Builder(this).setTitle("Rechazar el acta").setView(e)
+                .setMessage("No se grabará fecha de calibración. Lo escrito sigue en el equipo: restaure a fábrica "
+                        + "si no debe quedar.")
+                .setPositiveButton("Rechazar", (d, w) -> {
+                    acta.rechazar(Sesion.ahoraIso(), e.getText().toString().trim());
+                    guardarActa(acta);
+                    refrescar();
+                })
+                .setNegativeButton("Cancelar", null).show();
+    }
+
+    private void guardarActa(Acta acta) {
+        try {
+            java.io.File f = Campanas.guardarActa(this, acta.texto());
+            Registro.nota("acta guardada en " + f.getName() + ":\n" + acta.texto());
+        } catch (IOException e) {
+            Registro.nota("no se pudo guardar el acta: " + e.getMessage() + "\n" + acta.texto());
+        }
+    }
+
     // ------------------------------------------------------ serie y fecha (3.6.2)
 
     /**
      * Tras una calibracion verificada: #SC con la fecha de hoy y relectura #GC.
      * Llamar desde el hilo de trabajo. Devuelve el texto para el operador.
      */
+    private volatile String ultimaFechaGrabada;
+
     private String grabarFechaHoy() throws IOException, InterruptedException {
+        ultimaFechaGrabada = null;
         Sesion s = Sesion.get();
         if (!s.es362()) {
             return "Firmware " + s.firmware() + ": no tiene #SC, la fecha de calibración NO se graba.";
@@ -588,6 +817,7 @@ public class AdminActivity extends Base {
             s.fechaCalibracion = leida;
         }
         if ("OK".equals(res) && hoy.equals(leida)) {
+            ultimaFechaGrabada = hoy;
             return "Fecha de calibración " + hoy + " grabada y verificada con #GC# (vence "
                     + Calibracion.vencimiento(hoy) + ").";
         }

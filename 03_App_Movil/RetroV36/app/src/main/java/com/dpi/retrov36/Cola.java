@@ -30,7 +30,7 @@ public final class Cola {
         public final int orientacion;
         public final String motivo;
 
-        Paso(String patron, int orientacion, String motivo) {
+        public Paso(String patron, int orientacion, String motivo) {
             this.patron = patron;
             this.orientacion = orientacion;
             this.motivo = motivo;

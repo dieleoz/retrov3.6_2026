@@ -147,6 +147,24 @@ public final class Campanas {
         }
     }
 
+    /** Guarda un acta de calibracion (nunca pisa otra); va en el ZIP de la campana de su equipo. */
+    public static synchronized File guardarActa(Context ctx, String texto) throws IOException {
+        Sesion s = Sesion.get();
+        File dir = new File(ctx.getFilesDir(), "campanas");
+        if (!dir.isDirectory() && !dir.mkdirs()) {
+            throw new IOException("no se pudo crear " + dir);
+        }
+        String sello = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+        File f = new File(dir, "acta_" + clave(s.serie(), s.mac) + "_" + sello + ".txt");
+        for (int i = 2; f.exists(); i++) {
+            f = new File(dir, "acta_" + clave(s.serie(), s.mac) + "_" + sello + "_" + i + ".txt");
+        }
+        try (Writer w = new OutputStreamWriter(new FileOutputStream(f), StandardCharsets.UTF_8)) {
+            w.write(texto);
+        }
+        return f;
+    }
+
     /** Archiva la campana actual (se renombra, no se borra) y empieza otra. */
     public static synchronized void nueva(Context ctx, String serie, String mac) throws IOException {
         Campana c = abrir(ctx, serie, mac);
@@ -217,6 +235,14 @@ public final class Campanas {
                     + "(pruebas.txt), todos los registros de tramas de la campaña (tramas/) y el diario.\n\n"
                     + c.resumen());
             fichero(z, "diario_" + fichero.getName(), fichero);
+            File[] actas = fichero.getParentFile().listFiles();
+            if (actas != null) {
+                for (File a : actas) {
+                    if (a.getName().startsWith("acta_" + claveAbierta + "_")) {
+                        fichero(z, "actas/" + a.getName(), a);
+                    }
+                }
+            }
             File fp = ficheroPruebas();
             if (fp != null && fp.exists()) {
                 fichero(z, "pruebas.txt", fp);

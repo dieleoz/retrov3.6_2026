@@ -71,6 +71,25 @@ public final class Sesion {
     /** Coeficientes leidos con #G (V3.6); null si no leidos. */
     public final Ecuacion[] leidas = new Ecuacion[Fabrica.CODIGOS.length];
     public volatile double[] temperatura;
+    /**
+     * Acta de la calibracion en curso (3.6.8); null si no se ha escrito nada. Mientras
+     * exista y no este cerrada, el protocolo de disparos esta fijo (P9-B3).
+     */
+    public volatile Acta acta;
+
+    public boolean calibrando() {
+        Acta a = acta;
+        return a != null && !a.cerrada();
+    }
+
+    /** De donde salen los puntos del ajuste (P9-B7). */
+    public String origenAjuste() {
+        Campana c = Campanas.abierta();
+        if (c != null && c.esDeEsteEquipo(mac) && !c.medidasElegidas().isEmpty()) {
+            return "series elegidas de la campaña de " + c.equipo + " (" + c.mac + ")";
+        }
+        return "ATENCIÓN: medidas sueltas de esta sesión, no de la campaña (P9-B7)";
+    }
 
     /** null: pruebas no hechas; true/false: APTO / NO APTO. */
     public volatile Boolean apto;
@@ -108,6 +127,7 @@ public final class Sesion {
             leidas[i] = null;
         }
         temperatura = null;
+        acta = null;
         apto = null;
         resumenPruebas = "";
         overrideAdmin = false;

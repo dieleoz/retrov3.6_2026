@@ -207,6 +207,36 @@ public final class Asistente {
         return f;
     }
 
+    /**
+     * P9-B13 (REVISION-Arquitectura-P9-V3.6.md §4 bis): la curva nueva evaluada en la x de
+     * OSCURO no puede dar bastante mas que la de fabrica en ese punto. Caso de referencia:
+     * blanco grado 2 de la campana del 19-sep, R(575) ~ 219 frente a 25 de fabrica: una
+     * lamina degradada, o nada, leeria ~200. El arquitecto no fija cifra (lo acepta Diego
+     * por escrito); umbral del coordinador, configurable: R_oscuro <= max(fabrica + 10 ; 25).
+     * x de oscuro por defecto 575 (medida con la V3.6 en SLV-002, ACTA-antes-y-despues:40).
+     */
+    public static volatile double X_OSCURO = 575;
+    public static volatile double OSCURO_MARGEN = 10;
+    public static volatile double OSCURO_MINIMO = 25;
+    /**
+     * P9-B5 / §4 ter: s de reproducibilidad entre colocaciones, relativa, para los criterios
+     * que dependen de dispersion. 3 % hasta que P9-A5 la mida (2-4 % segun el coordinador).
+     */
+    public static volatile double S_REP_REL = 0.03;
+
+    /** Motivo de bloqueo por oscuro, o null si la curva cumple. */
+    public static String comprobarOscuro(Ecuacion nueva, char k, double xOscuro, double margen, double minimo) {
+        double rN = nueva.evaluar(xOscuro);
+        double rF = Fabrica.ecuacion(k).evaluar(xOscuro);
+        double lim = Math.max(rF + margen, minimo);
+        if (rN > lim) {
+            return String.format(Locale.US, "en oscuro (x = %.0f) la curva nueva da R = %.0f frente a %.0f de fábrica; "
+                    + "límite máx(fábrica + %.0f ; %.0f) = %.0f. Una lámina degradada, o nada, leería %.0f (P9-B13)",
+                    xOscuro, rN, rF, margen, minimo, lim, rN);
+        }
+        return null;
+    }
+
     /** Limites de #S del firmware V3.6.1 (calibracion_v36.c:588, CAMBIOS-V3.6.md §7). */
     public static final int S_X_MIN = 600;
     public static final int S_X_MAX = 4300;
@@ -238,6 +268,45 @@ public final class Asistente {
             }
         }
         return null;
+    }
+
+    /**
+     * RF-CAL-15/16 (informativo, lo decide Diego): sesgo y RMS relativos por tipo de lamina,
+     * curva nueva frente a fabrica. "No empeorar" con margen de reproducibilidad (P9-B5):
+     * empeora solo si RMS_nueva > RMS_fabrica + S_REP_REL.
+     */
+    public static String residuoPorTipo(List<Punto> puntos, Ecuacion nueva, Ecuacion fabrica) {
+        Map<String, List<Punto>> porTipo = new LinkedHashMap<>();
+        for (Punto q : puntos) {
+            List<Punto> l = porTipo.get(q.patron.tipo);
+            if (l == null) {
+                l = new ArrayList<>();
+                porTipo.put(q.patron.tipo, l);
+            }
+            l.add(q);
+        }
+        StringBuilder sb = new StringBuilder("Residuo por tipo (nueva / fábrica), relativo al certificado:\n");
+        for (Map.Entry<String, List<Punto>> e : porTipo.entrySet()) {
+            double[] rn = rel(e.getValue(), nueva);
+            double[] rf = rel(e.getValue(), fabrica);
+            boolean empeora = rn[1] > rf[1] + 100 * S_REP_REL;
+            sb.append(String.format(Locale.US, "  %-4s n=%d  sesgo %+.1f %% / %+.1f %%  RMS %.1f %% / %.1f %%%s\n",
+                    e.getKey(), e.getValue().size(), rn[0], rf[0], rn[1], rf[1],
+                    empeora ? "  EMPEORA más allá de la reproducibilidad" : ""));
+        }
+        return sb.toString();
+    }
+
+    /** {sesgo %, RMS %} de (R_curva - cert) / cert. */
+    static double[] rel(List<Punto> l, Ecuacion e) {
+        double s = 0;
+        double s2 = 0;
+        for (Punto q : l) {
+            double r = 100 * (e.evaluar(q.x) - q.patron.valor) / q.patron.valor;
+            s += r;
+            s2 += r * r;
+        }
+        return new double[]{s / l.size(), Math.sqrt(s2 / l.size())};
     }
 
     public static final class Propuesta {
@@ -351,6 +420,16 @@ public final class Asistente {
             if (fw != null) {
                 bloqueos.add(fw);
             }
+            // P9-B13: oscuro y parte baja.
+            String osc = comprobarOscuro(e, k, X_OSCURO, OSCURO_MARGEN, OSCURO_MINIMO);
+            if (osc != null) {
+                bloqueos.add(osc);
+            }
+            Ecuacion fab = Fabrica.ecuacion(k);
+            inf.append(String.format(Locale.US, "Oscuro (x = %.0f): R nueva %.1f, fábrica %.1f. Patrón más bajo (x = %.0f): "
+                    + "R nueva %.1f, fábrica %.1f. Por debajo del patrón más bajo la lectura NO está calibrada.\n",
+                    X_OSCURO, e.evaluar(X_OSCURO), fab.evaluar(X_OSCURO), xmin, e.evaluar(xmin), fab.evaluar(xmin)));
+            inf.append(residuoPorTipo(p, e, fab));
             if (grado == 2 && (!f.bloqueos.isEmpty() || fw != null) && x.length >= 3) {
                 // Si la parabola no puede, se mira si una recta si.
                 try {

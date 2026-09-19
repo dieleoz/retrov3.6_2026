@@ -143,7 +143,10 @@ public class AsistenteTest {
         assertTrue(p2.bloqueos.toString(), p2.bloqueos.get(0).contains("creciente"));
         // Grado 1: creciente; negativa solo por debajo de los patrones (aviso).
         Asistente.Propuesta p1 = Asistente.proponer('1', 1, med, Fabrica.ecuacion('1'));
-        assertTrue(p1.informe, p1.escribible());
+        // 3.6.8, P9-B13: una recta por puntos de la curva de fabrica del blanco (parabola)
+        // da ~200 en oscuro: el unico bloqueo es el del oscuro.
+        assertEquals(p1.informe, 1, p1.bloqueos.size());
+        assertTrue(p1.informe, p1.bloqueos.get(0).contains("oscuro"));
         assertTrue(p1.avisos.toString(), p1.avisos.get(0).contains("mezcla tipos"));
         for (Asistente.Punto q : p1.puntos) {
             assertEquals(2, q.n);
@@ -171,7 +174,9 @@ public class AsistenteTest {
         Asistente.Propuesta p = Asistente.proponer('1', 2, med, Fabrica.ecuacion('1'));
         assertFalse(p.escribible());
         Asistente.Propuesta p1 = Asistente.proponer('1', 1, med, Fabrica.ecuacion('1'));
-        assertTrue(p1.informe, p1.escribible());
+        // Con 3 patrones el grado 1 cabe; solo lo para el oscuro (P9-B13, 3.6.8).
+        assertEquals(p1.informe, 1, p1.bloqueos.size());
+        assertTrue(p1.informe, p1.bloqueos.get(0).contains("oscuro"));
     }
 
     @Test
