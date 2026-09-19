@@ -95,7 +95,24 @@ reinicio; CRC corrupto en un registro → sólo ese código a fábrica; cabecera
 bloqueo tras 5 fallos (de `#L` y de `#P`); caducidad a los 10 min. Los CRC del volcado de EEPROM se
 recalcularon fuera (Python, CRC-16/CCITT-FALSE, `"123456789"` → 0x29B1) y cuadran los 13 registros.
 
-### 3.3 Formato numérico: **no cumple O-02** (ver §4)
+### 3.3 Descarte de trama `#` incompleta y trama en la ventana de `clearBuffer()`
+
+El descarte no depende de `taskUartTimeout` (sigue comentada en `uart_module.c:172`, como en 2020):
+lo hace `atenderAdmin()` (`uart_module.c:108-117`), una función normal, no un protothread, llamada en
+cada vuelta del bucle principal desde `executeUartModule()` (`uart_module.c:169`, `main.c:37`). Compara
+`getMillis() - adminTiempo > 2000` (resta sin signo, segura ante el desbordamiento del contador).
+Ritmo: una comprobación por vuelta del bucle; la vuelta se alarga en los tramos bloqueantes de 2020
+(`__delay_ms(20)` de `uart_stone.c:107`, bucle de 600 conversiones de `measurement.c:242`).
+
+Prueba en simulador con el `uart_module.c` real (`pruebas/T-RX_harness_rx.c`; UART1 y reloj simulados):
+`#` suelto, a 1,9 s la trama sigue abierta (`adminIndex` = 1); a 2,5 s se ha descartado, y un `1`
+posterior entra en `bufferData` (`bufferIndex` = 1, `bufferData[0]` = `'1'`), que es la condición de
+medida de 2020 (`gui.c:295`, sin cambios). Trama `#V#` que llega partida alrededor de un
+`clearBuffer()` con un byte suelto pendiente, y trama `#V#` en la ventana de 500 ms de `gui.c:342-346`:
+en los dos casos llega entera a `adminProcesarTrama` y `bufferIndex` queda en 0 (no dispara medida).
+Un byte suelto en esa ventana sigue disparando otra medida, como en 2020.
+
+### 3.4 Formato numérico: **no cumple O-02** (ver §4.1)
 
 120 valores en simulador: los 35 literales distintos de fábrica (coeficientes y temperatura) y 85 aleatorios entre 1e-9 y 1e5, de los dos signos:
 
@@ -136,5 +153,5 @@ recalcularon fuera (Python, CRC-16/CCITT-FALSE, `"123456789"` → 0x29B1) y cuad
 
 ## 6. Entregable
 
-- `hex/RetroVertical_V3.6.hex`, su md5 y el informe de memoria en `hex/memoria.txt`.
+- `hex/RetroVertical_V3.6.hex`, md5 `680b6a7d3a387ccddf066a2ebc0899d1` (`hex/RetroVertical_V3.6.hex.md5`). ROM 49 060 B de 131 072 (37,4 %), RAM 2 373 B de 8 192 (29,0 %), pila hardware estimada 11 niveles en `main` y 16 con interrupción (base: 11 y 16). Detalle en `hex/memoria.txt`.
 - md5 de cada fuente en `hex/fuente.md5`.

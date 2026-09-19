@@ -279,3 +279,236 @@ Se dejan marcadas, sin elegir, salvo donde el código ya decide.
 | 6 | `SPEC-06` da como ejemplo de respuesta `@LEERV,255.3@`, con decimales; el firmware emite `%d` | `SPEC-06` §D · `Aplicacion.c:312` | El código decide: entero |
 | 7 | Recuento del catálogo: 54/76/30 (`SPEC-06` §J, VALIDACION §1), 55/77/30 (REVISION E4) y "declara 160, hay 162, seis inalcanzables" (`ROADMAP.md` V5, punto 7) | Tres documentos | Abierta; sólo importa si la V3.6 reutiliza el catálogo |
 | 8 | Tiempo de ciclo: `MEJORAS.md` M-06 da "~1000 + ~2000 ms" citando `SPEC-02` §B; REVISION E2 dice que `SPEC-02` da 2000 ms en total; `SPEC-07` RNF-03 da 3015 ms. Ninguna cifra está medida | `MEJORAS.md` M-06 · REVISION E2 · `SPEC-07` RNF-03 | Abierta en V4. En V3 no hay cifra: se mide (tramo 4) |
+
+---
+
+## 8. Segunda pasada (18-sep-2026)
+
+**Nada de esta sección está medido.** Sale de leer documentos y código. Completa la primera pasada
+con los documentos del proyecto V5 que ésta no revisó. **Origen de todas las filas: proyecto V5**
+(`D:\IT\P_RetroReflectometro_Vertical`, commit `f79daf6`), que es **otro proyecto** y aquí sólo se
+consulta: nada de esta sección propone escribir en él ni versionar la V3.6 allí.
+
+- **Fuentes nuevas (sólo lectura), en `05_Documentacion/` del V5:** `SPEC-08-APK-Cotejo-Equipos.md`
+  (SPEC-08), `ENCARGO-Medida-Julio.md` (ENCARGO), `PROCEDIMIENTO-Identificar-Firmware.md` (PIF),
+  `TABLA-Patrones-Derivada.md` (TABLA) y `SPEC-01` a `SPEC-04`, más `ROADMAP.md` del V5 (tarea 3 y
+  tabla SLV-002) y `03_App_Movil/RetroDiagBT/.../Barrido.java`.
+- **Contrato V3.6:** `PROTOCOLO-V3.6.md` revisión 1.1 (§4 bis manda) y `SPEC-V3.6.md`.
+- Las citas de firmware sin ruta son de `01_Firmware/base_2020_d089f962/RetroVertical1.X/` de este
+  repositorio. Todas se han abierto el 18-sep-2026.
+
+### 8.0 Hecho nuevo: la app ya existe
+
+`03_App_Movil/RetroV36/` contiene la app (`com.dpi.retrov36`, `versionCode 360`, sin permiso
+`INTERNET`; `README.md:7-9`). Su `README.md` describe un modo de pruebas de seis pruebas
+(`:57-69`), la medida de patrones (`:49-50`) y el asistente (`:99-107`). **Lo que sigue se contrasta
+con ese `README.md`, no con el código Java**, que esta pasada no ha revisado. Donde se dice "ya lo
+hace", significa "su `README` dice que lo hace".
+
+### 8.1 Copia antigua `D:\@Proyect\IT\P_RetroReflectometro_Vertical\05_Documentacion\`
+
+Comparados nombres y md5 de los dos `05_Documentacion/`. **No hay ningún documento que esté sólo en
+la copia antigua.** La antigua tiene 14 de los 20. Los 13 comunes coinciden en md5 salvo
+`TABLA-Patrones-Derivada.md`, que en la antigua es una versión anterior (102 líneas frente a 208)
+cuyas líneas están todas en la nueva (`diff --strip-trailing-cr`). En la raíz, `MEJORAS.md` e
+`INDICE_CRUZADO.md` coinciden en md5. `ROADMAP.md`, `README.md`, `ESTADO.md`, `CLAUDE.md` y
+`ARQUITECTURA.map` difieren y no se han revisado aquí, porque no son documentos de mejoras ni SPEC.
+Nada que añadir por esta vía.
+
+### 8.2 Mejoras, una por fila
+
+Mismas columnas que §3. Las filas que duplican una ya tratada se remiten a ella y **no se cuentan**.
+
+**SPEC-08 (origen: proyecto V5)**
+
+| ID | Qué es | V3.6 | Por qué | Prioridad | Depende de |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **S8-1** (§2.1) | Encender de cero antes de la sesión, por el arrastre de estado | **Adaptada** | Con `e` no hay arrastre de estado en el V3. Pero la `x` lleva un factor de temperatura activo (`gui.c:300`, `X_1 = 0,00043212` en `gui.c:42`) y la app no puede leer la temperatura: ninguna orden de `PROTOCOLO-V3.6.md` §3 la devuelve (`#GT#` da los coeficientes, no T). Se registra la hora de encendido y la sesión se hace en un solo régimen térmico (`PROCEDIMIENTO-Calibracion-V3-K42.md:244`) | Antes de P8 | Ninguna |
+| **S8-2** (§2.2) | Descartar las líneas de arranque | **No aplica** | El V3 no emite nada al arrancar (§2) | No | — |
+| **S8-3** (§2.5) | Pedir naranja en lugar de rojo | **No aplica** | Es un defecto del V4.1 (M-20) | No | — |
+| **S8-4** (§2.7) | Registrar todas las lecturas, no sólo la última | **Sí** | Ya lo hace el registro de tramas (`README.md:89`); el CSV sólo lleva las válidas (`:90`). Que se mantenga así: el estadístico (S8-7) cuenta las excluidas | Antes de P8 | RF-06 |
+| — (§2.8) | Si la medida no es válida, no sale número ni veredicto | Se trata en M-03 | — | — | — |
+| **S8-5** (§2.9) | Tanda de control sobre el equipo patrón en la misma jornada | **Adaptada** | En P8 no hay un equipo patrón contra el que cotejar. El control equivalente es un **patrón testigo** medido con `e` al principio y al final de la sesión, junto al oscuro que ya pide `SPEC-V3.6.md:289`. Su diferencia mide la deriva térmica de la sesión (S8-1) | Antes de P8 | RF-APP-13 |
+| **S8-6** (§3) | Versión de la tabla de referencia en cada medida y en el acta | **Sí** | Un veredicto sin la tabla contra la que se emitió no vale. En V3.6: md5 del `patrones_certificados_P1-P31.csv` cargado, en cada fila y en el acta (RF-APP-21) | Antes de P8 | M-09 |
+| — (§3) | Registrar qué se midió inmediatamente antes | Se trata en RF-06 / RF-APP-20 | El registro de tramas ya lo da en orden | — | — |
+| **S8-7** (condición 1) | Fijar el estadístico que convierte N lecturas en un valor | **Adaptada** | Ver §8.3 | Antes de P8 | RF-APP-13, P-04 |
+| **S8-8** (condición 2) | Cotejar en cuentas, no en unidades de R | **Sí** | En V3.6 ya es así en la práctica: `e` da la `x` y el asistente ajusta sobre `x` (`SPEC-V3.6.md:302`). Falta subirlo a regla: toda tolerancia y toda repetibilidad, en cuentas de `x` | Antes de P8 | Ninguna |
+| **S8-9** (condición 3) | Suelo de resolución: paso observable | **Adaptada** | En V3 no son diez cuentas. Ver §8.4 | Antes de P8 | Ninguna |
+| **S8-10** (condición 4) | Declarar la relación con SPEC-07 | **Adaptada** | En V3.6 hay que declarar qué certifica cada pantalla: el modo de pruebas dictamina aptitud; el asistente ajusta contra patrones; **ninguno coteja dos equipos**. Si alguna vez se comparan dos V3 (SLV-002 y otro), aplican las reglas de SPEC-08: mismos patrones físicos, misma jornada, en cuentas | Antes de P8 | Ninguna |
+| — (condición 5, M6) | `getTypePaper()` puede no devolver nada y decide la rama | Se trata en M-04 corregida | El equivalente V3 es el gatillo con el color de pantalla (§8.3, punto 5) | — | — |
+| **S8-11** (§5.2; ENCARGO §4d) | Qué geometría mide el equipo | **Sí** | Tampoco consta para el V3. Sin ella, el acta no puede decir contra qué fila de la norma se dictamina. `SPEC-V3.6.md:334` ya lo recoge en el acta | Después | Dato del fabricante |
+| **S8-12** (§5.4; ENCARGO §4b) | N lecturas y desviación aceptable: criterio del propietario | **Sí** | Es P-04 (`SPEC-V3.6.md:575`). Los umbrales de `README.md:125` (10 y 15 cuentas) son provisionales | Antes de P8 | T-B04 medido |
+| — (§5.3) | Azul sin datos de calibración | Se trata en RF-APP-14 | En P1-P31 verde, azul y rojo tienen un solo nivel | — | — |
+| **S8-13** (§6) | Administrador con dos niveles y credenciales de correo cifradas | **No aplica** | La V3.6 no lleva credenciales (sin `INTERNET`, `README.md:9`) y su único nivel de escritura es el PIN del equipo | No | — |
+
+**ENCARGO, PIF y TABLA (origen: proyecto V5)**
+
+| ID | Qué es | V3.6 | Por qué | Prioridad | Depende de |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **ENC-1** (ENCARGO §1) | Cambiar las claves por defecto antes de medir nada | **Adaptada** | El PIN de fábrica `2026` está escrito en `PROTOCOLO-V3.6.md:64`. La app debería exigir `#P` en la primera sesión de administrador si `#L,2026#` funciona | Antes de P8 | RF-APP-19 |
+| **ENC-2** (ENCARGO §4f; TABLA §4ter) | Los sumandos K no salen de ninguna regresión | **No aplica** | Las ecuaciones del V3 son polinomios completos (`ecuacionesCalibracion.c:3-42`) y el asistente sustituye la curva entera. El origen de los coeficientes de 2020 tampoco está documentado, pero no hay ningún término suelto que conservar | No | — |
+| **ENC-3** (ENCARGO §5; TABLA §4ter) | La señal útil ocupa el 6,8 % del ADC | **Adaptada** | La cifra es de la placa V4 y **no se traslada**. En SLV-002 un mismo patrón dio `x` = 599-634 en los 12 códigos (`ROADMAP.md` V5:38), y el blanco intenso tiene su techo en `x` ≈ 3580 (`SPEC-V3.6.md:73`): el recorrido del V3 puede ser mucho mayor. Hay que medirlo: oscuro y patrón más brillante con `e`. Se propone mostrarlo en el modo de pruebas como dato informativo (recorrido en cuentas y en % de 4096) | Después (dato de P8) | RF-APP-13 |
+| **PIF-1** (vía A) | Identificar el firmware por lo que responde | **Adaptada** | Ver §8.5 | Antes de campo (reducida); barrido, después | Pruebas 2 a 4 del `README.md` |
+| **PIF-2** (A.4) | El tiempo de respuesta como firma | **Adaptada** | Registrar por código el tiempo entre el envío y el primer byte de `::`. Cuesta poco y distingue variantes. El V3 espera 400 ms con la luz encendida (`measurement.c:225-226`); la duración del resto no está medida | Antes de campo | Registro de tramas |
+| **PIF-3** (final) | La primera orden de un firmware nuevo: lectura en crudo con un decimal | **No aplica** | Con `e` el paso ya es de una cuenta de `x` (§8.4). Un decimal no añadiría resolución útil por debajo del ruido térmico | No | — |
+| **TAB-1** (§1, §5) | Tabla derivada: `x` esperada por patrón, invirtiendo las ecuaciones del firmware | **Adaptada** | Junto al "como llegó" de RF-APP-16: por cada patrón, la `x` que haría que la ecuación de fábrica diera su valor certificado, y al lado la `x` medida, en cuentas. Es la comparación que no depende de la curva | Antes de P8 | RF-APP-10 |
+| **TAB-2** (§4bis) | Residuos en cuentas y no sólo en R; ningún panel medido dos veces | **Adaptada** | Dividir por una pendiente pequeña infla el residuo en R. El asistente muestra residuos en R (`SPEC-V3.6.md:304`): añadir la columna en cuentas de `x`. La falta de repeticiones ya la cubre RF-APP-13 (10 + 3×5) | Antes de P8 | RF-APP-15 |
+
+**Patrones de defecto de `SPEC-01` a `SPEC-04` que pueden repetirse (origen: proyecto V5)**
+
+| ID | Patrón V4.1 | V3.6 | En el V3 | Prioridad | Depende de |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| PAT-0 | Estado oculto entre medidas (`error`, `SPEC-02` §G.2) | Se trata en M-04 corregida | Color de pantalla y gatillo (`gui.c:311-315`, `SPEC-V3.6.md:46`). Con `e` no hay otro estado que llegue a la `x`: el filtro se reinicia en cada medida (`measurement.c:241`) | — | — |
+| **PAT-1** | Esperas bloqueantes | **Adaptada** | El V3 las tiene: 600 conversiones sin ceder (`measurement.c:242-245`), 200 en la temperatura (`:67-70`) y `__delay_ms(20)` en la STONE (`SPEC-V3.6.md:47`). La app no debe suponer que el equipo atiende mientras mide. El firmware V3.6 no debe añadir ninguna | Antes de campo | RF-APP-01 |
+| **PAT-2** | Buffer de recepción sin límite | **Sí** | `bufferData[50]` se llena sin comprobar (`uart_module.c:19,52-56`) y en 2020 no se vacía por tiempo (`:109`). **Regla nueva para la app:** ninguna trama de más de 49 bytes (un `#S` completo) sale hacia un equipo que no haya respondido `#V,3.6,...#`. En un V3 2020 desbordaría el buffer | Antes de campo | RF-APP-03 |
+| **PAT-3** | Trama que deja el equipo sin Bluetooth, sin perro guardián (`@` sin `LEERV`, PIF vía A) | **Sí** | La V3.6 conserva `WDTE = OFF` (`PROTOCOLO-V3.6.md:104-105`; `device_config.c:77`). Su descarte a los 2 s de una trama `#` incompleta (`PROTOCOLO-V3.6.md:33`) **necesita una tarea de tiempo que en 2020 está desconectada** (`uart_module.c:109`). Si no se activa, un `#` suelto deja el analizador esperando para siempre. La app no envía nunca un `#` suelto. Se cierra con T-C16/T-C17 | Antes de P7 | Firmware V3.6 |
+| **PAT-4** | EEPROM usada como variable temporal (`SPEC-04:42`) | **Sí** | En 2020 **nada escribe la EEPROM**: `writeFunction15Params` y las demás funciones de escritura no tienen ninguna llamada (búsqueda en todo el proyecto). La V3.6 será la primera en escribirla, y sólo con `#S`, `#F`, `#ST` y `#P`. **Prueba en la app:** `#G` de los 12 antes y después de una tanda de medidas, iguales | Antes de P8 | P7 |
+| **PAT-5** | Análisis por subcadena (`SPEC-03:135`: un `1` en cualquier posición) | **Sí** | El analizador `#...#` del firmware y el de la app separan por campos y validan cada uno. Nunca `strstr` | Antes de P7 | Firmware V3.6 |
+| **PAT-6** | Filtro IIR truncado a entero en cada paso (`SPEC-02` §G.1) | **No aplica** | En el V3 el acumulador es `float` (`measurement.c:20,244`). Es global y lo comparten la temperatura y la reflexión (`:66,241`): la V3.6 debe seguir reiniciándolo en cada rutina | No | — |
+
+### 8.3 Las condiciones de SPEC-08 aplicadas a la V3.6
+
+La tarea 3 del `ROADMAP.md` V5 (`:91`) pide cinco cosas. Traducidas a la V3.6:
+
+1. **Estadístico (S8-7).** Hoy la V3.6 usa tres distintos sin declararlo: la **media** por patrón en el
+   asistente (`SPEC-V3.6.md:302`; `README.md:50,102`), la **mediana** como referencia en la prueba de
+   coherencia (`README.md:67`) y la **desviación** de 5 lecturas en la de repetibilidad (`:69`).
+   Propuesta, a decidir con P-04:
+   - **Asistente:** el valor de cada patrón es la media de las lecturas válidas de `x` con `e`, y se
+     publican n, s y cuántas se excluyeron. `::0` y los tiempos agotados no entran. **Nunca se
+     mezclan** lecturas de `e` con lecturas invertidas de `6`: éstas son intervalos, y el acta lleva
+     su semiancho.
+   - Si queda fuera más de una lectura de las 10, el patrón no se usa en el ajuste.
+   - **Modo de pruebas:** se declara la mediana como referencia de la prueba 4, que resiste un código
+     mal invertido. La prueba 6 pasa a 10 lecturas, como pide RF-APP-09.
+   - Con 3 recolocaciones de 5, el valor sale de las 15 lecturas, y las 10 seguidas sólo dan el
+     error puro de repetibilidad. Esto también es propuesta.
+2. **Cotejar en cuentas (S8-8).** Aplica íntegra. Tolerancias, repetibilidad, el "como llegó" (TAB-1)
+   y el antes/después de RF-APP-17 se miden en cuentas de `x`. La R sólo aparece como resultado de la
+   curva. El acta dice que `x` no es retrorreflexión (M-08).
+3. **Suelo de resolución (S8-9).** Con `e` es **una cuenta**, no diez. Con inversión depende del
+   código y de `x`. El cálculo está en §8.4. Consecuencia: ninguna tolerancia por debajo de
+   `max(suelo, 2·s)`, donde `s` es la repetibilidad medida en T-B04. El umbral de 10 y la tolerancia
+   de 15 (`README.md:125`) quedan por encima del suelo de `e`. Con `6` invertido, la app ya suma la
+   resolución (`README.md:67`).
+4. **Relación con SPEC-07 (S8-10).** Se escribe en `SPEC-V3.6.md` qué certifica cada pantalla
+   (tabla §8.2). El acta ya dice "ajuste contra patrones, no calibración trazable"
+   (`SPEC-V3.6.md:334`).
+5. **M6 en §2.4.** El equivalente V3 es el gatillo. Si está pulsado, la respuesta a `e` es la
+   ecuación del color de pantalla aplicada a la `x`, y no la `x`: `gui.c:311-315` aplica esa ecuación
+   y `ecuacionesCalibracion.c:191-192` no aplica ninguna encima. La app no lo puede detectar en una
+   lectura suelta. La prueba 4 sí lo delata, porque los 12 códigos dejan de invertir a la misma `x`
+   (doble ecuación, `SPEC-V3.6.md:46`).
+
+**Qué no pasa a la V3.6:**
+- encender de cero por el arrastre (S8-1 lo sustituye por el control térmico);
+- el descarte del banner;
+- pedir naranja en lugar de rojo;
+- los dos niveles de administrador;
+- la cifra de "30 unidades de R en blanco", que es de la placa V4 y de su ecuación.
+
+### 8.4 Suelo de resolución del V3
+
+**Por `e` (la `x`):**
+
+| Paso | Qué hace | Cita |
+| :--- | :--- | :--- |
+| 1 | ADC de 12 bits: el resultado justificado a la izquierda se reconvierte a 12 bits | `adcc.c:108,159` |
+| 2 | Referencia externa en VREF+ (`ADREF = 0x02`); MCP1541 de 4,096 V nominal, **no medida en esta placa**: 1 cuenta ≈ 1 mV | `adcc.c:101-102`; `HARDWARE-V3-SATLUX-H-IoT.md:211-212` (V5) |
+| 3 | Media de 15 muestras y filtro exponencial en `float` (α = 0,995, 599 pasos) | `measurement.c:228-245` |
+| 4 | **Truncado** a entero y suma de 200 | `measurement.c:247` |
+| 5 | Producto por el factor de temperatura `k = X_1·T + X_0` (`X_2 = 0`) | `gui.c:41-43,300` |
+| 6 | **Truncado** a `unsigned int` | `gui.c:30,300` |
+| 7 | `e` envía ese entero con `%u`, sin ecuación; si pasa de 4000, envía 0 | `ecuacionesCalibracion.c:51-52,60,191-192` |
+
+**Resultado: el paso de la `x` es de 1 cuenta** (1/k cuentas de ADC, en torno a 1 mV). **Es diez
+veces más fino que el del V4.1**, donde el entero va en unidades de diez cuentas (SPEC-08 §4,
+"Segundo"). Los dos truncados sesgan hacia abajo menos de 2 cuentas en total. Como el sesgo va
+siempre en el mismo sentido, se cancela al comparar dos lecturas, pero no al dar un valor absoluto.
+
+**Pero el suelo práctico lo pone la temperatura, no el entero.** ∂x/∂T = (ADC + 200)·X_1 ≈
+x·4,3·10⁻⁴ por unidad de T. Eso da 0,43 cuentas a x = 1000, 0,86 a x = 2000 y 1,3 a x = 3000. Según
+el comentario de `gui.c:503`, T va en décimas de grado; eso **está sin verificar**
+(`PROCEDIMIENTO-Calibracion-V3-K42.md:172-175`). Si es así, **un grado mueve la `x` entre 4 y 13
+cuentas**. La app no ve T; de ahí S8-1 y S8-5, el control térmico y el patrón testigo.
+
+**Un `::0` de `e`** sólo puede ser saturación (x > 4000). Negativo no puede ser, porque
+x ≥ trunc(200·k) > 0 (`measurement.c:247`). Según `PROCEDIMIENTO-Calibracion-V3-K42.md:160-163`,
+la saturación empieza hacia ADC ≈ 3760 a 25 °C (sin verificar).
+
+**Por un código `k` e inversión (SLV-002, sin `e`):** la respuesta es un entero de R. Cada valor
+recibido corresponde a un intervalo de `x` de ancho 1/f′ₖ(x). Calculado sobre
+`ecuacionesCalibracion.c:3-42`, en cuentas de `x` por unidad de R:
+
+| Código | x = 500 | 1000 | 1500 | 2000 | 3000 | Peor caso |
+| :--- | ---: | ---: | ---: | ---: | ---: | :--- |
+| `6` naranja intenso (el que usa la app) | 10,9 | 5,5 | 3,7 | 2,7 | 1,8 | x < 475: sin inversión (da 0) |
+| `1` blanco intenso | 1,9 | 2,2 | 2,8 | 3,6 | 10 | pendiente nula en x ≈ 3580: sin inversión |
+| `2` amarillo intenso | 2,8 | 2,1 | 2,1 | 2,6 | — | decreciente desde x ≈ 2780 |
+| `3` / `a` verde | 1,7 | 5,3 | 23 | 7,0 | 0,9 | **23,7** en x ≈ 1550 |
+| `4` rojo intenso | 1,9 | 5,4 | 14 | 5,8 | 1,0 | 14,6 en x ≈ 1520 |
+| `b` rojo opaco | 27 | 6,7 | 3,8 | 2,7 | 1,7 | 16,8 en x ≈ 600 |
+
+Cuadra con lo que dice la app: `b` da unas 15 cuentas por unidad de R hacia x ≈ 600
+(`README.md:67`), y con `6` el semiancho es ≤ 3 cuentas entre 1700 y 3000 (`:79`). También es
+coherente con las `x` de 599 a 634 que dieron los 12 códigos en SLV-002 (`ROADMAP.md` V5:38): hacia
+x ≈ 600, los códigos de pendiente baja tienen intervalos de 10 a 27 cuentas.
+
+### 8.5 PROCEDIMIENTO-Identificar-Firmware: equivalente V3 y cómo entra en el modo de pruebas
+
+La vía A del V4 (saludo, `86`/`7`, defecto del rojo, tiempos) no aplica: el V3 no saluda y no tiene
+`error`. **Su equivalente V3 ya existe, en tres piezas:**
+
+1. **Firma de órdenes:** qué bytes responden y con qué formato. Es lo que hizo el barrido de RTV Diag
+   BT sobre SLV-002, que reveló la falta de `e` (`ROADMAP.md` V5:37). La prueba 3 de `README.md:66`
+   ya es un barrido reducido a la lista blanca (`1`-`8`, `a`-`e`).
+2. **Firma de fórmulas:** los 12 códigos invierten a la misma `x`. Es el equivalente exacto de A.2 y
+   corresponde a la prueba 4 (`README.md:67`). Así se identificaron las fórmulas de SLV-002. En V3.6
+   se añade la comprobación exacta con `#E,k,x#` (`PROTOCOLO-V3.6.md:88`), que es la prueba 5.
+3. **Vía B (ICSP):** ya se sabe que el chip de SLV-002 está protegido (`ROADMAP.md` V5:40). Su papel
+   lo cumple la línea base G3, tomada antes de grabar (`ROADMAP.md` P7).
+
+**Propuesta de integración:**
+- **En el flujo APTO**, sólo la firma reducida (pruebas 2 a 4), más el tiempo de respuesta por código
+  (PIF-2), guardada como "firma" en el registro. La app la compara con las firmas conocidas: fuente
+  2020 (responde a `e`), SLV-002 (sin `e`) y V3.6 (`#V#`). Si no coincide con ninguna, marca "variante
+  desconocida" y no deja escribir.
+- **El barrido completo va aparte**, como herramienta técnica con confirmación explícita, **nunca en
+  el flujo APTO**. Motivo: contradice la regla D8, que prohíbe enviar un byte que no sea una orden.
+  Cada byte enciende la luz y mide (`gui.c:295-297`), y son unas 255 medidas en más de 6 minutos
+  (`Barrido.java:34,43`).
+- **Condición para barrer un V3.6:** `Barrido.java` sólo excluye `0x40` (`:37`), así que envía `#`
+  (`0x23`), y deja 1500 ms entre bytes (`:34`). En V3.6 un `#` abre una trama que se descarta a los
+  2 s (`PROTOCOLO-V3.6.md:33`). El byte siguiente, enviado a los 1,5 s, **entra en esa trama y no
+  mide**, y la firma saldría falsa. Hay que excluir `0x23` o esperar más de 2 s tras él.
+
+### 8.6 Recuento actualizado
+
+| | Sí | Adaptada | No aplica | Total |
+| :--- | ---: | ---: | ---: | ---: |
+| Primera pasada (§3.5) | 18 | 17 | 9 | 44 |
+| Corrección de M-04 (de "No aplica" a "Adaptada") | 0 | +1 | −1 | 0 |
+| SPEC-08 (S8-1 a S8-13) | 5 | 5 | 3 | 13 |
+| ENCARGO, PIF y TABLA (ENC-1 a TAB-2) | 0 | 6 | 2 | 8 |
+| Patrones de SPEC-01 a SPEC-04 (PAT-1 a PAT-6) | 4 | 1 | 1 | 6 |
+| **Total** | **27** | **30** | **14** | **71** |
+
+**Entradas nuevas: 27, de las que 21 aplican (Sí o Adaptada).** Las filas marcadas "Se trata en" no
+se cuentan.
+
+### 8.7 Contradicciones nuevas
+
+Se dejan marcadas, sin elegir, salvo donde el código ya decide. La numeración sigue la de §7.
+
+| # | Contradicción | Dónde | Estado |
+| :--- | :--- | :--- | :--- |
+| 9 | Este documento decía que el buffer del V3 se vacía a los 2 s; la tarea que lo haría está desconectada | §2 de este documento · `uart_module.c:109` · `SPEC-V3.6.md:32` | **El código decide.** Corregido en §2, con la versión errónea al lado |
+| 10 | Este documento pedía `#...#` ≤ 48 bytes; la revisión 1.1 fija 96 | §3.4 de este documento · `PROTOCOLO-V3.6.md:80` | **Manda la 1.1.** Corregido en §3.4 |
+| 11 | M-04 "no aplica": sí hay estado que llega a la ecuación, con el gatillo pulsado | §3.1 · `gui.c:311-315` · `SPEC-V3.6.md:46` | **El código decide.** Corregido en §3.1 |
+| 12 | `PROTOCOLO-V3.6.md` §5 dice "límite de 50 bytes"; su propio §4 bis (O-01) fija un buffer de 100. §5 no está marcado como superado | `PROTOCOLO-V3.6.md:80,101` | Manda §4 bis, por su título. Falta anotarlo en §5 |
+| 13 | `SPEC-V3.6.md` no está al día con la revisión 1.1. `#V#` va sin máscara (RF-APP-03, `:222`, frente a O-03). RF-APP-07 y RF-APP-17 comparan con "≤ 1·10⁻⁶" y 7 cifras (`:252,313`), frente a 9 cifras y 1 ulp (O-02). RF-APP-17, C-06 y P-01 (`:315,558,569`) siguen bloqueados por O-01, que la 1.1 resuelve con 96 bytes | `SPEC-V3.6.md` · `PROTOCOLO-V3.6.md:80-83` | Manda la 1.1. La SPEC está desactualizada |
+| 14 | "Lo recibido durante la medida se pierde" (RF-APP-01, `SPEC-V3.6.md:210`) y "los bytes sueltos durante una medida se descartan, como en 2020" (O-05). No del todo: `clearBuffer()` va **antes** de la pausa de 500 ms (`gui.c:342` frente a `:345-346`), y la tarea UART sigue corriendo durante esa pausa (`main.c:35`, `uart_module.c:92-93`). Un byte que llegue en ella sobrevive y dispara otra medida | `SPEC-V3.6.md:210` · `PROTOCOLO-V3.6.md:84` · `gui.c:342-346` | **Sin medir.** No tiene efecto si se respeta la espera de 1 s de RF-APP-01. Importa si la V3.6 debe "conservar el comportamiento de 2020" |
+| 15 | La app y la SPEC no piden lo mismo. Repetibilidad: 5 lecturas (`README.md:69`) frente a 10 (RF-APP-09, `SPEC-V3.6.md:265`). "Medir ×N": N = 3 (`README.md:49`) frente a 10 + 3×5 (RF-APP-13, `:288`). Detección: `#V#`, `9` y `@LEERV` (`README.md:65`) frente a `#V#`, `e`, `6` y `@LEERV` (RF-APP-03, `:220-225`) | `README.md` de RetroV36 · `SPEC-V3.6.md` | Abierta. En principio la SPEC manda sobre la app, pero puede que la corregida sea la app |
+| 16 | "Un 0 de `e` es saturado **o negativo**" (`README.md:76`; RF-APP-05). Con `e` no puede haber negativo: `x ≥ 200·k` | `measurement.c:247` · `ecuacionesCalibracion.c:191-192` | **El código decide:** con `e`, 0 = saturación. Con los códigos `1`-`d`, la frase sigue valiendo |
+| 17 | La regla D8 (sólo bytes de orden) frente al barrido de RTV Diag BT, que envía 255 bytes | §3.3 D8 · `Barrido.java:13` | Se resuelve separando el barrido del flujo APTO (§8.5) |
+| 18 | SPEC-08 §4 dice que "una cuenta equivale a 3,0 R en blanco" y, en el párrafo siguiente, que el paso observable es de diez cuentas. La tarea 3 del `ROADMAP.md` V5 (`:91`) da la corrección por pendiente | SPEC-08 §4 (V5) | Abierta **en el proyecto V5**. No afecta a la V3.6, cuyo suelo se calcula aparte (§8.4) |
