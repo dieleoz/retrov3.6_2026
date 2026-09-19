@@ -20,7 +20,7 @@ sólo lectura: no se usó el PICkit ni se grabó nada.
 | ¿Para qué patas se compiló? | Las de la **V4.1 / `Retro_smd_v1`**: UART1 en RC4/RC5, UART2 en RD0/RD1 |
 | Baudios UART1 | **115 200** (no 9600) |
 | Versión | Intermedia **sin fuente en disco**: patas y reloj de V4.1, protocolo STONE binario `A5 5A` de la v4.0 |
-| ¿Sirve la V3.6? | **No, tal como está.** Casi ninguna pata coincide (tabla de §3) |
+| ¿Sirve la V3.6? | **No, tal como está.** Casi ninguna pata coincide (tabla de §4) |
 | Recomendación | **(B)** tratarlo como V4 dentro de la línea V4.6 |
 
 **Contradicción abierta:** la placa dice "v4.0", y el fuente v4.0 (abr-2021) usa las patas de la
