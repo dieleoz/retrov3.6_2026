@@ -24,3 +24,4 @@ registrada, y no en una casilla del operador (P11 §3, QA-3612).
 | **PROTOCOLO-AJUSTE** | Los patrones de AJUSTE de los códigos que se escriben (8, b, 5), P81 y las re-medidas se miden en "preciso", 5 × 4; el resto, 1 × 4 | 19-sep-2026 ~17:10 | "ok si a todo" |
 | **RF-CAL-15-b** | El límite del RMS de tipo I del código b es 11,5 % estricto, sin el ±3 | 19-sep-2026 ~17:10 | "ok si a todo" |
 | **TIPO-I-REPETIR** | P34, P37, P43, P44, P38, P39 y P49 se repiten en "preciso"; los demás tipo I medidos a las 15:10 (3 × 3) valen | 19-sep-2026 ~17:10 | "ok si a todo" |
+| **PRECISO-5x9** | Las series con K ≥ 5 y M ≥ 4 (por ejemplo, las de 5 × 9 de la mañana) cuentan como "preciso" (`Protocolo.java:102`; efecto en la media ≤ 0,19 %, REVISION-P15) | 19-sep-2026, tarde | "sí, cuentan como preciso" |
