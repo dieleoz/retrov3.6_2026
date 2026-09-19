@@ -842,8 +842,9 @@ cliente tiene que seguir funcionando").
    T-B06 y T-B08, que no cuestan una grabación y fijan tiempos y comportamiento.
 4. **G4 preparado:** que la app compare con 2 ulp mientras T-A23 falle (RF-APP-07 r1.1), o T-C04 y la
    prueba 5 pueden dar NO APTO con el chip recién grabado (C-12).
-5. **G5:** corregir `README.md` (V3.6 y app), `ROADMAP.md` P1/P2/P7-bis y `ARQUITECTURA.map` CA4/CA7
-   según C-09, C-15, C-16, C-22, C-32, C-34 de la SPEC.
+5. **G5:** corregir el `README.md` de la V3.6 (estado de P2 y del firmware) y el de la app (fila 2 de
+   las pruebas), `ROADMAP.md` P1/P2/P7-bis y `ARQUITECTURA.map` CA4/CA7, según C-09, C-15, C-16, C-32 y
+   C-34 de la SPEC. (C-22, "sin remoto", ya está corregida.)
 6. **Deseable antes de grabar** (no son condición de G): T-A21, T-A22, T-A27 completa, T-A29, T-A33 en
    simulador, y T-A34 en la app. Cualquier fallo que obligue a cambiar el fuente cambia el `.hex` y
    devuelve a G1-G2.

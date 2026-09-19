@@ -897,7 +897,7 @@ Veredicto de P2, 18-sep-2026 19:48: **APROBADO CON CONDICIONES.** Estado de cada
 | **G2** | T-A20 en MDB: 0 diferencias en los 12 códigos, `x` de 0 a 65535, entre la base 2020 y la V3.6 en `DEF` | RF-FW-04, 05, 06 | T-A20 | **Declarada cumplida** (`CAMBIOS-V3.6.md` §3.1: 0 diferencias). Arnés, generador y guion MDB en `pruebas/`, que coinciden con el `calibracion_v36.c` actual. **Falta el informe** `pruebas/T-A20.md` que `CAMBIOS` cita y no existe (C-19): recuentos por código y md5 |
 | **G3** | Línea base de SLV-002 antes de grabar: T-B03, T-B07, T-B09, T-B10 | RF-APP-13, 25; RF-FW-06, 08, 10 | T-B03, T-B07, T-B09, T-B10 | **Pendiente.** Hechas antes: T-B11 (barrido) y T-B12 (ICSP); T-B10 parcial (8 blancos por pantalla). La app cubre T-B07 y T-B09 (esta con 3 repeticiones, no 10) con `LineaBase` |
 | **G4** | Tras grabar: verificación con IPE (T-C01), `#V#` (T-C03) y `#G`/`#GT#` de fábrica (T-C04) | RF-FW-16, 18, 26 | T-C01, T-C03, T-C04 | **Pendiente** (tras grabar). Riesgo: con la tolerancia de 1 ulp de la app, T-C04 **puede fallar** en un chip recién grabado (C-12) |
-| **G5** | Documentos reconciliados | — | Revisión | **Parcial.** Esta SPEC r1.1 y `TDD-V3.6.md` integran P2; quedan abiertas C-09, C-15, C-16, C-18, C-19, C-22 y C-32, que piden cambios en otros documentos |
+| **G5** | Documentos reconciliados | — | Revisión | **Parcial.** Esta SPEC r1.1 y `TDD-V3.6.md` integran P2; quedan abiertas C-09, C-15, C-16, C-18, C-19, C-32 y C-34, que piden cambios en otros documentos o en el código |
 
 ### Para calibrar (C1-C5)
 
@@ -1056,7 +1056,7 @@ Las que tienen decisión la llevan; las demás quedan abiertas.
 - **C-22 — "Sin remoto".** `README.md:52` de la V3.6, `README.md:7` de la V4.6 y
   `APRENDIDO-DE-V3.6.md:8` dicen "git local sin remoto"; los dos repositorios tienen remoto privado
   (`dieleoz/retrov3.6_2026`, `dieleoz/retrov4.6_2026`, `git remote -v`, 18-sep-2026). Corregido en esta
-  SPEC y en `APRENDIDO`; los dos README quedan para quien los mantiene.
+  SPEC, en `APRENDIDO` y en los dos `README.md`, con el texto anterior al lado.
 - **C-23 — Cita de EEPROM en el contrato.** O-09 sigue sin resolver en §4 del contrato.
 - **C-24 — Pausa entre peticiones.** RF-APP-01 r1.0 (respuesta + 1 s) frente a la app (1500 ms desde
   el envío, 600 ms desde el último byte). **Decidido:** RF-APP-01 r1.1.

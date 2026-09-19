@@ -49,10 +49,10 @@ pantalla y la app del cliente sigan funcionando. Contrato: [`05_Documentacion/PR
 Todo lo copiado sale de `D:\@Proyect\IT\old\VERTICAL\`, que se conserva intacto como archivo con su
 `INDICE.md` y los `VERSION.md`. La historia de cómo se llegó aquí está en
 [`HISTORIA.md`](HISTORIA.md), y el grafo del sistema en [`ARQUITECTURA.map`](ARQUITECTURA.map).
-**Es un proyecto independiente, con su propio git local y sin remoto.** El repositorio de la línea
-V4.1/V5 (`D:\IT\P_RetroReflectometro_Vertical`, GitHub `dieleoz/Retro_Vertical_2026_v1`) **es otro
-proyecto**: aquí sólo se consulta, y la V3.6 no se sube a ese GitHub. Si la V3.6 necesita remoto, será
-uno propio y privado.
+**Es un proyecto independiente, con remoto privado propio: `github.com/dieleoz/retrov3.6_2026`.**
+*(Antes decía "con su propio git local y sin remoto"; corregido el 18-sep-2026.)* El repositorio de la
+línea V4.1/V5 (`D:\IT\P_RetroReflectometro_Vertical`, GitHub `dieleoz/Retro_Vertical_2026_v1`) **es otro
+proyecto**: aquí sólo se consulta, y la V3.6 no se sube a ese GitHub.
 
 ## Reglas
 
