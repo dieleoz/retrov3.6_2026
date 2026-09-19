@@ -8,7 +8,7 @@ contra patrones**, no una calibración trazable.
 
 **Revisión r2 (19-sep-2026, tarde): §12.** Añade el banco guiado de los 133 patrones P1-P132, el flujo
 "Calibrar este equipo", RF-CAL-35 a RF-CAL-43, los defectos D-18 a D-20, las contradicciones C-CAL-16 a
-C-CAL-22 y las decisiones PA-10 a PA-23. **Tampoco está implementado ni medido.** Desde las 12:23 del
+C-CAL-22 y las decisiones PA-10 a PA-24. **Corregida tras la revisión P10** (`REVISION-Arquitectura-P10-V3.6.md`): métodos del 8 y del b, dispensa del 2, K de la cola, comprobación 1 de RF-CAL-39 y §12.8. **Tampoco está implementado ni medido.** Desde las 12:23 del
 19-sep, SLV-002 tiene escritos y re-medidos los códigos 1 y 2, con el acta aceptada (§12.0): lo que
 decía el párrafo anterior sobre la escritura queda superado para esos dos códigos, y se deja escrito.
 
@@ -733,15 +733,24 @@ Todos llevan criterio medible. Los umbrales nuevos son **propuesta** mientras Di
 (§12.11).
 
 **RF-CAL-35 — Banco guiado de los 133 patrones.** La captura sigue, en su orden, la cola
-`06_Calibracion/cola_banco_P1-P132.csv` (md5 `5ba94658…`):
+`06_Calibracion/cola_banco_P1-P132.csv` (md5 `9ddb7882…`):
 
 - calentamiento de 10 min (RF-CAL-01);
 - en cada sesión, batería (`9`), OSCURO y A5 (P22, P28, P4) al inicio, y A5 y OSCURO al final;
 - los patrones, agrupados por color;
 - todo con `e` y M = 4, más 1 disparo de asentamiento por colocación;
-- **K = 5** en el OSCURO y la A5 del inicio del banco, en el patrón de re-medida de cada código y en
-  los cuatro del código 8;
-- **K = 3** en todo lo demás, también en la A5 y el OSCURO del final y en los de las sesiones 2 y 3.
+- **K = 5** en **todos los OSCURO** (inicio y fin de cada sesión), en la A5 del inicio del banco, en el
+  patrón de re-medida de cada código (**también P81, decida lo que decida PA-14**) y en los patrones de
+  los códigos de 3-4 puntos (8 y b);
+- **K = 3** en todo lo demás, también en la A5 del final y en las A5 de las sesiones 2 y 3.
+
+**[Corregido tras P10-C3]** Antes, los OSCURO del final y de las sesiones 2 y 3, y P81, iban a K = 3
+(`REVISION-Arquitectura-P10-V3.6.md` §2.3). **La cola dice qué se mide, no cómo se ajusta:** su columna
+`uso` es informativa, y el uso, el método y el patrón de re-medida salen de la tabla RF-CAL-37. Una
+decisión de Diego sobre PA-14 no cambia la cola. **Ancla de la recta anclada:** la media de los OSCURO de
+inicio y de fin de la sesión en que se midió ese color. Si el OSCURO tiene deriva (RF-CAL-36), no hay
+ancla. El acta del 5 y del b declara la sensibilidad al ancla: 5 cuentas de error son del 1,6 al 2,0 %
+de R en el 5 y del 2,2 al 2,9 % en el b (P10 §2.3).
 
 *Criterio:* el diario de la campaña contiene K colocaciones aceptadas por cada fila `PATRON` de la cola
 (o una marca de saltado), y las cuatro de control por cada sesión. Si falta un patrón de uso AJUSTE o
@@ -749,8 +758,8 @@ RE-MEDIDA, su código no se puede calibrar hasta medirlo.
 
 *Por qué K = 3 y no 5:* con s_rep = 2,24 % (A5 del 19-sep), la media de K colocaciones lleva un 1,29 %
 con K = 3 y un 1,00 % con K = 5. En códigos de 15 a 24 patrones, el ruido de colocación que queda en la
-curva es de ~0,3 %, frente a residuos por tipo del 2,8 al 10 %. Tiempo estimado: **≈ 190 min en 3
-sesiones**, frente a ≈ 4 h 25 min a 5 × 4. Modelo y variantes en `PLAN-Captura-Banco-P1-P132.md` §2 y
+curva es de ~0,3 %, frente a residuos por tipo del 2,8 al 10 %. Tiempo estimado: **≈ 195 min en 3
+sesiones**, frente a ≈ 4 h 26 min a 5 × 4. Modelo y variantes en `PLAN-Captura-Banco-P1-P132.md` §2 y
 §4.
 
 **RF-CAL-36 — Deriva de la sesión.** Con la A5 del inicio y la del final de cada sesión, se calcula
@@ -764,16 +773,22 @@ para cada patrón de la A5 d = (x̄_fin − x̄_ini)/x̄_ini, y D = media de las
 
 **RF-CAL-37 — Método por código, fijado en configuración.** Una tabla versionada dentro del APK dice,
 por código, el método (grado 1, grado 2, recta anclada o sólo verificar), el patrón de re-medida y si
-hay dispensa de RF-CAL-14/15/16. El operador no elige grado (P9-B6). La tabla de partida es esta:
+hay dispensa de RF-CAL-14/15/16. El operador no elige grado (P9-B6). **La tabla sigue a `06_Calibracion/SLV-002/REFORMULACION-y-Simulacion-2026-09-19.md` (commit `66a7649`, **REFORM**)**, que
+es el cálculo con las dos campañas y la A5. Tabla de partida **[corregida tras P10-C2]**:
 
 | Código | Método | Re-medida | Dispensa | Origen |
 | :---: | :--- | :--- | :--- | :--- |
-| 1 | Grado 1 | P28 | RF-CAL-14/15/16 | Decisión de Diego, 19-sep 11:20 |
-| 2 | Recta anclada en el OSCURO de la sesión | P25 | Ninguna | Decisión de Diego (opción b) |
+| 1 | Grado 1. **Escrito; no se reescribe** (REFORM §3.1 y §6) | P28 | RF-CAL-14/15/16 (acta, línea 11) | Decisión de Diego, 19-sep 11:20 |
+| 2 | Recta anclada en el OSCURO. **Escrito; no se reescribe** (REFORM §3.2 y §6) | P25 | **RF-CAL-14/15**: Diego dio la conformidad en el acta (línea 18: P23, P24 y P30 fuera del 10 %; RMS de IV 8,5 %) | Decisión de Diego (opción b) |
 | 3, 4, 6 | Grado 1; recta anclada si la libre no pasa `#S` | P123, P11, P86 | Ninguna | PA-16 |
-| 5 | Sólo verificar; recta anclada si PA-14 | P81 | Ninguna | PA-14 |
-| 8 | Grado 1 | P43 | Ninguna | P-CAL-05; C-CAL-15 abierta |
-| 7, a, b, c, d | Sólo verificar | — | — | §12.1; b: PA-14 |
+| 5 | Sólo verificar; recta anclada si PA-14 (REFORM §6: "ni con el banco; sólo con dispensa") | P81 | — | PA-14 |
+| 8 | **Recta anclada en el OSCURO** (REFORM §3.3 y §6: `c1 = 2.04279088E-01`, `c0 = -1.15490317E+02`). La de grado 1 pasa `#S` por 0,33 en x = 600 | P43 | Ninguna: cumple RF-CAL-14/15/16 | REFORM; C-CAL-15 abierta |
+| b | **Recta anclada en el OSCURO** (REFORM §3.4 y §6: `c1 = 3.13845140E-01`, `c0 = -1.77434093E+02`) | P49 | **RF-CAL-14/15, pendiente de Diego** (P39 +15,3 %, P49 −10,2 %, RMS 11,5 %). Sin ella, sólo verificar | REFORM; PA-24 |
+| 7, a, c, d | Sólo verificar | — | — | §12.1 |
+
+*Texto de `80a0a97`, retirado:* "8: Grado 1 | Ninguna"; "2: Dispensa: Ninguna" (**era falso**: C-P10-5);
+"b: Sólo verificar". Con el 8 y el b anclados, sin serie OSCURO **sólo el código 1** se puede calibrar
+(AT-07 y T-S06 corregidos).
 
 *Criterio:* cambiar la tabla exige compilar, y el acta cita su versión. Con la tabla del APK, la
 pantalla de calibración no tiene ningún control de grado ni de método.
@@ -792,12 +807,23 @@ el acta no aparece la palabra "supuesta". Hoy aparece en las líneas 14 y 21 del
 pide "Coloque <patrón de la tabla RF-CAL-37> y pulse OK". Mide K = 5 colocaciones con M = 4, alternando
 `e` y el código en cada disparo. Es conforme si se cumplen las tres comprobaciones:
 
-1. **Coherencia en el equipo.** Es lo que hace hoy la app, con otra tolerancia. Con
-   d_i = R_k,i − R_#G(x_e,i) en los n = K·M pares: |d̄| ≤ máx(2 ; 3·s_d/√n). Si falla, la colocación
-   **no es válida** (el equipo se movió entre `e` y el código). Se registra y se repite la colocación.
-   Nunca cuenta como re-medida conforme.
+1. **Colocación válida.** Dos filtros por colocación, antes de contarla **[P10-C1]**:
+   - **Patrón presente:** el disparo de asentamiento tiene que caer en [0,8 ; 1,2]·x̄_banco del patrón.
+     Si no, la app repite "Coloque P28" sin gastar ningún disparo. El 19-sep a las 12:16:32, el
+     asentamiento dio `::592`, a 27 cuentas del oscuro (T4:2081-2083): no había patrón debajo.
+   - **Coherencia por par:** con d_i = R_k,i − R_#G(x_e,i), cualquier par con
+     |d_i| > máx(3 ; 2 %·R_#G(x_e,i)) invalida la colocación. El 19-sep, el par 6 dio d = +462,3 (se
+     apoyó P28 entre `e` y el código); en el segundo intento, el mayor |d_i| fue 4,5 frente a un umbral
+     de ~10.
+
+   Una colocación no válida se registra y se repite; nunca cuenta como re-medida, ni conforme ni no
+   conforme. *Texto de `80a0a97`, retirado:* "|d̄| ≤ máx(2 ; 3·s_d/√n)". **No invalidaba el intento de
+   las 12:17:02:** el par atípico inflaba s_d (154,5) por encima de d̄ (50,3) (C-P10-1). Queda como
+   control de sesgo, sin decidir: con los pares del segundo intento, d̄ = −1,44 frente a 2,49, un margen
+   de 0,5 que cuadra con el truncado a entero (−0,5 de media). Se fija con un caso real en T-S12.
 2. **Reproducción de la campaña:** |x̄_rem − x̄_banco| ≤ 2·s_rep·x̄_banco·√(1/K_rem + 1/K_banco), con la
-   s_rep de RF-CAL-38 y la serie del banco de ese patrón. Detecta un patrón cambiado o mal apoyado.
+   s_rep de RF-CAL-38 y la serie del banco de ese patrón con uso RE-MEDIDA (no la de la A5, P10 §2.4).
+   Detecta un patrón cambiado o mal apoyado.
 3. **Frente al certificado:** |R̄_k − R_cert| ≤ máx(10 % ; 2 unidades) (RF-CAL-14). Es la comprobación
    metrológica que hoy falta (D-19).
 
@@ -818,7 +844,9 @@ de grupo de color, antes de la Fase B y antes de cada `#S`. La tensión se calcu
 - n ≥ 10: V = 10 + (n + 30,09)/90,91;
 - n = 5: V entre 10,39 y 10,44 V;
 - n = 0: V < 10,34 V;
-- n = 177: puede ser el recorte a 99 (V ≥ 12,28 V).
+- n = 177: puede ser el recorte a 99, pero sólo si V > 12,28 V;
+- n > 177 es posible, porque sin recorte n no tiene tope (13 V da 242);
+- la V es la de la vuelta anterior, **antes del destello** de la lámpara, no en carga.
 
 Umbrales propuestos (PA-17):
 
@@ -860,7 +888,7 @@ escribe "no conocido", nunca se deja vacío.
 Es el del QA (§2.2 y §2.4), con estos cambios:
 
 - **Fase A, medir:** la cola de RF-CAL-35 sustituye a los "patrones mínimos" del QA (§2.3). Se miden
-  todos, y con K = 3 caben en ≈ 190 min. **El conflicto 5 desaparece**: la decisión C se cumple
+  todos, y con K = 3 caben en ≈ 195 min. **El conflicto 5 desaparece**: la decisión C se cumple
   entera.
 - **Fase B, "Calibrar este equipo":** comprobaciones previas; cálculo con la campaña (nunca con medidas
   de sesión, P9-B7); una pantalla de resumen con una tarjeta por código; una casilla de conformidad por
@@ -926,15 +954,35 @@ la 3.6.2 lo está sólo en parte, y se puede invertir** (C-CAL-17):
 3. Con `9`, en la vuelta siguiente: bv' = 2·bv − 21; si 5 < bv' < 10, bv' = 5; si bv' < 0, bv' = 0;
    n = (int) bv', y la respuesta es `:<n>:` (`gui.c:329-340`). El `nivel[2]` que desbordaba es
    `nivel[6]` desde la V3.6 (`gui.c:268`).
-4. Por tanto, n = trunc(90,91·(V − 10) − 30,09): V = 10 + (n + 30,09)/90,91 es el extremo inferior de un intervalo de 11 mV. Los valores 6 a 9 no salen nunca. Hay tres
-   excepciones: n = 5 (V de 10,39 a 10,44), n = 0 (V < 10,34) y n = 177 si coincide con el recorte a
-   99.
+4. Por tanto, n = trunc(90,91·(V − 10) − 30,09): V = 10 + (n + 30,09)/90,91 es el extremo inferior de
+   un intervalo de 11 mV. Los valores 6 a 9 no salen nunca. Casos especiales **[corregidos tras P10-C9]**:
+   - n = 5: V de 10,39 a 10,44;
+   - n = 0 ⇔ V < 10,342 (el recorte a 0 da lo mismo, así que no es una excepción);
+   - **n = 177 sólo aparece con V > 12,28 V**, y sólo si la `9` cae en la vuelta siguiente a un recorte a
+     99 (`gui.c:352-356`);
+   - **n puede pasar de 177**: sin recorte no hay tope (con 13 V, n = 242).
+
+   *Texto de `80a0a97`, retirado:* "n = 177 si coincide con el recorte a 99", sin la condición de V y
+   sin decir que n pasa de 177.
+4 bis. **La V es la de antes del destello.** Se mide en la vuelta anterior (`gui.c:349-351`), sin la
+   carga de la lámpara; bv' no persiste, porque `gui.c:350` lo sobrescribe. No es la tensión en carga.
+4 ter. **Mientras se atiende una `9` se pierde todo byte que no empiece por `#`** (`clearBuffer`,
+   `uart_module.c:23-26`; `gui.c:343`). Además, cualquier trama que empiece por `9` cuenta como batería
+   (`strncmp(...,1)`, `gui.c:329`). La app no envía nada detrás de una `9` hasta tener `:n:` o agotar la
+   espera.
 5. `9` entra en la rama de medida (`gui.c:296`): **dispara la lámpara**, como cualquier código, y tarda
    lo mismo. Por eso no se envía en mitad de una serie.
 6. **Ninguna respuesta `:n:` se ha registrado nunca con la V3.6.** La única petición, del 19-sep a las
    09:52, quedó sin respuesta porque el equipo estaba mudo
    (`07 pruebas/campana_103300/tramas/rtv36_20260919_095234.txt:15-16`). La fórmula sale de leer el
    código: T-C44 la contrasta con un polímetro.
+7. **Tres dudas de hardware que el código no resuelve** (P10 §4). Se cierran con T-C44, no reprogramando:
+   - que la referencia del ADC valga 4,096 V: `ADREF` elige VREF+ externo (`adcc.c:101-102`), y el valor
+     depende del componente;
+   - que la resistencia de 10k sea la inferior del divisor: lo dice un comentario
+     (`measurement.c:144`), sin cotejar con el esquemático;
+   - que el TAD esté dentro de especificación con `ADCLK = 0x00` (Fosc/2) y `ADACQ = 0`
+     (`adcc.c:83-86`, `:105-106`).
 
 ### 12.9 Sólo app o también firmware
 
@@ -973,17 +1021,18 @@ Cada una lleva la recomendación de esta revisión. La numeración sigue a la de
 
 | ID | Pregunta | Recomendación |
 | :--- | :--- | :--- |
-| **PA-10** | ¿Protocolo del banco con M = 4 en todo, K = 3 en general y K = 5 en el OSCURO, la A5 inicial, la re-medida y el código 8? | **Sí.** ≈ 190 min frente a ≈ 4 h 25 min a 5 × 4, y con la decisión C entera (RF-CAL-35) |
+| **PA-10** | ¿Protocolo del banco con M = 4 en todo, K = 3 en general y K = 5 en todos los OSCURO, la A5 inicial, la re-medida y los códigos 8 y b? | **Sí.** ≈ 195 min frente a ≈ 4 h 26 min a 5 × 4, y con la decisión C entera (RF-CAL-35). Cambia P9-B3 de 1 + 9 a 1 + 4 (P10-C12): Diego lo firma |
 | **PA-11** | ¿El "cada patrón" de RF-CAL-18/23 se cumple con el banco de verificación después de escribir, calculando R con `#G`? | **Sí**, con la comprobación 1 de RF-CAL-39 como prueba de la equivalencia |
 | **PA-12** | ¿Re-medida no conforme: una repetición y, si falla, restaurar y detener? | **Sí.** Nunca "repetir hasta que pase" (D-20) |
 | **PA-13** | ¿El flujo no cambia el PIN, y RF-CAL-29 queda en suspenso hasta que exista el superadministrador? | **Sí** (P9-B10) |
-| **PA-14** | ¿Azul intenso (5) y rojo tipo I (b) con recta anclada en el oscuro, cambiando la regla de cobertura de la app para la recta anclada? | **Sí para el 5**: la fábrica lee −55 % y la recta libre no tiene pendiente. **El b, después del banco**, y sólo si su `x` queda a ≥ 10·s_osc del oscuro |
+| **PA-14** | ¿Azul intenso (5) con recta anclada en el oscuro, cambiando la regla de cobertura de la app para la recta anclada? Esa regla haría ajustable también el **d** (0-73, 5 niveles; C-P10-7) | **Sí para el 5**: la fábrica lee −55 % y la recta libre no tiene pendiente. El d, sólo verificar (su rango certificado es de 68 a 73). REFORM §6 dice "ni con el banco; sólo con dispensa": es la misma decisión. *Retirado:* "el b, después del banco"; el b pasa a PA-24 |
 | **PA-15** | ¿Café y lila entran en el ajuste del 4 o sólo se verifican? | **Sólo verificar**, con el error declarado (§12.5) |
 | **PA-16** | ¿Códigos 3, 4 y 6 en grado 1, con la recta anclada si la libre no pasa `#S`? ¿Qué se hace con los nueve verdes de 51? | **Grado 1, con la anclada de reserva.** Los de 51 entran sólo si Diego confirma el certificado |
 | **PA-17** | ¿Umbrales de batería: aviso con n < 19 (V < 10,54 V) y bloqueo de escrituras con n = 0 o sin respuesta? | **Sí, provisionales**, hasta medir la `x` frente a V (T-C45) |
 | **PA-18** | ¿Una sesión con deriva (RF-CAL-36) queda fuera del ajuste salvo nota de Diego? | **Sí** |
-| **PA-19** | ¿Patrón de re-medida del 2: P25 en lugar del P5 del 19-sep? | **Sí.** P5 es un XI desordenado (C-39), y P25 queda a +1,0 % con la curva escrita |
+| **PA-19** | ¿Patrón de re-medida del 2: P25 en lugar del P5 del 19-sep? | **Sí.** P5 es un XI desordenado (C-39), y P25 queda a +1,0 % con la curva escrita y la `x` de la campaña de las 10:33 (REFORM:226 da +2,3 % con la `x` combinada de todas las sesiones: otra base) |
 | **PA-20** | ¿P22 se queda en la A5 aunque saliera FUERA? | **Sí**, para no perder la continuidad. Si vuelve a salir FUERA en el banco, se cambia por P21 y se anota |
 | **PA-21** | ¿Catálogo maestro = `06_Calibracion/patrones_certificados_P1-P132.csv`, copiado al APK en la compilación con su md5? | **Sí.** Cierra C-CAL-06 |
 | **PA-22** | ¿Clave de firma propia del proyecto, para poder instalar siempre encima (D-09, P9-P8)? | **Sí.** Sin ella, el aviso de no desinstalar no basta |
 | **PA-23** | ¿Se completan en SLV-002 la persistencia y un `#V#` que diga `CAL` en el próximo contacto? | **Sí** (T-C41). No hace falta reescribir nada |
+| **PA-24** | ¿Conformidad a RF-CAL-14/15 para la recta anclada del **b** (P39 +15,3 %, P49 −10,2 %, RMS 11,5 %; REFORM §3.4)? El 8 anclado no la necesita | **Decide Diego con las cifras delante.** Sin la conformidad, el b se verifica. Recomendación de P10 §7: escribirlo después del banco, cuando esté medida la deriva del OSCURO |

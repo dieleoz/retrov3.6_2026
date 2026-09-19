@@ -1030,10 +1030,10 @@ nombres de fichero y pantallas. Evidencia: capturas y listado de `Download/RTV/`
 ### 3 ter.2 Nivel A
 
 **T-A50 — Cola del banco.** RF-APP-33, RF-CAL-35 · A · R-JVM · **PENDIENTE**
-- Pre: `06_Calibracion/cola_banco_P1-P132.csv` (md5 `5ba94658…`) en los recursos de prueba.
+- Pre: `06_Calibracion/cola_banco_P1-P132.csv` (md5 `9ddb7882…`) en los recursos de prueba.
 - Pasos: (a) cargar la cola; (b) cargarla con un byte cambiado; (c) recorrerla simulando OK en cada
   paso, saltando P56 (AJUSTE) y P35 (VERIFICACIÓN); (d) intentar saltar un paso OSCURO y uno A5.
-- Esperado: (a) 180 pasos, 133 `PATRON` con los 133 IDs del catálogo, 9 con K = 5 y 124 con K = 3,
+- Esperado: (a) 180 pasos, 133 `PATRON` con los 133 IDs del catálogo, 13 con K = 5 y 120 con K = 3 (P10-C3: P81 incluido), los 6 OSCURO a K = 5,
   todos con M = 4 y asentamiento 1; (b) "Cola no admitida", 0 pasos; (c) Σ K·(M + 1) `e` de los pasos
   medidos, y P56 y P35 marcados como saltados; (d) no hay salto posible.
 - Pasa: todo. Además, `calibrable(1)` = falso mientras P56 esté saltado.
@@ -1049,9 +1049,12 @@ nombres de fichero y pantallas. Evidencia: capturas y listado de `Download/RTV/`
 
 **T-A52 — Método por código fijado.** RF-CAL-37 · A · R-JVM · **PENDIENTE**
 - Pasos: leer la tabla del APK; pedir la propuesta de cada código con la campaña del 19-sep.
-- Esperado: 1 → grado 1 con dispensa; 2 → recta anclada con re-medida P25; 3, 4 y 6 → grado 1;
-  5 → sólo verificar (o recta anclada si la tabla lo dice); 8 → grado 1; 7, a, b, c y d → sólo
-  verificar. La interfaz de Operación no expone ningún método (0 controles, revisión de código).
+- Esperado (tabla RF-CAL-37 corregida tras P10-C2, que sigue a
+  `06_Calibracion/SLV-002/REFORMULACION-y-Simulacion-2026-09-19.md` §6): 1 → grado 1 con dispensa
+  RF-CAL-14/15/16, sin reescribir; 2 → recta anclada con dispensa RF-CAL-14/15 y re-medida P25, sin
+  reescribir; 3, 4 y 6 → grado 1; 5 → sólo verificar (o recta anclada si la tabla lo dice, PA-14);
+  8 → **recta anclada** con re-medida P43 y sin dispensa; b → **recta anclada** con re-medida P49 si la
+  tabla trae la conformidad de PA-24, y sólo verificar si no; 7, a, c y d → sólo verificar. La interfaz de Operación no expone ningún método (0 controles, revisión de código).
 - Pasa: la tabla manda en los 12 códigos.
 
 **T-A53 — s_rep medida, nunca supuesta.** RF-CAL-38, RF-APP-38 · A · R-JVM · **PENDIENTE**
@@ -1065,9 +1068,13 @@ nombres de fichero y pantallas. Evidencia: capturas y listado de `Download/RTV/`
 - Pre: curvas `#G` del acta del 19-sep (código 1: `2.98471571E-01`, `-1.62263885E+02`; código 2:
   `3.65483810E-01`, `-2.06628295E+02`) y los pares `e`/código de T4 (líneas 2156, 2234 y 2762 y sus
   disparos).
-- Pasos: evaluar (a) el intento de las 12:17:02 sobre "P28"; (b) el de las 12:17:36; (c) P5; (d) P28
+- Pasos: evaluar (a) el intento de las 12:16:32-12:17:02 sobre "P28" (T4:2080-2156); (b) el de las 12:17:36; (c) P5; (d) P28
   con R desplazada al +12 % del certificado; (e) P28 con la `x` al −8 % de la del banco.
-- Esperado: (a) comprobación 1 falla (d̄ = +50,7): **colocación no válida**, no NO CONFORME; (b)
+- Esperado: (a) **colocación no válida** por los dos filtros de P10-C1: el asentamiento da 592, fuera de
+  [0,8 ; 1,2]·2277,9 ("patrón presente"), y el par 6 da |d| = 462,3 > máx(3 ; 2 %·R) ("coherencia por
+  par"); no cuenta como NO CONFORME ni gasta la repetición. *Texto de `80a0a97`, retirado:* "falla
+  la comprobación 1 (d̄ = +50,7)"; con la fórmula de entonces pasaba (C-P10-1). Además, en (b) ningún
+  |d_i| pasa de 4,5; (b)
   conforme: frente al certificado +2,9 % y `x` −2,9 % dentro de 2·s_rep·√(1/K_rem + 1/K_banco);
   (c) conforme: −6,3 % y +0,1 %; (d) NO CONFORME por la comprobación 3; (e) NO CONFORME por la 2.
 - Pasa: los cinco.
@@ -1083,7 +1090,8 @@ nombres de fichero y pantallas. Evidencia: capturas y listado de `Download/RTV/`
 - Pasos: `Asistente.cobertura` con el catálogo P1-P132; después, la cobertura de la recta anclada del 5
   y del b con el ancla en x = 565,4.
 - Esperado: 1, 2, 3, 4, 6 y 8 hasta grado 2; b hasta grado 1; 5, 7, a, c y d "sólo verificar"
-  (`SPEC-Calibracion-V3.6.md` §12.1). Con el ancla: 5 ajustable (rango 0-102) y b ajustable (0-81).
+  (`SPEC-Calibracion-V3.6.md` §12.1). Con el ancla: 5 ajustable (rango 0-102), b ajustable (0-81) y **d ajustable (0-73, 5 niveles)**; que el d
+  lo sea o no lo decide la tabla RF-CAL-37 (PA-14, C-P10-7).
   Café y lila no aparecen en la cobertura del 4 (16 patrones, no 26).
 - Pasa: todo.
 
@@ -1233,8 +1241,9 @@ nombres de fichero y pantallas. Evidencia: capturas y listado de `Download/RTV/`
 **T-S06 — Campaña sin OSCURO (negativo).** RF-APP-48, RF-CAL-37 (AT-07) · S · R-SIM · **PENDIENTE**
 - Pre: la campaña completa, sin ninguna serie OSCURO.
 - Pasos: "Calibrar este equipo".
-- Esperado: la tarjeta del 2 dice "no calculable: falta OSCURO", sin casilla; 1 y 8 se pueden calibrar;
-  **0 tramas `#S,2`**.
+- Esperado: las tarjetas del 2, del 8 y del b (recta anclada) dicen "no calculable: falta OSCURO", sin
+  casilla; sólo el 1 se puede calibrar (corregido tras P10: con el 8 anclado, AT-07 queda así);
+  **0 tramas `#S,2`, `#S,8` ni `#S,b`**.
 - Pasa: todo.
 
 **T-S07 — Fase B completa.** RF-APP-34, 36, 44, 45, 46, RF-CAL-39, RF-CAL-43 (AT-08) · S · R-SIM · **PENDIENTE**

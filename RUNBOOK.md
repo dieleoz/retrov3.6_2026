@@ -209,8 +209,9 @@ cambiar el firmware.
      P1-P132 con P32a/P32b; `06_Calibracion/PLAN-Captura-Banco-P1-P132.md`). El operador sólo coloca y
      pulsa OK.
   3. Cada sesión empieza con batería (`9`), OSCURO y A5 (P22, P28, P4), y termina con A5 y OSCURO. Tres
-     sesiones de unos 60 min, agrupadas por color. Todo a 3 × 4, salvo OSCURO y A5 del inicio, los
-     patrones de re-medida y el código 8, que van a 5 × 4. **≈ 190 min en total** (estimación).
+     sesiones de unos 60 min, agrupadas por color. Todo a 3 × 4, salvo todos los OSCURO, la A5 del
+     inicio, los patrones de re-medida (P81 incluido) y los códigos 8 y b, que van a 5 × 4. **≈ 195 min
+     en total** (estimación).
   4. Café y lila se miden con el código del rojo (4) y sólo se verifican (PA-15).
   5. Al final de cada sesión, ZIP automático con copia en `Download/RTV/`. **No desinstalar la app**:
      instalar encima.
@@ -234,9 +235,10 @@ cambiar el firmware.
 - **Criterio de salida.** Propuesta aceptada por Diego por escrito.
 
 - **Flujo nuevo, PENDIENTE (app 3.6.10).** El operador no ajusta: el método por código viene fijado en
-  el APK (RF-CAL-37). Código 1, grado 1; código 2, recta anclada en el OSCURO de la sesión; 3, 4 y 6,
-  grado 1 si Diego lo aprueba (PA-16); 5, sólo con recta anclada (PA-14); 8, grado 1; el resto se
-  verifica. **La fase 10 se funde con la 11** en el botón "Calibrar este equipo".
+  el APK (RF-CAL-37). Código 1, grado 1, y código 2, recta anclada: escritos, **no se reescriben**
+  (`06_Calibracion/SLV-002/REFORMULACION-y-Simulacion-2026-09-19.md` §6). 8, recta anclada; b, recta
+  anclada si Diego da la conformidad a RF-CAL-14 (PA-24); 3, 4 y 6, grado 1 si Diego lo aprueba
+  (PA-16); 5, sólo con recta anclada (PA-14); el resto se verifica. **La fase 10 se funde con la 11** en el botón "Calibrar este equipo".
 
 ## Fase 11 — Escritura, `#E` y acta
 

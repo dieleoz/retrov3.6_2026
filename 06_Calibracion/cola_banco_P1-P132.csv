@@ -1,7 +1,7 @@
 orden,sesion,bloque,paso,patron,color,tipo,valor_certificado,codigo_equipo,uso,K,M,asentamiento,remedida_de_codigo,x_esperada,origen_x,nota
 1,1,INICIO,CALENTAMIENTO,,,,,,,,,,,,,10 min encendido antes de la primera serie (RF-CAL-01)
 2,1,INICIO,BATERIA,,,,,9,CONTROL,,,,,,,orden 9: tension y nivel; aviso si baja (RF-CAL-41)
-3,1,INICIO,OSCURO,OSCURO,,,0,e,CONTROL,5,4,1,,565,medida,superficie negra mate; ancla de la recta del codigo 2 (y del 5 si PA-14)
+3,1,INICIO,OSCURO,OSCURO,,,0,e,CONTROL,5,4,1,,565,medida,superficie negra mate; ancla = media de OSCURO inicio y fin de la sesion (P10-C3)
 4,1,A5-INICIO,A5,P22,amarillo,IV,334,e,CONTROL,5,4,1,,1497.0,medida,puente y s_rep (P9-A5); no entra en el ajuste
 5,1,A5-INICIO,A5,P28,blanco,IX,484,e,CONTROL,5,4,1,,2277.9,medida,puente y s_rep (P9-A5); no entra en el ajuste
 6,1,A5-INICIO,A5,P4,blanco,XI,828,e,CONTROL,5,4,1,,3315.8,medida,puente y s_rep (P9-A5); no entra en el ajuste
@@ -57,11 +57,11 @@ orden,sesion,bloque,paso,patron,color,tipo,valor_certificado,codigo_equipo,uso,K
 56,1,A5-FIN,A5,P22,amarillo,IV,334,e,CONTROL,3,4,1,,1497.0,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
 57,1,A5-FIN,A5,P28,blanco,IX,484,e,CONTROL,3,4,1,,2277.9,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
 58,1,A5-FIN,A5,P4,blanco,XI,828,e,CONTROL,3,4,1,,3315.8,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
-59,1,FIN,OSCURO,OSCURO,,,0,e,CONTROL,3,4,1,,565,medida,deriva del oscuro
+59,1,FIN,OSCURO,OSCURO,,,0,e,CONTROL,5,4,1,,565,medida,deriva del oscuro y segunda mitad del ancla
 60,1,FIN,EXPORTAR,,,,,,CONTROL,,,,,,,ZIP de la sesion; copia en Download/RTV/
 61,1,FIN,PAUSA,,,,,,CONTROL,,,,,,,si se apaga el equipo o se cambia la bateria: 10 min de calentamiento al volver
 62,2,INICIO,BATERIA,,,,,9,CONTROL,,,,,,,orden 9: tension y nivel; aviso si baja (RF-CAL-41)
-63,2,INICIO,OSCURO,OSCURO,,,0,e,CONTROL,3,4,1,,565,medida,superficie negra mate; ancla de la recta del codigo 2 (y del 5 si PA-14)
+63,2,INICIO,OSCURO,OSCURO,,,0,e,CONTROL,5,4,1,,565,medida,superficie negra mate; ancla = media de OSCURO inicio y fin de la sesion (P10-C3)
 64,2,A5-INICIO,A5,P22,amarillo,IV,334,e,CONTROL,3,4,1,,1497.0,medida,puente y s_rep (P9-A5); no entra en el ajuste
 65,2,A5-INICIO,A5,P28,blanco,IX,484,e,CONTROL,3,4,1,,2277.9,medida,puente y s_rep (P9-A5); no entra en el ajuste
 66,2,A5-INICIO,A5,P4,blanco,XI,828,e,CONTROL,3,4,1,,3315.8,medida,puente y s_rep (P9-A5); no entra en el ajuste
@@ -82,21 +82,21 @@ orden,sesion,bloque,paso,patron,color,tipo,valor_certificado,codigo_equipo,uso,K
 81,2,COLOR:rojo,PATRON,P89,rojo,XI,183,4,AJUSTE,3,4,1,,1588,estimada: recta por el oscuro,
 82,2,COLOR:rojo,PATRON,P53,rojo,XI,279,4,AJUSTE,3,4,1,,2124,estimada: recta por el oscuro,
 83,2,COLOR:rojo,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
-84,2,COLOR:cafe,PATRON,P68,cafe,IV,36,4,VERIFICACION,3,4,1,,767,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-15)
-85,2,COLOR:cafe,PATRON,P128,cafe,IX,38,4,VERIFICACION,3,4,1,,778,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-15)
-86,2,COLOR:cafe,PATRON,P83,cafe,IX,55,4,VERIFICACION,3,4,1,,873,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-15)
-87,2,COLOR:cafe,PATRON,P113,cafe,XI,60,4,VERIFICACION,3,4,1,,901,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-15)
-88,2,COLOR:cafe,PATRON,P98,cafe,XI,68,4,VERIFICACION,3,4,1,,945,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-15)
+84,2,COLOR:cafe,PATRON,P68,cafe,IV,36,4,VERIFICACION,3,4,1,,767,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-06)
+85,2,COLOR:cafe,PATRON,P128,cafe,IX,38,4,VERIFICACION,3,4,1,,778,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-06)
+86,2,COLOR:cafe,PATRON,P83,cafe,IX,55,4,VERIFICACION,3,4,1,,873,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-06)
+87,2,COLOR:cafe,PATRON,P113,cafe,XI,60,4,VERIFICACION,3,4,1,,901,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-06)
+88,2,COLOR:cafe,PATRON,P98,cafe,XI,68,4,VERIFICACION,3,4,1,,945,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-06)
 89,2,COLOR:cafe,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
-90,2,COLOR:lila,PATRON,P69,lila,IV,139,4,VERIFICACION,3,4,1,,1342,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-15)
-91,2,COLOR:lila,PATRON,P129,lila,IX,157,4,VERIFICACION,3,4,1,,1442,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-15)
-92,2,COLOR:lila,PATRON,P84,lila,IX,177,4,VERIFICACION,3,4,1,,1554,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-15)
-93,2,COLOR:lila,PATRON,P99,lila,XI,188,4,VERIFICACION,3,4,1,,1616,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-15)
-94,2,COLOR:lila,PATRON,P114,lila,XI,202,4,VERIFICACION,3,4,1,,1694,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-15)
+90,2,COLOR:lila,PATRON,P69,lila,IV,139,4,VERIFICACION,3,4,1,,1342,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-06)
+91,2,COLOR:lila,PATRON,P129,lila,IX,157,4,VERIFICACION,3,4,1,,1442,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-06)
+92,2,COLOR:lila,PATRON,P84,lila,IX,177,4,VERIFICACION,3,4,1,,1554,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-06)
+93,2,COLOR:lila,PATRON,P99,lila,XI,188,4,VERIFICACION,3,4,1,,1616,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-06)
+94,2,COLOR:lila,PATRON,P114,lila,XI,202,4,VERIFICACION,3,4,1,,1694,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-06)
 95,2,COLOR:lila,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
-96,2,COLOR:rojo-I,PATRON,P39,rojo,I,46,b,VERIFICACION,3,4,1,,734.3,medida,verificar; ajuste solo con recta anclada (PA-14)
-97,2,COLOR:rojo-I,PATRON,P38,rojo,I,52,b,VERIFICACION,3,4,1,,743.9,medida,verificar; ajuste solo con recta anclada (PA-14)
-98,2,COLOR:rojo-I,PATRON,P49,rojo,I,81,b,VERIFICACION,3,4,1,,797.2,medida,verificar; ajuste solo con recta anclada (PA-14)
+96,2,COLOR:rojo-I,PATRON,P39,rojo,I,46,b,AJUSTE,5,4,1,,734.3,medida,recta anclada; conformidad de Diego a RF-CAL-14 pendiente
+97,2,COLOR:rojo-I,PATRON,P38,rojo,I,52,b,AJUSTE,5,4,1,,743.9,medida,recta anclada; conformidad de Diego a RF-CAL-14 pendiente
+98,2,COLOR:rojo-I,PATRON,P49,rojo,I,81,b,RE-MEDIDA,5,4,1,b,797.2,medida,recta anclada; conformidad de Diego a RF-CAL-14 pendiente
 99,2,COLOR:rojo,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
 100,2,COLOR:naranja,PATRON,P70,naranja,IV,80,6,AJUSTE,3,4,1,,1050,estimada: fabrica invertida,
 101,2,COLOR:naranja,PATRON,P71,naranja,IV,84,6,AJUSTE,3,4,1,,1070,estimada: fabrica invertida,
@@ -122,11 +122,11 @@ orden,sesion,bloque,paso,patron,color,tipo,valor_certificado,codigo_equipo,uso,K
 121,2,A5-FIN,A5,P22,amarillo,IV,334,e,CONTROL,3,4,1,,1497.0,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
 122,2,A5-FIN,A5,P28,blanco,IX,484,e,CONTROL,3,4,1,,2277.9,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
 123,2,A5-FIN,A5,P4,blanco,XI,828,e,CONTROL,3,4,1,,3315.8,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
-124,2,FIN,OSCURO,OSCURO,,,0,e,CONTROL,3,4,1,,565,medida,deriva del oscuro
+124,2,FIN,OSCURO,OSCURO,,,0,e,CONTROL,5,4,1,,565,medida,deriva del oscuro y segunda mitad del ancla
 125,2,FIN,EXPORTAR,,,,,,CONTROL,,,,,,,ZIP de la sesion; copia en Download/RTV/
 126,2,FIN,PAUSA,,,,,,CONTROL,,,,,,,si se apaga el equipo o se cambia la bateria: 10 min de calentamiento al volver
 127,3,INICIO,BATERIA,,,,,9,CONTROL,,,,,,,orden 9: tension y nivel; aviso si baja (RF-CAL-41)
-128,3,INICIO,OSCURO,OSCURO,,,0,e,CONTROL,3,4,1,,565,medida,superficie negra mate; ancla de la recta del codigo 2 (y del 5 si PA-14)
+128,3,INICIO,OSCURO,OSCURO,,,0,e,CONTROL,5,4,1,,565,medida,superficie negra mate; ancla = media de OSCURO inicio y fin de la sesion (P10-C3)
 129,3,A5-INICIO,A5,P22,amarillo,IV,334,e,CONTROL,3,4,1,,1497.0,medida,puente y s_rep (P9-A5); no entra en el ajuste
 130,3,A5-INICIO,A5,P28,blanco,IX,484,e,CONTROL,3,4,1,,2277.9,medida,puente y s_rep (P9-A5); no entra en el ajuste
 131,3,A5-INICIO,A5,P4,blanco,XI,828,e,CONTROL,3,4,1,,3315.8,medida,puente y s_rep (P9-A5); no entra en el ajuste
@@ -153,19 +153,19 @@ orden,sesion,bloque,paso,patron,color,tipo,valor_certificado,codigo_equipo,uso,K
 152,3,COLOR:verde-I,PATRON,P40,verde,I,6,a,VERIFICACION,3,4,1,,624.7,medida,a menos de 80 cuentas del oscuro
 153,3,COLOR:verde-I,PATRON,P45,verde,I,7,a,VERIFICACION,3,4,1,,615.6,medida,a menos de 80 cuentas del oscuro
 154,3,COLOR:verde,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
-155,3,COLOR:azul,PATRON,P66,azul,IV,89,5,VERIFICACION,3,4,1,,837,estimada: recta por el oscuro,AJUSTE solo si PA-14 = recta anclada
-156,3,COLOR:azul,PATRON,P67,azul,IV,95,5,VERIFICACION,3,4,1,,856,estimada: recta por el oscuro,AJUSTE solo si PA-14 = recta anclada
-157,3,COLOR:azul,PATRON,P126,azul,IX,91,5,VERIFICACION,3,4,1,,843,estimada: recta por el oscuro,AJUSTE solo si PA-14 = recta anclada
-158,3,COLOR:azul,PATRON,P81,azul,IX,92,5,VERIFICACION,3,4,1,,846,estimada: recta por el oscuro,AJUSTE solo si PA-14 = recta anclada
-159,3,COLOR:azul,PATRON,P127,azul,IX,97,5,VERIFICACION,3,4,1,,862,estimada: recta por el oscuro,AJUSTE solo si PA-14 = recta anclada
-160,3,COLOR:azul,PATRON,P82,azul,IX,98,5,VERIFICACION,3,4,1,,865,estimada: recta por el oscuro,AJUSTE solo si PA-14 = recta anclada
-161,3,COLOR:azul,PATRON,P17,azul,XI,83,5,VERIFICACION,3,4,1,,828.4,medida,AJUSTE solo si PA-14 = recta anclada
-162,3,COLOR:azul,PATRON,P18,azul,XI,84,5,VERIFICACION,3,4,1,,813.4,medida,AJUSTE solo si PA-14 = recta anclada
-163,3,COLOR:azul,PATRON,P19,azul,XI,85,5,VERIFICACION,3,4,1,,823.6,medida,AJUSTE solo si PA-14 = recta anclada
-164,3,COLOR:azul,PATRON,P111,azul,XI,93,5,VERIFICACION,3,4,1,,849,estimada: recta por el oscuro,AJUSTE solo si PA-14 = recta anclada
-165,3,COLOR:azul,PATRON,P96,azul,XI,95,5,VERIFICACION,3,4,1,,856,estimada: recta por el oscuro,AJUSTE solo si PA-14 = recta anclada
-166,3,COLOR:azul,PATRON,P112,azul,XI,101,5,VERIFICACION,3,4,1,,874,estimada: recta por el oscuro,AJUSTE solo si PA-14 = recta anclada
-167,3,COLOR:azul,PATRON,P97,azul,XI,102,5,VERIFICACION,3,4,1,,877,estimada: recta por el oscuro,AJUSTE solo si PA-14 = recta anclada
+155,3,COLOR:azul,PATRON,P66,azul,IV,89,5,VERIFICACION,3,4,1,,837,estimada: recta por el oscuro,uso segun la tabla RF-CAL-37 del APK (PA-14)
+156,3,COLOR:azul,PATRON,P67,azul,IV,95,5,VERIFICACION,3,4,1,,856,estimada: recta por el oscuro,uso segun la tabla RF-CAL-37 del APK (PA-14)
+157,3,COLOR:azul,PATRON,P126,azul,IX,91,5,VERIFICACION,3,4,1,,843,estimada: recta por el oscuro,uso segun la tabla RF-CAL-37 del APK (PA-14)
+158,3,COLOR:azul,PATRON,P81,azul,IX,92,5,RE-MEDIDA,5,4,1,5,846,estimada: recta por el oscuro,uso segun la tabla RF-CAL-37 del APK (PA-14)
+159,3,COLOR:azul,PATRON,P127,azul,IX,97,5,VERIFICACION,3,4,1,,862,estimada: recta por el oscuro,uso segun la tabla RF-CAL-37 del APK (PA-14)
+160,3,COLOR:azul,PATRON,P82,azul,IX,98,5,VERIFICACION,3,4,1,,865,estimada: recta por el oscuro,uso segun la tabla RF-CAL-37 del APK (PA-14)
+161,3,COLOR:azul,PATRON,P17,azul,XI,83,5,VERIFICACION,3,4,1,,828.4,medida,uso segun la tabla RF-CAL-37 del APK (PA-14)
+162,3,COLOR:azul,PATRON,P18,azul,XI,84,5,VERIFICACION,3,4,1,,813.4,medida,uso segun la tabla RF-CAL-37 del APK (PA-14)
+163,3,COLOR:azul,PATRON,P19,azul,XI,85,5,VERIFICACION,3,4,1,,823.6,medida,uso segun la tabla RF-CAL-37 del APK (PA-14)
+164,3,COLOR:azul,PATRON,P111,azul,XI,93,5,VERIFICACION,3,4,1,,849,estimada: recta por el oscuro,uso segun la tabla RF-CAL-37 del APK (PA-14)
+165,3,COLOR:azul,PATRON,P96,azul,XI,95,5,VERIFICACION,3,4,1,,856,estimada: recta por el oscuro,uso segun la tabla RF-CAL-37 del APK (PA-14)
+166,3,COLOR:azul,PATRON,P112,azul,XI,101,5,VERIFICACION,3,4,1,,874,estimada: recta por el oscuro,uso segun la tabla RF-CAL-37 del APK (PA-14)
+167,3,COLOR:azul,PATRON,P97,azul,XI,102,5,VERIFICACION,3,4,1,,877,estimada: recta por el oscuro,uso segun la tabla RF-CAL-37 del APK (PA-14)
 168,3,COLOR:azul,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
 169,3,COLOR:azul-I,PATRON,P42,azul,I,7,c,VERIFICACION,3,4,1,,592.6,medida,a menos de 80 cuentas del oscuro
 170,3,COLOR:azul-I,PATRON,P32a,azul,I,9,c,VERIFICACION,3,4,1,,630.9,medida,P32 duplicado en la fuente: leer etiqueta y color en voz alta (C-41); a menos de 80 cuentas del oscuro
@@ -177,5 +177,5 @@ orden,sesion,bloque,paso,patron,color,tipo,valor_certificado,codigo_equipo,uso,K
 176,3,A5-FIN,A5,P22,amarillo,IV,334,e,CONTROL,3,4,1,,1497.0,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
 177,3,A5-FIN,A5,P28,blanco,IX,484,e,CONTROL,3,4,1,,2277.9,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
 178,3,A5-FIN,A5,P4,blanco,XI,828,e,CONTROL,3,4,1,,3315.8,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
-179,3,FIN,OSCURO,OSCURO,,,0,e,CONTROL,3,4,1,,565,medida,deriva del oscuro
+179,3,FIN,OSCURO,OSCURO,,,0,e,CONTROL,5,4,1,,565,medida,deriva del oscuro y segunda mitad del ancla
 180,3,FIN,EXPORTAR,,,,,,CONTROL,,,,,,,ZIP de la sesion; copia en Download/RTV/

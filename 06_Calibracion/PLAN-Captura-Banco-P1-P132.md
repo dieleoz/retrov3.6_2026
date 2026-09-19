@@ -13,7 +13,7 @@ se pueda escribir: eso lo deciden el ajuste con lo medido y Diego.
   (commit `bba4dbe`). Son 133 patrones, porque P32 está repetido en la fuente (P32a azul 9 y P32b
   naranja 68).
 - **Cola para la app:** `06_Calibracion/cola_banco_P1-P132.csv`, generada junto a este documento (md5
-  `5ba9465852fd721751c496183f2dff95`, del blob con LF). Tiene 180 filas: 133 patrones y 47 pasos de control. El acta
+  `9ddb7882fa6c32c50c90fcdd72ba8960`, del blob con LF). Tiene 180 filas: 133 patrones y 47 pasos de control. El acta
   del banco debe citar ese md5.
 - **`x` medida:** media de la serie elegida en `resumen.txt` del ZIP
   `06_Calibracion/SLV-002/campanas/campana_SLV-002_20260919_122727.zip` (md5 `ce1f35fc…`), líneas
@@ -34,9 +34,16 @@ se pueda escribir: eso lo deciden el ajuste con lo medido y Diego.
 3. **Protocolo K × M con M = 4 fijo en todo el banco**, más 1 disparo de asentamiento por colocación.
    El M es el mismo en campaña, re-medida y verificación (P9-B3). Con M = 4 actúa el rechazo de
    descolgados (`Veredicto.N_MIN_DESCOLGADOS = 4`, `Veredicto.java:40`).
-4. **K = 3 colocaciones** para los patrones de AJUSTE y de VERIFICACIÓN. **K = 5** para el OSCURO y
-   la A5 del inicio del banco, para el patrón de RE-MEDIDA de cada código y para los cuatro patrones
-   del código 8. §4 explica por qué.
+4. **K = 3 colocaciones** para los patrones de AJUSTE y de VERIFICACIÓN. **K = 5** para **todos los
+   OSCURO** (inicio y fin de cada sesión), la A5 del inicio del banco, el patrón de RE-MEDIDA de cada
+   código (también P81, decida lo que decida PA-14) y los patrones de los códigos con 3-4 puntos (8 y
+   b). §4 explica por qué. **Corregido tras P10-C3** (`05_Documentacion/REVISION-Arquitectura-P10-V3.6.md`):
+   antes, los OSCURO de fin y de las sesiones 2 y 3 y P81 iban a K = 3.
+4 bis. **La cola dice qué se mide (K, M y orden); no decide el método.** La columna `uso` es
+   informativa: el uso real, el método y el patrón de re-medida salen de la tabla RF-CAL-37 del APK
+   (`SPEC-Calibracion-V3.6.md` §12.2). Una decisión de Diego distinta en PA-14 no cambia la cola.
+4 ter. **Ancla de la recta anclada:** la media de los OSCURO de inicio y de fin de la sesión en que se
+   midió ese color. Si el OSCURO tiene deriva (RF-CAL-36), no hay ancla.
 5. **La A5 (P22, P28, P4) y el OSCURO van al principio y al final de cada sesión.** Los del principio
    dan la s_rep y el ancla. Los del final dan la deriva de la sesión (RF-CAL-36).
 6. **La batería se lee con la orden `9`** al empezar la sesión y al cambiar de grupo de color
@@ -71,7 +78,7 @@ de fábrica en todos, como pedía el encargo.
 | ---: | :---: | :--- | :--- | :--- | :---: | ---: | :---: | :--- | :---: | ---: | :--- |
 | 1 | 1 | CALENTAMIENTO |  |  |  |  |  |  |  |  | 10 min encendido antes de la primera serie (RF-CAL-01) |
 | 2 | 1 | BATERIA |  |  |  |  | 9 | control |  |  | orden 9: tensión y nivel; aviso si baja (RF-CAL-41) |
-| 3 | 1 | OSCURO inicio | OSCURO |  |  | 0 | e | control | 5 × 4 | 565 | superficie negra mate; ancla de la recta del código 2 (y del 5 si PA-14) |
+| 3 | 1 | OSCURO inicio | OSCURO |  |  | 0 | e | control | 5 × 4 | 565 | superficie negra mate; ancla = media de OSCURO inicio y fin de la sesión (P10-C3) |
 | 4 | 1 | A5-INICIO | P22 (A5) | amarillo | IV | 334 | e | control | 5 × 4 | 1497 | puente y s_rep (P9-A5); no entra en el ajuste |
 | 5 | 1 | A5-INICIO | P28 (A5) | blanco | IX | 484 | e | control | 5 × 4 | 2277,9 | puente y s_rep (P9-A5); no entra en el ajuste |
 | 6 | 1 | A5-INICIO | P4 (A5) | blanco | XI | 828 | e | control | 5 × 4 | 3315,8 | puente y s_rep (P9-A5); no entra en el ajuste |
@@ -127,11 +134,11 @@ de fábrica en todos, como pedía el encargo.
 | 56 | 1 | A5-FIN | P22 (A5) | amarillo | IV | 334 | e | control | 3 × 4 | 1497 | deriva de la sesión frente a A5-INICIO (RF-CAL-36) |
 | 57 | 1 | A5-FIN | P28 (A5) | blanco | IX | 484 | e | control | 3 × 4 | 2277,9 | deriva de la sesión frente a A5-INICIO (RF-CAL-36) |
 | 58 | 1 | A5-FIN | P4 (A5) | blanco | XI | 828 | e | control | 3 × 4 | 3315,8 | deriva de la sesión frente a A5-INICIO (RF-CAL-36) |
-| 59 | 1 | OSCURO fin | OSCURO |  |  | 0 | e | control | 3 × 4 | 565 | deriva del oscuro |
+| 59 | 1 | OSCURO fin | OSCURO |  |  | 0 | e | control | 5 × 4 | 565 | deriva del oscuro y segunda mitad del ancla |
 | 60 | 1 | EXPORTAR |  |  |  |  |  | control |  |  | ZIP de la sesión; copia en `Download/RTV/` |
 | 61 | 1 | PAUSA |  |  |  |  |  | control |  |  | si se apaga el equipo o se cambia la batería: 10 min de calentamiento al volver |
 | 62 | 2 | BATERIA |  |  |  |  | 9 | control |  |  | orden 9: tensión y nivel; aviso si baja (RF-CAL-41) |
-| 63 | 2 | OSCURO inicio | OSCURO |  |  | 0 | e | control | 3 × 4 | 565 | superficie negra mate; ancla de la recta del código 2 (y del 5 si PA-14) |
+| 63 | 2 | OSCURO inicio | OSCURO |  |  | 0 | e | control | 5 × 4 | 565 | superficie negra mate; ancla = media de OSCURO inicio y fin de la sesión (P10-C3) |
 | 64 | 2 | A5-INICIO | P22 (A5) | amarillo | IV | 334 | e | control | 3 × 4 | 1497 | puente y s_rep (P9-A5); no entra en el ajuste |
 | 65 | 2 | A5-INICIO | P28 (A5) | blanco | IX | 484 | e | control | 3 × 4 | 2277,9 | puente y s_rep (P9-A5); no entra en el ajuste |
 | 66 | 2 | A5-INICIO | P4 (A5) | blanco | XI | 828 | e | control | 3 × 4 | 3315,8 | puente y s_rep (P9-A5); no entra en el ajuste |
@@ -152,21 +159,21 @@ de fábrica en todos, como pedía el encargo.
 | 81 | 2 | rojo | P89 | rojo | XI | 183 | 4 | AJUSTE | 3 × 4 | ~1588 (o) |  |
 | 82 | 2 | rojo | P53 | rojo | XI | 279 | 4 | AJUSTE | 3 × 4 | ~2124 (o) |  |
 | 83 | 2 | BATERIA |  |  |  |  | 9 | control |  |  | control al cambiar de grupo |
-| 84 | 2 | cafe | P68 | café | IV | 36 | 4 | VERIFICACIÓN | 3 × 4 | ~767 (r) | sin código propio: se mide con el del rojo (4); no entra en el ajuste (PA-15) |
-| 85 | 2 | cafe | P128 | café | IX | 38 | 4 | VERIFICACIÓN | 3 × 4 | ~778 (r) | sin código propio: se mide con el del rojo (4); no entra en el ajuste (PA-15) |
-| 86 | 2 | cafe | P83 | café | IX | 55 | 4 | VERIFICACIÓN | 3 × 4 | ~873 (r) | sin código propio: se mide con el del rojo (4); no entra en el ajuste (PA-15) |
-| 87 | 2 | cafe | P113 | café | XI | 60 | 4 | VERIFICACIÓN | 3 × 4 | ~901 (r) | sin código propio: se mide con el del rojo (4); no entra en el ajuste (PA-15) |
-| 88 | 2 | cafe | P98 | café | XI | 68 | 4 | VERIFICACIÓN | 3 × 4 | ~945 (r) | sin código propio: se mide con el del rojo (4); no entra en el ajuste (PA-15) |
+| 84 | 2 | cafe | P68 | café | IV | 36 | 4 | VERIFICACIÓN | 3 × 4 | ~767 (r) | sin código propio: se mide con el del rojo (4); no entra en el ajuste (PA-06) |
+| 85 | 2 | cafe | P128 | café | IX | 38 | 4 | VERIFICACIÓN | 3 × 4 | ~778 (r) | sin código propio: se mide con el del rojo (4); no entra en el ajuste (PA-06) |
+| 86 | 2 | cafe | P83 | café | IX | 55 | 4 | VERIFICACIÓN | 3 × 4 | ~873 (r) | sin código propio: se mide con el del rojo (4); no entra en el ajuste (PA-06) |
+| 87 | 2 | cafe | P113 | café | XI | 60 | 4 | VERIFICACIÓN | 3 × 4 | ~901 (r) | sin código propio: se mide con el del rojo (4); no entra en el ajuste (PA-06) |
+| 88 | 2 | cafe | P98 | café | XI | 68 | 4 | VERIFICACIÓN | 3 × 4 | ~945 (r) | sin código propio: se mide con el del rojo (4); no entra en el ajuste (PA-06) |
 | 89 | 2 | BATERIA |  |  |  |  | 9 | control |  |  | control al cambiar de grupo |
-| 90 | 2 | lila | P69 | lila | IV | 139 | 4 | VERIFICACIÓN | 3 × 4 | ~1342 (r) | sin código propio: se mide con el del rojo (4); no entra en el ajuste (PA-15) |
-| 91 | 2 | lila | P129 | lila | IX | 157 | 4 | VERIFICACIÓN | 3 × 4 | ~1442 (r) | sin código propio: se mide con el del rojo (4); no entra en el ajuste (PA-15) |
-| 92 | 2 | lila | P84 | lila | IX | 177 | 4 | VERIFICACIÓN | 3 × 4 | ~1554 (r) | sin código propio: se mide con el del rojo (4); no entra en el ajuste (PA-15) |
-| 93 | 2 | lila | P99 | lila | XI | 188 | 4 | VERIFICACIÓN | 3 × 4 | ~1616 (r) | sin código propio: se mide con el del rojo (4); no entra en el ajuste (PA-15) |
-| 94 | 2 | lila | P114 | lila | XI | 202 | 4 | VERIFICACIÓN | 3 × 4 | ~1694 (r) | sin código propio: se mide con el del rojo (4); no entra en el ajuste (PA-15) |
+| 90 | 2 | lila | P69 | lila | IV | 139 | 4 | VERIFICACIÓN | 3 × 4 | ~1342 (r) | sin código propio: se mide con el del rojo (4); no entra en el ajuste (PA-06) |
+| 91 | 2 | lila | P129 | lila | IX | 157 | 4 | VERIFICACIÓN | 3 × 4 | ~1442 (r) | sin código propio: se mide con el del rojo (4); no entra en el ajuste (PA-06) |
+| 92 | 2 | lila | P84 | lila | IX | 177 | 4 | VERIFICACIÓN | 3 × 4 | ~1554 (r) | sin código propio: se mide con el del rojo (4); no entra en el ajuste (PA-06) |
+| 93 | 2 | lila | P99 | lila | XI | 188 | 4 | VERIFICACIÓN | 3 × 4 | ~1616 (r) | sin código propio: se mide con el del rojo (4); no entra en el ajuste (PA-06) |
+| 94 | 2 | lila | P114 | lila | XI | 202 | 4 | VERIFICACIÓN | 3 × 4 | ~1694 (r) | sin código propio: se mide con el del rojo (4); no entra en el ajuste (PA-06) |
 | 95 | 2 | BATERIA |  |  |  |  | 9 | control |  |  | control al cambiar de grupo |
-| 96 | 2 | rojo-I | P39 | rojo | I | 46 | b | VERIFICACIÓN | 3 × 4 | 734,3 | verificar; ajuste sólo con recta anclada (PA-14) |
-| 97 | 2 | rojo-I | P38 | rojo | I | 52 | b | VERIFICACIÓN | 3 × 4 | 743,9 | verificar; ajuste sólo con recta anclada (PA-14) |
-| 98 | 2 | rojo-I | P49 | rojo | I | 81 | b | VERIFICACIÓN | 3 × 4 | 797,2 | verificar; ajuste sólo con recta anclada (PA-14) |
+| 96 | 2 | rojo-I | P39 | rojo | I | 46 | b | AJUSTE | 5 × 4 | 734,3 | recta anclada; conformidad de Diego a RF-CAL-14 pendiente |
+| 97 | 2 | rojo-I | P38 | rojo | I | 52 | b | AJUSTE | 5 × 4 | 743,9 | recta anclada; conformidad de Diego a RF-CAL-14 pendiente |
+| 98 | 2 | rojo-I | P49 | rojo | I | 81 | b | RE-MEDIDA | 5 × 4 | 797,2 | recta anclada; conformidad de Diego a RF-CAL-14 pendiente |
 | 99 | 2 | BATERIA |  |  |  |  | 9 | control |  |  | control al cambiar de grupo |
 | 100 | 2 | naranja | P70 | naranja | IV | 80 | 6 | AJUSTE | 3 × 4 | ~1050 (f) |  |
 | 101 | 2 | naranja | P71 | naranja | IV | 84 | 6 | AJUSTE | 3 × 4 | ~1070 (f) |  |
@@ -192,11 +199,11 @@ de fábrica en todos, como pedía el encargo.
 | 121 | 2 | A5-FIN | P22 (A5) | amarillo | IV | 334 | e | control | 3 × 4 | 1497 | deriva de la sesión frente a A5-INICIO (RF-CAL-36) |
 | 122 | 2 | A5-FIN | P28 (A5) | blanco | IX | 484 | e | control | 3 × 4 | 2277,9 | deriva de la sesión frente a A5-INICIO (RF-CAL-36) |
 | 123 | 2 | A5-FIN | P4 (A5) | blanco | XI | 828 | e | control | 3 × 4 | 3315,8 | deriva de la sesión frente a A5-INICIO (RF-CAL-36) |
-| 124 | 2 | OSCURO fin | OSCURO |  |  | 0 | e | control | 3 × 4 | 565 | deriva del oscuro |
+| 124 | 2 | OSCURO fin | OSCURO |  |  | 0 | e | control | 5 × 4 | 565 | deriva del oscuro y segunda mitad del ancla |
 | 125 | 2 | EXPORTAR |  |  |  |  |  | control |  |  | ZIP de la sesión; copia en `Download/RTV/` |
 | 126 | 2 | PAUSA |  |  |  |  |  | control |  |  | si se apaga el equipo o se cambia la batería: 10 min de calentamiento al volver |
 | 127 | 3 | BATERIA |  |  |  |  | 9 | control |  |  | orden 9: tensión y nivel; aviso si baja (RF-CAL-41) |
-| 128 | 3 | OSCURO inicio | OSCURO |  |  | 0 | e | control | 3 × 4 | 565 | superficie negra mate; ancla de la recta del código 2 (y del 5 si PA-14) |
+| 128 | 3 | OSCURO inicio | OSCURO |  |  | 0 | e | control | 5 × 4 | 565 | superficie negra mate; ancla = media de OSCURO inicio y fin de la sesión (P10-C3) |
 | 129 | 3 | A5-INICIO | P22 (A5) | amarillo | IV | 334 | e | control | 3 × 4 | 1497 | puente y s_rep (P9-A5); no entra en el ajuste |
 | 130 | 3 | A5-INICIO | P28 (A5) | blanco | IX | 484 | e | control | 3 × 4 | 2277,9 | puente y s_rep (P9-A5); no entra en el ajuste |
 | 131 | 3 | A5-INICIO | P4 (A5) | blanco | XI | 828 | e | control | 3 × 4 | 3315,8 | puente y s_rep (P9-A5); no entra en el ajuste |
@@ -223,19 +230,19 @@ de fábrica en todos, como pedía el encargo.
 | 152 | 3 | verde-I | P40 | verde | I | 6 | a | VERIFICACIÓN | 3 × 4 | 624,7 | a menos de 80 cuentas del oscuro |
 | 153 | 3 | verde-I | P45 | verde | I | 7 | a | VERIFICACIÓN | 3 × 4 | 615,6 | a menos de 80 cuentas del oscuro |
 | 154 | 3 | BATERIA |  |  |  |  | 9 | control |  |  | control al cambiar de grupo |
-| 155 | 3 | azul | P66 | azul | IV | 89 | 5 | VERIFICACIÓN | 3 × 4 | ~837 (o) | AJUSTE sólo si PA-14 = recta anclada |
-| 156 | 3 | azul | P67 | azul | IV | 95 | 5 | VERIFICACIÓN | 3 × 4 | ~856 (o) | AJUSTE sólo si PA-14 = recta anclada |
-| 157 | 3 | azul | P126 | azul | IX | 91 | 5 | VERIFICACIÓN | 3 × 4 | ~843 (o) | AJUSTE sólo si PA-14 = recta anclada |
-| 158 | 3 | azul | P81 | azul | IX | 92 | 5 | VERIFICACIÓN | 3 × 4 | ~846 (o) | AJUSTE sólo si PA-14 = recta anclada |
-| 159 | 3 | azul | P127 | azul | IX | 97 | 5 | VERIFICACIÓN | 3 × 4 | ~862 (o) | AJUSTE sólo si PA-14 = recta anclada |
-| 160 | 3 | azul | P82 | azul | IX | 98 | 5 | VERIFICACIÓN | 3 × 4 | ~865 (o) | AJUSTE sólo si PA-14 = recta anclada |
-| 161 | 3 | azul | P17 | azul | XI | 83 | 5 | VERIFICACIÓN | 3 × 4 | 828,4 | AJUSTE sólo si PA-14 = recta anclada |
-| 162 | 3 | azul | P18 | azul | XI | 84 | 5 | VERIFICACIÓN | 3 × 4 | 813,4 | AJUSTE sólo si PA-14 = recta anclada |
-| 163 | 3 | azul | P19 | azul | XI | 85 | 5 | VERIFICACIÓN | 3 × 4 | 823,6 | AJUSTE sólo si PA-14 = recta anclada |
-| 164 | 3 | azul | P111 | azul | XI | 93 | 5 | VERIFICACIÓN | 3 × 4 | ~849 (o) | AJUSTE sólo si PA-14 = recta anclada |
-| 165 | 3 | azul | P96 | azul | XI | 95 | 5 | VERIFICACIÓN | 3 × 4 | ~856 (o) | AJUSTE sólo si PA-14 = recta anclada |
-| 166 | 3 | azul | P112 | azul | XI | 101 | 5 | VERIFICACIÓN | 3 × 4 | ~874 (o) | AJUSTE sólo si PA-14 = recta anclada |
-| 167 | 3 | azul | P97 | azul | XI | 102 | 5 | VERIFICACIÓN | 3 × 4 | ~877 (o) | AJUSTE sólo si PA-14 = recta anclada |
+| 155 | 3 | azul | P66 | azul | IV | 89 | 5 | VERIFICACIÓN | 3 × 4 | ~837 (o) | uso segun la tabla RF-CAL-37 del APK (PA-14) |
+| 156 | 3 | azul | P67 | azul | IV | 95 | 5 | VERIFICACIÓN | 3 × 4 | ~856 (o) | uso segun la tabla RF-CAL-37 del APK (PA-14) |
+| 157 | 3 | azul | P126 | azul | IX | 91 | 5 | VERIFICACIÓN | 3 × 4 | ~843 (o) | uso segun la tabla RF-CAL-37 del APK (PA-14) |
+| 158 | 3 | azul | P81 | azul | IX | 92 | 5 | RE-MEDIDA | 5 × 4 | ~846 (o) | uso segun la tabla RF-CAL-37 del APK (PA-14) |
+| 159 | 3 | azul | P127 | azul | IX | 97 | 5 | VERIFICACIÓN | 3 × 4 | ~862 (o) | uso segun la tabla RF-CAL-37 del APK (PA-14) |
+| 160 | 3 | azul | P82 | azul | IX | 98 | 5 | VERIFICACIÓN | 3 × 4 | ~865 (o) | uso segun la tabla RF-CAL-37 del APK (PA-14) |
+| 161 | 3 | azul | P17 | azul | XI | 83 | 5 | VERIFICACIÓN | 3 × 4 | 828,4 | uso segun la tabla RF-CAL-37 del APK (PA-14) |
+| 162 | 3 | azul | P18 | azul | XI | 84 | 5 | VERIFICACIÓN | 3 × 4 | 813,4 | uso segun la tabla RF-CAL-37 del APK (PA-14) |
+| 163 | 3 | azul | P19 | azul | XI | 85 | 5 | VERIFICACIÓN | 3 × 4 | 823,6 | uso segun la tabla RF-CAL-37 del APK (PA-14) |
+| 164 | 3 | azul | P111 | azul | XI | 93 | 5 | VERIFICACIÓN | 3 × 4 | ~849 (o) | uso segun la tabla RF-CAL-37 del APK (PA-14) |
+| 165 | 3 | azul | P96 | azul | XI | 95 | 5 | VERIFICACIÓN | 3 × 4 | ~856 (o) | uso segun la tabla RF-CAL-37 del APK (PA-14) |
+| 166 | 3 | azul | P112 | azul | XI | 101 | 5 | VERIFICACIÓN | 3 × 4 | ~874 (o) | uso segun la tabla RF-CAL-37 del APK (PA-14) |
+| 167 | 3 | azul | P97 | azul | XI | 102 | 5 | VERIFICACIÓN | 3 × 4 | ~877 (o) | uso segun la tabla RF-CAL-37 del APK (PA-14) |
 | 168 | 3 | BATERIA |  |  |  |  | 9 | control |  |  | control al cambiar de grupo |
 | 169 | 3 | azul-I | P42 | azul | I | 7 | c | VERIFICACIÓN | 3 × 4 | 592,6 | a menos de 80 cuentas del oscuro |
 | 170 | 3 | azul-I | P32a | azul | I | 9 | c | VERIFICACIÓN | 3 × 4 | 630,9 | P32 duplicado en la fuente: leer etiqueta y color en voz alta (C-41); a menos de 80 cuentas del oscuro |
@@ -247,7 +254,7 @@ de fábrica en todos, como pedía el encargo.
 | 176 | 3 | A5-FIN | P22 (A5) | amarillo | IV | 334 | e | control | 3 × 4 | 1497 | deriva de la sesión frente a A5-INICIO (RF-CAL-36) |
 | 177 | 3 | A5-FIN | P28 (A5) | blanco | IX | 484 | e | control | 3 × 4 | 2277,9 | deriva de la sesión frente a A5-INICIO (RF-CAL-36) |
 | 178 | 3 | A5-FIN | P4 (A5) | blanco | XI | 828 | e | control | 3 × 4 | 3315,8 | deriva de la sesión frente a A5-INICIO (RF-CAL-36) |
-| 179 | 3 | OSCURO fin | OSCURO |  |  | 0 | e | control | 3 × 4 | 565 | deriva del oscuro |
+| 179 | 3 | OSCURO fin | OSCURO |  |  | 0 | e | control | 5 × 4 | 565 | deriva del oscuro y segunda mitad del ancla |
 | 180 | 3 | EXPORTAR |  |  |  |  |  | control |  |  | ZIP de la sesión; copia en `Download/RTV/` |
 
 ---
@@ -265,15 +272,15 @@ patrón.
 
 | Variante | Qué mide | Patrones | Estimación |
 | :--- | :--- | ---: | ---: |
-| **Banco completo (esta cola)** | Los 133, con OSCURO y A5 al inicio y al final de cada sesión | 133 | **≈ 190 min en 3 sesiones: 74 (con 10 de calentamiento), 63 y 53** |
-| Banco completo a 5 × 4 (referencia) | Los 133 a K = 5 | 133 | ≈ 225 min sólo de patrones, más ≈ 40 de control: **≈ 4 h 25 min** |
-| Sólo ajuste, códigos 1, 2 y 8 (los decididos) | Blanco y amarillo intensos y amarillo tipo I | 44 | 51 min de patrones. **≈ 72 min en una sesión, u ≈ 81 min en dos** (recomendado: sesión 1 blanco y amarillo tipo I, sesión 2 amarillo intenso) |
-| Sólo ajuste, todos los ajustables (1, 2, 3, 4, 6, 8, y 5 si PA-14) | Sin los de sólo verificar | 107 | 121 min de patrones. **≈ 160 min en 3 sesiones** |
-| Verificación rápida | OSCURO, A5 y un patrón por código (los de RE-MEDIDA, más P35, P40, P49, P36 y P41), a 3 × 4 | 12 | **≈ 27 min**, calentamiento incluido |
-| Fase B (escritura y re-medida) | Por código: `#S`, `#G`, `#E` y re-medida a 5 × 4 con `e` y código alternados, más persistencia | — | ≈ 2,4 min por código. **≈ 17 min** para 6 códigos |
+| **Banco completo (esta cola)** | Los 133, con OSCURO y A5 al inicio y al final de cada sesión | 133 | **≈ 195 min en 3 sesiones: 75 (con 10 de calentamiento), 66 y 55** |
+| Banco completo a 5 × 4 (referencia) | Los 133 a K = 5 | 133 | ≈ 225 min sólo de patrones, más ≈ 41 de control: **≈ 4 h 26 min** |
+| Sólo ajuste, códigos 1, 2, 8 y b | Blanco y amarillo intensos, amarillo y rojo tipo I | 47 | 56 min de patrones. **≈ 78 min en una sesión, u ≈ 88 min en dos** (recomendado: sesión 1 blanco y tipo I, sesión 2 amarillo intenso) |
+| Sólo ajuste, todos los ajustables (1, 2, 3, 4, 6, 8, b, y 5 si PA-14) | Sin los de sólo verificar | 110 | 126 min de patrones. **≈ 168 min en 3 sesiones** |
+| Verificación rápida | OSCURO, A5 y un patrón por código (los 8 de RE-MEDIDA, más P35, P40, P36 y P41), a 3 × 4, con OSCURO a 5 × 4 | 12 | **≈ 28 min**, calentamiento incluido |
+| Fase B (escritura y re-medida) | Por código: `#S`, `#G`, `#E` y re-medida a 5 × 4 con `e` y código alternados, más persistencia | — | ≈ 2,4 min por código. **≈ 19 min** para 7 códigos |
 
-**Control por sesión:** OSCURO y A5 al inicio y al final suman 8,6 min por sesión (3 × 4). En la
-primera son 5 × 4 al inicio y suman 11,1 min, más 10 de calentamiento.
+**Control por sesión:** OSCURO a 5 × 4 y A5 a 3 × 4, al inicio y al final, suman 9,8 min por sesión. En
+la primera, la A5 del inicio va a 5 × 4 y el control suma 11,7 min, más 10 de calentamiento.
 
 ---
 
@@ -282,7 +289,7 @@ primera son 5 × 4 al inicio y suman 11,1 min, más 10 de calentamiento.
 Regla de la app: patrones del color y la clase del código, grado máximo = mín(2 ; niveles distintos − 2),
 y "sólo verificar" si el rango certificado es menor de 20 unidades o del 30 % del mayor
 (`Asistente.java:33-36`, `:75-98`). El grado que se propone es otra cosa: sale de las decisiones de
-Diego y de `SPEC-Calibracion-V3.6.md` §4.4.
+Diego, de `SPEC-Calibracion-V3.6.md` §4.4 y de `06_Calibracion/SLV-002/REFORMULACION-y-Simulacion-2026-09-19.md` (commit `66a7649`, en adelante **REFORM**), que manda en los códigos 1, 2, 8 y b.
 
 ### 3.0 Resumen
 
@@ -292,12 +299,12 @@ Diego y de `SPEC-Calibracion-V3.6.md` §4.4.
 | **2** amarillo intenso | 24 | 24 | 207-782 | ~1132-2788 (14 medidos) | Hasta grado 2 | **Recta anclada en el oscuro (decidido, escrito el 19-sep)** | **P25** (IX 576) |
 | **3** verde intenso | 19 | 11 | 51-173 | ~649-849 (4 medidos) | Hasta grado 2 | Grado 1 (PA-16) | **P123** (IX 115) |
 | **4** rojo intenso | 16 | 15 | 68-279 | ~945-2124 (2 medidos) | Hasta grado 2 | Grado 1 (PA-16). Sin café ni lila (PA-15) | **P11** (IV 194) |
-| 5 azul intenso | 13 | 12 | 83-102 | 813-877 (3 medidos) | **No ajustable: rango 19 % < 30 %** | Sólo verificar. Ajustable sólo con recta anclada (PA-14) | P81 (IX 92), si PA-14 |
+| 5 azul intenso | 13 | 12 | 83-102 | 813-877 (3 medidos) | **No ajustable: rango 19 % < 30 %** | Sólo verificar. Ajustable sólo con recta anclada (PA-14). REFORM §6: "ni con el banco; sólo con dispensa" | P81 (IX 92), **medido a 5 × 4 siempre** (P10-C3) |
 | **6** naranja intenso | 15 | 15 | 80-173 | ~1050-1457 (0 medidos) | Hasta grado 2 | Grado 1 (PA-16) | **P86** (IX 124) |
 | 7 blanco tipo I | 1 | 1 | 96 | 1115 | No: 1 nivel | Sólo verificar | — |
-| **8** amarillo tipo I | 4 | 4 | 64-122 | 899-1151 (4 medidos) | Hasta grado 2 | Grado 1 (P-CAL-05), con C-CAL-15 | **P43** (I 122) |
+| **8** amarillo tipo I | 4 | 4 | 64-122 | 899-1151 (4 medidos) | Hasta grado 2 | **Recta anclada** (REFORM §3.3 y §6), con C-CAL-15 | **P43** (I 122) |
 | a verde tipo I | 2 | 2 | 6-7 | 616-625 | No: 2 niveles | Sólo verificar | — |
-| b rojo tipo I | 3 | 3 | 46-81 | 734-797 | Hasta grado 1 | Sólo verificar: la recta libre no pasa `#S` (propuesta del 19-sep, §2.4). Recta anclada si PA-14 | — |
+| **b** rojo tipo I | 3 | 3 | 46-81 | 734-797 | Hasta grado 1 | **Recta anclada** (REFORM §3.4 y §6), con la conformidad de Diego a RF-CAL-14 pendiente | **P49** (I 81) |
 | c azul tipo I | 6 | 3 | 7-10 | 593-644 | No: rango de 3 | Sólo verificar | — |
 | d naranja tipo I | 4 | 4 | 68-73 | 803-907 | No: rango 7 % | Sólo verificar | — |
 | (4) café y lila | 10 | 10 | 36-202 | ~767-1694 (r) | No se cuentan (otro color) | Verificar con el 4 (PA-15) | — |
@@ -315,6 +322,9 @@ Hay que cambiar esa regla (RF-APP-42) y que Diego lo decida (PA-14).
 
 ### 3.1 Código 1, blanco intenso (grado 1, escrito el 19-sep)
 
+**No se reescribe** (REFORM §3.1 y §6: la curva nueva se separa de la del acta 0,89·σ_col como mucho).
+El banco lo verifica.
+
 - **Ajuste:** P56, P3, P2, P52, P58, P51 (IV); P27, P28, P118, P73 (IX); P1, P103, P7, P6, P88, P4 (XI).
 - **Rango:** R 347-828. `x` medida de 1674 (P3) a 3316 (P4). Los 8 nuevos se estiman dentro: 1717-3130 (o).
 - **Extrapolación:** por encima de 828 (x > 3316) hasta x = 4300, donde la curva escrita da R ≈ 1121.
@@ -325,6 +335,9 @@ Hay que cambiar esa regla (RF-APP-42) y que Diego lo decida (PA-14).
   Además, repetirlo da continuidad con la re-medida del 19-sep.
 
 ### 3.2 Código 2, amarillo intenso (recta anclada, escrito el 19-sep)
+
+**No se reescribe** (REFORM §3.2 y §6: 0,55·σ_col como mucho). Diego dio la conformidad a sus
+incumplimientos de RF-CAL-14/15 en el acta (línea 18).
 
 - **Ajuste:** P61, P62, P22, P21, P29, P30, P24 (IV); P121, P122, P77, P76, P31, P25, P26 (IX); P107,
   P106, P91, P92, P10, P9, P23, P8, P5, P20 (XI).
@@ -366,7 +379,9 @@ Hay que cambiar esa regla (RF-APP-42) y que Diego lo decida (PA-14).
 - **Rango:** R 83-102. `x` medida en P17-P19 (813-828); los nuevos se estiman en 837-877 (o).
 - **Por qué no:** el rango de R es del 19 % y el de `x`, de unas 64 cuentas, del orden de 3 s_rep a
   esa altura. Una recta libre sobre ese grupo queda sin pendiente.
-- **Con recta anclada (PA-14):** la pendiente la fija el oscuro, a 250-310 cuentas. RE-MEDIDA: **P81**
+- **Con recta anclada (PA-14):** la pendiente la fija el oscuro, a 250-310 cuentas: 5 cuentas de error en
+  el ancla son un 1,6-2,0 % de R (P10 §2.3). La misma regla de la anclada haría ajustable también el **d**
+  (0-73, 5 niveles; C-P10-7): Diego decide los dos a la vez. RE-MEDIDA: **P81**
   (IX, 92).
 
 ### 3.6 Código 6, naranja intenso
@@ -381,16 +396,23 @@ Hay que cambiar esa regla (RF-APP-42) y que Diego lo decida (PA-14).
 
 - **Ajuste:** P44 (64), P37 (82), P34 (86), P43 (122), todos a **5 × 4**: con 4 puntos, cada uno pesa.
 - **Rango:** `x` medida 899-1151. Sin extrapolar hasta 122. Por debajo, hasta el oscuro.
-- **Grado admisible:** 2 por la regla (4 niveles). Propuesto: 1 (P-CAL-05). Además sigue abierta
-  C-CAL-15: no hay certificado de los tipo I.
+- **Grado admisible:** 2 por la regla (4 niveles). **Método: recta anclada en el oscuro** (REFORM §3.3
+  y §6: `c1 = 2.04279088E-01`, `c0 = -1.15490317E+02`). La de grado 1 corta el cero en x ≈ 598 y pasa
+  `#S` por 0,33 unidades en x = 600; con la colocación simulada falla en 1603 de 4000 casos, y la
+  anclada en 0. Sigue abierta C-CAL-15: no hay certificado de los tipo I.
 - **RE-MEDIDA: P43**, el que más cuentas da sobre el oscuro. **El código 8 no se escribió el 19-sep.**
 
 ### 3.8 Código b, rojo tipo I
 
 - **Patrones:** P39 (46), P38 (52), P49 (81). `x` 734-797: 63 cuentas de rango.
-- **Regla:** hasta grado 1. **Propuesto: sólo verificar.** La recta libre da R(600) = −27,8 y `#S` la
-  rechaza (`PROPUESTA-Ajuste-SLV-002-2026-09-19.md`, §2.4). Con recta anclada, la pendiente la fijaría
-  el oscuro, a 170-230 cuentas (PA-14).
+- **Regla:** hasta grado 1. **Método: recta anclada en el oscuro** (REFORM §3.4 y §6: `c1 = 3.13845140E-01`,
+  `c0 = -1.77434093E+02`). La recta libre se hace negativa en x = 600 y `#S` la rechaza. La anclada
+  incumple RF-CAL-14 en P39 (+15,3 %) y P49 (−10,2 %) y RF-CAL-15: **necesita la conformidad de Diego,
+  pendiente**. El banco no trae ningún rojo tipo I nuevo: esperar no la mejora.
+- **Los tres a 5 × 4**, como el 8: con 3 puntos, cada uno pesa un tercio.
+- **Sensibilidad al ancla:** la `x` está a 170-230 cuentas del oscuro, así que 5 cuentas de error en el
+  ancla son un 2,2-2,9 % de R (P10 §2.3). El acta lo declara.
+- **RE-MEDIDA: P49** (I, 81), la que propone REFORM §6.
 
 ### 3.9 Café y lila (con el código 4)
 
@@ -423,13 +445,14 @@ Con la s entre colocaciones medida en la A5 del 19-sep, **s_rep = 2,24 %** (medi
 - **En los códigos con muchos patrones (1, 2, 3, 4 y 6, de 15 a 24), la curva la fija el conjunto.** Con
   16 puntos a K = 3, el ruido de colocación que queda en la curva es del orden de 1,29/√16 ≈ 0,3 %. Los
   residuos por tipo que se quieren juzgar son del 2,8 al 10 % (acta del 19-sep, líneas 11 y 18). Pasar
-  los 88 de AJUSTE a K = 5 cuesta 37 s por patrón, unos 54 min más de banco, para bajar ese 0,3 % a 0,25 %.
+  los 85 de AJUSTE que van a K = 3 a K = 5 cuesta 37 s por patrón, unos 52 min más de banco, para bajar ese 0,3 % a 0,25 %.
 - **Donde un solo punto manda, K = 5:**
-  - el **OSCURO**, porque es el ancla del 2 y su error se traslada entero a la parte baja de la curva;
+  - **todos los OSCURO**, porque son el ancla del 2, del 8 y del b (y del 5 si PA-14), y su error se
+    traslada entero a la parte baja de la curva;
   - la **A5 del inicio**, porque es la s_rep que Diego fijó como criterio (4 grados de libertad por
     patrón, el mínimo razonable, `PROPUESTA-Ajuste-SLV-002-2026-09-19.md` §6);
   - el **patrón de RE-MEDIDA** de cada código, porque es la referencia con la que se compara la Fase B;
-  - los **4 del código 8**, porque con 4 puntos cada uno pesa un 25 %.
+  - los **4 del código 8 y los 3 del b**, porque con 3-4 puntos cada uno pesa un 25-33 %.
 - **K = 3 es el mínimo que detecta una mala colocación.** Con K = 1 no hay s entre colocaciones, y la
   app tiene que suponerla. Así se hizo el 19-sep: "s_rep 14,9 (supuesta)" en el acta, línea 14. Con
   K = 3, `Veredicto.sEntre` y `REPRO_MAX` = 3 % (`Veredicto.java:71`) marcan la serie para repetir.
