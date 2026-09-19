@@ -527,3 +527,17 @@ Rango medido: x 899-1151. Fuera de él la curva es EXTRAPOLACIÓN:
   4000    2344.9    749.4 extrapolado
 Aviso: la curva es negativa hasta x = 598 (por debajo de los patrones): ahí el equipo responderá 0
 ```
+
+## Decisiones de Diego (19-sep-2026, 11:20)
+
+- **Código 2 (amarillo intenso): opción (b)**, recta anclada al punto de oscuro, que se calcula fuera de
+  la app. Queda pendiente medir el oscuro como serie (5 colocaciones × 9 sobre superficie negra mate)
+  antes de fijar el ancla.
+- **Código 1 (blanco intenso): se acepta el ajuste de grado 1** aunque incumple RF-CAL-14 (P3, LOO
+  +18,8 %), RF-CAL-15 (RMS IV 10 %) y RF-CAL-16 (XI 2,8 % frente a 2,6 % de fábrica). Sigue siendo
+  provisional hasta la A5.
+- **Criterio de reproducibilidad:** se sustituye el "≤ máx(3·s ; 1 %)" por el que salga de la A5
+  (s entre colocaciones).
+
+Estado a las 11:20: firmware 3.6.2 confirmado en el equipo por la app 3.6.8 (`#GC,NONE#`), con serie y
+fecha en NONE y APTO dos veces. **La A5 y la serie de oscuro están sin medir**, y la serie sin grabar.
