@@ -82,7 +82,7 @@ V4.6 las duplica y adapta en su repositorio. No hay SPEC compartidas.
 | Documento | Estado |
 | :--- | :--- |
 | [`SPEC-V3.6.md`](05_Documentacion/SPEC-V3.6.md), [`TDD-V3.6.md`](05_Documentacion/TDD-V3.6.md), [`PROTOCOLO-V3.6.md`](05_Documentacion/PROTOCOLO-V3.6.md) (rev. 1.1) | Vigentes; reconciliación con el código en curso |
-| `05_Documentacion/SPEC-Calibracion-V3.6.md` | **En curso** (no existe a las 09:50): modo superadministrador y PDF del informe |
+| [`SPEC-Calibracion-V3.6.md`](05_Documentacion/SPEC-Calibracion-V3.6.md) | **Escrita, 19-sep-2026, sin validar en equipo**: cobertura por código, campaña, ajuste (decisión C), criterios de aceptación **propuestos**, acta, superadministrador, informe PDF, incertidumbre pendiente y contradicciones C-CAL-01 a 15 |
 | `05_Documentacion/SPEC-Registro-Indicador-Interventoria.md` | **En curso** (no existe a las 09:50): registros por vía y tipo de señal |
 | `08_Senales/` | **En curso** (no existe a las 09:50): catálogo de señales del Manual 2024 |
 | SPEC de la app de producción | Por escribir en P10 |
