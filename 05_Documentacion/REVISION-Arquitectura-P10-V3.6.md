@@ -87,9 +87,9 @@ implemente fielmente la SPEC fallará T-A54 (a).
 
 - **Patrón presente.** El disparo de asentamiento tiene que caer en [0,8 ; 1,2]·x̄_banco del patrón. Si
   no, se muestra "Coloque P28" y no se gasta ningún disparo. El 12:17:02, el asentamiento dio `::592`
-  (T4:2081-2083), a 34 cuentas del oscuro: el caso se habría detectado antes de medir.
+  (T4:2081-2083), a 27 cuentas del oscuro: el caso se habría detectado antes de medir.
 - **Coherencia por par.** Cualquier par con |d_i| > máx(3 ; 2 %·R_#G(x_e,i)) invalida la colocación.
-  En el segundo intento (T4:2162-2233) el mayor |d_i| es 3,3, frente a un umbral de unos 10: pasa.
+  En el segundo intento (T4:2162-2233) el mayor |d_i| es 4,5 (cálculo de esta revisión), frente a un umbral de unos 10: pasa.
 
 **Nota de margen.** En ese segundo intento, d̄ = −1,44 frente al umbral de la SPEC, máx(2 ; 2,49) =
 2,49. El sesgo negativo cuadra con el truncado a entero del firmware (−0,5 de media) más el ruido entre
@@ -174,7 +174,7 @@ D-20.** El acta sí queda incompleta: hay que anotarla, sin reescribirla.
 
 | Disparos | `e` | Código 1 | Lectura |
 | :--- | :--- | :--- | :--- |
-| Asentamiento (T4:2081) | 592 | — | **Sin patrón**: a 34 cuentas del oscuro de las 11:58 (S060, 565,4) |
+| Asentamiento (T4:2081) | 592 | — | **Sin patrón**: a 27 cuentas del oscuro de las 11:58 (S060, 565,4) |
 | Pares 1-5 (T4:2084-2123) | 611, 598, 598, 599, 599 | 17, 17, 17, 18, 13 | Sin patrón. El equipo evalúa bien su curva: R_#G(598) = 16,2 |
 | Par 6 (T4:2124-2131) | 603 | **480** | **Se apoyó P28 entre los dos disparos** |
 | Pares 7-9 (T4:2132-2155) | 2198, 2213, 2213 | 492, 495, 497 | P28 colocado |
