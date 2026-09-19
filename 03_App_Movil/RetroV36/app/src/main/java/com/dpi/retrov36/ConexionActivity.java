@@ -34,6 +34,7 @@ public class ConexionActivity extends Base {
     private Button btnBotones;
     private Button btnCampana;
     private Button btnAdmin;
+    private Button btnCalibrar;
     /** true entre el toque del operador y el final de connect(). */
     private boolean esperandoConexion;
 
@@ -46,6 +47,7 @@ public class ConexionActivity extends Base {
         btnMedir = boton("2. Medida de patrones", v -> startActivity(new Intent(this, MedidaActivity.class)));
         btnCampana = boton("3. Campaña de calibración (guiada, un solo envío)",
                 v -> startActivity(new Intent(this, CampanaActivity.class)));
+        btnCalibrar = boton("4. Calibrar este equipo", v -> startActivity(new Intent(this, CalibrarActivity.class)));
         btnBotones = boton("Botones de pantalla (sólo V3.6)", v -> startActivity(new Intent(this, BotonesActivity.class)));
         btnAdmin = boton("Modo administrador (sólo V3.6)", v -> startActivity(new Intent(this, AdminActivity.class)));
         boton("Compartir registro y datos", v -> compartirTodo());
@@ -111,6 +113,7 @@ public class ConexionActivity extends Base {
         btnMedir.setEnabled(con);
         btnBotones.setEnabled(con && s.version == Sesion.Version.V36);
         btnAdmin.setEnabled(con);
+        btnCalibrar.setEnabled(con);
         listaDispositivos.setEnabled(!EnlaceSerie.instancia().estaConectando());
     }
 

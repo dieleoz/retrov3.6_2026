@@ -159,6 +159,29 @@ public abstract class Base extends AppCompatActivity implements EnlaceSerie.Oyen
         runOnUiThread(r);
     }
 
+    /**
+     * Desde el hilo de trabajo: muestra un dialogo y espera la respuesta. Devuelve 0 (positivo),
+     * 1 (negativo) o 2 (neutro). negativo y neutro pueden ser null.
+     */
+    protected int preguntar(String titulo, String mensaje, String positivo, String negativo, String neutro)
+            throws InterruptedException {
+        final int[] r = {-1};
+        final java.util.concurrent.CountDownLatch l = new java.util.concurrent.CountDownLatch(1);
+        enUi(() -> {
+            AlertDialog.Builder b = new AlertDialog.Builder(this).setTitle(titulo).setMessage(mensaje).setCancelable(false)
+                    .setPositiveButton(positivo, (d, w) -> { r[0] = 0; l.countDown(); });
+            if (negativo != null) {
+                b.setNegativeButton(negativo, (d, w) -> { r[0] = 1; l.countDown(); });
+            }
+            if (neutro != null) {
+                b.setNeutralButton(neutro, (d, w) -> { r[0] = 2; l.countDown(); });
+            }
+            b.show();
+        });
+        l.await();
+        return r[0];
+    }
+
     protected void aviso(String t) {
         Toast.makeText(this, t, Toast.LENGTH_LONG).show();
     }

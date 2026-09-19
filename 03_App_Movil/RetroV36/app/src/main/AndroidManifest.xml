@@ -39,6 +39,8 @@
         <activity android:name=".CampanaActivity" android:label="Campaña de calibración" />
         <activity android:name=".BancoActivity" android:label="Banco P1-P132"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
+        <activity android:name=".CalibrarActivity" android:label="Calibrar este equipo"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

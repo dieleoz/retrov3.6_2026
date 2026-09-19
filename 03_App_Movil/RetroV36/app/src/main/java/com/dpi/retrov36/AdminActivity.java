@@ -52,7 +52,7 @@ public class AdminActivity extends Base {
     private EditText edXosc;
     private EditText edOscMargen;
     private EditText edOscMin;
-    private EditText edSrep;
+    private TextView txtSrep;
     private Spinner spRemedida;
     private Button btnRemedida;
     private Button btnAceptar;
@@ -131,13 +131,16 @@ public class AdminActivity extends Base {
         edOscMin = campo("Mínimo en oscuro", InputType.TYPE_CLASS_NUMBER);
         edOscMin.setText(String.format(Locale.US, "%.0f", Asistente.OSCURO_MINIMO));
         fila(edXosc, edOscMargen, edOscMin);
-        edSrep = campo("s_rep entre colocaciones (%) para criterios (P9-B5)", InputType.TYPE_CLASS_NUMBER
-                | InputType.TYPE_NUMBER_FLAG_DECIMAL);
-        edSrep.setText(String.format(Locale.US, "%.1f", 100 * Asistente.S_REP_REL));
+        // P10 hallazgo 9: s_rep no se teclea; sale de la A5 del inicio del banco (Anclas.sRep).
+        txtSrep = texto("s_rep: se calcula de la A5 del inicio del banco");
         spRemedida = new Spinner(this);
         panel.addView(spRemedida);
-        btnRemedida = boton("Re-medida de verificación del último código escrito", v -> remedida());
-        btnAceptar = boton("Aceptar acta y grabar fecha (#SC)", v -> aceptarActa());
+        // 3.6.11: la re-medida (D-20, una repeticion como maximo) y la aceptacion (persistencia, #V# y #G
+        // frescos, #SC) se hacen en "Calibrar este equipo", que retoma el acta en disco.
+        btnRemedida = boton("Re-medida: en Calibrar este equipo",
+                v -> startActivity(new android.content.Intent(this, CalibrarActivity.class)));
+        btnAceptar = boton("Aceptar acta: en Calibrar este equipo",
+                v -> startActivity(new android.content.Intent(this, CalibrarActivity.class)));
         btnRechazar = boton("Rechazar acta (no se graba fecha)", v -> rechazarActa());
         fila(btnAceptar, btnRechazar);
         txtActa = texto("");
@@ -223,7 +226,7 @@ public class AdminActivity extends Base {
                 : acta.motivoNoAceptable())));
         Acta.Codigo ult = acta == null || acta.codigos().isEmpty() ? null : acta.codigos().get(acta.codigos().size() - 1);
         btnRemedida.setEnabled(ab && !ocupado && ult != null && !acta.cerrada());
-        btnAceptar.setEnabled(ab && !ocupado && acta != null && acta.motivoNoAceptable() == null);
+        btnAceptar.setEnabled(!ocupado && acta != null && !acta.cerrada());
         btnRechazar.setEnabled(ab && !ocupado && acta != null && !acta.cerrada());
         if (ult != null) {
             List<String> et = new ArrayList<>();
@@ -468,7 +471,19 @@ public class AdminActivity extends Base {
             Asistente.X_OSCURO = Double.parseDouble(edXosc.getText().toString().trim());
             Asistente.OSCURO_MARGEN = Double.parseDouble(edOscMargen.getText().toString().trim());
             Asistente.OSCURO_MINIMO = Double.parseDouble(edOscMin.getText().toString().trim());
-            Asistente.S_REP_REL = Double.parseDouble(edSrep.getText().toString().trim().replace(',', '.')) / 100.0;
+            Asistente.S_REP_REL = Double.NaN;
+            Campana c = Campanas.abierta();
+            if (c != null) {
+                try (java.io.InputStream in = getAssets().open(BancoCola.ASSET)) {
+                    Anclas.Valor v = Anclas.sRep(BancoCola.cargar(ImportadorCampana.leer(in)), c);
+                    Asistente.S_REP_REL = v.valor;
+                    txtSrep.setText(v.texto);
+                } catch (IOException | RuntimeException e) {
+                    txtSrep.setText("s_rep: cola del banco no admitida (" + e.getMessage() + ")");
+                }
+            } else {
+                txtSrep.setText("s_rep: sin campaña de este equipo, no conocido");
+            }
             return true;
         } catch (NumberFormatException e) {
             alerta("Parámetros", "Revise x de oscuro, margen, mínimo y s_rep.");
@@ -661,7 +676,10 @@ public class AdminActivity extends Base {
         op("Escribir código " + k, true, () -> {
             Sesion ses = Sesion.get();
             if (ses.acta == null || ses.acta.cerrada()) {
-                ses.acta = nuevaActa();
+                Acta en = Campanas.actaEnCurso(this);
+                if (en == null) {
+                    Campanas.adjuntarActa(this, nuevaActa());
+                }
                 Registro.nota("acta abierta:\n" + ses.acta.texto());
             }
             String no = ses.acta.motivoNoEscribir(k);
@@ -674,6 +692,7 @@ public class AdminActivity extends Base {
             if (anterior == null) {
                 return "no se pudo leer el estado anterior del código " + k + ": no se escribe nada";
             }
+            ses.acta.escribiendo(k, anterior, ts.enviada);
             Cliente.Respuesta r = Cliente.instancia().pedir(ts.texto, Tramas.Tipo.ADMIN, 5000);
             String res = resultado(r);
             Ecuacion e = releer(k);
@@ -698,6 +717,7 @@ public class AdminActivity extends Base {
                     String osc = String.format(Locale.US, "Oscuro (x = %.0f): R %.1f (fábrica %.1f), valor que acepta Diego (P9-B13)",
                             Asistente.X_OSCURO, e.evaluar(Asistente.X_OSCURO), fab.evaluar(Asistente.X_OSCURO));
                     acta.escrito(k, tramaG, e, osc, metodo, conformidad);
+                    acta.dato("#V# posterior", OpsEquipo.leerV());
                     salida = "#S OK y " + estado + " (" + Ecuacion.ULP_S + " ulp); #E en 5 puntos coincide con la curva "
                             + "enviada (±1). Ahora: re-medida de verificación del código " + k + " (RF-CAL-18). "
                             + "No se escribe otro código antes (P9-B8). La fecha de calibración se graba al aceptar el acta.";
@@ -706,6 +726,9 @@ public class AdminActivity extends Base {
                 }
             } else {
                 salida = "#S OK pero " + estado + ". Se restaura el estado anterior: " + restaurar(k, anterior);
+            }
+            if (!salida.startsWith("#S OK y") && Sesion.get().acta.escribiendo() == k) {
+                Sesion.get().acta.sinEscribir(k, salida);
             }
             Sesion.get().guardarCoeficientes(this, "despues de escribir el codigo " + k);
             final String aviso = salida;
@@ -891,10 +914,35 @@ public class AdminActivity extends Base {
             alerta("Serie no válida", mal);
             return;
         }
-        new AlertDialog.Builder(this).setTitle("Grabar serie")
-                .setMessage("Se grabará la serie \"" + serie + "\" en la EEPROM del equipo (actual: "
-                        + Sesion.get().serieEquipo + ").\n\nTrama: #SN," + serie + "#")
-                .setPositiveButton("Grabar", (d, w) -> op("Grabar serie", true, () -> {
+        // P10-C6: doble entrada solo en el alta; casilla si difiere del nombre Bluetooth; aviso si ya tenia serie.
+        Sesion ses = Sesion.get();
+        LinearLayout caja = new LinearLayout(this);
+        caja.setOrientation(LinearLayout.VERTICAL);
+        final EditText repite = new EditText(this);
+        repite.setHint("Repita la serie");
+        caja.addView(repite);
+        final android.widget.CheckBox distinta = new android.widget.CheckBox(this);
+        final boolean difiere = ses.nombre == null || !ses.nombre.contains(serie);
+        distinta.setText("La serie no coincide con el nombre Bluetooth (" + ses.nombre + "): es correcta");
+        if (difiere) {
+            caja.addView(distinta);
+        }
+        boolean yaTiene = ses.serieEquipo != null && !Calibracion.NONE.equals(ses.serieEquipo);
+        new AlertDialog.Builder(this).setTitle("Alta de la serie")
+                .setMessage((yaTiene ? "ATENCIÓN: el equipo ya tiene serie (" + ses.serieEquipo + "); se sustituye.\n\n" : "")
+                        + "Se grabará la serie \"" + serie + "\" en la EEPROM del equipo (actual: "
+                        + ses.serieEquipo + ").\n\nTrama: #SN," + serie + "#")
+                .setView(caja)
+                .setPositiveButton("Grabar", (d, w) -> {
+                    if (!serie.equals(repite.getText().toString().trim())) {
+                        alerta("Serie", "Las dos entradas no coinciden: no se graba.");
+                        return;
+                    }
+                    if (difiere && !distinta.isChecked()) {
+                        alerta("Serie", "Confirme que la serie es correcta aunque difiera del nombre Bluetooth.");
+                        return;
+                    }
+                    op("Grabar serie", true, () -> {
                     Cliente.Respuesta r = Cliente.instancia().pedir("#SN," + serie + "#", Tramas.Tipo.ADMIN, 5000);
                     String res = resultado(r);
                     Cliente.Respuesta g = Cliente.instancia().pedir("#GN#", Tramas.Tipo.ADMIN, Cliente.TIMEOUT_ADMIN_MS);
@@ -904,7 +952,8 @@ public class AdminActivity extends Base {
                     }
                     return "#SN -> " + res + "; #GN# -> " + g.describir()
                             + (serie.equals(leida) ? " (verificada)" : " (NO coincide con lo enviado)");
-                }))
+                    });
+                })
                 .setNegativeButton("Cancelar", null).show();
     }
 
@@ -942,6 +991,12 @@ public class AdminActivity extends Base {
                     String res = resultado(r);
                     if ("OK".equals(res)) {
                         leerTodo("despues de " + trama);
+                    }
+                    // P10 hallazgo 9: un #F tras la conformidad deja el acta sin valor (lo certificado ya no esta).
+                    Acta acta = Sesion.get().acta;
+                    if (acta != null && !acta.cerrada() && (todos || acta.codigo(k) != null)) {
+                        acta.invalidar(trama + " -> " + res + " después de abrir el acta");
+                        res += ". El acta en curso queda INVALIDADA: recházela";
                     }
                     return res;
                 }))

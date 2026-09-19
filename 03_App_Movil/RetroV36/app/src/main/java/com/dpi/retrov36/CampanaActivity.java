@@ -75,6 +75,7 @@ public class CampanaActivity extends Base {
                 v -> startActivity(new android.content.Intent(this, BancoActivity.class)));
         btnImportar = boton("Importar ZIP de campaña", v -> importar());
         fila(banco, btnImportar);
+        boton("Calibrar este equipo", v -> startActivity(new android.content.Intent(this, CalibrarActivity.class)));
         texto("No desinstale la app: se borrarían las series. Para actualizar, instale la versión nueva encima. "
                 + "Cada exportación deja una copia en Download/RTV/.");
         edK = campo("Colocaciones K", InputType.TYPE_CLASS_NUMBER);

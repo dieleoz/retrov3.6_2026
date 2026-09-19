@@ -218,6 +218,89 @@ public final class Campanas {
         return total;
     }
 
+    // ----------------------------------------------------------- acta en disco (RF-APP-36)
+
+    private static File ficheroActaEnCurso(Context ctx) {
+        Sesion s = Sesion.get();
+        String k = claveAbierta != null ? claveAbierta : clave(s.serie(), s.mac);
+        return new File(new File(ctx.getFilesDir(), "campanas"), "acta_" + k + "_curso.csv");
+    }
+
+    private static Writer escritorActa;
+
+    /**
+     * El acta a medias de este equipo, leida de disco (reconectar no la borra). La deja en
+     * Sesion.acta y sigue escribiendo en su diario. null si no hay ninguna abierta.
+     */
+    public static synchronized Acta actaEnCurso(Context ctx) throws IOException {
+        Sesion s = Sesion.get();
+        if (s.acta != null && !s.acta.cerrada()) {
+            return s.acta;
+        }
+        File f = ficheroActaEnCurso(ctx);
+        if (!f.exists()) {
+            return null;
+        }
+        Acta a;
+        try (InputStreamReader r = new InputStreamReader(new FileInputStream(f), StandardCharsets.UTF_8)) {
+            a = Acta.leer(r);
+        }
+        if (a == null || a.cerrada() || !a.mac.equalsIgnoreCase(s.mac)) {
+            return null;
+        }
+        cerrarEscritorActa();
+        escritorActa = new OutputStreamWriter(new FileOutputStream(f, true), StandardCharsets.UTF_8);
+        a.continuarEn(escritorActa);
+        s.acta = a;
+        Registro.nota("acta a medias recuperada de " + f.getName());
+        return a;
+    }
+
+    /** Un acta nueva pasa a vivir en disco: ABRE en su diario (sustituye al acta en curso anterior). */
+    public static synchronized void adjuntarActa(Context ctx, Acta a) throws IOException {
+        File f = ficheroActaEnCurso(ctx);
+        File dir = f.getParentFile();
+        if (!dir.isDirectory() && !dir.mkdirs()) {
+            throw new IOException("no se pudo crear " + dir);
+        }
+        if (f.exists()) {
+            archivarActa(f);
+        }
+        cerrarEscritorActa();
+        escritorActa = new OutputStreamWriter(new FileOutputStream(f, true), StandardCharsets.UTF_8);
+        a.escribirEn(escritorActa);
+        Sesion.get().acta = a;
+    }
+
+    /** Al cerrar (aceptada o rechazada): el diario se archiva con fecha y se guarda el texto. */
+    public static synchronized File cerrarActaEnDisco(Context ctx, Acta a) throws IOException {
+        File f = ficheroActaEnCurso(ctx);
+        cerrarEscritorActa();
+        if (f.exists()) {
+            archivarActa(f);
+        }
+        return guardarActa(ctx, "App RTV " + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")\n" + a.texto());
+    }
+
+    private static void archivarActa(File f) throws IOException {
+        String sello = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+        File dest = new File(f.getParentFile(), f.getName().replace("_curso.csv", "_" + sello + "_diario.csv"));
+        if (!f.renameTo(dest)) {
+            throw new IOException("no se pudo archivar " + f.getName());
+        }
+    }
+
+    private static void cerrarEscritorActa() {
+        if (escritorActa != null) {
+            try {
+                escritorActa.close();
+            } catch (IOException e) {
+                // ya volcado linea a linea
+            }
+            escritorActa = null;
+        }
+    }
+
     /** Guarda un acta de calibracion (nunca pisa otra); va en el ZIP de la campana de su equipo. */
     public static synchronized File guardarActa(Context ctx, String texto) throws IOException {
         Sesion s = Sesion.get();

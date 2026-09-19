@@ -4,7 +4,7 @@
 V3.6 no se puede probar: el firmware V3.6 no existe todavía en ningún equipo. Lo que sí debe funcionar
 es la medida contra un V3 2020 (SLV-002), y eso tampoco se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 3611`, `versionName 3.6.11` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.11 → 3611) (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 3612`, `versionName 3.6.12` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.12 → 3612) (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -112,6 +112,42 @@ Reglas que salen de ahí, en el código:
   envía sólo `1`-`8`, `a`-`d` y `9`.
 - Tras 3 peticiones seguidas sin un solo byte, la app aconseja apagar y encender el equipo y lo anota
   en el registro.
+
+## Cambios de la 3.6.12 (corte B: calibrar con un botón; REVISION-Arquitectura-P10-V3.6.md)
+
+**Nada de esto se ha probado contra un equipo.** El flujo escribe en la EEPROM: T-C43 (Fase B en el equipo) sigue
+PENDIENTE y exige que Diego autorice el código.
+
+- **"Calibrar este equipo"** (`CalibrarActivity`, desde la pantalla inicial y desde Campaña). El operador no
+  elige código, grado, método ni patrón de re-medida: salen de la **tabla RF-CAL-37 del APK**
+  (`TablaCalibracion`): 1 y 2 no se reescriben; 3, 4 y 6 grado 1, o recta anclada si la libre no pasa `#S`;
+  8 y b recta anclada en el OSCURO (b con la dispensa de PA-24 pendiente); 5 sólo verificar, o recta anclada si
+  se activa PA-14; 7, a, c y d sólo verificar. Una tarjeta por código con su propuesta y su casilla de
+  conformidad; nombre y nota obligatorios.
+- **Comprobaciones previas:** conexión, firmware 3.6.2, pruebas pasadas, cola admitida, campaña del equipo,
+  **serie `#GN#` igual a la de la campaña**, s_rep medida (A5 del inicio del banco; no se teclea) y batería.
+- **Por código:** batería (9; bloquea con n = 0 o sin respuesta), `#G` anterior, `#S`, `#G`, `#E` en 5 puntos y
+  `#V#` fresco (D-18). Si algo falla, se restaura la curva anterior (`#F,k#` si era la de fábrica, `#S` con la
+  copia si no).
+- **Re-medida (D-19, D-20, P10-C1):** K = 5 colocaciones × M = 4 pares `e`/código sobre el patrón de la tabla.
+  Colocación con patrón ausente o par incoherente: NO_VALIDA, se registra y se repite. Criterios: reproducción
+  de la campaña con s_rep medida y |R − certificado| ≤ max(10 %; 2). **Una repetición como máximo**; si la
+  segunda tampoco es conforme, se restaura y la secuencia se para. Cada intento queda en el acta.
+- **Acta en disco y reanudable** (RF-APP-36): `files/campanas/acta_<equipo>_curso.csv`, evento a evento. Al
+  volver se retoma; un corte durante `#S` (RF-APP-37) se resuelve releyendo `#G` y `#E`: entró, no entró o
+  ninguna de las dos (se restaura).
+- **Persistencia:** apagar y encender; la app reconecta por MAC, vuelve a entrar con el PIN y relee `#V#`,
+  `#G` y `#E` de lo certificado.
+- **Aceptar:** `#V#` y `#G` frescos iguales a lo certificado, campos obligatorios (md5 de la cola, s_rep,
+  batería, `#V#` posterior y oscuro si hay recta anclada) y `#SC` con la fecha de hoy verificada con `#GC#`.
+  **Si `#SC` falla, el acta no se cierra.** Tras reconectar hay que volver a pasar las pruebas (la versión
+  vuelve a "sin detectar"), porque sin 3.6.2 detectada no se acepta.
+- **Avanzado:** un `#F` con el acta abierta la invalida; reescribir el mismo código no bloquea; s_rep ya no se
+  teclea; la re-medida y la aceptación se hacen en "Calibrar este equipo"; el alta de la serie pide doble
+  entrada, casilla si difiere del nombre Bluetooth y aviso si el equipo ya tenía serie.
+- Tests: `Version3612Test` (12: D-20, acta en disco, corte durante `#S`, `#F`, `#SC`, T-A54 con cifras,
+  T-A63, RF-CAL-37, anclas). El recorrido de la pantalla no tiene prueba automática.
+- Entrega: `RTV-V3.6.12.apk` y `RTV-V3.6.12-3612.apk`.
 
 ## Cambios de la 3.6.11 (arreglo de la QA de la 3.6.10, `05_Documentacion/QA-App-3.6.10.md`)
 
