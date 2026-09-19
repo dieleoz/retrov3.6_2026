@@ -54,7 +54,7 @@ Tramas ASCII **entre `#` y `#`**, campos separados por `,`, **como máximo 48 by
 Motivo: la pantalla de SLV-002 no es idéntica al proyecto STONE archivado. Pulsando cada botón y
 leyendo `#K#` se obtiene el código real que envía, que llega a `bufferPantalla[8]`
 (`ecuacionesCalibracion.c:73-130`). El registro **no altera** el tratamiento de las tramas. Si la
-respuesta pasara de 48 bytes, se envían sólo las más recientes que quepan, o el firmware usa un
+respuesta pasara de 96 bytes (revisión 1.1; antes decía 48), se envían sólo las más recientes que quepan, o el firmware usa un
 límite mayor para respuestas; documentarlo.
 
 **Números:** notación científica con 7 cifras significativas y punto decimal, por ejemplo
