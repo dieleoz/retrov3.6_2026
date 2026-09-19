@@ -1196,9 +1196,12 @@ public class FlujoCalibracionTest {
         String c = g.cerrarSinRestaurar("1234", "el #F no entra; se revisa en taller", "Ana Ruiz");
         assertTrue(c, c.startsWith("Acta cerrada SIN RESTAURAR") && c.contains("8"));
         assertNull(g.acta());
-        assertTrue(almacen.cerradas.get(0), almacen.cerradas.get(0).contains(
-                "RECHAZADA SIN RESTAURAR, firmado por Firmado por \"Ana Ruiz\", ITVIAL SAS, "
-                        + FlujoCalibracion.hoyDe(reloj)));
+        // RTV 1.0.0-rc4: se asevera el REQUISITO -la frase dictada, una sola vez y sin anuncio repetido-,
+        // no la salida. La version anterior de esta linea fijaba "firmado por Firmado por ...", que es el
+        // defecto, y por eso no lo cazo.
+        String firmaAna = FlujoCalibracion.firmaDe("Ana Ruiz", reloj.hoy());
+        FirmaActaTest.anunciaLaFirmaUnaSolaVez(almacen.cerradas.get(0), firmaAna);
+        FirmaActaTest.anunciaLaFirmaUnaSolaVez(c, firmaAna);
         assertEquals(0, sim.cuantas("#SC,"));
         assertTrue(g.cerrarSinRestaurar("1234", "x", "Ana Ruiz").startsWith("Solo se cierra"));
         // F-03: no se calibra al instante; Diego libera con su PIN y entonces si
@@ -1211,8 +1214,8 @@ public class FlujoCalibracionTest {
         assertTrue(g.liberarTrasCierre("0000", "x", "Luis Gomez").contains("no se libera"));
         // el acta anterior la cerro Ana; hoy libera Luis, y el diario lo dice con SU nombre
         String lib = g.liberarTrasCierre("1234", "curva del 8 comprobada con #G", "Luis Gomez");
-        assertTrue(lib, lib.startsWith("Liberado por Firmado por \"Luis Gomez\", ITVIAL SAS, "
-                + FlujoCalibracion.hoyDe(reloj)));
+        String firmaLuis = FlujoCalibracion.firmaDe("Luis Gomez", reloj.hoy());
+        FirmaActaTest.anunciaLaLiberacionUnaSolaVez(lib, firmaLuis);
         assertNull(g.bloqueoSinRestaurar());
     }
 
@@ -1477,12 +1480,14 @@ public class FlujoCalibracionTest {
         sim.inyectar("#F,8#", EquipoSimulado.Falla.OK_SIN_HACER, 10);
         f.rechazar("prueba");
         String c = f.cerrarSinRestaurar("1234", "motivo", "  Ana Ruiz  ");
-        String esperada = "Firmado por \"Ana Ruiz\", ITVIAL SAS, " + FlujoCalibracion.hoyDe(reloj);
-        assertTrue(c, c.contains(esperada));
-        assertTrue(almacen.cerradas.get(0), almacen.cerradas.get(0).contains(esperada));
-        // la fecha es la del dia, AAAA-MM-DD, del mismo reloj del acta: ni la hora ni la del certificado
-        assertEquals(10, FlujoCalibracion.hoyDe(reloj).length());
-        assertTrue(reloj.ahoraIso().startsWith(FlujoCalibracion.hoyDe(reloj)));
+        String esperada = FlujoCalibracion.firmaDe("Ana Ruiz", reloj.hoy());
+        // "contains" no basta: la rc3 tambien la contenia, precedida de "firmado por". Se asevera que la
+        // frase se lea una sola vez y sin anuncio repetido, que es lo que dice el requisito.
+        FirmaActaTest.anunciaLaFirmaUnaSolaVez(c, esperada);
+        FirmaActaTest.anunciaLaFirmaUnaSolaVez(almacen.cerradas.get(0), esperada);
+        // la fecha sale de reloj.hoy(), el mismo del que sale la que se graba con #SC: no pueden discrepar
+        assertEquals(10, reloj.hoy().length());
+        assertTrue(reloj.hoy(), reloj.hoy().matches("[0-9]{4}-[0-9]{2}-[0-9]{2}"));
         // y no cita a Diego salvo que sea quien este delante
         assertFalse(esperada, esperada.contains("Diego"));
     }

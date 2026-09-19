@@ -1594,12 +1594,12 @@ public final class FlujoCalibracion {
                 desconocidos.append(c.k).append(' ');
             }
         }
-        acta.rechazar(reloj.ahoraIso(), "RECHAZADA SIN RESTAURAR, firmado por " + firmante.trim() + ": "
+        acta.rechazar(reloj.ahoraIso(), "RECHAZADA SIN RESTAURAR. " + firmante.trim() + ". Motivo: "
                 + (motivo == null ? "" : motivo) + " | códigos en estado desconocido: " + desconocidos.toString().trim()
                 + " | " + acta.rechazoPendiente());
         almacen.cerrar(acta);
         acta = null;
-        return "Acta cerrada SIN RESTAURAR (firmado por " + firmante.trim() + "). Códigos en estado desconocido: "
+        return "Acta cerrada SIN RESTAURAR. " + firmante.trim() + ". Códigos en estado desconocido: "
                 + desconocidos.toString().trim() + ": avise a Diego antes de calibrar otra vez.";
     }
 
@@ -1627,13 +1627,22 @@ public final class FlujoCalibracion {
         if (ops.entrar(clave.trim()) != null) {
             return null;
         }
-        return "Firmado por \"" + Csv.unaLinea(nombre.trim()) + "\", " + EMPRESA + ", " + hoyDe(reloj);
+        return firmaDe(Csv.unaLinea(nombre.trim()), reloj.hoy());
     }
 
-    /** La fecha del dia, AAAA-MM-DD, del mismo reloj que el resto del acta (decision FIRMA-ACTA). */
-    static String hoyDe(Reloj r) {
-        String iso = r.ahoraIso();
-        return iso != null && iso.length() >= 10 ? iso.substring(0, 10) : iso;
+    /**
+     * La linea de firma que el acta cita literalmente (decision FIRMA-ACTA de Diego):
+     * {@code Firmado por "<nombre>", ITVIAL SAS, <AAAA-MM-DD>}.
+     *
+     * Publica y en un solo sitio a proposito: es un texto que ve el cliente, y quien lo incruste NO debe
+     * anteponerle "firmado por" -ya lo dice la propia frase-. En la rc3 los cuatro puntos de incrustacion se
+     * lo anteponian y el acta decia "firmado por Firmado por ...".
+     *
+     * La fecha sale de {@link Reloj#hoy()}, el mismo del que sale la que se graba con #SC (:1476), no de un
+     * recorte de ahoraIso(): asi la firma y la fecha de calibracion no pueden discrepar.
+     */
+    public static String firmaDe(String nombre, String hoy) {
+        return "Firmado por \"" + nombre + "\", " + EMPRESA + ", " + hoy;
     }
 
     /** F-03: motivo del bloqueo tras un cierre SIN RESTAURAR; null si no lo hay. */
@@ -1672,9 +1681,9 @@ public final class FlujoCalibracion {
             return "Liberar lo firma quien tenga el PIN de administrador del equipo. El PIN tecleado no vale: "
                     + "no se libera.";
         }
-        almacen.anadirAUltimaCerrada(Acta.lineaLiberada(reloj.ahoraIso(), "liberado por " + firmante + ": "
+        almacen.anadirAUltimaCerrada(Acta.lineaLiberada(reloj.ahoraIso(), "LIBERADA. " + firmante + ". Motivo: "
                 + (motivo == null ? "" : motivo)));
-        return "Liberado por " + firmante + ". La nueva acta tomará como curva anterior la que lea con #G.";
+        return "Equipo liberado. " + firmante + ". La nueva acta tomará como curva anterior la que lea con #G.";
     }
 
     // ------------------------------------------------------ una sola sesion (3.6.15)

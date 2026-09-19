@@ -11,10 +11,10 @@ android {
         applicationId "com.dpi.retrov36"
         minSdkVersion 24
         targetSdkVersion 30
-        // RTV 1.0.0-rc3. rc1 = 10000/"1.0.0" (072331f, anterior a la mezcla de la 3.6.17); rc2 = 10001.
+        // RTV 1.0.0-rc4. rc1 = 10000/"1.0.0" (072331f); rc2 = 10001; rc3 = 10002.
         // Cada rc lleva su propio par para que no se confundan en el telefono (RF-APP-41).
-        versionCode 10002
-        versionName "1.0.0-rc3"
+        versionCode 10003
+        versionName "1.0.0-rc4"
     }
 
     buildTypes {
