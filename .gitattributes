@@ -1,3 +1,4 @@
 # Los .hex y sus md5 declarados se guardan byte a byte (sin conversion de fin de linea).
 *.hex -text
 *.md5 -text
+*.zip binary

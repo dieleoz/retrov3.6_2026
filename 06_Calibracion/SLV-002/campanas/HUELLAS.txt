@@ -1,0 +1,4 @@
+campana_SLV-002_20260919_103300.zip
+md5    4c50dbf63d53bd7f53cbd9856a0e5805
+sha256 3aae14a9c2c6d2ce253fb1b680bd229f1bb865aa75bf8c58510c4e2c8220a1d3
+App 3.6.5, firmware 3.6.1 (#V# 2026-09-19 DEF 0000). 55 series, 50 patrones P1-P50, orientacion 0 (P5 tambien a 90). Exportada 19-sep-2026 10:33 por Diego.
