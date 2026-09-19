@@ -9,6 +9,14 @@ por decisión de Diego, antes de este veredicto), sin calibración escrita. La p
 se mantiene o se revierte a la 3.6.1 (§1 y §8.1). Y se añade §4 ter: la reproducibilidad entre
 colocaciones frente a los criterios de aceptación de la SPEC de calibración.
 
+**Fuera de alcance, pero hay que saberlo (r2).** Mientras se cerraba esta revisión llegó la **app 3.6.7**
+(`9ea7b6e`: `#SN`, `#FT`, `#SC` automático y campaña por colocaciones, 3 × 3). **No está revisada.** El
+veredicto (b) es para la 3.6.6. Si se escribe con la 3.6.7 hace falta antes una revisión del delta, con
+dos puntos ya vistos en el diff: `grabarFechaHoy()` manda `#SC` con la fecha de hoy **tras cada `#S`
+verificado** (`AdminActivity.java` de la 3.6.7), es decir, antes de la re-medida y de la aceptación del
+acta: la fecha quedaría diciendo "calibrado" aunque luego se rechace. Y el protocolo 3 × 3 no es el
+1 + 9 con que se midió la campaña del ajuste (P9-B3).
+
 **r1 (19-sep-2026, tras el primer commit de este documento).** Durante la revisión llegó el commit
 `5d184bf`: campaña completa de SLV-002, `06_Calibracion/SLV-002/campanas/campana_SLV-002_20260919_103300.zip`
 (md5 `4c50dbf6…`, SHA-256 `3aae14a9…`, recalculados aquí e iguales a `HUELLAS.txt`), hecha con la
