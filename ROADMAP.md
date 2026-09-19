@@ -1,125 +1,161 @@
 # ROADMAP — V3.6: qué se hace y en qué orden
 
-**Actualizado:** 19-sep-2026, 09:50. Lo que no está aquí no está en ejecución. SLV-002 lleva el
-firmware **V3.6.1**, grabado a las 09:36 y **aún sin comprobar en el equipo**. **Ningún equipo está
-calibrado todavía.** El procedimiento paso a paso está en [`RUNBOOK.md`](RUNBOOK.md).
+**Actualizado:** 19-sep-2026, 12:30. Lo que no está aquí no está en ejecución. **Ningún equipo tiene
+todavía una calibración con acta aceptada.** SLV-002 lleva el firmware **3.6.2**; el código 1 está
+escrito y comprobado con `#E`, pero **sin re-medida registrada**, y lo escrito después de las 12:04 no
+tiene registro en el repositorio. Procedimiento paso a paso: [`RUNBOOK.md`](RUNBOOK.md).
 
 ## Objetivo
 
 Dejar los **dos equipos V3** (SLV-002 y el segundo) con firmware **V3.6**: la calibración pasa a
-EEPROM y se ajusta **desde la app, en modo administrador**, sin volver a reprogramar. La pantalla
-STONE y la app del cliente siguen funcionando igual. Después, app de producción, informe de ajuste y
-registros para la interventoría. Los dos V4, en su propio repositorio, cuando se cierre la V3.6.
+EEPROM y se ajusta **desde la app**, sin volver a reprogramar, con serie y fecha de calibración
+guardadas en el propio equipo. La pantalla STONE y la app del cliente siguen funcionando igual.
+Después, app de producción, informe de ajuste y registros para la interventoría. Los dos V4, en su
+propio repositorio, cuando se cierre la V3.6.
 
-**Por equipo, nunca por modelo (L-23).** Campaña, ajuste, coeficientes y acta son de **cada equipo
-físico**. Entre equipos se reutilizan el catálogo de patrones, el método, el firmware y la app; los
-coeficientes, nunca.
+**Por equipo, nunca por modelo (L-23).** Campaña, ajuste, coeficientes, fecha y acta son de **cada
+equipo físico**. Entre equipos se reutilizan el catálogo de patrones, el método, el firmware y la app.
 
-## DÓNDE QUEDAMOS — 19-sep-2026, 09:50
+## DÓNDE QUEDAMOS — 19-sep-2026, ~12:30
 
-- **SLV-002 (Concesionaria Vial Andina):**
-  - V3.6 grabada el 18-sep 20:24 (`.hex` `680b6a7d…`, commit `f75ff88`). **G4 cerrada el 19-sep**:
-    `#V#` → `#V,3.6,2026-09-18,DEF,0000#`, `#E` 60/60 exacto, repetibilidad s = 4,0 cuentas
-    ([acta](06_Calibracion/SLV-002/ACTA-antes-y-despues-grabacion.md)).
-  - **Firmware V3.6.1 grabado a las 09:36** (`.hex` `8736c05d…`, commit `869d3c6`; registro
-    `01_Firmware/lecturas_equipos/SLV-002/grabacion_V3.6.1_2026-09-19.log`). IPE: *Program Succeeded*;
-    el "Verify failed" posterior en ceros es la protección de código (L-14). **Sin comprobar en el
-    equipo:** falta `#V#` con fecha `2026-09-19` y `#E` a fábrica.
-- **Firmware 3.6.2 en curso:** añade `#FT#` (repone el factor de temperatura de fábrica; ya en
-  `PROTOCOLO-V3.6.md` §3, sin commit a las 09:50). Se grabará con el PICkit, que sigue conectado.
-- **App:** 3.6.3 (`d3025b2`, coherencia con deriva e INVÁLIDA); **3.6.4** (`090c84c`, APK md5
-  `efb0386b…`): tipo I P32a-P50, disparo de asentamiento, `ULP_S` = 8, criterio de `#S` de la 3.6.1;
-  **3.6.5** (`ff66f93`): campaña guiada por equipo (serie + MAC) con un solo ZIP, **sin probar en el
-  equipo**. El APK del árbol a las 09:50 da md5 `f01531e7…`: no es el de la 3.6.4 y no está declarado
-  en ningún commit (los APK no se versionan).
-- **Campaña de SLV-002** (`07 pruebas/19092026_0900/`, **sin commit**):
-  - medidos: los amarillos salvo P24; los blancos P1, P2, P3, P4, P6 y P7;
-  - **faltan:** P27 y P28 (blancos IX, **imprescindibles**), P24 (dos series contradictorias: 2065 y
-    2443), P30 ×9, los tipo I y la prueba de giro de los XI.
-- **Hallazgos del día:** el primer disparo de cada serie sale bajo (17 de 17 series, L-16); los XI no
-  siguen el orden de su certificado (L-22); P32 aparece duplicado en la lista de tipo I (la app lo
-  carga como P32a azul y P32b naranja, **pendiente de confirmar**).
+**Firmware.** SLV-002 lleva la **3.6.2** (`.hex` md5 `9d5d5e39…`, commit `6a32ca3`), grabada a las
+10:37 (`78924ae`, registro en `01_Firmware/lecturas_equipos/SLV-002/grabacion_V3.6.2_2026-09-19.log`).
+Añade `#FT#`, serie (`#SN`/`#GN`) y fecha de calibración (`#SC`/`#GC`). La revisión P9 r2 la **mantiene
+con condiciones** ([`REVISION-Arquitectura-P9-V3.6.md`](05_Documentacion/REVISION-Arquitectura-P9-V3.6.md) §1).
+A las 11:20 la app 3.6.8 la confirmó en el equipo (`#GC,NONE#`, APTO dos veces; propuesta,
+"Decisiones de Diego").
 
-## Decisión de calibración (Diego, 19-sep-2026)
+**App.** Vigente la **3.6.9** (`f52eeb1`, APK md5 `3fbb68f3…`, 89 tests JVM). La QA ISTQB
+([`QA-Flujo-Calibracion-V3.6.md`](05_Documentacion/QA-Flujo-Calibracion-V3.6.md), `f45d2a8`) concluye
+que **no está lista para un operador sin soporte**: 17 defectos, entre ellos el acta que se pierde al
+reconectar (D-02), la serie que se sobrescribe con un toque (D-04), la identidad sacada del nombre
+Bluetooth y no de la EEPROM (D-05) y la campaña que borra una desinstalación (D-09). Propone un
+**modo banco** (medir) y un **"Calibrar este equipo"** de un solo botón.
 
-**Opción C: compromiso entre XI e IV/IX** para las curvas intensas de blanco (código 1) y amarillo
-(código 2). Una sola curva no puede corregir a la vez el XI (+2-3 %) y el IV/IX (+25-50 %): se ajusta
-por mínimos cuadrados con todos los patrones, sin ponderar por tipo, y el acta declara el error
-residual de cada tipo. Verde, azul y rojo intensos (un solo nivel de patrón) sólo se comprueban. Con
-tipo I, la app 3.6.4 permite ajustar además el 8 (amarillo opaco, hasta grado 2) y el b (rojo opaco,
-grado 1).
+**Campañas de SLV-002** (`06_Calibracion/SLV-002/campanas/`, huellas en `HUELLAS.txt`):
 
-## Puertas P1-P8: firmware, app y calibración de SLV-002
+- **10:33**: 50 patrones P1-P50, 55 series, app 3.6.5 y firmware 3.6.1 (md5 `4c50dbf6…`).
+- **12:00**: importa la de 10:33 y añade **A5** y **OSCURO** (md5 `3e2c913b…`), app 3.6.9 y firmware
+  3.6.2. **A5 NO CONCLUYENTE**: s_rep media 2,24 %, P22 −5,6 % (fuera), P28 −2,1 %, P4 −1,1 %; no
+  obliga a revertir la 3.6.2. **OSCURO: x = 565,4** (s 2,0). La batería del equipo se cambió hacia
+  las 11:40, a mitad de sesión.
+- En `07 pruebas/19092026_1210/` hay un ZIP de las **12:10** que no está en `HUELLAS.txt` ni
+  versionado; la QA lo cita (D-02: "no lleva acta").
 
-| Puerta | Qué tiene que cumplirse | Estado a las 09:50 |
+**Propuesta y decisiones** ([`PROPUESTA-Ajuste-SLV-002-2026-09-19.md`](06_Calibracion/SLV-002/PROPUESTA-Ajuste-SLV-002-2026-09-19.md),
+decisiones de Diego de las 11:20):
+
+- **código 1**, blanco intenso: grado 1 aceptado, aunque incumple RF-CAL-14, 15 y 16;
+- **código 2**, amarillo intenso: recta anclada en oscuro;
+- **reproducibilidad**: el criterio sale de la A5, no del "máx(3·s ; 1 %)".
+
+**Escritura en SLV-002. Estado en parte sin confirmar:**
+
+| Qué | Evidencia | Estado |
 | :--- | :--- | :--- |
-| **P1 — Especificación** | `SPEC-V3.6` con RF de firmware y app, paridad y pruebas | **Cerrada** (r1.1, 18-sep). Reconciliación con el código en curso: SPEC, [`TDD-V3.6.md`](05_Documentacion/TDD-V3.6.md) y [`MATRIZ-SPEC-codigo-V3.6.md`](05_Documentacion/MATRIZ-SPEC-codigo-V3.6.md) (sin commit) |
-| **P2 — Arquitectura** | Revisión adversaria de SPEC, PROTOCOLO y código | **Cerrada**: APROBADO CON CONDICIONES, 18-sep 19:48 (G1-G5 para grabar, C1-C5 para calibrar; `SPEC-V3.6.md` §6 bis) |
-| **P3 — Compilación reproducible** | XC8 2.10 compila la base 2020 idéntica a `d089f962` | **Cerrada**, 18-sep: `d089f9625090a1213291c090eae7ac01` idéntico |
-| **P4 — Firmware** | `.hex` atado a un commit; fábrica = ecuaciones de 2020 (T-A20) | **Cerrada** la V3.6 (`680b6a7d`) y la **V3.6.1** (`8736c05d`, commit `8860445`: límites de `#S` y `#ST`). **3.6.2 en curso** (`#FT#`) |
-| **P5 — App** | APK con tests en verde y modo de pruebas | **Cerrada con la 3.6.4** (`090c84c`, `efb0386b`). 3.6.5 compilada, sin probar en equipo |
-| **P6 — Autorización** | Visto bueno del propietario a reprogramar | **Cerrada** el 18-sep por Diego: acepta perder el original. La placa es de un cliente (Concesionaria Vial Andina) |
-| **P7 — Grabación** | G1-G5 y verificación tras grabar | **Cerrada** para la V3.6 (G4 el 19-sep, `#E` 60/60). **V3.6.1 grabada sin comprobar**: repetir la G4 abreviada (`#V#`, `#GT#`, `#G`, `#E`) tras la próxima grabación |
-| **P7-bis — Condiciones para calibrar** | C1-C5 de P2 | **C1:** T-A23 medida en simulador (hasta 7 ulp; `CAMBIOS-V3.6.md` §7.2); la app 3.6.4 tolera 8 y comprueba con `#E`. **C2, C3:** en la app. **C4:** cumplida en firmware 3.6.1 (T-A30 en simulador). **C5:** `#E` 60/60 hecho; T-C05 completa y T-C23 en equipo, pendientes |
-| **P8 — Calibración de SLV-002** | Campaña, ajuste con la opción C, escritura con `#S`, `#E` y acta de antes y después | **En curso: campaña a medias** (ver "DÓNDE QUEDAMOS"). Ajuste, escritura y acta, pendientes |
+| Código 1, grado 1 | `#S,1,…,2.98471545E-01,-1.62263869E+02` → `#OK#` a las 12:04:34, relectura y `#E` conformes (QA §1, T4:1660-1698) | **Escrito y comprobado con `#E`. Sin re-medida registrada** |
+| Re-medidas y códigos 8 y 2 | Sólo lo dicho por Diego: hechos hacia las 12:25 | **Sin ZIP ni registro de tramas en el repositorio. Sin confirmar** |
+| Serie en EEPROM | `#SN,SLV-002#` a las 11:48:52 y `#SN,SLV-02#` a las 12:09:02 (QA §1, T4:593 y T4:2048) | Según Diego, **corregida después a `SLV-002`**. Sin registro que lo confirme |
+| Fecha de calibración | — | Sin constancia de `#SC` |
+| Acta | — | **Sin aceptar** |
 
-## Puertas P9-P12: de la calibración a la producción
+**Catálogo nuevo P1-P132** (`06_Calibracion/patrones_certificados_P1-P132.csv`, `bba4dbe`): 133
+entradas (P32 sigue duplicado como P32a azul y P32b naranja). Con él, **los códigos intensos 3 a 6**
+(verde, rojo, azul y naranja) tienen niveles suficientes para ajustarse y dejan de ser "sólo
+verificar". **Café y lila** se miden con el código del rojo (4 intenso, b tipo I); queda abierto si
+entran en el ajuste del rojo o sólo se verifican (recomendación: **sólo verificar**). La app 3.6.9
+**todavía no lee este catálogo**: carga `assets/patrones_certificados_P1-P31.csv` (59 entradas).
 
-Tubería acordada con Diego, en este orden. Ninguna se abre sin la anterior.
+**Otros documentos del día:** [`ESTUDIO-Tecnologia-App-Produccion.md`](05_Documentacion/ESTUDIO-Tecnologia-App-Produccion.md)
+(seguir en Android nativo; subir `targetSdk` desde 30),
+[`SPEC-Registro-Indicador-Interventoria.md`](05_Documentacion/SPEC-Registro-Indicador-Interventoria.md)
+(SFT: > 70 % del valor original, mensual, 95 %; umbral en contradicción C-01 con AT4, AT2 y Manual 2024),
+[`08_Senales/`](08_Senales/CATALOGO-Senales-Manual-2024.md) (376 señales del Manual 2024) y
+[`SPEC-Calibracion-V3.6.md`](05_Documentacion/SPEC-Calibracion-V3.6.md).
 
-| Puerta | Qué tiene que cumplirse | Estado a las 09:50 |
+## AHORA — el ciclo acordado con Diego, en este orden
+
+Ningún paso empieza sin cerrar el anterior.
+
+| # | Paso | Quién | Sale | Estado |
+| :---: | :--- | :--- | :--- | :--- |
+| 1 | **SPEC + TDD del flujo nuevo**: modo banco, "Calibrar este equipo" con un botón, serie leída de `#GN#`, acta persistente, catálogo P1-P132 leído de CSV, comprobación de oscuro, A5 y colocaciones | Subagente | `SPEC-V3.6.md`, `SPEC-Calibracion-V3.6.md`, `TDD-V3.6.md`, matriz | **En curso** |
+| 2 | **Arquitecto**: revisión del paso 1 y del delta de las apps 3.6.7-3.6.9, que la P9 r2 no revisó | Subagente, modelo capaz | Veredicto escrito | Tras 1 |
+| 3 | **App** (y firmware, sólo si el paso 2 lo exige) | Subagente | APK atado a un commit, md5, tests en verde | Tras 2 |
+| 4 | **QA ISTQB de la APK** y visto bueno | Subagente | Informe con los 22 casos de aceptación | Tras 3 |
+| 5 | **Diego mide el banco completo** en SLV-002: 133 patrones más A5 y OSCURO, con la app guiada, en **un solo ZIP** | Diego | ZIP en `06_Calibracion/SLV-002/campanas/` con su huella | Tras 4 |
+| 6 | **Calibrar con un botón** | Diego con la app | Códigos escritos, relectura, `#E` y re-medida en el registro | Tras 5 |
+| 7 | **Acta y fecha** (`#SC` sólo con el acta aceptada) | Diego | Acta en `06_Calibracion/SLV-002/` | Tras 6. Cierra P8 |
+
+Mientras tanto, **no se escribe nada más en SLV-002**. Lo escrito hoy se reconcilia en el paso 5: la
+campaña completa lee con los coeficientes que el equipo tenga (`#G` de los 12 códigos al empezar).
+
+## Puertas P1-P12
+
+| Puerta | Qué tiene que cumplirse | Estado a las 12:30 |
 | :--- | :--- | :--- |
-| **P9 — Validación del arquitecto** | Con SPEC y TDD reconciliados con el código (P1), el arquitecto valida **firmware 3.6.x y APK**: aprobado, o aprobado con condiciones resueltas | Espera a la reconciliación de SPEC/TDD |
-| **P10 — Propuesta de app de producción** | Con el visto bueno de P9: propuesta escrita de la app de producción, **revisando también la app de campo existente** (`RetroVerticalP1`, repositorio V5, `CLAUDE.md` §6 del V5) y [`ROADMAP-MEJORAS-App.md`](ROADMAP-MEJORAS-App.md). Primero se especifica qué hace la de campo, después qué se mejora | Tras P9 |
-| **P11 — APK de producción** | Un subagente construye la APK según P10; atada a un commit, con md5 y tests en verde; probada en SLV-002 | Tras P10 |
-| **P12 — Informe y registros** | PDF de "informe de ajuste y verificación" (el título lo decide Diego) desde el modo superadministrador, y registros periódicos para la interventoría por vía y tipo de señal, con serie o MAC, fecha de calibración y **vencimiento = calibración + 1 año** | SPEC en curso (ver abajo) |
-
-## Especificaciones
-
-Regla de Diego (19-sep-2026): **las SPEC son por versión de hardware.** La V3.6 lleva las suyas; la
-V4.6 las duplica y adapta en su repositorio. No hay SPEC compartidas.
-
-| Documento | Estado |
-| :--- | :--- |
-| [`SPEC-V3.6.md`](05_Documentacion/SPEC-V3.6.md), [`TDD-V3.6.md`](05_Documentacion/TDD-V3.6.md), [`PROTOCOLO-V3.6.md`](05_Documentacion/PROTOCOLO-V3.6.md) (rev. 1.1) | Vigentes; reconciliación con el código en curso |
-| [`SPEC-Calibracion-V3.6.md`](05_Documentacion/SPEC-Calibracion-V3.6.md) | **Escrita, 19-sep-2026, sin validar en equipo**: cobertura por código, campaña, ajuste (decisión C), criterios de aceptación **propuestos**, acta, superadministrador, informe PDF, incertidumbre pendiente y contradicciones C-CAL-01 a 15 |
-| `05_Documentacion/SPEC-Registro-Indicador-Interventoria.md` | **En curso** (no existe a las 09:50): registros por vía y tipo de señal |
-| `08_Senales/` | **En curso** (no existe a las 09:50): catálogo de señales del Manual 2024 |
-| SPEC de la app de producción | Por escribir en P10 |
-
-## AHORA, en este orden
-
-1. **Firmware 3.6.2** (`#FT#`) y grabación en SLV-002 con el PICkit conectado. Después, desconectar,
-   apagar y encender, y **G4 abreviada** con la app: `#V#`, `#GT#`, los 12 `#G`, `#E` en 5 puntos por
-   código. Si la 3.6.2 se graba antes de comprobar la 3.6.1, se anota que la 3.6.1 no llegó a
-   comprobarse en el equipo.
-2. **Terminar la campaña de SLV-002** con la app 3.6.5 (modo guiado): P27 y P28 primero, P24 (tercera
-   serie para decidir entre 2065 y 2443), P30 ×9, los tipo I, el giro de P5 a 0° y 90°. Un solo ZIP.
-3. **Ajuste** de los códigos 1 y 2 con la opción C; 8 y b si los tipo I lo permiten; el resto sólo se
-   comprueba. Diego acepta la propuesta antes de escribir.
-4. **Escritura** con `#S`, relectura `#G`, `#E` contra la curva enviada, nueva medida de patrones con
-   el código de cada color y **acta** en `06_Calibracion/SLV-002/`. Cierra P8.
-5. En paralelo, sin equipo: SPEC/TDD reconciliados → **P9**.
+| **P1 — Especificación** | `SPEC-V3.6` con RF de firmware y app, paridad y pruebas | Cerrada en r1.1 (18-sep) y reconciliada en r1.2 (`b7783fd`). **Reabierta** por el flujo nuevo (ciclo, paso 1) |
+| **P2 — Arquitectura** | Revisión adversaria de SPEC, PROTOCOLO y código | **Cerrada**, 18-sep 19:48 (APROBADO CON CONDICIONES) |
+| **P3 — Compilación reproducible** | XC8 2.10 compila la base 2020 idéntica a `d089f962` | **Cerrada**, 18-sep |
+| **P4 — Firmware** | `.hex` atado a un commit; fábrica = ecuaciones de 2020 (T-A20) | **Cerrada la 3.6.2** (`6a32ca3`, `9d5d5e39…`; simulador: T-A20 sin diferencias) |
+| **P5 — App** | APK con tests en verde y modo de pruebas | 3.6.9 compilada (`f52eeb1`, 89 tests JVM). **Reabierta:** la QA la da por no apta sin soporte (ciclo, pasos 3-4) |
+| **P6 — Autorización** | Visto bueno del propietario a reprogramar | **Cerrada**, 18-sep (Diego) |
+| **P7 — Grabación** | Verificación tras grabar | **Cerrada para la 3.6.2**: grabada a las 10:37, confirmada por la app 3.6.8 a las 11:20 |
+| **P8 — Calibración de SLV-002** | Campaña, ajuste, escritura con `#S`, `#E`, re-medida y acta | **En curso, con estado sin confirmar**: ver "DÓNDE QUEDAMOS". Se cierra en el ciclo, pasos 5-7 |
+| **P9 — Validación del arquitecto** | Firmware 3.6.x y APK: aprobado, o aprobado con condiciones resueltas | Hecha r1/r2 sobre firmware 3.6.2 y app 3.6.6: (a) la 3.6.2 se mantiene; (b) escribir, con P9-B1 a B13. **Las apps 3.6.7-3.6.9 sin revisar** (ciclo, paso 2) |
+| **P10 — Propuesta de app de producción** | Propuesta escrita, revisando también la app de campo (`RetroVerticalP1`, V5) y `ROADMAP-MEJORAS-App.md` | Estudio de tecnología hecho (`d295547`). Propuesta, tras P9 |
+| **P11 — APK de producción** | Atada a un commit, md5, tests en verde, probada en SLV-002 | Tras P10 |
+| **P12 — Informe y registros** | PDF de ajuste y verificación y registros para la interventoría con serie, fecha y vencimiento = calibración + 1 año | SPEC de registros escrita (`7111024`, decisiones PA-01, 07 y 08 en `2069ab5`). Informe PDF, pendiente |
 
 ## Segundo equipo V3
 
-Tramo propio, **después de cerrar P8 en SLV-002**. Mismo firmware y misma app; **campaña, ajuste y
-acta propios** (L-23). Se sigue [`RUNBOOK.md`](RUNBOOK.md) de la fase 0 a la 11.
+Tramo propio, **después de cerrar P8 en SLV-002** y con la app que salga del ciclo. Mismo firmware
+(3.6.2) y misma app; **campaña, ajuste, acta y fecha propios** (L-23). Se sigue
+[`RUNBOOK.md`](RUNBOOK.md) de la fase 0 a la 11.
 
 | Paso | Qué | Estado |
 | :--- | :--- | :--- |
 | Identificación | Serie, cliente, micro, placa, pantalla, nombre Bluetooth y MAC; acta en `06_Calibracion/<serie>/` | Sin empezar: equipo no identificado |
-| Línea base y lectura ICSP | Antes de conectar el PICkit, por pantalla y por Bluetooth | Sin empezar |
+| Línea base y lectura ICSP | Antes de conectar el PICkit, por pantalla y por Bluetooth. **Desconectar el PICkit antes de medir** | Sin empezar |
 | Autorización | Visto bueno del propietario de **ese** equipo | Sin pedir |
-| Grabación y G4 | El `.hex` vigente de la V3.6.x, atado a su commit | Sin empezar |
-| Campaña, ajuste, escritura y acta | Como SLV-002, con su propia campaña | Sin empezar |
+| Grabación y G4 | `.hex` 3.6.2, atado a su commit; `#SN` con la serie **una sola vez**, verificada con `#GN#` | Sin empezar |
+| Banco completo, calibración y acta | Como SLV-002 en el ciclo, pasos 5-7: 133 patrones más A5 y OSCURO, un ZIP | Sin empezar |
+
+## Decisiones pendientes (Diego)
+
+| ID | Qué hay que decidir | Por qué ahora |
+| :--- | :--- | :--- |
+| D-1 | Qué se hace con lo escrito en SLV-002 después de las 12:04: se reconstruye su registro o se reescribe en el ciclo | No hay ZIP que lo confirme y el acta no está aceptada |
+| D-2 | Criterio de reproducibilidad con la A5 NO CONCLUYENTE (s_rep 2,24 %, P22 −5,6 %): umbral y número de colocaciones K × M | Sustituye a RF-CAL-13 y entra en la SPEC (paso 1) |
+| D-3 | Qué códigos intensos 3-6 se ajustan con el P1-P132 y con qué grado | Hasta hoy sólo se verificaban |
+| D-4 | Café y lila: dentro del ajuste del rojo o sólo verificar (recomendación: sólo verificar) | El catálogo los trae |
+| D-5 | P32a/P32b: identidad del P32 duplicado en la fuente | Sigue sin confirmar |
+| D-6 | Ancla del código 2: la serie OSCURO (x = 565,4) o la observación única de la propuesta (x ≈ 575) | La propuesta se calculó con 575 |
+| D-7 | Adoptar el flujo de la QA: modo banco más "Calibrar este equipo" | Condiciona la SPEC (paso 1) |
+| D-8 | Clave de firma propia del APK, para instalar siempre encima y no desinstalar (QA §3.3) | Una desinstalación borra la campaña |
+| D-9 | Umbral de la interventoría (C-01: SFT 70 %, AT4 y AT2 80 %, Manual 100 %) | Bloquea el indicador E11 |
+| D-10 | Cuándo subir `targetSdk` (hoy 30) a 35/36 | El estudio lo liga a publicar en Play; ver contradicción abajo |
+
+## Contradicciones abiertas (no se eligen: se cierran midiendo o con registro)
+
+- **Serie de SLV-002:** el registro de tramas deja `SLV-02` a las 12:09:02 (QA §1); según Diego se
+  corrigió a `SLV-002` después. Se cierra con `#GN#` en el paso 5.
+- **Códigos 8 y 2 y re-medidas de las 12:25:** dichos por Diego, sin ZIP ni tramas. Se cierra con `#G`
+  de los 12 códigos en el paso 5.
+- **Café y lila:** el commit `bba4dbe` dice "sin código en el firmware"; Diego dice que se miden con el
+  código del rojo.
+- **`targetSdk`:** el encargo del 19-sep lo llama urgente; el estudio (`ESTUDIO-…:111`) dice que sólo
+  obliga si se publica en Play.
+- **"Código 1 verificado":** comprobado con `#E` (relectura conforme), pero la QA lo da por "escrito y
+  sin verificar" porque falta la re-medida de patrones.
+
+## Especificaciones
+
+**Las SPEC son por versión de hardware** (Diego, 19-sep-2026): la V3.6 lleva las suyas; la V4.6 las
+duplica y adapta en su repositorio.
 
 ## Después de la V3.6
 
 - **Los dos V4:** repositorio `D:\IT\P_RetroVertical_V4.6` (remoto `dieleoz/retrov4.6_2026`), en
-  espera. Lo aprendido aquí pasa a su `APRENDIDO-DE-V3.6.md` y a su runbook.
-- **Registro de medidas periódicas para la interventoría:**
-  [`SPEC-Registro-Indicador-Interventoria.md`](05_Documentacion/SPEC-Registro-Indicador-Interventoria.md)
-  (19-sep-2026, sin validar). Inventario de señales por vía, lecturas por color, equipo y calibración
-  con vencimiento en todo registro, paquete exportable con hashes. Requisitos RF-REG-01 a 28, núcleo y
-  mejora; el umbral queda abierto (PA-04). Entra en la SPEC de la app de producción (P10).
+  espera. Lo aprendido hoy está en su `APRENDIDO-DE-V3.6.md` (L-24 en adelante).
+- **Registro de medidas periódicas para la interventoría** (P12), dentro de la app de producción (P10).

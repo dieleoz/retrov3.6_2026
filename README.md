@@ -3,10 +3,12 @@
 Firmware, app y documentación de la **generación V3** del retrorreflectómetro vertical SAT-LUX/V3,
 con **PIC18F47K42**, placa **"SATLUX H-IoT"** y pantalla **STONE STA035WT-01**, reconstruida en 2026.
 
-> **Nada de este repositorio se ha grabado ni probado todavía en un equipo.** La V3.6 está en
-> construcción. El único equipo estudiado es SLV-002 (Concesionaria Vial Andina), y su firmware
-> original **no se puede leer**: el chip está protegido. Grabar la V3.6 **borra el original sin
-> vuelta atrás**.
+> **Ningún equipo está calibrado todavía con acta aceptada.** SLV-002 (Concesionaria Vial Andina)
+> lleva el firmware **3.6.2** desde el 19-sep-2026 10:37. El código 1 se escribió y se verificó con
+> `#E` a las 12:04; lo que según Diego se escribió después **no tiene ZIP ni registro en el
+> repositorio** y el acta no está aceptada (ver `ROADMAP.md`, "DÓNDE QUEDAMOS"). La QA de la app 3.6.9
+> dice que **no está lista para un operador sin soporte**. El firmware original de SLV-002 se perdió
+> al grabar (estaba protegido; pérdida autorizada por Diego).
 
 ## Por qué existe
 
@@ -15,49 +17,79 @@ recompilar y reprogramar. La **V3.6** las pasa a **EEPROM** y las deja cambiar *
 modo administrador**, sin volver a tocar el PIC. Todo lo demás se mantiene como en 2020, para que la
 pantalla y la app del cliente sigan funcionando. Contrato: [`05_Documentacion/PROTOCOLO-V3.6.md`](05_Documentacion/PROTOCOLO-V3.6.md).
 
-## Estado — 18-sep-2026, 20:00
+**La calibración es por equipo, nunca por modelo** (L-23): campaña, ajuste, coeficientes, fecha y
+acta son de cada equipo físico. Entre equipos se reutilizan catálogo, método, firmware y app.
 
-| Pieza | Estado |
+## Versiones vigentes — 19-sep-2026, 12:30
+
+Comprobado con `git log` y `md5sum` a esa hora.
+
+| Pieza | Versión | Huella | Estado |
+| :--- | :--- | :--- | :--- |
+| Firmware | **3.6.2**: `#FT#`, serie `#SN`/`#GN` (EEPROM 0x1EE) y fecha de calibración `#SC`/`#GC` (0x200) | `.hex` md5 `9d5d5e39…`, commit `6a32ca3`; grabado en SLV-002 a las 10:37 (`78924ae`) | Mantenido por la revisión P9 **con condiciones** (P9-A3 y P9-A5) |
+| App `RetroV36` | **3.6.9** (`versionName` en `app/build.gradle:15`) | commit `f52eeb1`; `03_App_Movil/RTV-V3.6.9.apk` md5 `3fbb68f3…` (igual a `RTV-V3.6.apk`) | QA ISTQB: **no apta sin soporte** (17 defectos) |
+| Catálogo de patrones | **P1-P132** (133 entradas: P32 duplicado como P32a/P32b) | `06_Calibracion/patrones_certificados_P1-P132.csv`, commit `bba4dbe` | **La app 3.6.9 todavía carga el P1-P31 + tipo I** (`app/src/main/assets/patrones_certificados_P1-P31.csv`, 59 entradas) |
+
+Lo que trajeron las apps del día (3.6.3 a 3.6.9): patrones tipo I y disparo de asentamiento (3.6.4);
+campaña guiada por equipo con un solo ZIP (3.6.5); medida por K × M colocaciones, serie y fecha de
+calibración (3.6.7); comprobación de oscuro, condición P9-B13 (3.6.8); acta; importar el ZIP de una
+campaña exportada, recta anclada en oscuro y preajustes A5 y OSCURO (3.6.9). Cada APK se entrega
+también con la versión en el nombre (`RTV-V<versión>.apk`, `85d949b`).
+
+**Café y lila** (nuevos en el P1-P132) se miden con el código del rojo: 4 en intenso y b en tipo I.
+Queda abierto si entran en el ajuste del rojo o sólo se verifican; la recomendación es **sólo
+verificar**.
+
+## Documentos
+
+| Documento | Qué es |
 | :--- | :--- |
-| Especificación (`SPEC-V3.6.md`) | **Escrita**: 27 RF de firmware, 22 de app, 23 de paridad y 66 pruebas. Sus 10 observaciones al protocolo se resolvieron en la **revisión 1.1** del PROTOCOLO |
-| Revisión de arquitectura (puerta P2) | En curso |
-| Firmware V3.6 | En construcción. **XC8 2.10 instalado** (`C:\Program Files (x86)\Microchip\xc8\v2.10`). Pendiente: reproducibilidad de la base y verificación de las fórmulas de fábrica |
-| App V3.6 (`RetroV36`) | En construcción: modo de pruebas, medida P1-P31, visor de botones STONE y modo administrador |
-| Grabación en SLV-002 | **GRABADO el 18-sep-2026 20:24** con el `.hex` `680b6a7d` (PICkit 3, IPE 5.50). Pendiente de probar con la app 3.6.2 (G4). Original perdido: estaba protegido |
-| Software y bases de pantalla STONE | En curso: `04_Pantalla_STONE/SOFTWARE-STONE.md` |
+| [`ROADMAP.md`](ROADMAP.md) | **Qué se hace y en qué orden.** Puertas P1-P12 y el ciclo en curso. Empezar por aquí |
+| [`RETOMAR.md`](RETOMAR.md) | Dónde se quedó el trabajo y el prompt para retomarlo |
+| [`RUNBOOK.md`](RUNBOOK.md) | Procedimiento paso a paso para calibrar un equipo V3 con la V3.6 |
+| [`05_Documentacion/PROTOCOLO-V3.6.md`](05_Documentacion/PROTOCOLO-V3.6.md) | Contrato de órdenes `#...#`, con las de la 3.6.2 |
+| [`05_Documentacion/SPEC-V3.6.md`](05_Documentacion/SPEC-V3.6.md), [`TDD-V3.6.md`](05_Documentacion/TDD-V3.6.md), [`MATRIZ-SPEC-codigo-V3.6.md`](05_Documentacion/MATRIZ-SPEC-codigo-V3.6.md) | Requisitos, pruebas y su cruce con el código. **En revisión** para el flujo nuevo (ciclo, paso 1) |
+| [`05_Documentacion/SPEC-Calibracion-V3.6.md`](05_Documentacion/SPEC-Calibracion-V3.6.md) | Calibración contra patrones: cobertura por código, campaña, ajuste, criterios **propuestos**, acta, superadministrador e informe. En revisión |
+| [`05_Documentacion/REVISION-Arquitectura-P9-V3.6.md`](05_Documentacion/REVISION-Arquitectura-P9-V3.6.md) | Revisión P9 (r2): la 3.6.2 se mantiene; condiciones P9-A1 a A5 y P9-B1 a B13 para escribir |
+| [`05_Documentacion/QA-Flujo-Calibracion-V3.6.md`](05_Documentacion/QA-Flujo-Calibracion-V3.6.md) | QA ISTQB de la app 3.6.9: 17 defectos, flujo propuesto "modo banco" + "Calibrar este equipo" y 22 casos de aceptación |
+| [`05_Documentacion/ESTUDIO-Tecnologia-App-Produccion.md`](05_Documentacion/ESTUDIO-Tecnologia-App-Produccion.md) | Viabilidad de la app de producción: seguir en Android nativo; subir `targetSdk` (hoy 30) |
+| [`05_Documentacion/SPEC-Registro-Indicador-Interventoria.md`](05_Documentacion/SPEC-Registro-Indicador-Interventoria.md) | Registro de medidas periódicas e indicador E11 (SFT: > 70 % del valor original). Umbral en contradicción abierta con AT4, AT2 y Manual 2024 (C-01) |
+| [`05_Documentacion/PROCEDIMIENTO-Calibracion-V3-K42.md`](05_Documentacion/PROCEDIMIENTO-Calibracion-V3-K42.md) | Procedimiento de calibración del V3 K42 |
+| [`06_Calibracion/SLV-002/PROPUESTA-Ajuste-SLV-002-2026-09-19.md`](06_Calibracion/SLV-002/PROPUESTA-Ajuste-SLV-002-2026-09-19.md) | Propuesta de ajuste de SLV-002 con las decisiones de Diego de las 11:20 |
+| [`06_Calibracion/SLV-002/ACTA-antes-y-despues-grabacion.md`](06_Calibracion/SLV-002/ACTA-antes-y-despues-grabacion.md) | Acta de la grabación (G4) |
+| `06_Calibracion/SLV-002/campanas/` + `HUELLAS.txt` | ZIP de las campañas de 10:33 y 12:00 con md5 y SHA-256 |
+| [`08_Senales/CATALOGO-Senales-Manual-2024.md`](08_Senales/CATALOGO-Senales-Manual-2024.md) | 376 señales verticales del Manual 2024 con iconos propios (`senales.csv`, `indice.html`) |
+| [`ROADMAP-MEJORAS-App.md`](ROADMAP-MEJORAS-App.md) | 44 mejoras de la app de campo evaluadas para la V3.6 |
+| [`ARQUITECTURA.map`](ARQUITECTURA.map), [`HISTORIA.md`](HISTORIA.md) | Grafo del sistema y cómo se llegó aquí |
 
 ## Estructura
 
-| Carpeta o fichero | Qué hay |
+| Carpeta | Qué hay |
 | :--- | :--- |
-| `ROADMAP.md` | Puertas P1-P12 y orden de ejecución. **Empezar por aquí** |
-| [`RUNBOOK.md`](RUNBOOK.md) | Procedimiento paso a paso para calibrar un equipo V3 con la V3.6 (pensado para el segundo equipo) |
-| `ROADMAP-MEJORAS-App.md` | 44 mejoras de la app de campo evaluadas para la V3.6 (18 aplican, 17 adaptadas, 9 no) y los defectos que no se deben repetir |
-| `ARQUITECTURA.map` | Grafo del sistema: 85 nodos, contradicciones abiertas CA1-CA7 |
-| `HISTORIA.md` | Cómo se llegó aquí y los errores que no deben repetirse |
-| `01_Firmware/base_2020_d089f962/` | Fuente de 2020 **sin tocar** y su `.hex` (md5 `d089f962…`). Es la referencia de todas las comparaciones |
-| `01_Firmware/RetroVertical_V3.6.X/` | Proyecto MPLAB X de la V3.6 (XC8 **2.10**). `CAMBIOS-V3.6.md` al terminar |
-| `01_Firmware/lecturas_equipos/` | Lo leído por ICSP de cada equipo (SLV-002: protegido, sólo configuración) |
-| `02_Hardware/` | PCB Proteus 3.3 (del Horizontal). El mapeo de la placa H-IoT está en el repositorio V5: `05_Documentacion/HARDWARE-V3-SATLUX-H-IoT.md`. ICSP en el conector `PICKIT3` de 6 pines |
-| `03_App_Movil/` | App V3.6: medida, registro, modo de pruebas y modo administrador de calibración |
-| `04_Pantalla_STONE/` | Proyecto STONE de 2020 (STVA035WT, 2.ª generación, `.vt`), diseños y la herramienta TOOL 2019. **La STONE no se modifica** |
-| `05_Documentacion/` | `PROTOCOLO-V3.6.md` (**rev. 1.1**), `SPEC-V3.6.md`, procedimiento de calibración |
-| `06_Calibracion/` | Patrones certificados P1-P31 (17 XI, 9 IV y 5 IX; sin tipo I) y las hojas de calibración de 2020 |
-| `.claude/skills/` | `leer-planos-pcb` (Eagle, IPC-D-356, Proteus, cruce con el firmware) y `validar-botones-stone`, en curso |
+| `01_Firmware/base_2020_d089f962/` | Fuente de 2020 **sin tocar** y su `.hex` (md5 `d089f962…`). Referencia de todas las comparaciones |
+| `01_Firmware/RetroVertical_V3.6.X/` | Proyecto MPLAB X de la V3.6 (XC8 2.10) y `CAMBIOS-V3.6.md` |
+| `01_Firmware/lecturas_equipos/SLV-002/` | Lectura ICSP (protegido) y registros de grabación de la 3.6, 3.6.1 y 3.6.2 |
+| `02_Hardware/` | PCB Proteus 3.3. El mapeo de la placa H-IoT está en el repositorio V5 (`HARDWARE-V3-SATLUX-H-IoT.md`) |
+| `03_App_Movil/` | App `RetroV36` y los APK entregados (`*.apk` no se versiona) |
+| `04_Pantalla_STONE/` | Proyecto STONE de 2020. **La STONE no se modifica** |
+| `05_Documentacion/` | Protocolo, SPEC, TDD, matriz, revisiones, QA y estudios |
+| `06_Calibracion/` | Catálogos de patrones (P1-P31 y P1-P132), hojas de 2020 y una carpeta por equipo |
+| `07 pruebas/` | Material en bruto que comparte el teléfono. **Sin versionar**; lo que vale pasa a `06_Calibracion/<equipo>/` con su huella |
+| `08_Senales/` | Catálogo de señales del Manual 2024 |
 
 ## Procedencia
 
-Todo lo copiado sale de `D:\@Proyect\IT\old\VERTICAL\`, que se conserva intacto como archivo con su
-`INDICE.md` y los `VERSION.md`. La historia de cómo se llegó aquí está en
-[`HISTORIA.md`](HISTORIA.md), y el grafo del sistema en [`ARQUITECTURA.map`](ARQUITECTURA.map).
-**Es un proyecto independiente, con remoto privado propio: `github.com/dieleoz/retrov3.6_2026`.**
-*(Antes decía "con su propio git local y sin remoto"; corregido el 18-sep-2026.)* El repositorio de la
-línea V4.1/V5 (`D:\IT\P_RetroReflectometro_Vertical`, GitHub `dieleoz/Retro_Vertical_2026_v1`) **es otro
-proyecto**: aquí sólo se consulta, y la V3.6 no se sube a ese GitHub.
+Todo lo copiado sale de `D:\@Proyect\IT\old\VERTICAL\`, que se conserva intacto. **Proyecto
+independiente, con remoto privado propio: `github.com/dieleoz/retrov3.6_2026`.** El repositorio de la
+línea V4.1/V5 (`D:\IT\P_RetroReflectometro_Vertical`, `dieleoz/Retro_Vertical_2026_v1`) y el de la
+V4.6 (`D:\IT\P_RetroVertical_V4.6`, `dieleoz/retrov4.6_2026`) son otros proyectos. Lo aprendido aquí
+pasa a la V4.6 en su `APRENDIDO-DE-V3.6.md`.
 
 ## Reglas
 
 - Toda afirmación sobre el código va con `archivo:línea`.
-- **Nada se graba en un equipo** sin: compilación verificada contra la base, revisión del cambio,
-  prueba previa en otra placa si la hay, y autorización del propietario del equipo.
+- **Nada se graba en un equipo** sin compilación verificada contra la base, revisión del cambio,
+  prueba previa en otra placa si la hay y autorización del propietario del equipo.
+- **Nada se da por escrito en un equipo sin su registro** (tramas o ZIP) en el repositorio.
+- La serie del equipo se lee de la EEPROM (`#GN#`), no se teclea.
 - Documentación en español, sin emojis.
