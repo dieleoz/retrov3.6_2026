@@ -91,6 +91,36 @@ public final class Ajuste {
         return new Resultado(grado, e, res);
     }
 
+    /**
+     * Recta de minimos cuadrados obligada a pasar por (x0, r0): R = r0 + k (x - x0),
+     * k = sum((R - r0)(x - x0)) / sum((x - x0)^2). Opcion (b) de Diego para el codigo 2
+     * (06_Calibracion/SLV-002/PROPUESTA-Ajuste-SLV-002-2026-09-19.md, tools/propuesta_ajuste_slv002.py:208).
+     */
+    public static Resultado anclada(double[] x, double[] r, double x0, double r0) {
+        if (x.length != r.length || x.length < 2 || distintas(x) < 2) {
+            throw new IllegalArgumentException("la recta anclada necesita al menos 2 valores de x distintos");
+        }
+        if (Double.isNaN(x0)) {
+            throw new IllegalArgumentException("falta la x de oscuro para anclar la recta");
+        }
+        double num = 0;
+        double den = 0;
+        for (int i = 0; i < x.length; i++) {
+            num += (r[i] - r0) * (x[i] - x0);
+            den += (x[i] - x0) * (x[i] - x0);
+        }
+        if (den == 0) {
+            throw new IllegalArgumentException("todos los puntos están en la x de oscuro");
+        }
+        double k = num / den;
+        Ecuacion e = new Ecuacion(0, 0, k, r0 - k * x0);
+        double[] res = new double[x.length];
+        for (int i = 0; i < x.length; i++) {
+            res[i] = r[i] - e.evaluar(x[i]);
+        }
+        return new Resultado(1, e, res);
+    }
+
     private static int distintas(double[] x) {
         java.util.HashSet<Double> s = new java.util.HashSet<>();
         for (double v : x) {

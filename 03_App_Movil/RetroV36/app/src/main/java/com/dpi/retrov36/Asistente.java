@@ -216,6 +216,15 @@ public final class Asistente {
      * x de oscuro por defecto 575 (medida con la V3.6 en SLV-002, ACTA-antes-y-despues:40).
      */
     public static volatile double X_OSCURO = 575;
+    /** "Grado" de la recta anclada en oscuro (opcion (b), 3.6.9). */
+    public static final int GRADO_ANCLADA = -1;
+    /** Ancla de la recta: x de la serie OSCURO de la campana y R objetivo (certificado 0). */
+    public static volatile double X_ANCLA = Double.NaN;
+    public static volatile double R_ANCLA = 0;
+    public static volatile String ORIGEN_ANCLA = "";
+    /** Umbrales propuestos de SPEC-Calibracion (RF-CAL-14/15): avisan, no bloquean (3.6.9). */
+    public static final double RF14_RESIDUO_MAX = 0.10;
+    public static final double RF15_RMS_MAX = 0.06;
     public static volatile double OSCURO_MARGEN = 10;
     public static volatile double OSCURO_MINIMO = 25;
     /**
@@ -297,6 +306,43 @@ public final class Asistente {
         return sb.toString();
     }
 
+    /**
+     * Criterios propuestos de SPEC-Calibracion que Diego puede dispensar (3.6.9): RF-CAL-14
+     * (residuo de cada patron <= 10 %), RF-CAL-15 (RMS por tipo <= 6 %), RF-CAL-16 (por tipo,
+     * la curva nueva no empeora el RMS de fabrica; letra estricta, sin margen).
+     */
+    public static List<String> incumplimientos(List<Punto> puntos, Ecuacion nueva, Ecuacion fabrica) {
+        List<String> out = new ArrayList<>();
+        for (Punto q : puntos) {
+            double r = (nueva.evaluar(q.x) - q.patron.valor) / q.patron.valor;
+            if (Math.abs(r) > RF14_RESIDUO_MAX) {
+                out.add(String.format(Locale.US, "RF-CAL-14: %s (%s) residuo %+.1f %% > 10 %%", q.patron.nombre,
+                        q.patron.tipo, 100 * r));
+            }
+        }
+        Map<String, List<Punto>> porTipo = new LinkedHashMap<>();
+        for (Punto q : puntos) {
+            List<Punto> l = porTipo.get(q.patron.tipo);
+            if (l == null) {
+                l = new ArrayList<>();
+                porTipo.put(q.patron.tipo, l);
+            }
+            l.add(q);
+        }
+        for (Map.Entry<String, List<Punto>> e : porTipo.entrySet()) {
+            double[] rn = rel(e.getValue(), nueva);
+            double[] rf = rel(e.getValue(), fabrica);
+            if (rn[1] > 100 * RF15_RMS_MAX) {
+                out.add(String.format(Locale.US, "RF-CAL-15: RMS de %s %.1f %% > 6 %%", e.getKey(), rn[1]));
+            }
+            if (rn[1] > rf[1]) {
+                out.add(String.format(Locale.US, "RF-CAL-16: en %s la curva nueva (RMS %.1f %%) no mejora a la de fábrica (%.1f %%)",
+                        e.getKey(), rn[1], rf[1]));
+            }
+        }
+        return out;
+    }
+
     /** {sesgo %, RMS %} de (R_curva - cert) / cert. */
     static double[] rel(List<Punto> l, Ecuacion e) {
         double s = 0;
@@ -328,6 +374,10 @@ public final class Asistente {
             this.informe = informe;
         }
 
+        /** RF-CAL-14/15/16 incumplidos: no bloquean, piden conformidad con nota (3.6.9). */
+        public final List<String> incumplimientos = new ArrayList<>();
+        public String metodo = "";
+
         public boolean escribible() {
             return ajuste != null && bloqueos.isEmpty();
         }
@@ -350,9 +400,18 @@ public final class Asistente {
                                      List<Patron> catalogo) {
         List<String> bloqueos = new ArrayList<>();
         List<String> avisos = new ArrayList<>();
+        List<String> incumple = new ArrayList<>();
         List<Punto> p = puntos(medidas, k);
         StringBuilder inf = new StringBuilder();
-        inf.append("Código ").append(k).append(" (").append(Fabrica.nombre(k)).append("), grado ").append(grado).append('\n');
+        final boolean anclada = grado == GRADO_ANCLADA;
+        if (anclada) {
+            inf.append("Código ").append(k).append(" (").append(Fabrica.nombre(k)).append("), RECTA ANCLADA EN OSCURO")
+                    .append(String.format(Locale.US, " en (x = %.1f ; R = %.0f)%s\n", X_ANCLA, R_ANCLA,
+                            ORIGEN_ANCLA.isEmpty() ? "" : ", " + ORIGEN_ANCLA));
+            grado = 1;
+        } else {
+            inf.append("Código ").append(k).append(" (").append(Fabrica.nombre(k)).append("), grado ").append(grado).append('\n');
+        }
         if (catalogo != null) {
             Cobertura cc = cobertura(k, catalogo);
             inf.append("Catálogo: ").append(cc.texto()).append('\n');
@@ -388,7 +447,7 @@ public final class Asistente {
                 r[i] = p.get(i).patron.valor;
             }
             try {
-                a = Ajuste.ajustar(x, r, grado);
+                a = anclada ? Ajuste.anclada(x, r, X_ANCLA, R_ANCLA) : Ajuste.ajustar(x, r, grado);
             } catch (IllegalArgumentException e) {
                 bloqueos.add(e.getMessage());
             }
@@ -430,6 +489,7 @@ public final class Asistente {
                     + "R nueva %.1f, fábrica %.1f. Por debajo del patrón más bajo la lectura NO está calibrada.\n",
                     X_OSCURO, e.evaluar(X_OSCURO), fab.evaluar(X_OSCURO), xmin, e.evaluar(xmin), fab.evaluar(xmin)));
             inf.append(residuoPorTipo(p, e, fab));
+            incumple.addAll(incumplimientos(p, e, fab));
             if (grado == 2 && (!f.bloqueos.isEmpty() || fw != null) && x.length >= 3) {
                 // Si la parabola no puede, se mira si una recta si.
                 try {
@@ -456,9 +516,16 @@ public final class Asistente {
         for (String s : avisos) {
             inf.append("Aviso: ").append(s).append('\n');
         }
+        for (String s : incumple) {
+            inf.append("INCUMPLE (avisa, no bloquea; exige conformidad del superadministrador): ").append(s).append('\n');
+        }
         for (String s : bloqueos) {
             inf.append("NO SE PUEDE ESCRIBIR: ").append(s).append('\n');
         }
-        return new Propuesta(k, p, a, bloqueos, avisos, inf.toString());
+        Propuesta pr = new Propuesta(k, p, a, bloqueos, avisos, inf.toString());
+        pr.incumplimientos.addAll(incumple);
+        pr.metodo = anclada ? String.format(Locale.US, "recta anclada en oscuro (x = %.1f ; R = %.0f)%s", X_ANCLA, R_ANCLA,
+                ORIGEN_ANCLA.isEmpty() ? "" : ", " + ORIGEN_ANCLA) : "mínimos cuadrados, grado " + grado;
+        return pr;
     }
 }

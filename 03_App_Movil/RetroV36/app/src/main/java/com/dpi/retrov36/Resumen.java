@@ -11,6 +11,20 @@ public final class Resumen {
 
     private Resumen() { }
 
+    public static String hex(byte[] datos, String algoritmo) throws IOException {
+        MessageDigest md;
+        try {
+            md = MessageDigest.getInstance(algoritmo);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IOException("algoritmo no disponible: " + algoritmo, e);
+        }
+        StringBuilder sb = new StringBuilder();
+        for (byte x : md.digest(datos)) {
+            sb.append(String.format("%02x", x & 0xFF));
+        }
+        return sb.toString();
+    }
+
     public static String hex(File f, String algoritmo) throws IOException {
         MessageDigest md;
         try {

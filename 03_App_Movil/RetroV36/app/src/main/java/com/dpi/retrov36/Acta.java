@@ -69,13 +69,19 @@ public final class Acta {
         public final String tramaG;
         public final Ecuacion leida;
         public final String oscuro;
+        /** Metodo del ajuste (grado o "recta anclada en oscuro (...)"). */
+        public final String metodo;
+        /** Conformidad del superadministrador si la curva incumple RF-CAL-14/15/16; vacia si no hizo falta. */
+        public final String conformidad;
         public Remedida remedida;
 
-        Codigo(char k, String tramaG, Ecuacion leida, String oscuro) {
+        Codigo(char k, String tramaG, Ecuacion leida, String oscuro, String metodo, String conformidad) {
             this.k = k;
             this.tramaG = tramaG;
             this.leida = leida;
             this.oscuro = oscuro;
+            this.metodo = metodo == null ? "" : metodo;
+            this.conformidad = conformidad == null ? "" : conformidad;
         }
     }
 
@@ -112,7 +118,11 @@ public final class Acta {
 
     /** #S verificado con #E: queda anotado con la curva leida con #G (P9-B9). */
     public void escrito(char k, String tramaG, Ecuacion leida, String oscuro) {
-        codigos.add(new Codigo(k, tramaG, leida, oscuro));
+        escrito(k, tramaG, leida, oscuro, "", "");
+    }
+
+    public void escrito(char k, String tramaG, Ecuacion leida, String oscuro, String metodo, String conformidad) {
+        codigos.add(new Codigo(k, tramaG, leida, oscuro, metodo, conformidad));
     }
 
     public void remedida(char k, Remedida r) {
@@ -203,7 +213,13 @@ public final class Acta {
                 + "la lectura no está calibrada.\n\n");
         for (Codigo c : codigos) {
             sb.append("Código ").append(c.k).append(" (").append(Fabrica.nombre(c.k)).append(")\n");
+            if (!c.metodo.isEmpty()) {
+                sb.append("  Método: ").append(c.metodo).append('\n');
+            }
             sb.append("  Curva certificada = leída con #G tras #S (P9-B9): ").append(c.tramaG).append('\n');
+            if (!c.conformidad.isEmpty()) {
+                sb.append("  ").append(c.conformidad).append('\n');
+            }
             sb.append("  #E en 5 puntos: coincide con la curva enviada (±1)\n");
             if (c.oscuro != null && !c.oscuro.isEmpty()) {
                 sb.append("  ").append(c.oscuro).append('\n');

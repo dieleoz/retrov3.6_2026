@@ -4,7 +4,7 @@
 V3.6 no se puede probar: el firmware V3.6 no existe todavía en ningún equipo. Lo que sí debe funcionar
 es la medida contra un V3 2020 (SLV-002), y eso tampoco se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 368`, `versionName 3.6.8` (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 369`, `versionName 3.6.9` (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -28,7 +28,7 @@ no se versionan.
 
 ### Tests JVM
 
-`app/src/test/`: `CalculoTest`, `ReceptorTest`, `AsistenteTest`, `FabricaTest` (84 tests).
+`app/src/test/`: `CalculoTest`, `ReceptorTest`, `AsistenteTest`, `FabricaTest` (89 tests).
 `./gradlew testDebugUnitTest` **no arranca en esta máquina**: el ejecutor de Gradle 6.5 no encuentra su
 clase `GradleWorkerMain` porque la carpeta de usuario lleva `ñ` (`C:\Users\Diego.Zuñiga`). Se compilan
 con Gradle y se ejecutan con JUnit a mano:
@@ -38,7 +38,7 @@ con Gradle y se ejecutan con JUnit a mano:
 mkdir -p libtest   # copiar aquí (fuera de build/: clean lo borra) junit-4.13.2.jar y hamcrest-core-1.3.jar de ~/.gradle/caches
 cd app && "$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;build/intermediates/javac/debugUnitTest/classes;../libtest/junit-4.13.2.jar;../libtest/hamcrest-core-1.3.jar" \
   org.junit.runner.JUnitCore com.dpi.retrov36.CalculoTest com.dpi.retrov36.ReceptorTest \
-  com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest com.dpi.retrov36.CoherenciaRealTest com.dpi.retrov36.CampanaTest com.dpi.retrov36.Version367Test com.dpi.retrov36.Version368Test
+  com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest com.dpi.retrov36.CoherenciaRealTest com.dpi.retrov36.CampanaTest com.dpi.retrov36.Version367Test com.dpi.retrov36.Version368Test com.dpi.retrov36.Version369Test
 ```
 
 `FabricaTest` compara las 12 ecuaciones de la app con el **texto** de
@@ -111,6 +111,23 @@ Reglas que salen de ahí, en el código:
   envía sólo `1`-`8`, `a`-`d` y `9`.
 - Tras 3 peticiones seguidas sin un solo byte, la app aconseja apagar y encender el equipo y lo anota
   en el registro.
+
+## Cambios de la 3.6.9
+
+- **Importar una campaña exportada** (botón "Importar campaña (ZIP o campana.csv) o CSV antiguos"): del ZIP
+  se usa el **diario** (reconstrucción exacta, incluidas las series sin disparos); si sólo hay `campana.csv`,
+  se reconstruye desde él (una serie sin disparos no tiene filas: con el ZIP del 19-sep salen 56 por el
+  diario y 55 por el CSV). Sin volver a juzgar: veredicto, aceptada, elegida, orientación, colocación,
+  descartes y reasignaciones tal cual. Se rechaza entero si es de otro equipo (serie o MAC). Se muestra el md5
+  del fichero y cada serie lleva el origen en su nota (queda en el diario). Reimportar no duplica.
+- **Recta anclada en oscuro** (opción (b) de Diego para el código 2; disponible en cualquier código):
+  mínimos cuadrados obligada a pasar por (x_oscuro ; 0). x_oscuro = media de la serie **OSCURO** de la
+  campaña (patrón especial, superficie negra mate, certificado 0). Reproduce la propuesta: k = 0,36753403,
+  IV 8,7 %, XI 5,8 %. El acta declara el método.
+- **Preajustes:** A5 pasa a **5 × 9** (+ asentamiento); nuevo "OSCURO", 5 × 9. Ni A5 ni OSCURO entran en el
+  ajuste de los códigos; OSCURO da el ancla.
+- **RF-CAL-14/15/16** (propuestos) avisan, no bloquean: escribir una curva que los incumple pide la
+  conformidad del superadministrador con nota, que queda en el acta (caso: blanco grado 1).
 
 ## Cambios de la 3.6.8 (condiciones (b) de REVISION-Arquitectura-P9-V3.6.md)
 

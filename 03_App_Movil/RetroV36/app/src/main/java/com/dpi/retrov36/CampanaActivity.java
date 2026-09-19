@@ -42,6 +42,10 @@ public class CampanaActivity extends Base {
     /** Preajuste P9-A5: P22, P28 y P4 a 5 colocaciones x 3 disparos (medida puente). */
     private static boolean modoA5;
     private Button btnA5;
+    /** Preajuste OSCURO (3.6.9): superficie negra mate, 5 x 9; da el ancla de la recta anclada. */
+    private static boolean modoOscuro;
+    private static int seriesOscuroAlEntrar;
+    private Button btnOscuro;
 
     private Campana campana;
     private TextView txtAvance;
@@ -89,14 +93,15 @@ public class CampanaActivity extends Base {
         txtResultado = texto("");
         txtResultado.setTypeface(Typeface.MONOSPACE);
 
-        btnA5 = boton("Preajuste A5 (arquitecto): P22, P28, P4 a 5 × 3", v -> alternarA5());
+        btnA5 = boton("Preajuste A5 (arquitecto): P22, P28, P4 a 5 × 9", v -> alternarA5());
+        btnOscuro = boton("Preajuste OSCURO: superficie negra mate, 5 × 9", v -> alternarOscuro());
 
         titulo("Enviar");
         boton("Exportar campaña (un solo ZIP con todo)", v -> exportar());
         texto("El ZIP lleva las series, las pruebas del equipo, todos los registros de tramas de la campaña y "
                 + "el resumen. Después de exportar no hace falta compartir nada más.");
         btnCerrar = boton("Cerrar campaña (queda de solo lectura)", v -> cerrarCampana());
-        Button imp = boton("Importar CSV de medidas antiguas", v -> importar());
+        Button imp = boton("Importar campaña (ZIP o campana.csv) o CSV antiguos", v -> importar());
         Button nueva = boton("Nueva campaña (archiva la actual)", v -> nueva());
         fila(imp, nueva);
         btnImportar = imp;
@@ -226,10 +231,26 @@ public class CampanaActivity extends Base {
             }
             btnA5.setText("Salir del preajuste A5");
         } else {
-            btnA5.setText("Preajuste A5 (arquitecto): P22, P28, P4 a 5 × 3");
+            btnA5.setText("Preajuste A5 (arquitecto): P22, P28, P4 a 5 × 9");
+        }
+        if (modoOscuro) {
+            cola = new ArrayList<>();
+            if (campana.seriesDe(Campana.OSCURO.nombre).size() == seriesOscuroAlEntrar) {
+                cola.add(new Cola.Paso(Campana.OSCURO.nombre, 0, "serie de oscuro, 5 × 9: ancla de la recta anclada"));
+            }
+            btnOscuro.setText("Salir del preajuste OSCURO");
+        } else {
+            btnOscuro.setText("Preajuste OSCURO: superficie negra mate, 5 × 9");
         }
         paso = cola.isEmpty() ? null : cola.get(0);
-        if (paso == null && modoA5) {
+        if (paso == null && modoOscuro) {
+            modoOscuro = false;
+            Campana.Serie so = campana.serieOscuro();
+            txtColoque.setText(so == null ? "Oscuro sin serie aceptada." : String.format(Locale.US,
+                    "Oscuro medido: x = %.1f (%s). Es el ancla de la recta anclada.", so.media(), so.id));
+            pintar();
+            return;
+        } else if (paso == null && modoA5) {
             A5.Resultado r = A5.evaluar(campana);
             txtColoque.setText("A5 completo: " + r.veredicto);
             txtResultado.setText(r.texto);
@@ -250,8 +271,8 @@ public class CampanaActivity extends Base {
             edK.setText(String.valueOf(acta.colocaciones));
             edN.setText(String.valueOf(acta.disparos));
         }
-        edK.setEnabled(!fijo && !modoA5);
-        edN.setEnabled(!fijo && !modoA5);
+        edK.setEnabled(!fijo && !modoA5 && !modoOscuro);
+        edN.setEnabled(!fijo && !modoA5 && !modoOscuro);
         btnOk.setEnabled(abiertaC && paso != null && !midiendo && con);
         btnSaltar.setEnabled(abiertaC && paso != null && !midiendo);
         btnCerrar.setEnabled(abiertaC && !midiendo);
@@ -342,7 +363,23 @@ public class CampanaActivity extends Base {
 
     // ---------------------------------------------------------------- guiado
 
+    private void alternarOscuro() {
+        modoOscuro = !modoOscuro;
+        modoA5 = false;
+        if (modoOscuro) {
+            seriesOscuroAlEntrar = campana.seriesDe(Campana.OSCURO.nombre).size();
+            edK.setText("5");
+            edN.setText("9");
+            Registro.nota("campana: preajuste OSCURO activado");
+        } else {
+            edK.setText("3");
+            edN.setText("3");
+        }
+        pintar();
+    }
+
     private void alternarA5() {
+        modoOscuro = false;
         modoA5 = !modoA5;
         if (modoA5) {
             edK.setText(String.valueOf(A5.COLOCACIONES));
@@ -676,19 +713,39 @@ public class CampanaActivity extends Base {
         Cliente.instancia().ejecutar(() -> {
             String res;
             try {
-                List<String> lineas = new ArrayList<>();
+                StringBuilder t = new StringBuilder();
+                List<String> antiguas = new ArrayList<>();
                 for (Uri u : uris) {
-                    try (InputStream in = getContentResolver().openInputStream(u);
-                         BufferedReader r = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
-                        String l;
-                        while ((l = r.readLine()) != null) {
-                            lineas.add(l);
-                        }
+                    byte[] datosF;
+                    try (InputStream in = getContentResolver().openInputStream(u)) {
+                        datosF = ImportadorCampana.leer(in);
+                    }
+                    String nombre = u.getLastPathSegment() == null ? u.toString() : u.getLastPathSegment();
+                    String md5 = Resumen.hex(datosF, "MD5");
+                    t.append(nombre).append(" (md5 ").append(md5).append("): ");
+                    String diario = ImportadorCampana.esZip(datosF) ? ImportadorCampana.diarioDeZip(datosF) : null;
+                    List<String> l = ImportadorCampana.esZip(datosF) ? ImportadorCampana.csvDeZip(datosF)
+                            : ImportadorCampana.lineas(datosF);
+                    if (diario != null) {
+                        ImportadorCampana.Resultado ir = ImportadorCampana.importarDiario(campana, diario,
+                                campana.catalogo(), nombre + " md5 " + md5);
+                        t.append("campaña exportada (diario del ZIP): ").append(ir.texto()).append('\n');
+                    } else if (l == null) {
+                        t.append("el ZIP no trae campana.csv\n");
+                    } else if (ImportadorCampana.esCsvDeCampana(l)) {
+                        ImportadorCampana.Resultado ir = ImportadorCampana.importar(campana, l, nombre + " md5 " + md5);
+                        t.append("campaña exportada: ").append(ir.texto()).append('\n');
+                    } else {
+                        antiguas.addAll(l);
+                        t.append("CSV de medidas antiguo\n");
                     }
                 }
-                Importador.Resultado ir = Importador.importar(campana, lineas, tolOrden);
-                res = uris.size() + " ficheros: " + ir.texto();
-                Registro.nota("campana: importacion de CSV: " + res);
+                if (!antiguas.isEmpty()) {
+                    Importador.Resultado ir = Importador.importar(campana, antiguas, tolOrden);
+                    t.append("CSV antiguos: ").append(ir.texto());
+                }
+                res = t.toString();
+                Registro.nota("campana: importacion: " + res);
             } catch (IOException | RuntimeException e) {
                 res = "No se pudo importar: " + EnlaceSerie.descripcion(e);
             }

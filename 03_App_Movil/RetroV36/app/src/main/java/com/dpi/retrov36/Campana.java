@@ -176,8 +176,25 @@ public final class Campana {
         return new ArrayList<>(catalogo.values());
     }
 
+    /**
+     * Patron especial OSCURO (3.6.9): superficie negra mate, certificado 0. No esta en el
+     * catalogo de patrones (no entra en la cola, el avance ni el ajuste de los codigos);
+     * su serie elegida da el ancla de la recta anclada en oscuro.
+     */
+    public static final Patron OSCURO = new Patron("OSCURO", 0, "-", "oscuro");
+
     public Patron patron(String nombre) {
-        return catalogo.get(nombre);
+        return OSCURO.nombre.equals(nombre) ? OSCURO : catalogo.get(nombre);
+    }
+
+    /** x de oscuro: media de la serie OSCURO elegida; NaN si no se ha medido. */
+    public double xOscuro() {
+        Serie s = elegida(OSCURO.nombre);
+        return s == null ? Double.NaN : s.media();
+    }
+
+    public Serie serieOscuro() {
+        return elegida(OSCURO.nombre);
     }
 
     public List<Serie> series() {
@@ -337,7 +354,7 @@ public final class Campana {
     /** "Era otro patron": la serie pasa a 'nuevo'; el original queda en patronOriginal y en el diario. */
     public void reasignar(Serie s, String nuevo, String nota) throws IOException {
         comprobarAbierta();
-        if (!catalogo.containsKey(nuevo)) {
+        if (patron(nuevo) == null) {
             throw new IllegalArgumentException("patron desconocido: " + nuevo);
         }
         elegidas.remove(s.patron);
@@ -574,7 +591,7 @@ public final class Campana {
     public String exportarCsv() {
         StringBuilder sb = new StringBuilder(cabeceraCsv()).append('\n');
         for (Serie s : series) {
-            Patron p = catalogo.get(s.patron);
+            Patron p = patron(s.patron);
             Serie el = elegida(s.patron);
             for (Disparo d : s.disparos) {
                 sb.append(Csv.unir(s.id, d.fecha, s.equipo, s.mac, s.firmware, s.patron, s.patronOriginal,
@@ -621,6 +638,10 @@ public final class Campana {
                         s.nota.isEmpty() ? "" : "; nota: " + s.nota));
             }
         }
+        Serie so = serieOscuro();
+        sb.append(so == null ? "\nOscuro: sin serie OSCURO medida (el ancla de la recta anclada no está medida).\n"
+                : String.format(Locale.US, "\nOscuro: serie %s, x = %.1f (s entre colocaciones %.1f, %d colocaciones).\n",
+                so.id, so.media(), so.desviacion(), so.colocaciones().size()));
         sb.append(desvioPorPosicion());
         sb.append('\n').append(A5.evaluar(this).texto);
         if (!exportaciones.isEmpty()) {

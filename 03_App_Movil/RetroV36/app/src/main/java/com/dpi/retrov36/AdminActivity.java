@@ -107,8 +107,12 @@ public class AdminActivity extends Base {
         RadioButton g2 = new RadioButton(this);
         g2.setText("Grado 2");
         g2.setId(View.generateViewId());
+        RadioButton g3 = new RadioButton(this);
+        g3.setText("Recta anclada en oscuro");
+        g3.setId(View.generateViewId());
         rgGrado.addView(g1);
         rgGrado.addView(g2);
+        rgGrado.addView(g3);
         rgGrado.check(g1.getId());
         panel.addView(rgGrado);
         Button ajustar = boton("Ajustar", v -> ajustar());
@@ -477,7 +481,23 @@ public class AdminActivity extends Base {
             return;
         }
         char k = codigoAjuste();
-        int grado = rgGrado.getCheckedRadioButtonId() == rgGrado.getChildAt(1).getId() ? 2 : 1;
+        int sel = rgGrado.getCheckedRadioButtonId();
+        int grado = sel == rgGrado.getChildAt(1).getId() ? 2 : (sel == rgGrado.getChildAt(2).getId()
+                ? Asistente.GRADO_ANCLADA : 1);
+        if (grado == Asistente.GRADO_ANCLADA) {
+            // El ancla sale de la serie OSCURO de la campana de este equipo (superficie negra mate, cert. 0).
+            Campana c = Campanas.abierta();
+            Campana.Serie so = c != null && c.esDeEsteEquipo(Sesion.get().mac) ? c.serieOscuro() : null;
+            if (so == null) {
+                alerta("Recta anclada", "Falta la serie OSCURO de la campaña de este equipo (preajuste OSCURO, 5 × 9). "
+                        + "Sin ella no hay ancla.");
+                return;
+            }
+            Asistente.X_ANCLA = so.media();
+            Asistente.R_ANCLA = 0;
+            Asistente.ORIGEN_ANCLA = String.format(Locale.US, "serie OSCURO %s de la campaña, %d colocaciones",
+                    so.id, so.colocaciones().size());
+        }
         Sesion s = Sesion.get();
         if (s.leidas[Fabrica.indice(k)] == null) {
             alerta("Coeficientes", "Lea antes los coeficientes del equipo: el estado \"como llegó\" se calcula con ellos.");
@@ -533,7 +553,46 @@ public class AdminActivity extends Base {
                 + "Ajuste contra patrones, no calibración trazable.");
         new AlertDialog.Builder(this).setTitle("Confirmar escritura en EEPROM")
                 .setMessage(m.toString())
-                .setPositiveButton("Escribir", (d, w) -> escribir(k, ts))
+                .setPositiveButton("Escribir", (d, w) -> conformidadYEscribir(k, ts, p))
+                .setNegativeButton("Cancelar", null).show();
+    }
+
+    /**
+     * Si la curva incumple RF-CAL-14/15/16 (propuestos), la app avisa pero no bloquea: pide la
+     * conformidad del superadministrador con una nota, que queda en el acta (3.6.9, decision de
+     * Diego para el blanco grado 1).
+     */
+    private void conformidadYEscribir(char k, Tramas.TramaS ts, Asistente.Propuesta p) {
+        if (p.incumplimientos.isEmpty()) {
+            escribir(k, ts, p.metodo, "");
+            return;
+        }
+        LinearLayout c = new LinearLayout(this);
+        c.setOrientation(LinearLayout.VERTICAL);
+        c.setPadding(dp(16), dp(8), dp(16), 0);
+        TextView t = new TextView(this);
+        StringBuilder sb = new StringBuilder("La curva incumple criterios propuestos (no bloquean):\n");
+        for (String s : p.incumplimientos) {
+            sb.append("- ").append(s).append('\n');
+        }
+        t.setText(sb.toString());
+        c.addView(t);
+        final CheckBox ok = new CheckBox(this);
+        ok.setText("El superadministrador da su conformidad");
+        c.addView(ok);
+        final EditText nota = new EditText(this);
+        nota.setHint("Nota obligatoria (quién y por qué)");
+        c.addView(nota);
+        new AlertDialog.Builder(this).setTitle("Conformidad del superadministrador").setView(c)
+                .setPositiveButton("Escribir", (d, w) -> {
+                    String n = nota.getText().toString().trim();
+                    if (!ok.isChecked() || n.isEmpty()) {
+                        alerta("Conformidad", "Hace falta marcar la conformidad y escribir la nota.");
+                        return;
+                    }
+                    escribir(k, ts, p.metodo, "Conformidad del superadministrador pese a incumplir "
+                            + String.join("; ", p.incumplimientos) + ". Nota: " + n);
+                })
                 .setNegativeButton("Cancelar", null).show();
     }
 
@@ -598,7 +657,7 @@ public class AdminActivity extends Base {
         return mal.length() == 0 ? null : "#E no reproduce la curva enviada:" + mal;
     }
 
-    private void escribir(char k, Tramas.TramaS ts) {
+    private void escribir(char k, Tramas.TramaS ts, String metodo, String conformidad) {
         op("Escribir código " + k, true, () -> {
             Sesion ses = Sesion.get();
             if (ses.acta == null || ses.acta.cerrada()) {
@@ -638,7 +697,7 @@ public class AdminActivity extends Base {
                     Ecuacion fab = Fabrica.ecuacion(k);
                     String osc = String.format(Locale.US, "Oscuro (x = %.0f): R %.1f (fábrica %.1f), valor que acepta Diego (P9-B13)",
                             Asistente.X_OSCURO, e.evaluar(Asistente.X_OSCURO), fab.evaluar(Asistente.X_OSCURO));
-                    acta.escrito(k, tramaG, e, osc);
+                    acta.escrito(k, tramaG, e, osc, metodo, conformidad);
                     salida = "#S OK y " + estado + " (" + Ecuacion.ULP_S + " ulp); #E en 5 puntos coincide con la curva "
                             + "enviada (±1). Ahora: re-medida de verificación del código " + k + " (RF-CAL-18). "
                             + "No se escribe otro código antes (P9-B8). La fecha de calibración se graba al aceptar el acta.";

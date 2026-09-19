@@ -12,15 +12,15 @@ import java.util.Locale;
  * patron frente a su serie de la campana, dentro de max(2 * s_rep ; 4 %). Criterio de
  * reversion a la 3.6.1: los tres desplazados en el mismo sentido mas alla de ese margen.
  *
- * El documento pide asentamiento + 9 disparos por colocacion; el coordinador, 5 x 3
- * (se dice en el informe). Las series A5 se guardan con veredicto "A5" y sin aceptar:
+ * Asentamiento + 9 disparos por colocacion (3.6.9). Las series A5 se guardan con veredicto "A5" y sin aceptar:
  * no entran en el ajuste ni cambian la serie elegida de la campana.
  */
 public final class A5 {
 
     public static final String[] PATRONES = {"P22", "P28", "P4"};
     public static final int COLOCACIONES = 5;
-    public static final int DISPAROS = 3;
+    /** 3.6.9: 5 x 9 (mas el asentamiento por colocacion), como pide el documento. La 3.6.8 usaba 5 x 3. */
+    public static final int DISPAROS = 9;
     public static final double MARGEN_REL = 0.04;
     public static final String VEREDICTO = "A5";
 
@@ -111,7 +111,7 @@ public final class A5 {
         if (!Double.isNaN(sRepRel)) {
             t.append(String.format(Locale.US, "s_rep media: %.2f %% (para los criterios P9-B5).\n", 100 * sRepRel));
         }
-        t.append("Protocolo: 5 colocaciones × 3 disparos (coordinador); el documento pide asentamiento + 9.\n");
+        t.append("Protocolo: 5 colocaciones × 9 disparos, más el asentamiento por colocación.\n");
         return new Resultado(t.toString(), ver, sRepRel);
     }
 }
