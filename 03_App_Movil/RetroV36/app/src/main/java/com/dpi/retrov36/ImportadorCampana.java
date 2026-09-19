@@ -24,6 +24,11 @@ import java.util.zip.ZipInputStream;
  * que queda en el diario (evento VEREDICTO). Si una fila es de otro equipo (serie o MAC
  * distinta de la campana abierta), no se importa nada. Las series ya importadas (mismo
  * primer disparo) se saltan: reimportar no duplica.
+ *
+ * P10-C8 (3.6.10): ATOMICO. Todo se valida antes de escribir la primera linea del diario
+ * (equipo, patrones, numeros, colocaciones): o entra todo, o nada. No pisa la serie que el
+ * operador ya tiene elegida para un patron. Compara el firmware de las series importadas con el
+ * de las que ya hay y lo avisa.
  */
 public final class ImportadorCampana {
 
@@ -33,8 +38,10 @@ public final class ImportadorCampana {
         public int series;
         public int yaEstaban;
         public int disparos;
+        public final List<String> avisos = new ArrayList<>();
         public String texto() {
-            return series + " series importadas (" + disparos + " disparos), " + yaEstaban + " ya estaban.";
+            return series + " series importadas (" + disparos + " disparos), " + yaEstaban + " ya estaban."
+                    + (avisos.isEmpty() ? "" : " Avisos: " + String.join("; ", avisos));
         }
     }
 
@@ -73,6 +80,8 @@ public final class ImportadorCampana {
         }
         Set<String> vistas = claves(c);
         Resultado r = new Resultado();
+        compararFirmware(c, firmwares(todo.series()), r);
+        Set<String> yaElegidos = elegidosDe(c);
         List<Campana.Serie> elegidas = new ArrayList<>();
         for (Campana.Serie s : todo.series()) {
             if (vistas.contains(clave(s))) {
@@ -95,7 +104,11 @@ public final class ImportadorCampana {
             String org = "importada de " + origen + ", serie " + s.id;
             c.cerrar(n, s.veredicto, s.aceptada, s.nota.isEmpty() ? org : s.nota + " | " + org);
             if (todo.elegida(s.patron) == s) {
-                elegidas.add(n);
+                if (yaElegidos.contains(s.patron)) {
+                    r.avisos.add(s.patron + ": se mantiene la serie elegida por el operador");
+                } else {
+                    elegidas.add(n);
+                }
             }
             r.series++;
         }
@@ -103,6 +116,37 @@ public final class ImportadorCampana {
             c.elegir(s);
         }
         return r;
+    }
+
+    private static Set<String> elegidosDe(Campana c) {
+        Set<String> s = new HashSet<>();
+        for (Campana.Serie x : c.series()) {
+            if (c.elegida(x.patron) != null) {
+                s.add(x.patron);
+            }
+        }
+        return s;
+    }
+
+    private static Set<String> firmwares(List<Campana.Serie> l) {
+        Set<String> s = new java.util.LinkedHashSet<>();
+        for (Campana.Serie x : l) {
+            s.add(x.firmware);
+        }
+        return s;
+    }
+
+    /** Avisa si las series importadas son de otro firmware que las que ya hay. */
+    private static void compararFirmware(Campana c, Set<String> importados, Resultado r) {
+        Set<String> actuales = firmwares(c.series());
+        for (String f : importados) {
+            if (!actuales.isEmpty() && !actuales.contains(f)) {
+                r.avisos.add("firmware distinto en lo importado (" + f + ") frente a " + actuales);
+            }
+        }
+        if (importados.size() > 1) {
+            r.avisos.add("lo importado mezcla firmwares: " + importados);
+        }
     }
 
     private static String clave(Campana.Serie s) {
@@ -204,8 +248,39 @@ public final class ImportadorCampana {
         if (col == null) {
             throw new IllegalArgumentException("fichero vacío");
         }
+        // Validacion completa ANTES de escribir nada (P10-C8).
+        Set<String> fws = new java.util.LinkedHashSet<>();
+        for (Map.Entry<String, List<List<String>>> e : porSerie.entrySet()) {
+            for (List<String> f : e.getValue()) {
+                String po = campo(f, col, "patron_original");
+                String pa = campo(f, col, "patron");
+                if (c.patron(po) == null || c.patron(pa) == null) {
+                    throw new IllegalArgumentException("patrón desconocido en " + e.getKey() + ": "
+                            + (c.patron(po) == null ? po : pa) + ": no se importa nada");
+                }
+                try {
+                    String xs = campo(f, col, "x");
+                    if (!xs.isEmpty()) {
+                        Double.parseDouble(xs);
+                    }
+                    String cs = col.containsKey("colocacion") ? campo(f, col, "colocacion") : "";
+                    if (!cs.isEmpty()) {
+                        Integer.parseInt(cs);
+                    }
+                    String o = campo(f, col, "orientacion");
+                    if (!o.isEmpty()) {
+                        Integer.parseInt(o);
+                    }
+                } catch (NumberFormatException ex) {
+                    throw new IllegalArgumentException("número no válido en " + e.getKey() + ": no se importa nada");
+                }
+                fws.add(campo(f, col, "firmware"));
+            }
+        }
         Set<String> vistas = claves(c);
         Resultado r = new Resultado();
+        compararFirmware(c, fws, r);
+        Set<String> yaElegidos = elegidosDe(c);
         List<Campana.Serie> elegidas = new ArrayList<>();
         for (Map.Entry<String, List<List<String>>> e : porSerie.entrySet()) {
             List<List<String>> filas = e.getValue();
@@ -248,7 +323,11 @@ public final class ImportadorCampana {
             c.cerrar(s, campo(a, col, "veredicto"), "1".equals(campo(a, col, "aceptada")),
                     nota.isEmpty() ? org : nota + " | " + org);
             if ("1".equals(campo(a, col, "elegida"))) {
-                elegidas.add(s);
+                if (yaElegidos.contains(s.patron)) {
+                    r.avisos.add(s.patron + ": se mantiene la serie elegida por el operador");
+                } else {
+                    elegidas.add(s);
+                }
             }
             r.series++;
         }

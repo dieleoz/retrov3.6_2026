@@ -51,6 +51,10 @@ public abstract class Base extends AppCompatActivity implements EnlaceSerie.Oyen
         raiz.setPadding(p, p, p, p);
         sv.addView(raiz);
         setContentView(sv);
+        // RF-APP-41: la version, en grande, en la cabecera de todas las pantallas.
+        TextView ver = texto("RTV V" + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")");
+        ver.setTextSize(20);
+        ver.setTypeface(Typeface.DEFAULT_BOLD);
         txtEnlace = texto("");
         txtEnlace.setTypeface(Typeface.DEFAULT_BOLD);
     }
@@ -169,6 +173,30 @@ public abstract class Base extends AppCompatActivity implements EnlaceSerie.Oyen
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         } else {
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        }
+    }
+
+    /** Comparte el ZIP de una campana exportada (un solo envio) con sus huellas. */
+    protected void compartirZip(Campanas.Exportacion ex, String texto) {
+        Uri u;
+        try {
+            u = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".ficheros", ex.zip);
+        } catch (IllegalArgumentException e) {
+            aviso("No se pudo compartir el ZIP: " + e.getMessage());
+            return;
+        }
+        Intent i = new Intent(Intent.ACTION_SEND);
+        i.setType("application/zip");
+        i.putExtra(Intent.EXTRA_STREAM, u);
+        i.putExtra(Intent.EXTRA_SUBJECT, ex.zip.getName());
+        i.putExtra(Intent.EXTRA_TEXT, texto + "\n" + ex.zip.getName() + "\nmd5 " + ex.md5 + "\nsha256 " + ex.sha256
+                + "\nCopia: " + ex.copia);
+        i.setClipData(ClipData.newRawUri(ex.zip.getName(), u));
+        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try {
+            startActivity(Intent.createChooser(i, "Enviar la campaña (un solo ZIP)"));
+        } catch (ActivityNotFoundException e) {
+            aviso("No hay ninguna aplicación para compartir el ZIP.");
         }
     }
 

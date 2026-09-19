@@ -4,7 +4,7 @@
 V3.6 no se puede probar: el firmware V3.6 no existe todavía en ningún equipo. Lo que sí debe funcionar
 es la medida contra un V3 2020 (SLV-002), y eso tampoco se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 369`, `versionName 3.6.9` (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 3610`, `versionName 3.6.10` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610) (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -22,13 +22,13 @@ export JAVA_HOME="D:/@Proyect/Baliza/7 sw apk/jdk-11/jdk-11.0.24+8"
 `local.properties` lleva `sdk.dir=C:/android-sdk` (barras normales) y no se versiona.
 
 **Entrega del APK.** Cada entrega se copia a **dos** rutas: `03_App_Movil/RTV-V3.6.apk` (la de siempre) y
-`03_App_Movil/RTV-V<versionName>.apk` (p. ej. `RTV-V3.6.8.apk`), para que no se confunda una versión con otra en el teléfono. Se comprueba con
+`03_App_Movil/RTV-V<versionName>.apk` (p. ej. `RTV-V3.6.8.apk`) y, desde la 3.6.10, también `RTV-V<versionName>-<versionCode>.apk` (RF-APP-41), para que no se confunda una versión con otra en el teléfono. Se comprueba con
 `aapt dump badging` que `versionCode`/`versionName` son los de la entrega y se declara el md5. Los `*.apk`
 no se versionan.
 
 ### Tests JVM
 
-`app/src/test/`: `CalculoTest`, `ReceptorTest`, `AsistenteTest`, `FabricaTest` (89 tests).
+`app/src/test/`: `CalculoTest`, `ReceptorTest`, `AsistenteTest`, `FabricaTest` (100 tests).
 `./gradlew testDebugUnitTest` **no arranca en esta máquina**: el ejecutor de Gradle 6.5 no encuentra su
 clase `GradleWorkerMain` porque la carpeta de usuario lleva `ñ` (`C:\Users\Diego.Zuñiga`). Se compilan
 con Gradle y se ejecutan con JUnit a mano:
@@ -38,7 +38,7 @@ con Gradle y se ejecutan con JUnit a mano:
 mkdir -p libtest   # copiar aquí (fuera de build/: clean lo borra) junit-4.13.2.jar y hamcrest-core-1.3.jar de ~/.gradle/caches
 cd app && "$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;build/intermediates/javac/debugUnitTest/classes;../libtest/junit-4.13.2.jar;../libtest/hamcrest-core-1.3.jar" \
   org.junit.runner.JUnitCore com.dpi.retrov36.CalculoTest com.dpi.retrov36.ReceptorTest \
-  com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest com.dpi.retrov36.CoherenciaRealTest com.dpi.retrov36.CampanaTest com.dpi.retrov36.Version367Test com.dpi.retrov36.Version368Test com.dpi.retrov36.Version369Test
+  com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest com.dpi.retrov36.CoherenciaRealTest com.dpi.retrov36.CampanaTest com.dpi.retrov36.Version367Test com.dpi.retrov36.Version368Test com.dpi.retrov36.Version369Test com.dpi.retrov36.Version3610Test
 ```
 
 `FabricaTest` compara las 12 ecuaciones de la app con el **texto** de
@@ -111,6 +111,29 @@ Reglas que salen de ahí, en el código:
   envía sólo `1`-`8`, `a`-`d` y `9`.
 - Tras 3 peticiones seguidas sin un solo byte, la app aconseja apagar y encender el equipo y lo anota
   en el registro.
+
+## Cambios de la 3.6.10 (corte A: medir el banco; REVISION-Arquitectura-P10-V3.6.md)
+
+- **Catálogo P1-P132** en `assets/patrones_certificados_P1-P132.csv` (md5 `07ab9cd8…`, P10-C7). El de P1-P50
+  de la 3.6.9 queda como recurso de prueba de las pruebas antiguas.
+- **Cola del banco** `assets/cola_banco_P1-P132.csv` (md5 `9ddb7882…`, commit `1f1c4e3`): se carga sólo si su
+  md5 está en `BancoCola.MD5_PERMITIDOS`; si no, "Cola no admitida" y ningún `e`. K, M y asentamiento salen de
+  cada fila; OSCURO y P81 a K = 5 (P10-C3; la cola ya lo trae y la app lo comprueba). Código por fila
+  (café y lila con el 4, VERIFICACIÓN). `.gitattributes` evita la conversión de fin de línea de los CSV.
+- **"Medir el banco"** (`BancoActivity`): paso a paso; calentamiento, batería, OSCURO, A5, patrones, pausa y
+  exportar. Cada paso queda en el diario (evento `PASO`): al volver sigue en el primer paso pendiente. Los
+  de control no se saltan; los patrones sí y quedan marcados (se ofrecen al final).
+- **Patrón presente (P10-C1):** el asentamiento de cada colocación tiene que caer en [0,8 ; 1,2]·x esperada;
+  si no, "Coloque P28" sin gastar la serie. La coherencia por par (`Colocacion.paresIncoherentes`) queda
+  lista para la re-medida del corte B.
+- **Batería (orden 9, RF-CAL-41 y §12.8 de `1f1c4e3`):** V, aviso con n < 19 y bloqueo de escrituras con n = 0
+  o sin respuesta (evento `BATERIA`); nunca en mitad de una serie.
+- **Exportar:** un solo ZIP y copia automática en `Download/RTV/` (MediaStore en Android 10+; permiso de
+  almacenamiento sólo hasta Android 9). Aviso de no desinstalar al arrancar si hay series sin exportar.
+- **Importar atómico (P10-C8):** todo se valida antes de escribir; no pisa la serie elegida por el operador;
+  avisa si el firmware de lo importado difiere. "Importar ZIP de campaña" y "Medir el banco" arriba; cerrar
+  y nueva campaña, en "Avanzado" al final (RF-APP-39).
+- **Versión** en grande en la cabecera de todas las pantallas y en `resumen.txt` (RF-APP-41).
 
 ## Cambios de la 3.6.9
 

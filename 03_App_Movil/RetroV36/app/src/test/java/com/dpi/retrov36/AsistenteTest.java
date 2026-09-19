@@ -50,7 +50,7 @@ public class AsistenteTest {
 
     private static List<Patron> catalogo() throws Exception {
         try (java.io.InputStreamReader r = new java.io.InputStreamReader(
-                new java.io.FileInputStream("src/main/assets/patrones_certificados_P1-P31.csv"),
+                new java.io.FileInputStream("src/test/resources/patrones_P1-P50_hasta_3.6.9.csv"),
                 java.nio.charset.StandardCharsets.UTF_8)) {
             return Patron.leer(r);
         }

@@ -1,6 +1,11 @@
 package com.dpi.retrov36;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
+import android.provider.MediaStore;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -147,6 +152,72 @@ public final class Campanas {
         }
     }
 
+    /**
+     * Copia del ZIP fuera de la app, en Download/RTV/ (RF-APP-40): sobrevive a desinstalar.
+     * API 29+: MediaStore.Downloads; API 24-28: carpeta publica (permiso WRITE_EXTERNAL_STORAGE).
+     * @return la ruta legible de la copia.
+     */
+    public static String copiarADescargas(Context ctx, File zip) throws IOException {
+        if (Build.VERSION.SDK_INT >= 29) {
+            ContentValues v = new ContentValues();
+            v.put(MediaStore.Downloads.DISPLAY_NAME, zip.getName());
+            v.put(MediaStore.Downloads.MIME_TYPE, "application/zip");
+            v.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/RTV");
+            Uri u = ctx.getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
+            if (u == null) {
+                throw new IOException("MediaStore no creó la copia en Download/RTV/");
+            }
+            try (java.io.OutputStream o = ctx.getContentResolver().openOutputStream(u);
+                 FileInputStream in = new FileInputStream(zip)) {
+                if (o == null) {
+                    throw new IOException("no se pudo abrir Download/RTV/" + zip.getName());
+                }
+                copiar(in, o);
+            }
+        } else {
+            File d = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "RTV");
+            if (!d.isDirectory() && !d.mkdirs()) {
+                throw new IOException("no se pudo crear " + d + " (¿permiso de almacenamiento?)");
+            }
+            try (FileInputStream in = new FileInputStream(zip);
+                 FileOutputStream o = new FileOutputStream(new File(d, zip.getName()))) {
+                copiar(in, o);
+            }
+        }
+        return "Download/RTV/" + zip.getName();
+    }
+
+    private static void copiar(java.io.InputStream in, java.io.OutputStream o) throws IOException {
+        byte[] b = new byte[8192];
+        int n;
+        while ((n = in.read(b)) > 0) {
+            o.write(b, 0, n);
+        }
+    }
+
+    /** Series sin exportar en todas las campanas del telefono (aviso de no desinstalar). */
+    public static synchronized int seriesSinExportarTodas(Context ctx) {
+        File dir = new File(ctx.getFilesDir(), "campanas");
+        File[] fs = dir.listFiles();
+        if (fs == null) {
+            return 0;
+        }
+        int total = 0;
+        for (File f : fs) {
+            if (!f.getName().startsWith("campana_") || !f.getName().endsWith(".csv") || f.getName().contains("_archivada_")) {
+                continue;
+            }
+            try (InputStreamReader r = new InputStreamReader(new FileInputStream(f), StandardCharsets.UTF_8)) {
+                Campana c = new Campana(Sesion.get().patrones(ctx));
+                c.leerDiario(r);
+                total += c.seriesSinExportar();
+            } catch (IOException | RuntimeException e) {
+                // un diario ilegible no impide el aviso de los demas
+            }
+        }
+        return total;
+    }
+
     /** Guarda un acta de calibracion (nunca pisa otra); va en el ZIP de la campana de su equipo. */
     public static synchronized File guardarActa(Context ctx, String texto) throws IOException {
         Sesion s = Sesion.get();
@@ -190,11 +261,14 @@ public final class Campanas {
         public final File zip;
         public final String md5;
         public final String sha256;
+        /** Ruta de la copia en Download/RTV/, o el motivo si no se pudo. */
+        public final String copia;
 
-        Exportacion(File zip, String md5, String sha256) {
+        Exportacion(File zip, String md5, String sha256, String copia) {
             this.zip = zip;
             this.md5 = md5;
             this.sha256 = sha256;
+            this.copia = copia;
         }
     }
 
@@ -211,8 +285,14 @@ public final class Campanas {
         // El ZIP no puede llevar su propia huella: se anota en el diario (sale en el
         // resumen de la siguiente exportacion), en el registro y en el texto del envio.
         abierta.anotarExportacion(Sesion.ahoraIso(), zip.getName(), md5, sha);
-        Registro.nota("campana exportada: " + zip.getName() + " md5 " + md5 + " sha256 " + sha);
-        return new Exportacion(zip, md5, sha);
+        String copia;
+        try {
+            copia = copiarADescargas(ctx, zip);
+        } catch (IOException | RuntimeException e) {
+            copia = "SIN COPIA en Download/RTV/: " + e.getMessage();
+        }
+        Registro.nota("campana exportada: " + zip.getName() + " md5 " + md5 + " sha256 " + sha + "; " + copia);
+        return new Exportacion(zip, md5, sha, copia);
     }
 
     public static synchronized File exportar(Context ctx, String serie, String mac) throws IOException {
@@ -228,7 +308,8 @@ public final class Campanas {
         }
         try (ZipOutputStream z = new ZipOutputStream(new FileOutputStream(zip))) {
             texto(z, "campana.csv", c.exportarCsv());
-            texto(z, "resumen.txt", "Campaña de calibración\nEquipo: serie " + serieAbierta + ", MAC " + macAbierta
+            texto(z, "resumen.txt", "Campaña de calibración - app RTV " + BuildConfig.VERSION_NAME + " ("
+                    + BuildConfig.VERSION_CODE + ")\nEquipo: serie " + serieAbierta + ", MAC " + macAbierta
                     + "\nFirmware: " + Sesion.get().firmware() + "\n" + Sesion.get().datosCalibracion()
                     + "\nFecha de exportación: " + Sesion.ahoraIso()
                     + "\n\nEste ZIP es el único envío: lleva las series (campana.csv), las pruebas del equipo "

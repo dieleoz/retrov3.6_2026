@@ -19,7 +19,7 @@ public class Version368Test {
 
     private static List<Patron> catalogo() throws Exception {
         try (InputStreamReader r = new InputStreamReader(
-                new FileInputStream("src/main/assets/patrones_certificados_P1-P31.csv"), StandardCharsets.UTF_8)) {
+                new FileInputStream("src/test/resources/patrones_P1-P50_hasta_3.6.9.csv"), StandardCharsets.UTF_8)) {
             return Patron.leer(r);
         }
     }

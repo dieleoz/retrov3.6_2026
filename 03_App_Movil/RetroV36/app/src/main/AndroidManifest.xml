@@ -9,6 +9,11 @@
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- 3.6.10 (RF-APP-40): copia del ZIP en Download/RTV/. Solo hace falta hasta Android 9;
+         desde Android 10 se escribe por MediaStore sin permiso. -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
 
     <application
         android:allowBackup="false"
@@ -32,6 +37,7 @@
         <activity android:name=".AdminActivity" android:label="Modo administrador" />
         <activity android:name=".BotonesActivity" android:label="Botones de pantalla" />
         <activity android:name=".CampanaActivity" android:label="Campaña de calibración" />
+        <activity android:name=".BancoActivity" android:label="Banco P1-P132" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

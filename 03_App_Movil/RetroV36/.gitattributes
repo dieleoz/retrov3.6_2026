@@ -1,0 +1,2 @@
+# Los CSV de assets se validan por md5 (cola del banco, catalogo): sin conversion de fin de linea.
+app/src/main/assets/*.csv -text

@@ -28,6 +28,9 @@ import java.util.Map;
  *   ELIGE,id
  *   CIERRE,fecha                     (3.6.6: la deja de solo lectura)
  *   EXPORTA,fecha,zip,md5,sha256     (3.6.6)
+ *   PASO,orden,estado,serie_id,fecha,nota   (3.6.10: estado del paso de la cola del banco:
+ *                                             HECHO o SALTADO; reanudar = primer paso sin estado)
+ *   BATERIA,fecha,n,texto            (3.6.10: respuesta a la orden 9; n vacio = sin respuesta)
  * El formato es compatible hacia atras: un diario de la 3.6.5 se lee igual.
  */
 public final class Campana {
@@ -142,6 +145,15 @@ public final class Campana {
     private String fechaCierre = "";
     /** Exportaciones anteriores con sus hashes (evento EXPORTA), para el resumen. */
     private final List<String> exportaciones = new ArrayList<>();
+    /** Numero de series que habia en la ultima exportacion (aviso de no desinstalar). */
+    private int seriesAlExportar;
+    /** Estado de cada paso de la cola del banco (orden -> HECHO / SALTADO). */
+    private final Map<Integer, String> pasos = new LinkedHashMap<>();
+    private final Map<Integer, String> seriePaso = new LinkedHashMap<>();
+    /** Lecturas de bateria: "fecha  texto". */
+    private final List<String> baterias = new ArrayList<>();
+    private Integer ultimaBateriaN;
+    private boolean hayBateria;
     /**
      * Equipo al que pertenece la campana. La optica cambia de un equipo a otro:
      * cada uno tiene su campana y su ajuste, y NUNCA se mezclan series. Con MAC
@@ -301,7 +313,47 @@ public final class Campana {
     /** Anota una exportacion (el ZIP no puede llevar su propio hash: va en la siguiente). */
     public void anotarExportacion(String fecha, String nombre, String md5, String sha256) throws IOException {
         exportaciones.add(fecha + "  " + nombre + "  md5 " + md5 + "  sha256 " + sha256);
+        seriesAlExportar = series.size();
         evento("EXPORTA", fecha, nombre, md5, sha256);
+    }
+
+    /** Series que no han salido en ninguna exportacion (aviso de no desinstalar, RF-APP-40). */
+    public int seriesSinExportar() {
+        return series.size() - seriesAlExportar;
+    }
+
+    /** Estado de los pasos del banco (copia). */
+    public Map<Integer, String> pasos() {
+        return new LinkedHashMap<>(pasos);
+    }
+
+    public String seriePaso(int orden) {
+        return seriePaso.get(orden);
+    }
+
+    /** Anota el estado de un paso del banco (HECHO o SALTADO). */
+    public void anotarPaso(int orden, String estado, String serieId, String fecha, String nota) throws IOException {
+        comprobarAbierta();
+        pasos.put(orden, estado);
+        seriePaso.put(orden, serieId == null ? "" : serieId);
+        evento("PASO", orden, estado, serieId == null ? "" : serieId, fecha, nota == null ? "" : nota);
+    }
+
+    /** Anota una lectura de bateria (orden 9). n null = sin respuesta. */
+    public void anotarBateria(String fecha, Integer n, String texto) throws IOException {
+        hayBateria = true;
+        ultimaBateriaN = n;
+        baterias.add(fecha + "  " + texto);
+        evento("BATERIA", fecha, n == null ? "" : String.valueOf(n), texto);
+    }
+
+    /** true si la ultima bateria leida bloquea escrituras (n = 0 o sin respuesta). */
+    public boolean bateriaBloqueaEscrituras() {
+        return hayBateria && (ultimaBateriaN == null || ultimaBateriaN == 0);
+    }
+
+    public List<String> baterias() {
+        return new ArrayList<>(baterias);
     }
 
     public String nuevoId() {
@@ -644,6 +696,27 @@ public final class Campana {
                 so.id, so.media(), so.desviacion(), so.colocaciones().size()));
         sb.append(desvioPorPosicion());
         sb.append('\n').append(A5.evaluar(this).texto);
+        if (!baterias.isEmpty()) {
+            sb.append("\nBatería (orden 9):\n");
+            for (String b : baterias) {
+                sb.append("  ").append(b).append('\n');
+            }
+        }
+        if (!pasos.isEmpty()) {
+            int h = 0;
+            int sl = 0;
+            StringBuilder sal = new StringBuilder();
+            for (Map.Entry<Integer, String> e : pasos.entrySet()) {
+                if ("HECHO".equals(e.getValue())) {
+                    h++;
+                } else {
+                    sl++;
+                    sal.append(e.getKey()).append(' ');
+                }
+            }
+            sb.append(String.format(Locale.US, "\nBanco: %d pasos hechos, %d saltados%s\n", h, sl,
+                    sl == 0 ? "" : " (órdenes " + sal.toString().trim() + ")"));
+        }
         if (!exportaciones.isEmpty()) {
             sb.append("\nExportaciones anteriores (el ZIP no puede llevar su propio hash):\n");
             for (String e : exportaciones) {
@@ -812,6 +885,16 @@ public final class Campana {
                 return true;
             case "EXPORTA":
                 exportaciones.add(c.get(1) + "  " + c.get(2) + "  md5 " + c.get(3) + "  sha256 " + c.get(4));
+                seriesAlExportar = series.size();
+                return true;
+            case "PASO":
+                pasos.put(Integer.parseInt(c.get(1)), c.get(2));
+                seriePaso.put(Integer.parseInt(c.get(1)), c.size() > 3 ? c.get(3) : "");
+                return true;
+            case "BATERIA":
+                hayBateria = true;
+                ultimaBateriaN = c.get(2).isEmpty() ? null : Integer.parseInt(c.get(2));
+                baterias.add(c.get(1) + "  " + (c.size() > 3 ? c.get(3) : ""));
                 return true;
             default:
                 return false;

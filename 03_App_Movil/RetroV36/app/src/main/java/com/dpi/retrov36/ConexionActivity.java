@@ -64,6 +64,7 @@ public class ConexionActivity extends Base {
         raiz.addView(listaDispositivos);
         Campanas.iniciar(this);
         pedirPermisos();
+        avisoSinExportar();
     }
 
     @Override
@@ -113,13 +114,31 @@ public class ConexionActivity extends Base {
         listaDispositivos.setEnabled(!EnlaceSerie.instancia().estaConectando());
     }
 
+    /** RF-APP-40: al arrancar, si hay series sin exportar, aviso de no desinstalar. */
+    private void avisoSinExportar() {
+        int n = Campanas.seriesSinExportarTodas(this);
+        if (n > 0) {
+            alerta("No desinstale la app", "Hay " + n + " series sin exportar. No desinstale la app: se borrarían. "
+                    + "Para actualizar, instale la versión nueva encima. Exporte la campaña (queda una copia en "
+                    + "Download/RTV/).");
+        }
+    }
+
     private void pedirPermisos() {
         // targetSdk 30: BLUETOOTH y BLUETOOTH_ADMIN se conceden al instalar;
         // solo la ubicacion se pide en ejecucion (mismo modelo que RetroDiagBT).
+        java.util.List<String> faltan = new java.util.ArrayList<>();
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PIDE_PERMISOS);
+            faltan.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+        // Copia en Download/RTV/ con Android 7-9 (en 10+ va por MediaStore, sin permiso).
+        if (android.os.Build.VERSION.SDK_INT < 29 && ContextCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            faltan.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+        if (!faltan.isEmpty()) {
+            ActivityCompat.requestPermissions(this, faltan.toArray(new String[0]), PIDE_PERMISOS);
         }
     }
 

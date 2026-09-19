@@ -70,6 +70,13 @@ public class CampanaActivity extends Base {
         super.onCreate(b);
         txtAvance = texto("");
         txtAvance.setTypeface(Typeface.DEFAULT_BOLD);
+        // RF-APP-39: "Importar" es el primer botón, al nivel de "Medir el banco".
+        Button banco = boton("Medir el banco (P1-P132)",
+                v -> startActivity(new android.content.Intent(this, BancoActivity.class)));
+        btnImportar = boton("Importar ZIP de campaña", v -> importar());
+        fila(banco, btnImportar);
+        texto("No desinstale la app: se borrarían las series. Para actualizar, instale la versión nueva encima. "
+                + "Cada exportación deja una copia en Download/RTV/.");
         edK = campo("Colocaciones K", InputType.TYPE_CLASS_NUMBER);
         edK.setText("3");
         edN = campo("Disparos por colocación M", InputType.TYPE_CLASS_NUMBER);
@@ -100,11 +107,6 @@ public class CampanaActivity extends Base {
         boton("Exportar campaña (un solo ZIP con todo)", v -> exportar());
         texto("El ZIP lleva las series, las pruebas del equipo, todos los registros de tramas de la campaña y "
                 + "el resumen. Después de exportar no hace falta compartir nada más.");
-        btnCerrar = boton("Cerrar campaña (queda de solo lectura)", v -> cerrarCampana());
-        Button imp = boton("Importar campaña (ZIP o campana.csv) o CSV antiguos", v -> importar());
-        Button nueva = boton("Nueva campaña (archiva la actual)", v -> nueva());
-        fila(imp, nueva);
-        btnImportar = imp;
 
         titulo("Lista de patrones");
         spColor = new Spinner(this);
@@ -115,6 +117,11 @@ public class CampanaActivity extends Base {
         lista = new LinearLayout(this);
         lista.setOrientation(LinearLayout.VERTICAL);
         raiz.addView(lista);
+
+        // RF-APP-39: lo que archiva o cierra la campaña, aparte y al final.
+        titulo("Avanzado");
+        btnCerrar = boton("Cerrar campaña (queda de solo lectura)", v -> cerrarCampana());
+        boton("Nueva campaña (archiva la actual)", v -> nueva());
         abrir();
     }
 
@@ -655,7 +662,7 @@ public class CampanaActivity extends Base {
             alerta("Exportar", "No se pudo preparar el ZIP: " + e.getMessage());
             return;
         }
-        String huellas = zip.getName() + "\nmd5 " + ex.md5 + "\nsha256 " + ex.sha256;
+        String huellas = zip.getName() + "\nmd5 " + ex.md5 + "\nsha256 " + ex.sha256 + "\nCopia: " + ex.copia;
         txtResultado.setText("ZIP preparado:\n" + huellas);
         Uri u;
         try {

@@ -226,7 +226,7 @@ public final class Sesion {
     public synchronized List<Patron> patrones(Context ctx) throws IOException {
         if (patrones == null) {
             try (InputStreamReader r = new InputStreamReader(
-                    ctx.getAssets().open("patrones_certificados_P1-P31.csv"), StandardCharsets.UTF_8)) {
+                    ctx.getAssets().open("patrones_certificados_P1-P132.csv"), StandardCharsets.UTF_8)) {
                 patrones = Patron.leer(r);
             }
         }
