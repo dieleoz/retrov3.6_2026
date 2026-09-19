@@ -414,8 +414,16 @@ exige respuesta en < 2,5 s; se fijan con T-B06 (máximo observado de 50 medidas 
 Una respuesta completa fuera de plazo cuenta como tiempo agotado. CA: T-A03, T-B06.
 *Texto r1.0:* «…silencio (valor inicial 300 ms…)… (valor inicial 5 s).»
 
-**RF-APP-03 — Detección de versión.** Al conectar, en este orden, con la espera de RF-APP-01 entre
-pasos:
+**RF-APP-03 — Detección de versión. MODIFICADO el 18-sep-2026 por dato de campo.** Con la app 3.6.0,
+SLV-002 no respondió a `#V#`, `e`, `6` ni `@LEERV,BLA,1@` (registro de las 20:13). Sin embargo, en el
+barrido de 255 bytes `6` respondía siempre, y **después de `e` (0x65) no volvió a responder ningún
+byte**. Hipótesis, sin confirmar: en la variante de SLV-002, `e` deja el equipo sin Bluetooth hasta
+apagarlo. **Nueva regla: nunca se envía `e` a un equipo no identificado como V3.6.** Orden vigente, el
+de la app 3.6.1: `#V#` → `9` (`:n:` = V3 2020) → `6` → `@LEERV,BLA,1@` sólo si nada respondió.
+"Con `e`" o "sin `e`" deja de detectarse por sonda: se registra como desconocido.
+
+*Tabla anterior, retirada por ese motivo* (enviaba `e` en el paso 2). Al conectar, en este orden, con
+la espera de RF-APP-01 entre pasos:
 
 | Paso | Envía | Si responde | Conclusión |
 | :--- | :--- | :--- | :--- |
