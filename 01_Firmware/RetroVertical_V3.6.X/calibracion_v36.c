@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "mcc_generated_files/mcc.h"
 #include "mcc_generated_files/memory.h"
 #include "calibracion_v36.h"
@@ -296,8 +297,26 @@ static void responderRegistroStone(void) {
 #define MAX_CAMPOS 6
 #define ADMIN_CADUCIDAD_MS 600000UL     /* 10 min sin tramas '#' */
 #define PIN_MAX_FALLOS 5
-#define TEMP_X0_MIN 0.5                 /* limites de #ST para X_0 */
-#define TEMP_X0_MAX 1.5
+
+/* Limites de #ST (condicion C4, V3.6.1). El factor F(T) = X_2*T*T + X_1*T + X_0
+ * multiplica la x antes de la ecuacion (gui.c:301). T = filtro del ADC / 4,928
+ * (measurement.c:72-73), con el ADC de 12 bits: T de 0 a 4095/4,928 = 830,97.
+ * F fuera de [0,5 ; 1,5] llevaria las medidas a casi 0 o las duplicaria. */
+#define TEMP_F_MIN 0.5
+#define TEMP_F_MAX 1.5
+#define TEMP_T_MAX 831.0
+
+/* Limites de #S (V3.6.1). R(x) = c3*x^3 + c2*x^2 + c1*x + c0 se convierte a
+ * unsigned int (aplicarEcuacion) y arreglar_dato() pone a 0 todo lo que pase
+ * de 4000 (ecuacionesCalibracion.c:49-54); un R negativo da la vuelta a mas
+ * de 4000 y tambien sale 0. x = (ADC filtrado + 200) * F(T) (measurement.c:247,
+ * gui.c:301); con el ADC a fondo (4095) x = 4295 si F = 1. Una curva que se sale
+ * de [0 ; 4000] en algun x de 600 a 4300 se rechaza con #ERR,FORMATO#. El 600 es
+ * el limite inferior fijado por el coordinador (19-sep-2026), no sale del codigo. */
+#define S_X_MIN 600.0
+#define S_X_MAX 4300.0
+#define S_R_MIN 0.0
+#define S_R_MAX 4000.0
 
 extern void arreglar_dato(void);        /* ecuacionesCalibracion.c:49-54 */
 
@@ -341,6 +360,64 @@ static unsigned char leerNumero(const char *campo, double *valor) {
     /* exponente 0xFF: infinito o NaN */
     if (((fb.b[3] & 0x7F) == 0x7F) && (fb.b[2] & 0x80)) return 0;
     *valor = fb.valor;
+    return 1;
+}
+
+/* 1 si v no es infinito ni NaN (exponente distinto de 0xFF). */
+static unsigned char esFinito(double v) {
+    union FloatBytes fb;
+    fb.valor = v;
+    return (((fb.b[3] & 0x7F) == 0x7F) && (fb.b[2] & 0x80)) ? 0 : 1;
+}
+
+/* F(T) con la misma forma que gui.c:301; 1 si es finito y esta en [0,5 ; 1,5]. */
+static unsigned char factorEnRango(const double *t3, double t) {
+    double f = t3[0] * t * t + t3[1] * t + t3[2];
+    return (esFinito(f) && f >= TEMP_F_MIN && f <= TEMP_F_MAX) ? 1 : 0;
+}
+
+/* C4: F(T) en [0,5 ; 1,5] para todo T de 0 a TEMP_T_MAX. Una parabola solo
+ * tiene su minimo o su maximo en los extremos o en el vertice. */
+static unsigned char temperaturaValida(const double *t3) {
+    double tv;
+    if (!factorEnRango(t3, 0.0) || !factorEnRango(t3, TEMP_T_MAX)) return 0;
+    if (t3[0] != 0.0) {
+        tv = -t3[1] / (2.0 * t3[0]);
+        if (tv > 0.0 && tv < TEMP_T_MAX && !factorEnRango(t3, tv)) return 0;
+    }
+    return 1;
+}
+
+/* R(x) con el mismo orden de operaciones que aplicarEcuacion(); 1 si es finito
+ * y esta en [S_R_MIN ; S_R_MAX]. */
+static unsigned char respuestaEnRango(const double *c, double x) {
+    double r = c[0] * x * x * x + c[1] * x * x + c[2] * x + c[3];
+    return (esFinito(r) && r >= S_R_MIN && r <= S_R_MAX) ? 1 : 0;
+}
+
+/* R(x) en un punto critico xc, solo si cae dentro de (S_X_MIN ; S_X_MAX). */
+static unsigned char criticoEnRango(const double *c, double xc) {
+    if (xc > S_X_MIN && xc < S_X_MAX) return respuestaEnRango(c, xc);
+    return 1;
+}
+
+/* Limites de #S: R(x) en [0 ; 4000] para todo x de 600 a 4300. Un polinomio de
+ * grado 3 o menor solo tiene extremos en los bordes o donde R'(x) = 0, es decir,
+ * 3*c3*x^2 + 2*c2*x + c1 = 0. Raices con la forma estable (sin cancelacion). */
+static unsigned char curvaValida(const double *c) {
+    double d, q;
+    if (!respuestaEnRango(c, S_X_MIN) || !respuestaEnRango(c, S_X_MAX)) return 0;
+    if (c[0] == 0.0) {
+        if (c[1] != 0.0 && !criticoEnRango(c, -c[2] / (2.0 * c[1]))) return 0;
+        return 1;
+    }
+    d = c[1] * c[1] - 3.0 * c[0] * c[2];
+    if (!esFinito(d)) return 0;
+    if (d < 0.0) return 1;                                /* sin puntos criticos reales */
+    q = sqrt(d);
+    q = (c[1] < 0.0) ? (q - c[1]) : -(q + c[1]);          /* q = -(c2 + signo(c2)*raiz) */
+    if (!criticoEnRango(c, q / (3.0 * c[0]))) return 0;
+    if (q != 0.0 && !criticoEnRango(c, c[2] / q)) return 0;
     return 1;
 }
 
@@ -507,6 +584,8 @@ void adminProcesarTrama(char *trama, unsigned char len) {
         for (i = 0; i < 4; i++) {
             if (!leerNumero(campo[2 + i], &v[i])) { adminErrorFormato(); return; }
         }
+        /* V3.6.1: R(x) en [0 ; 4000] para todo x de 600 a 4300 */
+        if (!curvaValida(v)) { adminErrorFormato(); return; }
         hacerCopia();
         for (i = 0; i < 4; i++) coefCal[k][i] = v[i];
         guardarYResponder();
@@ -538,8 +617,8 @@ void adminProcesarTrama(char *trama, unsigned char len) {
         for (i = 0; i < 3; i++) {
             if (!leerNumero(campo[1 + i], &v[i])) { adminErrorFormato(); return; }
         }
-        /* X_0 fuera de [0,5 ; 1,5] llevaria las medidas a 0 o las duplicaria */
-        if (v[2] < TEMP_X0_MIN || v[2] > TEMP_X0_MAX) { adminErrorFormato(); return; }
+        /* C4: F(T) en [0,5 ; 1,5] para todo T de 0 a 831 (antes solo se miraba X_0) */
+        if (!temperaturaValida(v)) { adminErrorFormato(); return; }
         hacerCopia();
         X_2 = v[0];
         X_1 = v[1];

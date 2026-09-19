@@ -1,7 +1,13 @@
 # CAMBIOS de la V3.6 frente a la base de 2020
 
-**Estado: compilada y probada sólo en simulador (MPLAB SIM). Nada de esto se ha probado en un equipo.**
-Lo que exige el equipo delante está en la sección 5 y queda pendiente.
+**Estado: la V3.6.1 (§7) está compilada y probada sólo en simulador (MPLAB SIM); no se ha grabado en
+ningún equipo.** La V3.6 (md5 `680b6a7d…`) sí corre en SLV-002 desde el 19-sep-2026. Lo que exige el
+equipo delante está en la sección 5 y queda pendiente.
+
+**Primero, lo que no cuadra:** la ida y vuelta de un coeficiente por `#S` → `#G` **puede superar los
+5 ulp** que tolera la app 3.6.2 (`Ecuacion.ULP_S`): medido en simulador hasta 5 ulp, y la emulación
+validada bit a bit contra el simulador llega a 7 (§7.2). La cifra "±2 ulp al imprimir" de §3.4 también
+queda corta: son hasta 3.
 
 - Base: `01_Firmware/base_2020_d089f962/RetroVertical1.X/`, `.hex` md5 `d089f9625090a1213291c090eae7ac01`.
 - Compilador: XC8 **v2.10** (`C:\Program Files (x86)\Microchip\xc8\v2.10\bin\xc8-cc.exe`, build Jul 30 2019),
@@ -42,24 +48,25 @@ Números de línea de la V3.6 salvo que se diga "base".
 
 ### 2.1 `calibracion_v36.c`
 
-- **Tabla de fábrica** (`:33-46`): los 48 coeficientes con **el mismo texto literal** que
+- **Tabla de fábrica** (`:34-47`): los 48 coeficientes con **el mismo texto literal** que
   `ecuacionesCalibracion.c:3-42` de la base; un término restado en 2020 aparece con signo menos; el grado
   que falta es `0.0`.
-- **Ecuación** (`aplicarEcuacion`, `:228-233`): `((c3·x·x·x + c2·x·x) + c1·x) + c0` en `double` de 32 bits,
+- **Ecuación** (`aplicarEcuacion`, `:229-234`): `((c3·x·x·x + c2·x·x) + c1·x) + c0` en `double` de 32 bits,
   mismo orden de operaciones que 2020, no Horner; la conversión final a `unsigned int` es la misma
   asignación que en 2020. Resultado en simulador: bit a bit igual a 2020 (§3.1).
-- **EEPROM** (`:52-222`): cabecera `V36`+versión 1 en 0x100; un registro de 18 bytes por código en
+- **EEPROM** (`:53-223`): cabecera `V36`+versión 1 en 0x100; un registro de 18 bytes por código en
   `0x104 + 18·k` (4 `float` little endian + CRC-16/CCITT-FALSE, byte bajo primero) y otro en 0x1DC para
   `X_2, X_1, X_0` y el PIN. Cabecera mala: todo de fábrica. CRC malo: sólo ese registro de fábrica.
   Escritura sólo de los bytes que cambian, relectura completa y, si no cuadra, la RAM vuelve al valor
   anterior y se responde `#ERR,EEPROM#` (RF-FW-19). Nada por debajo de 0x100.
-- **Máscara de `#V#`** (`:201-222`): bit *k* = coeficientes del código *k* distintos (bit a bit) de los de
+- **Máscara de `#V#`** (`:202-223`): bit *k* = coeficientes del código *k* distintos (bit a bit) de los de
   fábrica; bit 12 = factor de temperatura distinto del de `gui.c:41-44`. `CAL` si la máscara no es 0.
-- **Órdenes** (`adminProcesarTrama`, `:424-575`): `#V#`, `#L#`, `#Q#`, `#G#`, `#E#`, `#S#`, `#F#`,
+- **Órdenes** (`adminProcesarTrama`, `:501-654`): `#V#`, `#L#`, `#Q#`, `#G#`, `#E#`, `#S#`, `#F#`,
   `#GT#`, `#ST#`, `#P#`, `#K#`, `#KC#`. Ninguna mide. Números con `%.8E`. PIN de fábrica `2026`;
   5 fallos seguidos de `#L` o `#P` bloquean `#L` y `#P` hasta apagar; la sesión caduca a los 10 min sin
-  tramas `#`. `#ST` rechaza `X_0` fuera de [0,5 ; 1,5] con `#ERR,FORMATO#`.
-- **Registro STONE** (`:236-292`): últimas 8 tramas de UART2 (hasta 16 bytes cada una) y contador total
+  tramas `#`. `#ST` y `#S` rechazan con `#ERR,FORMATO#` lo que salga de los límites de §7.1 (en la V3.6
+  `#ST` sólo miraba `X_0`).
+- **Registro STONE** (`:237-292`): últimas 8 tramas de UART2 (hasta 16 bytes cada una) y contador total
   desde el arranque. Una "trama" es lo que lee una llamada a `readUartStr2()` (`uart_stone.c:89`), que
   espera 20 ms antes de leer (`uart_stone.c:107`, base `:100`). `#KC#` vacía las ranuras; el contador no.
   La respuesta `#K#` puede llegar a ~280 bytes: las respuestas no tienen límite de longitud.
@@ -132,7 +139,7 @@ Un byte suelto en esa ventana sigue disparando otra medida, como en 2020.
 2. **Trama `#` demasiado larga:** se descarta sin responder, como dice el contrato.
 3. **Negativos (RF-FW-06):** no se ha hecho "explícita" la conversión; se conserva la misma asignación
    `double` → `unsigned int` que 2020 y el simulador da el mismo resultado (p. ej. `2` con x = 4300: 65360).
-4. **`#ST`:** sólo se limita `X_0`; `X_1` y `X_2` sólo se exigen finitos. Un `X_1` extremo sigue pudiendo
+4. **`#ST` (corregido en la V3.6.1, §7.1):** en la V3.6 sólo se limitaba `X_0`; `X_1` y `X_2` sólo se exigían finitos. Un `X_1` extremo podía
    anular las medidas.
 5. **No bloqueantes, anotados:** el anillo RX de `uart1.c` es de 64 bytes (`UART1_RX_BUFFER_SIZE`,
    `uart1.c:57`) y una trama de 96 puede desbordarlo si el bucle principal está bloqueado más de ~65 ms
@@ -153,5 +160,153 @@ Un byte suelto en esa ventana sigue disparando otra medida, como en 2020.
 
 ## 6. Entregable
 
-- `hex/RetroVertical_V3.6.hex`, md5 `680b6a7d3a387ccddf066a2ebc0899d1` (`hex/RetroVertical_V3.6.hex.md5`). ROM 49 060 B de 131 072 (37,4 %), RAM 2 373 B de 8 192 (29,0 %), pila hardware estimada 11 niveles en `main` y 16 con interrupción (base: 11 y 16). Detalle en `hex/memoria.txt`.
-- md5 de cada fuente en `hex/fuente.md5`.
+**V3.6.1 (19-sep-2026, vigente):** `hex/RetroVertical_V3.6.hex`, md5 `8736c05d0273fdda66d5988f472d41e1`
+(`hex/RetroVertical_V3.6.hex.md5`). ROM 54 020 B de 131 072 (41,2 %), RAM 2 418 B de 8 192 (29,5 %), pila
+hardware estimada 11 niveles en `main` y 16 con interrupción (igual que la base). Bits de configuración
+e IDLOC idénticos a la V3.6 (`EC FF F7 FF 9F FF FF DF FE FF`). `#V#` sigue respondiendo `3.6`
+(`FW_VERSION_STR`, `calibracion_v36.h:16`); lo que distingue la 3.6.1 es la fecha de compilación
+(`#V,3.6,2026-09-19,...#`). Detalle en `hex/memoria.txt`; md5 de cada fuente en `hex/fuente.md5` (sólo
+cambia `calibracion_v36.c`).
+
+*V3.6 (18-sep-2026, la que lleva SLV-002):* md5 `680b6a7d3a387ccddf066a2ebc0899d1`, commit `f75ff88`.
+ROM 49 060 B (37,4 %), RAM 2 373 B (29,0 %). Se recupera de git.
+
+## 7. V3.6.1: límites de `#ST` y `#S` (C4) y medida de la ida y vuelta (C1)
+
+Sólo cambia `calibracion_v36.c`. Nada más del firmware se ha tocado: ni la tabla de fábrica, ni
+`aplicarEcuacion`, ni la EEPROM, ni el formato numérico. Probado sólo en simulador.
+
+### 7.1 Qué cambia
+
+| Líneas | Cambio |
+| :--- | :--- |
+| `:20` | `#include <math.h>` (para `sqrt`) |
+| `:301-319` | Constantes de los límites, con su origen en el código |
+| `:366-422` | `esFinito`, `factorEnRango`, `temperaturaValida`, `respuestaEnRango`, `criticoEnRango`, `curvaValida` |
+| `:587-588` | `#S`: `curvaValida(v)` antes de tocar RAM o EEPROM; si falla, `#ERR,FORMATO#` |
+| `:620-621` | `#ST`: `temperaturaValida(v)` sustituye a la comprobación de sólo `X_0` |
+
+**`#ST` (C4).** Se rechaza todo `(X_2, X_1, X_0)` con `F(T) = X_2·T² + X_1·T + X_0` fuera de
+[0,5 ; 1,5] o no finito en algún `T` de 0 a 831. Se evalúa en `T = 0`, `T = 831` y en el vértice
+`-X_1/(2·X_2)` si cae dentro; una parábola no tiene otros extremos. La forma de la evaluación es la de
+`gui.c:301`. Origen de 831: `T` = filtro del ADC / 4,928 (`measurement.c:72-73`), con ADC de 12 bits,
+4095/4,928 = 830,97.
+
+**`#S` (nuevo).** Se rechaza toda curva `R(x) = c3·x³ + c2·x² + c1·x + c0` con algún valor no finito,
+negativo o mayor que 4000 en algún `x` de 600 a 4300. Se evalúa en los dos bordes y en las raíces reales
+de `R'(x) = 3·c3·x² + 2·c2·x + c1` que caen dentro (forma estable de la raíz, sin cancelación); un
+polinomio de grado 3 no tiene otros extremos. El orden de operaciones es el de `aplicarEcuacion`. De
+dónde sale cada cifra:
+
+- **4000:** `arreglar_dato()` pone a 0 todo resultado mayor que 4000 (`ecuacionesCalibracion.c:49-54`).
+- **0:** un `R` negativo, al convertirse a `unsigned int` en `aplicarEcuacion`, da la vuelta a más de 4000
+  y también sale 0 (T-A20: código `2` con x = 4300 da 65360).
+- **4300:** `x = (ADC filtrado + 200) · F(T)` (`measurement.c:247`, `gui.c:301`); con el ADC a fondo,
+  4095 + 200 = 4295.
+- **600:** **no sale del código**. Es el límite inferior que fijó el coordinador el 19-sep-2026.
+
+Los coeficientes ya se exigían finitos (`leerNumero`, `:354-364`). `#F` no pasa por estos límites:
+repone la ROM.
+
+**Consecuencia que hay que conocer:** la curva de fábrica del código `2` (amarillo intenso) **no pasa**
+el límite de `#S`: es negativa desde x = 4175 (emulación `float32`, barrido entero de 600 a 4300; en el
+simulador, `#S,2,<fábrica>#` → `#ERR,FORMATO#`). Las otras once pasan. No afecta a `#F,2#` ni a la ROM,
+y la app ya repone fábrica con `#F` y no con `#S` (RF-APP-18). Pero una calibración nueva del `2` con
+la misma forma que la de fábrica sería rechazada.
+
+### 7.2 T-A23: ida y vuelta `#S` → `#G` (C1)
+
+Método en `pruebas/T-A23_T-A30/`. Texto `%.8E` de la app → `leerNumero()` (`strtod`) → `float` →
+`enviarNumero()` (`%.8E`) → texto que lee la app, con el `calibracion_v36.c` real en MPLAB SIM y XC8 2.10
+con los flags del proyecto. Error con la métrica de la app: `|leído − enviado| / Math.ulp(leído)` en
+`float32` (`Ecuacion.java:96-104`).
+
+| Lote | Valores | 0 ulp | 1 | 2 | 3 | 4 | 5 | Máx. |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1: 51 de fábrica (35 distintos) + 200 aleatorios | 251 | 90 | 96 | 52 | 13 | 0 | 0 | **3** |
+| 2: 51 de fábrica + 1965 aleatorios | 2016 | 648 | 928 | 356 | 77 | 6 | 1 | **5** |
+
+Aleatorios en el rango de calibración de grado 1 y 2: `c2` uniforme en ±1e-3 y log-uniforme de 1e-7 a
+1e-3, `c1` de 0 a 2, `c0` de ±1000. Por separado, sobre los 2267 valores: `strtod` hasta **3 ulp** y
+`%.8E` hasta **3 ulp** (un caso; §3.4 decía 2). `#G` de los valores de ROM (sin `strtod`): hasta 2 ulp.
+
+**Emulación, segunda fuente.** El código de `strtof` y de `efgtoa` de la biblioteca de XC8 2.10
+(`pic/sources/c99/common/strtof.c` y `doprnt.c`) reproducido en Python con `float32` (`emul.py`) da **los
+mismos bits que el simulador en 2267 de 2267 valores, en las dos direcciones**. Para cuadrar hizo falta
+un detalle: la conversión `uint32` → `float` de XC8 redondea el medio hacia arriba, no al par (con
+redondeo al par discrepan 26 de 2267). Con la emulación, 600 000 valores de 1e-9 a 1e4 y 60 000 por
+rango:
+
+| Rango | Máx. ida y vuelta (ulp) | Casos > 5 |
+| :--- | ---: | ---: |
+| `c3` log-uniforme 1e-9 a 1e-6 | **7** | 73 de 240 000 |
+| `c2` log-uniforme 1e-7 a 1e-3 | **6** | 5 de 240 000 |
+| `c2` uniforme ±1e-3 | 5 | 0 |
+| `c1` de 0 a 2 | 5 | 0 |
+| `c0` de ±1000 | 4 | 0 |
+| Sólo `strtod` / sólo `%.8E`, barrido de 600 000 | 4 / 3 | — |
+
+Por qué: `strtof` junta 9 cifras en un entero y luego divide por 10 una vez por cada posición decimal
+(hasta 9 divisiones en `float32`, variante `SMALLCODE`), y `efgtoa` busca la potencia de 10 multiplicando
+o dividiendo por 10 y vuelve a dividir por 10 en cada cifra. El error crece con el número de pasos, sobre
+todo con exponentes de -6 a -9.
+
+**Tolerancias de la app (`Ecuacion.java:87-88`, sin cambios en la 3.6.3):**
+
+- `ULP_G = 4` (`#G` frente a fábrica): **vale.** El error sólo de impresión no ha pasado de 3 ulp en
+  600 000 casos.
+- `ULP_S = 5` (`#G` tras `#S`): **no vale como cota.** Basta para `c2` uniforme, `c1` y `c0` (máx. 5, justo
+  en el límite), pero se supera con `c2` del orden de 1e-7 a 1e-6 (6) y con `c3` (7). Superarlo no
+  corrompe nada: la app da el `#S` por fallido y restaura lo anterior (`AdminActivity.java:471-497`).
+  Propuesta, a decidir fuera de este documento: `ULP_S = 8`, o conversión exacta en el firmware (P-10).
+- La restauración con `ULP_S + ULP_G` = 9 queda por encima de 7.
+
+### 7.3 T-A30 y límites de `#S` en simulador
+
+`calibracion_v36.c` real, tramas por `adminProcesarTrama`, EEPROM simulada en RAM
+(`pruebas/T-A23_T-A30/resultado_T-A30.txt`):
+
+| Trama | Caso | Respuesta |
+| :--- | :--- | :--- |
+| `#ST,0.00000000E+00,4.32119996E-04,9.01486516E-01#` | fábrica, dentro | `#OK#` |
+| `#ST,0,4.3E-04,4.9E-01#` | `X_0` fuera | `#ERR,FORMATO#` |
+| `#ST,0,1.0E-03,9.0E-01#` | `X_1` extremo, F(831) = 1,731 | `#ERR,FORMATO#` |
+| `#ST,0,-5.0E-04,9.0E-01#` | `X_1` extremo, F(831) = 0,485 | `#ERR,FORMATO#` |
+| `#ST,1.0E-06,0,9.0E-01#` | `X_2` extremo, F(831) = 1,591 | `#ERR,FORMATO#` |
+| `#ST,-4.0E-06,3.4E-03,9.0E-01#` | sólo el vértice (1,6225) se sale | `#ERR,FORMATO#` |
+| `#ST,-2.0E-06,1.7E-03,9.0E-01#` / `#ST,0,0,1.5#` | vértice 1,261 / borde | `#OK#` / `#OK#` |
+| `#S,1,…,-3.02000000E+02#` (T-C23) | dentro | `#OK#`; después `#E,1,1000#` → 231 |
+| `#S,1,0,0,1,0#` | R(4300) = 4300 | `#ERR,FORMATO#` |
+| `#S,1,0,0,1,-700#` | R(600) = -100 | `#ERR,FORMATO#` |
+| `#S,1,0,-1.0E-03,5.0,-2000#` | máximo interior 4250 | `#ERR,FORMATO#` |
+| `#S,1,0,1.0E-03,-5.0,6200#` / `…,6500#` | mínimo interior -50 / 250 | `#ERR,FORMATO#` / `#OK#` |
+| `#S,1,1.0E-07,-1.0E-03,3.0,1300#` / `…,-1000#` | cúbica, máximo local 4127 / 1827 | `#ERR,FORMATO#` / `#OK#` |
+| `#S,1,1.0E+30,0,0,0#`, `#S,1,0,0,1.0E+38,0#`, `nan` | desbordamiento, NaN | `#ERR,FORMATO#` |
+| `#S,2,<fábrica>#` / `#S,3,<fábrica>#` | ver §7.1 | `#ERR,FORMATO#` / `#OK#` |
+
+Además, 120 curvas aleatorias de grado 1, 2 y 3 y 120 factores de temperatura aleatorios: la decisión del
+firmware coincide en 240 de 240 con un barrido fuera (x entero de 600 a 4300, y T de 0 a 831 con paso
+0,05, en `float32`).
+
+**Observado de paso:** escribir con `#ST` el texto de fábrica que da la TDD (T-A30, paso 1) deja el
+equipo en `CAL` con máscara `1000` (bit 12): `strtod` lee `4,32120039E-04` y `9,01486659E-01`, que no son
+los `float` de ROM. Con `#S` de valores de fábrica pasaría lo mismo en su bit. Para volver a `DEF` en
+temperatura no hay orden: `#F` sólo repone coeficientes.
+
+### 7.4 No regresión
+
+- **T-A20** repetida con el fuente de la V3.6.1: `pruebas/T-A20_gen_equiv.py` regenera un arnés
+  **idéntico byte a byte** al archivado (`coefFabrica` y `aplicarEcuacion` no cambian). 4 grupos,
+  786 432 comparaciones, **0 diferencias**, y las cuatro sumas iguales a las de `pruebas/T-A20.md`
+  (2079971309, 1460313976, 1484936099, 1283016283).
+- `#V#` en simulador: `#V,3.6,2026-09-19,DEF,0000#`. La cadena `Sep 19 2026` está en el `.hex`.
+- Bits de configuración e IDLOC iguales a los de la V3.6.
+
+### 7.5 Riesgos para regrabar SLV-002
+
+- Grabar con borrado completo deja la EEPROM de datos a 0xFF (§5): SLV-002 volvería a `DEF` y PIN `2026`.
+  Hoy está en `DEF`; si alguien ha escrito algo desde el 19-sep, se perdería. **Antes de grabar: `#V#`,
+  `#G` de los 12 códigos y `#GT#`.**
+- `#S` es más estricto: una calibración del código `2` con forma parecida a la de fábrica, o cualquier
+  curva que dé más de 4000 o menos de 0 entre x = 600 y 4300, será rechazada con `#ERR,FORMATO#`.
+- Nada nuevo en la ruta de medida: T-A20 da 0 diferencias. El código añadido sólo corre con `#S` y `#ST`.

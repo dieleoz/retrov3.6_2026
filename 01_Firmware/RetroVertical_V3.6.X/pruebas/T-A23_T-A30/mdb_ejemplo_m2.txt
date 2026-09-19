@@ -1,0 +1,12 @@
+device PIC18F47K42
+hwtool SIM
+program "C:\Users\DIEGO~1.ZUI\AppData\Local\Temp\claude\D---Proyect-IT-P-RetroReflectometro-Vertical\be31a279-437b-4b73-afa4-7fb36ab499fb\scratchpad\sim361\ta23\m2\h.elf"
+break h2.c:52
+run
+wait 1800000
+print nReg
+print registro
+print decC
+print decT
+print ee
+quit
