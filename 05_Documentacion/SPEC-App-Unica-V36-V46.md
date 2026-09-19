@@ -6,6 +6,8 @@ firmware de 2020, v4.0 y V4.1, la identificación del equipo V3-2 y los borrador
 V4 delante. El firmware V4.6 no existe todavía: lo que aquí se dice de él es lo que pide su borrador,
 que otro agente está reescribiendo mientras se escribe este documento.
 
+**Revisión de arquitectura P2 (19-sep-2026):** capa de protocolo CON CONDICIONES (A-1 a A-9; C-U01 → `BLA,2`, C-U02 → orden de esta SPEC, versionName `1.0.0`): `D:\IT\P_RetroVertical_V4.6\05_Documentacion\REVISION-Arquitectura-V46-P2.md`.
+
 **Decisión de producto de Diego (19-sep-2026):** una sola app para los dos firmwares. Es la RTV de
 `03_App_Movil/RetroV36` (3.6.13 publicada; 3.6.14 en desarrollo por otro agente, `versionName` y
 `versionCode` en `app/build.gradle:14-15` del commit `00f667e`). Este documento **no toca código**.
