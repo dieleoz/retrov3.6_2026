@@ -45,6 +45,8 @@ public class CampanaActivity extends Base {
     private TextView txtColoque;
     private TextView txtResultado;
     private EditText edN;
+    private EditText edK;
+    private EditText edRepro;
     private EditText edTol;
     private Button btnOk;
     private Button btnSaltar;
@@ -61,11 +63,18 @@ public class CampanaActivity extends Base {
         super.onCreate(b);
         txtAvance = texto("");
         txtAvance.setTypeface(Typeface.DEFAULT_BOLD);
-        edN = campo("Disparos por patrón (N)", InputType.TYPE_CLASS_NUMBER);
-        edN.setText("9");
-        edTol = campo("Tolerancia de orden por certificado (%)", InputType.TYPE_CLASS_NUMBER);
+        edK = campo("Colocaciones K", InputType.TYPE_CLASS_NUMBER);
+        edK.setText("3");
+        edN = campo("Disparos por colocación M", InputType.TYPE_CLASS_NUMBER);
+        edN.setText("3");
+        fila(edK, edN);
+        edTol = campo("Tolerancia de orden (%)", InputType.TYPE_CLASS_NUMBER);
         edTol.setText("3");
-        fila(edN, edTol);
+        edRepro = campo("Reproducibilidad máx. entre colocaciones (%)", InputType.TYPE_CLASS_NUMBER);
+        edRepro.setText("3");
+        fila(edTol, edRepro);
+        texto("K × M: la reproducibilidad entre colocaciones (2-4 %) manda sobre la repetibilidad (0,3 %). "
+                + "Con K = 1 y M = 9 se mide como en la 3.6.5.");
 
         titulo("Modo guiado");
         txtColoque = texto("");
@@ -176,6 +185,15 @@ public class CampanaActivity extends Base {
         return a;
     }
 
+    private double repro() {
+        try {
+            double t = Double.parseDouble(edRepro.getText().toString().trim()) / 100.0;
+            return (t > 0 && t < 0.5) ? t : Veredicto.REPRO_MAX;
+        } catch (NumberFormatException e) {
+            return Veredicto.REPRO_MAX;
+        }
+    }
+
     private double tol() {
         try {
             double t = Double.parseDouble(edTol.getText().toString().trim()) / 100.0;
@@ -191,7 +209,8 @@ public class CampanaActivity extends Base {
         if (campana == null) {
             return;
         }
-        txtAvance.setText("Equipo " + campana.equipo + " (" + campana.mac + ")\nAvance: " + campana.avance());
+        txtAvance.setText("Equipo " + campana.equipo + " (" + campana.mac + ")\n" + Sesion.get().datosCalibracion()
+                + "\nAvance: " + campana.avance());
         List<Cola.Paso> cola = Cola.construir(campana, tol(), SALTADOS);
         paso = cola.isEmpty() ? null : cola.get(0);
         if (paso == null) {
@@ -338,14 +357,16 @@ public class CampanaActivity extends Base {
                     .setNegativeButton("Cancelar", null).show();
             return;
         }
-        final int n;
+        final int kCol;
+        final int mDisp;
         try {
-            n = Integer.parseInt(edN.getText().toString().trim());
-            if (n < 3 || n > 30) {
+            kCol = Integer.parseInt(edK.getText().toString().trim());
+            mDisp = Integer.parseInt(edN.getText().toString().trim());
+            if (kCol < 1 || kCol > 10 || mDisp < 1 || mDisp > 30 || kCol * mDisp < 3) {
                 throw new NumberFormatException();
             }
         } catch (NumberFormatException e) {
-            alerta("N", "Escriba entre 3 y 30 disparos por patrón.");
+            alerta("K × M", "Colocaciones K entre 1 y 10, disparos M entre 1 y 30, y al menos 3 disparos en total.");
             return;
         }
         midiendo = true;
@@ -354,51 +375,92 @@ public class CampanaActivity extends Base {
         txtResultado.setText("Midiendo " + p.nombre + "...");
         final double tolOrden = tol();
         Cliente.instancia().ejecutar(() -> {
-            Campana.Serie serie = null;
-            String error = null;
             try {
                 char codigo = s.version == Sesion.Version.V36 ? 'e' : '6';
-                serie = campana.nuevaSerie(Sesion.ahoraIso(), s.serie(), s.mac, s.firmware(), p.nombre, orientacion, codigo);
-                Registro.nota("campana: " + serie.id + " " + p.nombre + " a " + orientacion + "°, N=" + n);
-                if (s.disparosAsentamiento > 0) {
-                    enUi(() -> txtResultado.setText("Disparo de asentamiento (se descarta)..."));
-                    LecturaX.asentar(s);
-                }
-                for (int i = 0; i < n; i++) {
-                    final int k = i + 1;
-                    enUi(() -> txtResultado.setText("Midiendo " + p.nombre + ": disparo " + k + " de " + n + "..."));
-                    LecturaX.Lectura l = LecturaX.leer(s);
-                    if (l.valida()) {
-                        campana.agregarDisparo(serie, Sesion.ahoraIso(), l.respuesta.trama, l.x);
-                    } else {
-                        Registro.nota("campana: disparo " + k + " no valido: " + l.error);
-                    }
-                }
-            } catch (IOException | InterruptedException | RuntimeException e) {
-                error = EnlaceSerie.descripcion(e);
-            }
-            final Campana.Serie fs = serie;
-            final String ferr = error;
-            enUi(() -> {
-                midiendo = false;
-                pantallaEncendida(false);
-                if (fs == null) {
-                    alerta("Medida", "No se pudo empezar: " + ferr);
+                Campana.Serie serie = campana.nuevaSerie(Sesion.ahoraIso(), s.serie(), s.mac, s.firmware(), p.nombre,
+                        orientacion, codigo);
+                Registro.nota("campana: " + serie.id + " " + p.nombre + " a " + orientacion + "°, " + kCol + " colocaciones x "
+                        + mDisp + " disparos");
+                colocacion(serie, p, 1, kCol, mDisp, tolOrden);
+            } catch (IOException | RuntimeException e) {
+                final String err = EnlaceSerie.descripcion(e);
+                enUi(() -> {
+                    midiendo = false;
+                    pantallaEncendida(false);
+                    alerta("Medida", "No se pudo empezar: " + err);
                     pintar();
-                    return;
-                }
-                if (ferr != null) {
-                    txtResultado.setText("Medida interrumpida: " + ferr + Cliente.instancia().consejoSiMudo());
-                }
-                veredicto(fs, tolOrden);
-            });
+                });
+            }
         });
+    }
+
+    /**
+     * Una colocacion (en el hilo de trabajo): asentamiento + M disparos. Entre
+     * colocaciones pide al operador que levante y vuelva a apoyar el equipo.
+     */
+    private void colocacion(Campana.Serie serie, Patron p, int k, int kCol, int mDisp, double tolOrden) {
+        final Sesion s = Sesion.get();
+        String error = null;
+        try {
+            if (s.disparosAsentamiento > 0) {
+                enUi(() -> txtResultado.setText("Colocación " + k + " de " + kCol + ": asentamiento (se descarta)..."));
+                LecturaX.asentar(s);
+            }
+            for (int i = 0; i < mDisp; i++) {
+                final int j = i + 1;
+                enUi(() -> txtResultado.setText("Midiendo " + p.nombre + ": colocación " + k + " de " + kCol
+                        + ", disparo " + j + " de " + mDisp + "..."));
+                LecturaX.Lectura l = LecturaX.leer(s);
+                if (l.valida()) {
+                    campana.agregarDisparo(serie, k, Sesion.ahoraIso(), l.respuesta.trama, l.x);
+                } else {
+                    Registro.nota("campana: colocacion " + k + ", disparo " + j + " no valido: " + l.error);
+                }
+            }
+        } catch (IOException | InterruptedException | RuntimeException e) {
+            error = EnlaceSerie.descripcion(e);
+        }
+        final String ferr = error;
+        enUi(() -> {
+            if (ferr == null && k < kCol) {
+                new AlertDialog.Builder(this).setTitle("Colocación " + (k + 1) + " de " + kCol)
+                        .setMessage("Levante el equipo y vuelva a apoyarlo sobre " + p.nombre + ". Pulse OK cuando esté apoyado.")
+                        .setCancelable(false)
+                        .setPositiveButton("OK", (d, w) -> Cliente.instancia().ejecutar(
+                                () -> colocacion(serie, p, k + 1, kCol, mDisp, tolOrden)))
+                        .setNegativeButton("Terminar aquí", (d, w) -> terminarMedida(serie, null, tolOrden))
+                        .show();
+            } else {
+                terminarMedida(serie, ferr, tolOrden);
+            }
+        });
+    }
+
+    private void terminarMedida(Campana.Serie serie, String error, double tolOrden) {
+        midiendo = false;
+        pantallaEncendida(false);
+        if (error != null) {
+            txtResultado.setText("Medida interrumpida: " + error + Cliente.instancia().consejoSiMudo());
+        }
+        veredicto(serie, tolOrden);
     }
 
     private void veredicto(Campana.Serie serie, double tolOrden) {
         double[] x = new double[serie.disparos.size()];
+        java.util.Map<Integer, List<Double>> porCol = new java.util.TreeMap<>();
         for (int i = 0; i < x.length; i++) {
-            x[i] = serie.disparos.get(i).x;
+            Campana.Disparo dd = serie.disparos.get(i);
+            x[i] = dd.x;
+            List<Double> l = porCol.get(dd.colocacion);
+            if (l == null) {
+                l = new ArrayList<>();
+                porCol.put(dd.colocacion, l);
+            }
+            l.add(dd.x);
+        }
+        List<double[]> grupos = new ArrayList<>();
+        for (List<Double> l : porCol.values()) {
+            grupos.add(Estadistica.aVector(l));
         }
         Patron p = campana.patron(serie.patron);
         if (x.length == 0) {
@@ -409,7 +471,8 @@ public class CampanaActivity extends Base {
                     .setNegativeButton("Cerrar", (d, w) -> pintar()).setCancelable(false).show();
             return;
         }
-        Veredicto.Resultado v = Veredicto.evaluar(x, p, campana.medias(p.nombre), tolOrden);
+        // Los disparos se guardan colocacion a colocacion: el orden de 'descartar' coincide con el de disparos.
+        Veredicto.Resultado v = Veredicto.evaluarColocaciones(grupos, p, campana.medias(p.nombre), tolOrden, repro());
         try {
             for (int i = 0; i < x.length; i++) {
                 if (v.descartar[i] && !serie.disparos.get(i).descartado) {

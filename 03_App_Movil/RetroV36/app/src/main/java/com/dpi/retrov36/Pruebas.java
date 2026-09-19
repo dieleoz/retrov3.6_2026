@@ -276,6 +276,21 @@ public final class Pruebas {
             } else {
                 d.append(" (sin máscara: trama de la revisión 1.0 del contrato)");
             }
+            // 3.6.1 y 3.6.2 tienen la misma fecha de compilacion: se distinguen con #GC#,
+            // que solo se envia porque #V# ya identifico una V3.6.
+            Cliente.Respuesta rgc = c.pedir("#GC#", Tramas.Tipo.ADMIN, Cliente.TIMEOUT_ADMIN_MS);
+            s.variante = Calibracion.variante(rgc.trama);
+            d.append("\n#GC# -> ").append(rgc.describir()).append(": ");
+            if (s.variante == Calibracion.Variante.V362) {
+                s.fechaCalibracion = Calibracion.fechaDe(rgc.trama);
+                Cliente.Respuesta rgn = c.pedir("#GN#", Tramas.Tipo.ADMIN, Cliente.TIMEOUT_ADMIN_MS);
+                s.serieEquipo = rgn.valida() ? Calibracion.serieDe(rgn.trama) : null;
+                d.append("firmware 3.6.2\n#GN# -> ").append(rgn.describir()).append('\n').append(s.datosCalibracion());
+            } else if (s.variante == Calibracion.Variante.V361) {
+                d.append("firmware 3.6.1 (no tiene serie ni fecha de calibración)");
+            } else {
+                d.append("variante no reconocida: no se usan las órdenes de la 3.6.2");
+            }
             return d.toString();
         }
         if (iv != null) {

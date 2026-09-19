@@ -67,6 +67,111 @@ public final class Veredicto {
         }
     }
 
+    /** Reproducibilidad maxima entre colocaciones, relativa a la media (3.6.7). */
+    public static final double REPRO_MAX = 0.03;
+
+    /** s de las medias de colocacion (reproducibilidad); NaN con menos de 2. */
+    public static double sEntre(List<double[]> grupos) {
+        List<Double> m = new ArrayList<>();
+        for (double[] g : grupos) {
+            if (g.length > 0) {
+                m.add(Estadistica.media(g));
+            }
+        }
+        return Estadistica.desviacion(Estadistica.aVector(m));
+    }
+
+    /** s dentro de cada colocacion, combinada (raiz de la media ponderada de varianzas). */
+    public static double sDentro(List<double[]> grupos) {
+        double num = 0;
+        int gl = 0;
+        for (double[] g : grupos) {
+            if (g.length >= 2) {
+                double s = Estadistica.desviacion(g);
+                num += s * s * (g.length - 1);
+                gl += g.length - 1;
+            }
+        }
+        return gl == 0 ? Double.NaN : Math.sqrt(num / gl);
+    }
+
+    /**
+     * Serie de K colocaciones x M disparos (3.6.7). Con K = 1 es evaluar().
+     * Descolgados dentro de cada colocacion; media = media de las K medias;
+     * s entre colocaciones (reproducibilidad) y s dentro; REPETIR si la s entre
+     * colocaciones pasa de reproMax (relativa) o la s dentro pasa de SD_MAX.
+     * descartar y motivos siguen el orden de los disparos (colocacion a colocacion).
+     */
+    public static Resultado evaluarColocaciones(List<double[]> grupos, Patron p, Map<Patron, Double> medidos,
+                                                double tolOrden, double reproMax) {
+        if (grupos.size() <= 1) {
+            return evaluar(grupos.isEmpty() ? new double[0] : grupos.get(0), p, medidos, tolOrden);
+        }
+        int total = 0;
+        for (double[] g : grupos) {
+            total += g.length;
+        }
+        boolean[] desc = new boolean[total];
+        String[] mot = new String[total];
+        StringBuilder t = new StringBuilder();
+        List<double[]> buenos = new ArrayList<>();
+        int base = 0;
+        int n = 0;
+        for (int k = 0; k < grupos.size(); k++) {
+            double[] g = grupos.get(k);
+            String[] m = descolgados(g);
+            List<Double> ok = new ArrayList<>();
+            for (int i = 0; i < g.length; i++) {
+                if (m[i] != null) {
+                    desc[base + i] = true;
+                    mot[base + i] = m[i];
+                    t.append("Colocación ").append(k + 1).append(", disparo ").append(i + 1).append(' ')
+                            .append(m[i]).append(": se descarta.\n");
+                } else {
+                    ok.add(g[i]);
+                }
+            }
+            double[] v = Estadistica.aVector(ok);
+            if (v.length > 0) {
+                buenos.add(v);
+                n += v.length;
+                t.append(String.format(Locale.US, "Colocación %d: media %.1f, s %.1f, n %d\n", k + 1,
+                        Estadistica.media(v), Estadistica.desviacion(v), v.length));
+            }
+            base += g.length;
+        }
+        double[] medias = new double[buenos.size()];
+        for (int i = 0; i < medias.length; i++) {
+            medias[i] = Estadistica.media(buenos.get(i));
+        }
+        double media = Estadistica.media(medias);
+        double se = sEntre(buenos);
+        double sd = sDentro(buenos);
+        boolean ruidosa = (buenos.size() >= 2 && se > reproMax * media) || (!Double.isNaN(sd) && sd > SD_MAX);
+        t.append(String.format(Locale.US, "Media de las %d colocaciones %.1f; s entre colocaciones %.1f (%.2f %%), s dentro %.1f.\n",
+                buenos.size(), media, se, 100 * se / media, sd));
+        if (ruidosa) {
+            t.append(String.format(Locale.US, "Repetir: la reproducibilidad pasa del %.1f %% o la s dentro de %.0f cuentas.\n",
+                    100 * reproMax, SD_MAX));
+        }
+        List<String> dudas = new ArrayList<>();
+        if (buenos.size() > 0) {
+            dudas.addAll(orden(p, media, medidos, tolOrden));
+            dudas.addAll(parecido(p, media, medidos, tolOrden));
+        }
+        if (!dudas.isEmpty()) {
+            t.append("¿Es este el patrón?\n");
+            for (String d : dudas) {
+                t.append("- ").append(d).append('\n');
+            }
+            if ("XI".equalsIgnoreCase(p.tipo.trim())) {
+                t.append("(Es un XI: los XI pueden desordenarse por orientación. Compruébelo; el aviso se mantiene.)\n");
+            }
+        }
+        String ver = ruidosa ? "REPETIR" : (dudas.isEmpty() ? "OK" : "DUDOSO");
+        return new Resultado(desc, mot, media, se, n, ruidosa, dudas, ver, t.toString());
+    }
+
     /** Indices de los disparos descolgados y su motivo (null si no lo es). */
     public static String[] descolgados(double[] x) {
         String[] m = new String[x.length];

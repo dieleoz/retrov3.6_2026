@@ -47,6 +47,10 @@ public class AdminActivity extends Base {
     private TextView txtOp;
     private volatile boolean ocupado;
     private Asistente.Propuesta propuesta;
+    private TextView txtCal;
+    private EditText edSerie;
+    private Button btnSerie;
+    private Button btnFT;
 
     private interface Tarea {
         String correr() throws IOException, InterruptedException;
@@ -102,6 +106,12 @@ public class AdminActivity extends Base {
         fila(ajustar, btnEscribir);
         txtAjuste = texto("");
         txtAjuste.setTypeface(Typeface.MONOSPACE);
+
+        titulo("Serie y fecha de calibración (firmware 3.6.2)");
+        txtCal = texto("");
+        edSerie = campo("Serie del equipo (1-12 caracteres, sin # ni ,)", InputType.TYPE_CLASS_TEXT);
+        btnSerie = boton("Grabar serie (#SN) y verificar (#GN)", v -> grabarSerie());
+        btnFT = boton("Restaurar temperatura de fábrica (#FT#)", v -> restaurarTemperatura());
 
         titulo("Volver a fábrica");
         spFabrica = new Spinner(this);
@@ -168,6 +178,10 @@ public class AdminActivity extends Base {
             txtAcceso.setBackgroundColor(GRIS);
         }
         btnEscribir.setEnabled(ab && !ocupado && propuesta != null && propuesta.escribible());
+        boolean v362 = s.es362();
+        txtCal.setText(s.datosCalibracion() + (v362 ? "" : "\nGrabar serie y restaurar temperatura exigen la 3.6.2."));
+        btnSerie.setEnabled(ab && !ocupado && v362);
+        btnFT.setEnabled(ab && !ocupado && v362);
     }
 
     /** Ejecuta una operacion con el equipo en el hilo de trabajo y muestra el resultado. */
@@ -537,7 +551,8 @@ public class AdminActivity extends Base {
                 String porE = comprobarPorE(k, ts.enviada);
                 if (porE == null) {
                     salida = "#S OK y " + estado + " (" + Ecuacion.ULP_S + " ulp); #E en 5 puntos coincide con la curva "
-                            + "enviada (±1). Mida ahora al menos un patrón con el código " + k + " para verificar.";
+                            + "enviada (±1). " + grabarFechaHoy() + " Mida ahora al menos un patrón con el código " + k
+                            + " para verificar.";
                 } else {
                     salida = "#S OK pero " + porE + ". Se restaura el estado anterior: " + restaurar(k, anterior);
                 }
@@ -551,6 +566,76 @@ public class AdminActivity extends Base {
             }
             return salida;
         });
+    }
+
+    // ------------------------------------------------------ serie y fecha (3.6.2)
+
+    /**
+     * Tras una calibracion verificada: #SC con la fecha de hoy y relectura #GC.
+     * Llamar desde el hilo de trabajo. Devuelve el texto para el operador.
+     */
+    private String grabarFechaHoy() throws IOException, InterruptedException {
+        Sesion s = Sesion.get();
+        if (!s.es362()) {
+            return "Firmware " + s.firmware() + ": no tiene #SC, la fecha de calibración NO se graba.";
+        }
+        String hoy = Calibracion.hoy();
+        Cliente.Respuesta r = Cliente.instancia().pedir("#SC," + hoy + "#", Tramas.Tipo.ADMIN, 5000);
+        String res = resultado(r);
+        Cliente.Respuesta g = Cliente.instancia().pedir("#GC#", Tramas.Tipo.ADMIN, Cliente.TIMEOUT_ADMIN_MS);
+        String leida = Calibracion.fechaDe(g.trama);
+        if (leida != null) {
+            s.fechaCalibracion = leida;
+        }
+        if ("OK".equals(res) && hoy.equals(leida)) {
+            return "Fecha de calibración " + hoy + " grabada y verificada con #GC# (vence "
+                    + Calibracion.vencimiento(hoy) + ").";
+        }
+        return "ATENCIÓN: la fecha de calibración no quedó grabada (#SC -> " + res + ", #GC# -> "
+                + g.describir() + ").";
+    }
+
+    private void grabarSerie() {
+        final String serie = edSerie.getText().toString().trim();
+        String mal = Calibracion.motivoSerieInvalida(serie);
+        if (mal != null) {
+            alerta("Serie no válida", mal);
+            return;
+        }
+        new AlertDialog.Builder(this).setTitle("Grabar serie")
+                .setMessage("Se grabará la serie \"" + serie + "\" en la EEPROM del equipo (actual: "
+                        + Sesion.get().serieEquipo + ").\n\nTrama: #SN," + serie + "#")
+                .setPositiveButton("Grabar", (d, w) -> op("Grabar serie", true, () -> {
+                    Cliente.Respuesta r = Cliente.instancia().pedir("#SN," + serie + "#", Tramas.Tipo.ADMIN, 5000);
+                    String res = resultado(r);
+                    Cliente.Respuesta g = Cliente.instancia().pedir("#GN#", Tramas.Tipo.ADMIN, Cliente.TIMEOUT_ADMIN_MS);
+                    String leida = g.valida() ? Calibracion.serieDe(g.trama) : null;
+                    if (leida != null) {
+                        Sesion.get().serieEquipo = leida;
+                    }
+                    return "#SN -> " + res + "; #GN# -> " + g.describir()
+                            + (serie.equals(leida) ? " (verificada)" : " (NO coincide con lo enviado)");
+                }))
+                .setNegativeButton("Cancelar", null).show();
+    }
+
+    private void restaurarTemperatura() {
+        double[] t = Sesion.get().temperatura;
+        new AlertDialog.Builder(this).setTitle("Restaurar temperatura de fábrica")
+                .setMessage("El factor de temperatura vuelve a los valores de fábrica (gui.c:42-44). Actual: "
+                        + (t == null ? "sin leer" : Tramas.coeficiente(t[0]) + ", " + Tramas.coeficiente(t[1]) + ", "
+                        + Tramas.coeficiente(t[2])) + ".\n\nTrama: #FT#")
+                .setPositiveButton("Restaurar", (d, w) -> op("Restaurar temperatura (#FT#)", true, () -> {
+                    Cliente.Respuesta r = Cliente.instancia().pedir("#FT#", Tramas.Tipo.ADMIN, 5000);
+                    String res = resultado(r);
+                    Cliente.Respuesta gt = Cliente.instancia().pedir("#GT#", Tramas.Tipo.ADMIN, Cliente.TIMEOUT_ADMIN_MS);
+                    double[] nt = gt.valida() ? Tramas.parsearGT(gt.trama) : null;
+                    if (nt != null) {
+                        Sesion.get().temperatura = nt;
+                    }
+                    return "#FT# -> " + res + "; #GT# -> " + gt.describir();
+                }))
+                .setNegativeButton("Cancelar", null).show();
     }
 
     // ------------------------------------------------------------- fabrica

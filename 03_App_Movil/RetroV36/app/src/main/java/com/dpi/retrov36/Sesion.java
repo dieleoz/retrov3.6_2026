@@ -43,6 +43,12 @@ public final class Sesion {
     public volatile String fechaFirmware = "";
     /** "CAL" o "DEF" en V3.6; vacio en otro caso. */
     public volatile String marca = "";
+    /** Variante de la V3.6 segun #GC# (solo se pregunta tras identificar una V3.6). */
+    public volatile Calibracion.Variante variante = Calibracion.Variante.DESCONOCIDA;
+    /** Serie grabada en el equipo (#GN#): "NONE" si no hay; null si no se leyo o el firmware no la tiene. */
+    public volatile String serieEquipo;
+    /** Fecha de calibracion (#GC#): AAAA-MM-DD o "NONE"; null si no se leyo o el firmware no la tiene. */
+    public volatile String fechaCalibracion;
     /** Mascara de #V# (revision 1.1); -1 si no la trae. */
     public volatile int mascara = -1;
     /** Ultima trama '#' respondida (elapsedRealtime), para la caducidad del modo admin. */
@@ -92,6 +98,9 @@ public final class Sesion {
         fechaFirmware = "";
         marca = "";
         mascara = -1;
+        variante = Calibracion.Variante.DESCONOCIDA;
+        serieEquipo = null;
+        fechaCalibracion = null;
         ultimaAlmohadillaMs = 0;
         fallosPin = 0;
         eDisponible = false;
@@ -137,13 +146,34 @@ public final class Sesion {
     public String firmware() {
         switch (version) {
             case V36:
-                return "V3.6 " + fechaFirmware + (limitesS() ? " (3.6.1)" : " (3.6.0, sin límites de #S)") + " " + marca
+                return "V3.6 " + fechaFirmware + (variante == Calibracion.Variante.V362 ? " (3.6.2)"
+                        : (limitesS() ? " (3.6.1)" : " (3.6.0, sin límites de #S)")) + " " + marca
                         + (mascara >= 0 ? String.format(Locale.US, " mascara %04X", mascara) : "");
             case V3_2020:
                 return "V3 2020 (sin e)";
             default:
                 return version.texto;
         }
+    }
+
+    public boolean es362() {
+        return version == Version.V36 && variante == Calibracion.Variante.V362;
+    }
+
+    /** Serie del equipo, fecha de calibracion, vencimiento y estado (3.6.2). */
+    public String datosCalibracion() {
+        if (version != Version.V36) {
+            return "Serie y fecha de calibración: no disponibles en " + version.texto;
+        }
+        if (!es362()) {
+            return "Serie y fecha de calibración: el firmware no es la 3.6.2 (no tiene #GN#/#GC#)";
+        }
+        String f = fechaCalibracion;
+        String venc = (f != null && Calibracion.fechaValida(f)) ? Calibracion.vencimiento(f) : "-";
+        return "Serie en el equipo (#GN#): " + (serieEquipo == null ? "?" : serieEquipo)
+                + "; fecha de calibración (#GC#): " + (f == null ? "?" : f)
+                + "; vencimiento: " + venc
+                + "; estado: " + Calibracion.estado(f, marca, Calibracion.hoy());
     }
 
     /** Identidad para cabeceras y exportaciones. */

@@ -211,7 +211,8 @@ public final class Campanas {
         try (ZipOutputStream z = new ZipOutputStream(new FileOutputStream(zip))) {
             texto(z, "campana.csv", c.exportarCsv());
             texto(z, "resumen.txt", "Campaña de calibración\nEquipo: serie " + serieAbierta + ", MAC " + macAbierta
-                    + "\nFirmware: " + Sesion.get().firmware() + "\nFecha de exportación: " + Sesion.ahoraIso()
+                    + "\nFirmware: " + Sesion.get().firmware() + "\n" + Sesion.get().datosCalibracion()
+                    + "\nFecha de exportación: " + Sesion.ahoraIso()
                     + "\n\nEste ZIP es el único envío: lleva las series (campana.csv), las pruebas del equipo "
                     + "(pruebas.txt), todos los registros de tramas de la campaña (tramas/) y el diario.\n\n"
                     + c.resumen());

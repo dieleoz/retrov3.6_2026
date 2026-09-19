@@ -21,7 +21,7 @@ import java.util.Map;
  *
  * Eventos:
  *   SERIE,id,fecha,equipo,mac,firmware,patron,orientacion,codigo
- *   DISPARO,id,idx,fecha,respuesta_bruta,x
+ *   DISPARO,id,idx,fecha,respuesta_bruta,x[,colocacion]   (colocacion desde 3.6.7; si falta, 1)
  *   DESCARTE,id,idx,motivo
  *   VEREDICTO,id,veredicto,aceptada(0/1),nota
  *   REASIGNA,id,patron_nuevo,nota
@@ -39,14 +39,17 @@ public final class Campana {
         public final String fecha;
         public final String bruta;
         public final double x;
+        /** Colocacion (1..K) dentro de la serie; 1 en las campanas anteriores a la 3.6.7. */
+        public final int colocacion;
         public boolean descartado;
         public String motivo = "";
 
-        Disparo(int idx, String fecha, String bruta, double x) {
+        Disparo(int idx, String fecha, String bruta, double x, int colocacion) {
             this.idx = idx;
             this.fecha = fecha;
             this.bruta = bruta;
             this.x = x;
+            this.colocacion = colocacion;
         }
     }
 
@@ -90,12 +93,43 @@ public final class Campana {
             return Estadistica.aVector(v);
         }
 
-        public double media() {
-            return Estadistica.media(validos());
+        /** Disparos validos agrupados por colocacion, en orden. */
+        public List<double[]> colocaciones() {
+            Map<Integer, List<Double>> g = new java.util.TreeMap<>();
+            for (Disparo d : disparos) {
+                if (!d.descartado && !Double.isNaN(d.x)) {
+                    List<Double> l = g.get(d.colocacion);
+                    if (l == null) {
+                        l = new ArrayList<>();
+                        g.put(d.colocacion, l);
+                    }
+                    l.add(d.x);
+                }
+            }
+            List<double[]> out = new ArrayList<>();
+            for (List<Double> l : g.values()) {
+                out.add(Estadistica.aVector(l));
+            }
+            return out;
         }
 
+        /** Media de la serie: con varias colocaciones, la media de las medias de colocacion. */
+        public double media() {
+            List<double[]> g = colocaciones();
+            if (g.size() <= 1) {
+                return Estadistica.media(validos());
+            }
+            double[] m = new double[g.size()];
+            for (int i = 0; i < m.length; i++) {
+                m[i] = Estadistica.media(g.get(i));
+            }
+            return Estadistica.media(m);
+        }
+
+        /** Con una colocacion, s de los disparos; con varias, s entre colocaciones. */
         public double desviacion() {
-            return Estadistica.desviacion(validos());
+            List<double[]> g = colocaciones();
+            return g.size() <= 1 ? Estadistica.desviacion(validos()) : Veredicto.sEntre(g);
         }
     }
 
@@ -220,10 +254,14 @@ public final class Campana {
     }
 
     public Disparo agregarDisparo(Serie s, String fecha, String bruta, double x) throws IOException {
+        return agregarDisparo(s, 1, fecha, bruta, x);
+    }
+
+    public Disparo agregarDisparo(Serie s, int colocacion, String fecha, String bruta, double x) throws IOException {
         comprobarAbierta();
-        Disparo d = new Disparo(s.disparos.size() + 1, fecha, bruta, x);
+        Disparo d = new Disparo(s.disparos.size() + 1, fecha, bruta, x, colocacion);
         s.disparos.add(d);
-        evento("DISPARO", s.id, d.idx, fecha, bruta, Double.isNaN(x) ? "" : fmt(x));
+        evento("DISPARO", s.id, d.idx, fecha, bruta, Double.isNaN(x) ? "" : fmt(x), colocacion);
         return d;
     }
 
@@ -477,7 +515,7 @@ public final class Campana {
 
     public static String cabeceraCsv() {
         return "serie_id,fecha_hora,serie,mac,firmware,patron,patron_original,valor_certificado,tipo_lamina,color,"
-                + "orientacion,codigo,disparo,respuesta_bruta,x,descartado,motivo_descarte,veredicto,nota,aceptada,elegida";
+                + "orientacion,codigo,disparo,respuesta_bruta,x,descartado,motivo_descarte,veredicto,nota,aceptada,elegida,colocacion";
     }
 
     public String exportarCsv() {
@@ -490,7 +528,7 @@ public final class Campana {
                         p == null ? "" : fmt(p.valor), p == null ? "" : p.tipo, p == null ? "" : p.color,
                         s.orientacion < 0 ? "" : String.valueOf(s.orientacion), s.codigo, d.idx, d.bruta,
                         Double.isNaN(d.x) ? "" : fmt(d.x), d.descartado ? 1 : 0, d.motivo, s.veredicto, s.nota,
-                        s.aceptada ? 1 : 0, el == s ? 1 : 0)).append('\n');
+                        s.aceptada ? 1 : 0, el == s ? 1 : 0, d.colocacion)).append('\n');
             }
         }
         return sb.toString();
@@ -520,9 +558,12 @@ public final class Campana {
                         desc++;
                     }
                 }
-                sb.append(String.format(Locale.US, "        %s %s orient %s: n=%d (descartados %d) media %.1f s %.2f -> %s%s%s%s\n",
+                List<double[]> gs = s.colocaciones();
+                String rep = gs.size() <= 1 ? "" : String.format(Locale.US, " [%d colocaciones: s entre %.1f (%.1f %%), s dentro %.1f]",
+                        gs.size(), Veredicto.sEntre(gs), 100 * Veredicto.sEntre(gs) / s.media(), Veredicto.sDentro(gs));
+                sb.append(String.format(Locale.US, "        %s %s orient %s: n=%d (descartados %d) media %.1f s %.2f%s -> %s%s%s%s\n",
                         s.id, s.fecha, s.orientacion < 0 ? "?" : String.valueOf(s.orientacion), s.validos().length, desc,
-                        s.media(), s.desviacion(), s.veredicto, s.aceptada ? ", aceptada" : ", no aceptada",
+                        s.media(), s.desviacion(), rep, s.veredicto, s.aceptada ? ", aceptada" : ", no aceptada",
                         s.patronOriginal.equals(s.patron) ? "" : " (medida como " + s.patronOriginal + ")",
                         s.nota.isEmpty() ? "" : "; nota: " + s.nota));
             }
@@ -648,8 +689,9 @@ public final class Campana {
                     return false;
                 }
                 String xs = c.get(5);
+                int col = c.size() > 6 && !c.get(6).isEmpty() ? Integer.parseInt(c.get(6)) : 1;
                 s.disparos.add(new Disparo(Integer.parseInt(c.get(2)), c.get(3), c.get(4),
-                        xs.isEmpty() ? Double.NaN : Double.parseDouble(xs)));
+                        xs.isEmpty() ? Double.NaN : Double.parseDouble(xs), col));
                 return true;
             }
             case "DESCARTE": {

@@ -4,7 +4,7 @@
 V3.6 no se puede probar: el firmware V3.6 no existe todavía en ningún equipo. Lo que sí debe funcionar
 es la medida contra un V3 2020 (SLV-002), y eso tampoco se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 366`, `versionName 3.6.6` (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 367`, `versionName 3.6.7` (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -23,7 +23,7 @@ export JAVA_HOME="D:/@Proyect/Baliza/7 sw apk/jdk-11/jdk-11.0.24+8"
 
 ### Tests JVM
 
-`app/src/test/`: `CalculoTest`, `ReceptorTest`, `AsistenteTest`, `FabricaTest` (71 tests).
+`app/src/test/`: `CalculoTest`, `ReceptorTest`, `AsistenteTest`, `FabricaTest` (78 tests).
 `./gradlew testDebugUnitTest` **no arranca en esta máquina**: el ejecutor de Gradle 6.5 no encuentra su
 clase `GradleWorkerMain` porque la carpeta de usuario lleva `ñ` (`C:\Users\Diego.Zuñiga`). Se compilan
 con Gradle y se ejecutan con JUnit a mano:
@@ -33,7 +33,7 @@ con Gradle y se ejecutan con JUnit a mano:
 mkdir -p libtest   # copiar aquí (fuera de build/: clean lo borra) junit-4.13.2.jar y hamcrest-core-1.3.jar de ~/.gradle/caches
 cd app && "$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;build/intermediates/javac/debugUnitTest/classes;../libtest/junit-4.13.2.jar;../libtest/hamcrest-core-1.3.jar" \
   org.junit.runner.JUnitCore com.dpi.retrov36.CalculoTest com.dpi.retrov36.ReceptorTest \
-  com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest com.dpi.retrov36.CoherenciaRealTest com.dpi.retrov36.CampanaTest
+  com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest com.dpi.retrov36.CoherenciaRealTest com.dpi.retrov36.CampanaTest com.dpi.retrov36.Version367Test
 ```
 
 `FabricaTest` compara las 12 ecuaciones de la app con el **texto** de
@@ -106,6 +106,20 @@ Reglas que salen de ahí, en el código:
   envía sólo `1`-`8`, `a`-`d` y `9`.
 - Tras 3 peticiones seguidas sin un solo byte, la app aconseja apagar y encender el equipo y lo anota
   en el registro.
+
+## Cambios de la 3.6.7
+
+- **Firmware 3.6.2:** tras identificar una V3.6 con `#V#` se envía `#GC#`: `#GC,…#` = 3.6.2, `#ERR,FORMATO#` =
+  3.6.1 (misma fecha de compilación). A un equipo sin identificar no se envía nada de efecto desconocido.
+- **Serie y fecha:** `#GN#` y `#GC#` en Pruebas, en la cabecera de la campaña y en `resumen.txt`; vencimiento =
+  fecha + 1 año (un 29 de febrero vence el 28 de febrero). Estados: Sin fecha, No calibrado (fecha y DEF),
+  Calibración vencida. En admin: grabar serie (`#SN`, verificada con `#GN#`) y `#FT#` (sólo 3.6.2). Tras un
+  `#S` verificado con `#E`, la app graba `#SC` con la fecha de hoy y la verifica con `#GC#`; en la 3.6.1 avisa.
+- **K colocaciones × M disparos** (3 × 3 por defecto, configurable; 1 × 9 sigue valiendo). Asentamiento por
+  colocación; entre colocaciones pide levantar y volver a apoyar. Media = media de las K medias; se informan
+  la s entre colocaciones y la s dentro; repetir si la s entre colocaciones pasa del 3 % (configurable). El
+  diario añade la colocación al final de `DISPARO` (si falta, 1): las campañas anteriores se abren igual
+  (test con la campaña real de las 10:33).
 
 ## Cambios de la 3.6.6
 
