@@ -74,17 +74,29 @@ public class Version3612Test {
         assertEquals(TablaCalibracion.Metodo.GRADO1_O_ANCLADA, TablaCalibracion.fila('3').metodo);
         assertFalse(TablaCalibracion.fila('5').escribible());
         assertTrue(TablaCalibracion.fila('5').aviso.contains("sin decisión"));
-        Decisiones d = Decisiones.leer("PA-14,SI,2026-09-20,Diego Zuniga,DECISION-PA-14.md\n"
-                + "PA-24,SI,2026-09-20,Diego Zuniga,DECISION-PA-24.md");
-        assertEquals(TablaCalibracion.Metodo.ANCLADA, TablaCalibracion.fila('5', d).metodo);
-        assertTrue(TablaCalibracion.fila('5', d).escribible());
-        assertEquals(TablaCalibracion.Metodo.ANCLADA, TablaCalibracion.fila('b', d).metodo);
-        assertTrue(TablaCalibracion.fila('b', d).aviso.contains("QA-3612-06"));
-        // Una decision sin firmante Diego, sin fecha o sin documento no vale.
-        assertFalse(Decisiones.leer("PA-24,SI,2026-09-20,Operador,DOC.md").tomada("PA-24"));
-        assertFalse(Decisiones.leer("PA-24,SI,,Diego,DOC.md").tomada("PA-24"));
-        assertFalse(Decisiones.leer("PA-24,SI,2026-09-20,Diego,").tomada("PA-24"));
-        assertFalse(Decisiones.leer("PA-24,NO,2026-09-20,Diego,DOC.md").tomada("PA-24"));
+        // 3.6.14: decisiones por equipo; el b ademas exige la regla de su re-medida (REMEDIDA-b, QA-3612-06).
+        Decisiones d = Decisiones.leer("PA-14,SLV-002,SI,2026-09-20,Diego Zuniga,DECISION-PA-14.md\n"
+                + "PA-24,SLV-002,SI,2026-09-20,Diego Zuniga,DECISION-PA-24.md,\"RF-CAL-14 P49 -10 3\"");
+        assertEquals(TablaCalibracion.Metodo.ANCLADA, TablaCalibracion.fila('5', d, "SLV-002").metodo);
+        assertTrue(TablaCalibracion.fila('5', d, "SLV-002").escribible());
+        assertEquals(TablaCalibracion.Metodo.SOLO_VERIFICAR, TablaCalibracion.fila('b', d, "SLV-002").metodo);
+        assertTrue(TablaCalibracion.fila('b', d, "SLV-002").aviso.contains("REMEDIDA-b"));
+        Decisiones d2 = Decisiones.leer("PA-24,SLV-002,SI,2026-09-20,Diego,DOC.md,\"RF-CAL-14 P49 -10 3\"\n"
+                + "REMEDIDA-b,SLV-002,RF-CAL-18,2026-09-20,Diego,DOC.md");
+        assertEquals(TablaCalibracion.Metodo.ANCLADA, TablaCalibracion.fila('b', d2, "SLV-002").metodo);
+        assertEquals("RF-CAL-18", TablaCalibracion.fila('b', d2, "SLV-002").reglaRemedida);
+        assertTrue(TablaCalibracion.fila('b', d2, "SLV-002").dispensado("RF-CAL-14", "P49", -11.5));
+        assertFalse(TablaCalibracion.fila('b', d2, "SLV-002").dispensado("RF-CAL-14", "P49", -14.0));
+        assertFalse(TablaCalibracion.fila('b', d2, "SLV-002").dispensado("RF-CAL-14", "P39", 15.0));
+        // QA-3613-03: las decisiones y la tabla de SLV-002 no valen para otro equipo.
+        for (char k : Fabrica.CODIGOS) {
+            assertFalse(String.valueOf(k), TablaCalibracion.fila(k, d2, "SLV-003").escribible());
+        }
+        // Una decision sin firmante Diego, sin fecha, sin documento o sin SI no vale.
+        assertFalse(Decisiones.leer("PA-24,SLV-002,SI,2026-09-20,Operador,DOC.md").tomada("PA-24", "SLV-002"));
+        assertFalse(Decisiones.leer("PA-24,SLV-002,SI,,Diego,DOC.md").tomada("PA-24", "SLV-002"));
+        assertFalse(Decisiones.leer("PA-24,SLV-002,SI,2026-09-20,Diego,").tomada("PA-24", "SLV-002"));
+        assertFalse(Decisiones.leer("PA-24,SLV-002,NO,2026-09-20,Diego,DOC.md").tomada("PA-24", "SLV-002"));
         assertEquals(12, TablaCalibracion.tabla().size());
     }
 

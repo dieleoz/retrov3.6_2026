@@ -30,7 +30,8 @@ public final class Anclas {
 
     private static Campana.Serie seriePaso(Campana c, BancoCola.Paso p) {
         String id = c.seriePaso(p.orden);
-        return id == null || id.isEmpty() ? null : c.serie(id);
+        Campana.Serie s = id == null || id.isEmpty() ? null : c.serie(id);
+        return s == null || s.anulada != null ? null : s;   // 3.6.14: una serie anulada no cuenta
     }
 
     /** Sesion del banco en que se midieron los patrones del codigo k (la del primer paso con ese codigo). */

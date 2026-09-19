@@ -72,6 +72,12 @@ public final class Campana {
         public String veredicto = "PENDIENTE";
         public boolean aceptada;
         public String nota = "";
+        /**
+         * 3.6.14: motivo por el que el operador ANULO la serie ("papel equivocado: pedia P45, puse P40");
+         * null si no esta anulada. Una serie anulada no entra en el ajuste, ni en la A5, ni en la s_rep; nunca
+         * se borra del diario.
+         */
+        public String anulada;
 
         Serie(String id, String fecha, String equipo, String mac, String firmware, String patron,
               int orientacion, char codigo) {
@@ -150,6 +156,8 @@ public final class Campana {
     /** Estado de cada paso de la cola del banco (orden -> HECHO / SALTADO). */
     private final Map<Integer, String> pasos = new LinkedHashMap<>();
     private final Map<Integer, String> seriePaso = new LinkedHashMap<>();
+    /** Ordenes de los PASO en el orden en que se anotaron (para "rehacer el anterior"). */
+    private final List<Integer> historialPasos = new ArrayList<>();
     /** Lecturas de bateria: "fecha  texto". */
     private final List<String> baterias = new ArrayList<>();
     private Integer ultimaBateriaN;
@@ -217,7 +225,7 @@ public final class Campana {
     public List<Serie> seriesDe(String patron) {
         List<Serie> l = new ArrayList<>();
         for (Serie s : series) {
-            if (s.patron.equals(patron) && !esA5(s)) {
+            if (s.patron.equals(patron) && !esA5(s) && s.anulada == null) {
                 l.add(s);
             }
         }
@@ -231,7 +239,7 @@ public final class Campana {
     public List<Serie> seriesA5(String patron) {
         List<Serie> l = new ArrayList<>();
         for (Serie s : series) {
-            if (s.patron.equals(patron) && esA5(s)) {
+            if (s.patron.equals(patron) && esA5(s) && s.anulada == null) {
                 l.add(s);
             }
         }
@@ -324,7 +332,15 @@ public final class Campana {
 
     /** Estado de los pasos del banco (copia). */
     public Map<Integer, String> pasos() {
-        return new LinkedHashMap<>(pasos);
+        Map<Integer, String> m = new LinkedHashMap<>(pasos);
+        for (Map.Entry<Integer, String> e : m.entrySet()) {
+            String id = seriePaso.get(e.getKey());
+            Serie s = id == null || id.isEmpty() ? null : serie(id);
+            if ("HECHO".equals(e.getValue()) && s != null && s.anulada != null) {
+                e.setValue("REHACER");     // su serie esta anulada: el paso vuelve a la cola
+            }
+        }
+        return m;
     }
 
     public String seriePaso(int orden) {
@@ -336,6 +352,7 @@ public final class Campana {
         comprobarAbierta();
         pasos.put(orden, estado);
         seriePaso.put(orden, serieId == null ? "" : serieId);
+        historialPasos.add(orden);
         evento("PASO", orden, estado, serieId == null ? "" : serieId, fecha, nota == null ? "" : nota);
     }
 
@@ -414,6 +431,76 @@ public final class Campana {
         evento("REASIGNA", s.id, nuevo, nota == null ? "" : nota);
     }
 
+    /**
+     * 3.6.14 (peticion de Diego): anula una serie con un motivo obligatorio. Sale del ajuste, de la A5 y
+     * de la s_rep; queda en el diario (evento ANULA) y en el resumen. Nunca se borra nada.
+     */
+    public void anular(Serie s, String motivo, String fecha) throws IOException {
+        comprobarAbierta();
+        if (motivo == null || motivo.trim().isEmpty()) {
+            throw new IllegalArgumentException("anular una serie exige un motivo");
+        }
+        s.anulada = motivo.trim();
+        if (s.id.equals(elegidas.get(s.patron))) {
+            elegidas.remove(s.patron);
+        }
+        evento("ANULA", s.id, fecha == null ? "" : fecha, s.anulada);
+    }
+
+    /**
+     * Rehacer un paso del banco: anula su serie (con el motivo) y el paso vuelve a la cola (REHACER).
+     * Si la app se cierra entre los dos eventos, pasos() ya trata el paso como pendiente.
+     */
+    public void rehacer(int orden, String motivo, String fecha) throws IOException {
+        comprobarAbierta();
+        if (motivo == null || motivo.trim().isEmpty()) {
+            throw new IllegalArgumentException("rehacer un paso exige un motivo");
+        }
+        String id = seriePaso.get(orden);
+        Serie s = id == null || id.isEmpty() ? null : serie(id);
+        if (s != null && s.anulada == null) {
+            anular(s, motivo, fecha);
+        }
+        anotarPaso(orden, "REHACER", "", fecha, "rehacer: " + motivo.trim());
+    }
+
+    /** Pasos HECHO con serie (los que se pueden rehacer), en el orden en que se hicieron. */
+    public List<Integer> pasosRehacibles() {
+        List<Integer> l = new ArrayList<>();
+        Map<Integer, String> ef = pasos();
+        for (Integer o : historialPasos) {
+            String id = seriePaso.get(o);
+            if ("HECHO".equals(ef.get(o)) && id != null && !id.isEmpty() && !l.contains(o)) {
+                l.add(o);
+            }
+        }
+        // El ultimo hecho, al final: un paso rehecho y vuelto a hacer se mueve a su nueva posicion.
+        List<Integer> orden = new ArrayList<>();
+        for (int i = historialPasos.size() - 1; i >= 0; i--) {
+            Integer o = historialPasos.get(i);
+            if (l.contains(o) && !orden.contains(o)) {
+                orden.add(0, o);
+            }
+        }
+        return orden;
+    }
+
+    /** El ultimo paso HECHO con serie ("Rehacer el paso anterior"); null si ninguno. */
+    public Integer ultimoPasoRehacible() {
+        List<Integer> l = pasosRehacibles();
+        return l.isEmpty() ? null : l.get(l.size() - 1);
+    }
+
+    public List<Serie> seriesAnuladas() {
+        List<Serie> l = new ArrayList<>();
+        for (Serie s : series) {
+            if (s.anulada != null) {
+                l.add(s);
+            }
+        }
+        return l;
+    }
+
     public void elegir(Serie s) throws IOException {
         comprobarAbierta();
         elegidas.put(s.patron, s.id);
@@ -427,13 +514,13 @@ public final class Campana {
         String id = elegidas.get(patron);
         if (id != null) {
             Serie s = serie(id);
-            if (s != null && s.patron.equals(patron) && s.aceptada) {
+            if (s != null && s.patron.equals(patron) && s.aceptada && s.anulada == null) {
                 return s;
             }
         }
         Serie ultima = null;
         for (Serie s : series) {
-            if (s.patron.equals(patron) && s.aceptada) {
+            if (s.patron.equals(patron) && s.aceptada && s.anulada == null) {
                 ultima = s;
             }
         }
@@ -649,8 +736,10 @@ public final class Campana {
                 sb.append(Csv.unir(s.id, d.fecha, s.equipo, s.mac, s.firmware, s.patron, s.patronOriginal,
                         p == null ? "" : fmt(p.valor), p == null ? "" : p.tipo, p == null ? "" : p.color,
                         s.orientacion < 0 ? "" : String.valueOf(s.orientacion), s.codigo, d.idx, d.bruta,
-                        Double.isNaN(d.x) ? "" : fmt(d.x), d.descartado ? 1 : 0, d.motivo, s.veredicto, s.nota,
-                        s.aceptada ? 1 : 0, el == s ? 1 : 0, d.colocacion)).append('\n');
+                        Double.isNaN(d.x) ? "" : fmt(d.x), d.descartado ? 1 : 0, d.motivo,
+                        s.anulada == null ? s.veredicto : "ANULADA", s.anulada == null ? s.nota
+                                : (s.nota.isEmpty() ? "" : s.nota + " | ") + "ANULADA: " + s.anulada,
+                        s.aceptada && s.anulada == null ? 1 : 0, el == s ? 1 : 0, d.colocacion)).append('\n');
             }
         }
         return sb.toString();
@@ -690,6 +779,14 @@ public final class Campana {
                         s.nota.isEmpty() ? "" : "; nota: " + s.nota));
             }
         }
+        List<Serie> anul = seriesAnuladas();
+        if (!anul.isEmpty()) {
+            sb.append("\nSeries ANULADAS (fuera del ajuste, de la A5 y de la s_rep; siguen en el diario):\n");
+            for (Serie s : anul) {
+                sb.append(String.format(Locale.US, "  %s %s %s (medida como %s): %d disparos, media %.1f. Motivo: %s\n",
+                        s.id, s.fecha, s.patron, s.patronOriginal, s.validos().length, s.media(), s.anulada));
+            }
+        }
         Serie so = serieOscuro();
         sb.append(so == null ? "\nOscuro: sin serie OSCURO medida (el ancla de la recta anclada no está medida).\n"
                 : String.format(Locale.US, "\nOscuro: serie %s, x = %.1f (s entre colocaciones %.1f, %d colocaciones).\n",
@@ -706,10 +803,10 @@ public final class Campana {
             int h = 0;
             int sl = 0;
             StringBuilder sal = new StringBuilder();
-            for (Map.Entry<Integer, String> e : pasos.entrySet()) {
+            for (Map.Entry<Integer, String> e : pasos().entrySet()) {
                 if ("HECHO".equals(e.getValue())) {
                     h++;
-                } else {
+                } else if ("SALTADO".equals(e.getValue())) {
                     sl++;
                     sal.append(e.getKey()).append(' ');
                 }
@@ -890,7 +987,19 @@ public final class Campana {
             case "PASO":
                 pasos.put(Integer.parseInt(c.get(1)), c.get(2));
                 seriePaso.put(Integer.parseInt(c.get(1)), c.size() > 3 ? c.get(3) : "");
+                historialPasos.add(Integer.parseInt(c.get(1)));
                 return true;
+            case "ANULA": {
+                Serie s = serie(c.get(1));
+                if (s == null) {
+                    return false;
+                }
+                s.anulada = c.size() > 3 ? c.get(3) : "";
+                if (s.id.equals(elegidas.get(s.patron))) {
+                    elegidas.remove(s.patron);
+                }
+                return true;
+            }
             case "BATERIA":
                 hayBateria = true;
                 ultimaBateriaN = c.get(2).isEmpty() ? null : Integer.parseInt(c.get(2));

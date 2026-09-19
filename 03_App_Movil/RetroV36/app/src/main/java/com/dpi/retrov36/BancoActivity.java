@@ -48,8 +48,87 @@ public class BancoActivity extends Base {
         fila(btnOk, btnSaltar);
         txtResultado = texto("");
         txtResultado.setTypeface(Typeface.MONOSPACE);
+        // 3.6.14 (peticion de Diego): rehacer un patron antes de exportar. Nada se borra: la serie queda
+        // ANULADA en el diario con su motivo y el paso vuelve a la cola.
+        btnRehacerAnterior = boton("Rehacer el paso anterior", v -> rehacerAnterior());
+        btnRehacerPatron = boton("Rehacer patrón…", v -> elegirPasoARehacer());
+        fila(btnRehacerAnterior, btnRehacerPatron);
+        chkConfirmar = new android.widget.CheckBox(this);
+        chkConfirmar.setText("Confirmar cada patrón antes de pasar al siguiente");
+        chkConfirmar.setChecked(prefConfirmar());
+        chkConfirmar.setOnCheckedChangeListener((v, c) -> getSharedPreferences("rtv", MODE_PRIVATE).edit()
+                .putBoolean(PREF_CONFIRMAR, c).apply());
+        raiz.addView(chkConfirmar);
         boton("Exportar ahora (un solo ZIP + copia en Download/RTV/)", v -> exportar(null));
         cargar();
+    }
+
+    private static final String PREF_CONFIRMAR = "confirmar_patron";
+    private Button btnRehacerAnterior;
+    private Button btnRehacerPatron;
+    private android.widget.CheckBox chkConfirmar;
+
+    private boolean prefConfirmar() {
+        return getSharedPreferences("rtv", MODE_PRIVATE).getBoolean(PREF_CONFIRMAR, false);
+    }
+
+    private String describirPaso(int orden) {
+        BancoCola.Paso p = cola.paso(orden);
+        String sid = campana.seriePaso(orden);
+        Campana.Serie s = sid == null || sid.isEmpty() ? null : campana.serie(sid);
+        return "Paso " + orden + (p == null ? "" : " (" + p.tipo + " " + (p.patron.isEmpty() ? "" : p.patron) + ")")
+                + (s == null ? "" : ", serie " + s.id + " " + s.patron + String.format(Locale.US, ", x = %.1f", s.media()));
+    }
+
+    private void rehacerAnterior() {
+        Integer o = campana == null ? null : campana.ultimoPasoRehacible();
+        if (o != null) {
+            pedirMotivoYRehacer(o);
+        }
+    }
+
+    private void elegirPasoARehacer() {
+        if (campana == null) {
+            return;
+        }
+        final List<Integer> l = campana.pasosRehacibles();
+        if (l.isEmpty()) {
+            aviso("No hay pasos hechos que rehacer.");
+            return;
+        }
+        String[] items = new String[l.size()];
+        for (int i = 0; i < items.length; i++) {
+            items[i] = describirPaso(l.get(l.size() - 1 - i));   // el mas reciente arriba
+        }
+        new AlertDialog.Builder(this).setTitle("Rehacer patrón")
+                .setItems(items, (d, w) -> pedirMotivoYRehacer(l.get(l.size() - 1 - w)))
+                .setNegativeButton("Cancelar", null).show();
+    }
+
+    /** Motivo obligatorio; la serie queda ANULADA con el y el paso vuelve a la cola. */
+    private void pedirMotivoYRehacer(int orden) {
+        final EditText e = new EditText(this);
+        e.setHint("Motivo (obligatorio): p. ej. papel equivocado: pedía P45, puse P40");
+        new AlertDialog.Builder(this).setTitle("Rehacer: " + describirPaso(orden)).setView(e)
+                .setMessage("La serie queda ANULADA en el diario con este motivo (no se borra), sale del ajuste y "
+                        + "el paso vuelve a la cola para medirse otra vez.")
+                .setPositiveButton("Rehacer", (d, w) -> {
+                    String m = e.getText().toString().trim();
+                    if (m.isEmpty()) {
+                        aviso("El motivo es obligatorio.");
+                        pedirMotivoYRehacer(orden);
+                        return;
+                    }
+                    try {
+                        campana.rehacer(orden, m, Sesion.ahoraIso());
+                        Registro.nota("banco: " + describirPaso(orden) + " a rehacer: " + m);
+                    } catch (IOException | RuntimeException ex) {
+                        alerta("Rehacer", "No se pudo: " + ex.getMessage());
+                    }
+                    ultimoOfrecido = 0;
+                    pintar();
+                })
+                .setNegativeButton("Cancelar", null).show();
     }
 
     private void cargar() {
@@ -86,17 +165,21 @@ public class BancoActivity extends Base {
         Map<Integer, String> est = campana.pasos();
         int hechos = 0;
         int saltados = 0;
+        int rehacer = 0;
         for (String e : est.values()) {
             if ("HECHO".equals(e)) {
                 hechos++;
-            } else {
+            } else if ("SALTADO".equals(e)) {
                 saltados++;
+            } else if ("REHACER".equals(e)) {
+                rehacer++;
             }
         }
         paso = cola.siguiente(est, ultimoOfrecido);
         List<BancoCola.Paso> salt = cola.saltados(est);
-        txtAvance.setText(String.format(Locale.US, "Equipo %s (%s). Cola md5 %s…\nPasos hechos %d de %d, saltados %d.%s",
+        txtAvance.setText(String.format(Locale.US, "Equipo %s (%s). Cola md5 %s…\nPasos hechos %d de %d, saltados %d%s.%s",
                 campana.equipo, campana.mac, cola.md5.substring(0, 8), hechos, cola.pasos.size(), saltados,
+                rehacer == 0 ? "" : ", por rehacer " + rehacer,
                 campana.bateriaBloqueaEscrituras() ? "\nBATERÍA: escrituras bloqueadas (n = 0 o sin respuesta)." : "")
                 + (salt.isEmpty() ? "" : "\nSaltados: " + nombres(salt))
                 + (campana.cerrada() ? "\nCampaña CERRADA: no se mide nada más en ella (abra una nueva en Campaña, Avanzado)." : "")
@@ -118,6 +201,11 @@ public class BancoActivity extends Base {
         btnOk.setEnabled(abierta && paso != null && libre
                 && (con || "CALENTAMIENTO".equals(paso.tipo) || "EXPORTAR".equals(paso.tipo)));
         btnSaltar.setEnabled(abierta && paso != null && libre && paso.saltable());
+        Integer ult = campana.ultimoPasoRehacible();
+        btnRehacerAnterior.setEnabled(abierta && libre && ult != null);
+        btnRehacerAnterior.setText(ult == null ? "Rehacer el paso anterior" : "Rehacer el paso anterior ("
+                + describirPaso(ult) + ")");
+        btnRehacerPatron.setEnabled(abierta && libre && ult != null);
     }
 
     @Override
@@ -240,6 +328,8 @@ public class BancoActivity extends Base {
         volatile String pendiente;
         volatile String detalle;
         Veredicto.Resultado veredicto;
+        /** El operador confirmo "¿Era Pxx?" (preferencia de la 3.6.14). */
+        boolean confirmado;
 
         Medicion(BancoCola.Paso p, Campana c) {
             this.p = p;
@@ -562,6 +652,46 @@ public class BancoActivity extends Base {
         }
         final Veredicto.Resultado v = m.veredicto;
         final String nota = "banco paso " + p.orden + ", código " + p.codigo + ", uso " + p.uso + notas;
+        if ("OK".equals(v.veredicto) && prefConfirmar() && "PATRON".equals(p.tipo) && !m.confirmado) {
+            // 3.6.14: confirmacion opcional antes de aceptar un OK ("¿Era P45?").
+            dialogo(new AlertDialog.Builder(this).setTitle("¿Era " + p.patron + "?")
+                    .setMessage(cab + "\n" + v.texto + "\n¿La serie se midió sobre " + p.patron + " (" + p.color + " "
+                            + p.tipoLamina + ", cert. " + Campana.fmt(p.certificado) + ")?")
+                    .setPositiveButton("Sí", (x, w) -> {
+                        dialogoAbierto = false;
+                        m.confirmado = true;
+                        veredicto(m);
+                    })
+                    .setNegativeButton("No, rehacer", (x, w) -> {
+                        dialogoAbierto = false;
+                        final EditText e = new EditText(this);
+                        e.setHint("Motivo (obligatorio): p. ej. papel equivocado: pedía " + p.patron + ", puse P40");
+                        dialogo(new AlertDialog.Builder(this).setTitle("Rehacer " + p.patron).setView(e)
+                                .setPositiveButton("Rehacer", (x2, w2) -> {
+                                    dialogoAbierto = false;
+                                    String mot = e.getText().toString().trim();
+                                    if (mot.isEmpty()) {
+                                        aviso("El motivo es obligatorio.");
+                                        veredicto(m);
+                                        return;
+                                    }
+                                    cerrarSerie(s, "OK", true, nota);
+                                    anotar(p, "HECHO", s.id, "OK");
+                                    try {
+                                        campana.rehacer(p.orden, mot, Sesion.ahoraIso());
+                                    } catch (IOException | RuntimeException ex) {
+                                        alerta("Rehacer", ex.getMessage());
+                                    }
+                                    txtResultado.setText(cab + "\nANULADA (" + mot + "): el paso se repite.");
+                                    liberar(m);
+                                })
+                                .setNegativeButton("Volver", (x2, w2) -> {
+                                    dialogoAbierto = false;
+                                    veredicto(m);
+                                }));
+                    }));
+            return;
+        }
         if ("OK".equals(v.veredicto)) {
             cerrarSerie(s, "OK", true, nota);
             elegirDelBanco(s);

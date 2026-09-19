@@ -321,6 +321,10 @@ public final class Acta {
         return cierre != null;
     }
 
+    public boolean aceptada() {
+        return cierre != null && cierre.startsWith("ACEPTADA");
+    }
+
     public boolean invalidada() {
         return invalidada != null;
     }

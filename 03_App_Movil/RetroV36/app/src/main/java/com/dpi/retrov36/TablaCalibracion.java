@@ -2,6 +2,7 @@ package com.dpi.retrov36;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -9,22 +10,25 @@ import java.util.Map;
  * 1f1c4e3 tras P10-C2; sigue a 06_Calibracion/SLV-002/REFORMULACION-y-Simulacion-2026-09-19.md). El
  * operador no elige grado, metodo ni patron de re-medida. Java puro.
  *
- * - 1: grado 1, ESCRITO el 19-sep: no se reescribe. Re-medida P28. Dispensa RF-CAL-14/15/16 (acta, linea 11).
- * - 2: recta anclada, ESCRITO el 19-sep: no se reescribe. Re-medida P25. Dispensa RF-CAL-14/15 (acta, linea 18).
+ * 3.6.14 (QA-3613-03): la tabla es DE SLV-002. Para otro equipo todos los codigos se quedan en "solo
+ * verificar" hasta que tenga su propia tabla; las decisiones de Diego se leen por equipo.
+ *
+ * SLV-002:
+ * - 1, 2: escritos el 19-sep: no se reescriben (se cotejan: T-C41).
  * - 3, 4, 6: grado 1; recta anclada si la libre no pasa #S. Re-medida P123, P11, P86 (PA-16).
- * - 5: solo verificar; recta anclada SOLO con PA-14 decidida por Diego (Decisiones; decidida el 19-sep),
- *   con la cobertura de RF-APP-42 (el ancla cuenta como nivel).
- * - 8: recta anclada en el OSCURO (REFORM §3.3). Re-medida P43. Sin dispensa.
- * - b: recta anclada en el OSCURO (REFORM §3.4). Re-medida P49. Exige la dispensa RF-CAL-14/15 de PA-24:
- *   SOLO con PA-24 decidida por Diego (Decisiones, P11-M5, QA-3612-07). La casilla del operador no la
- *   concede. PA-24 decidida el 19-sep (DECISIONES-Diego-2026-09-19.md, 8af526d): la re-medida del b se
- *   juzga con RF-CAL-18 frente a la curva escrita y el incumplimiento frente al certificado (P49 a
- *   -10,2/-11,1 %, QA-3612-06) queda escrito como dispensado. El umbral no se toca.
+ * - 8: recta anclada en el OSCURO (REFORM §3.3). Re-medida P43. Sin dispensa. Va SOLO y PRIMERO: su acta
+ *   aceptada antes de ofrecer el b y el 5 (P12 §6, condicion 3).
+ * - b: recta anclada (REFORM §3.4), re-medida P49, solo con PA-24 (dispensa limitada a su alcance: P12 §5.2)
+ *   Y con la regla de re-medida REMEDIDA-b decidida (QA-3612-06). Tras el 8.
+ * - 5: recta anclada con la cobertura de RF-APP-42, solo con PA-14, con sus 13 pasos del banco hechos
+ *   (P12 §6, condicion 6). Tras el 8.
  * - 7, a, c, d: solo verificar.
  */
 public final class TablaCalibracion {
 
-    public static final String VERSION = "RF-CAL-37 de SPEC-Calibracion-V3.6.md (1f1c4e3), APK 3.6.13";
+    public static final String VERSION = "RF-CAL-37 de SPEC-Calibracion-V3.6.md (1f1c4e3), APK 3.6.14";
+    /** Unico equipo con tabla en este APK. */
+    public static final String EQUIPO_CON_TABLA = "SLV-002";
 
     public enum Metodo { GRADO1, ANCLADA, GRADO1_O_ANCLADA, NO_REESCRIBIR, SOLO_VERIFICAR }
 
@@ -34,29 +38,61 @@ public final class TablaCalibracion {
         public final String remedida;
         /** Criterios que se dispensan (vacio si ninguno). */
         public final String dispensa;
-        /** Decision de Diego que exige para escribirse (PA-24, PA-14); vacio si ninguna. */
-        public final String exigeDecision;
+        /** Lo unico que la dispensa cubre (P12 §5.2). */
+        public final List<Decisiones.Alcance> alcance;
+        /** Regla de la re-medida con dispensa: RF-CAL-18 o CERTIFICADO; vacio = la normal. */
+        public final String reglaRemedida;
+        /** Codigo que tiene que tener un acta ACEPTADA antes (0 si ninguno). */
+        public final char requiereAceptado;
+        /** true: se calibra solo, sin otros codigos en la misma pulsacion. */
+        public final boolean solo;
+        /** true: exige todos los pasos PATRON del codigo hechos, no solo AJUSTE y RE-MEDIDA. */
+        public final boolean todosLosPasos;
         public final String origen;
-        /** Aviso que la tarjeta y el acta muestran siempre (contradicciones abiertas, estado sin decidir). */
+        /** Aviso que la tarjeta y el acta muestran siempre. */
         public final String aviso;
 
-        Fila(char codigo, Metodo metodo, String remedida, String dispensa, String exigeDecision, String origen,
-             String aviso) {
+        Fila(char codigo, Metodo metodo, String remedida, String dispensa, List<Decisiones.Alcance> alcance,
+             String reglaRemedida, char requiereAceptado, boolean solo, boolean todosLosPasos, String origen, String aviso) {
             this.codigo = codigo;
             this.metodo = metodo;
             this.remedida = remedida;
             this.dispensa = dispensa;
-            this.exigeDecision = exigeDecision;
+            this.alcance = alcance;
+            this.reglaRemedida = reglaRemedida;
+            this.requiereAceptado = requiereAceptado;
+            this.solo = solo;
+            this.todosLosPasos = todosLosPasos;
             this.origen = origen;
             this.aviso = aviso;
+        }
+
+        static Fila simple(char k, Metodo m, String remedida, String origen, String aviso) {
+            return new Fila(k, m, remedida, "", Collections.<Decisiones.Alcance>emptyList(), "", (char) 0, false, false,
+                    origen, aviso);
         }
 
         public boolean escribible() {
             return metodo == Metodo.GRADO1 || metodo == Metodo.ANCLADA || metodo == Metodo.GRADO1_O_ANCLADA;
         }
 
-        public boolean necesitaOscuro() {
-            return metodo == Metodo.ANCLADA;
+        /** El incumplimiento (criterio, patron, desviacion %) queda dentro de lo dispensado. */
+        public boolean dispensado(String criterio, String patron, double dev) {
+            for (Decisiones.Alcance a : alcance) {
+                if (a.cubre(criterio, patron, dev)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public Decisiones.Alcance alcanceDe(String criterio, String patron) {
+            for (Decisiones.Alcance a : alcance) {
+                if (a.criterio.equals(criterio) && a.patron.equals(patron)) {
+                    return a;
+                }
+            }
+            return null;
         }
 
         public String texto() {
@@ -77,50 +113,73 @@ public final class TablaCalibracion {
     private TablaCalibracion() { }
 
     private static final String AVISO_B = "Contradicción abierta QA-3612-06: la recta anclada da P49 a −10,2 % (SPEC) "
-            + "o −11,1 % (REFORM) del certificado y la re-medida exige ±10 %: previsiblemente NO CONFORME. El umbral no "
-            + "se toca; lo decide Diego y se cierra midiendo.";
-    /** Con PA-24 decidida: la dispensa cubre el ajuste y la re-medida se juzga frente a la curva escrita. */
-    private static final String AVISO_B_PA24 = "Con PA-24, la re-medida en P49 se juzga con RF-CAL-18 frente a la curva "
-            + "escrita (y la reproducción de la campaña); la desviación frente al certificado se anota en el acta y, si pasa "
-            + "de ±10 %, como incumplimiento DISPENSADO por PA-24 (QA-3612-06, sin tocar el umbral).";
+            + "o −11,1 % (REFORM) del certificado y la re-medida exige ±10 %. La regla de la re-medida del b la confirma "
+            + "Diego (REMEDIDA-b en decisiones.csv); el umbral no se toca.";
 
-    /** Tabla sin decisiones: el 5 y el b solo se verifican. */
+    /** Tabla de SLV-002 sin decisiones (pruebas). */
     public static Map<Character, Fila> tabla() {
-        return tabla(Decisiones.ninguna());
+        return tabla(Decisiones.ninguna(), EQUIPO_CON_TABLA);
     }
 
-    public static Map<Character, Fila> tabla(Decisiones d) {
+    public static Map<Character, Fila> tabla(Decisiones d, String equipo) {
         Map<Character, Fila> t = new LinkedHashMap<>();
-        t.put('1', new Fila('1', Metodo.NO_REESCRIBIR, "P28", "RF-CAL-14/15/16", "", "Diego 19-sep 11:20; REFORM §3.1", ""));
-        t.put('2', new Fila('2', Metodo.NO_REESCRIBIR, "P25", "RF-CAL-14/15", "", "Diego, opción b; REFORM §3.2", ""));
-        t.put('3', new Fila('3', Metodo.GRADO1_O_ANCLADA, "P123", "", "", "PA-16", ""));
-        t.put('4', new Fila('4', Metodo.GRADO1_O_ANCLADA, "P11", "", "", "PA-16", ""));
-        t.put('5', d.tomada("PA-14")
-                ? new Fila('5', Metodo.ANCLADA, "P81", "", "PA-14", "PA-14: " + d.decision("PA-14").texto(),
-                "PA-14: recta anclada; cobertura de RF-APP-42 (el ancla cuenta como un nivel); ajuste con todos los "
-                + "patrones del 5 medidos en el banco")
-                : new Fila('5', Metodo.SOLO_VERIFICAR, "P81", "", "PA-14", "PA-14 sin decidir",
+        if (!EQUIPO_CON_TABLA.equals(equipo)) {
+            String av = "La tabla RF-CAL-37 de este APK es la de " + EQUIPO_CON_TABLA + ": para " + equipo
+                    + " no hay tabla ni decisiones. Sólo verificar (QA-3613-03).";
+            for (char k : Fabrica.CODIGOS) {
+                t.put(k, Fila.simple(k, Metodo.SOLO_VERIFICAR, "", "sin tabla para " + equipo, av));
+            }
+            return t;
+        }
+        t.put('1', Fila.simple('1', Metodo.NO_REESCRIBIR, "P28", "Diego 19-sep 11:20; REFORM §3.1", ""));
+        t.put('2', Fila.simple('2', Metodo.NO_REESCRIBIR, "P25", "Diego, opción b; REFORM §3.2", ""));
+        t.put('3', Fila.simple('3', Metodo.GRADO1_O_ANCLADA, "P123", "PA-16", ""));
+        t.put('4', Fila.simple('4', Metodo.GRADO1_O_ANCLADA, "P11", "PA-16", ""));
+        Decisiones.Decision pa14 = d.decision("PA-14", equipo);
+        t.put('5', pa14 != null
+                ? new Fila('5', Metodo.ANCLADA, "P81", "", Collections.<Decisiones.Alcance>emptyList(), "", '8', false, true,
+                "PA-14: " + pa14.texto(), "PA-14: recta anclada con la cobertura de RF-APP-42 (el ancla cuenta como un "
+                + "nivel: rango 0-102); exige sus 13 pasos del banco hechos; tras el acta ACEPTADA del 8")
+                : Fila.simple('5', Metodo.SOLO_VERIFICAR, "P81", "PA-14 sin decidir",
                 "código 5 de fábrica, fuera de tolerancia, sin decisión (PA-14 sin decidir)"));
-        t.put('6', new Fila('6', Metodo.GRADO1_O_ANCLADA, "P86", "", "", "PA-16", ""));
-        t.put('7', new Fila('7', Metodo.SOLO_VERIFICAR, "", "", "", "§12.1", ""));
-        t.put('8', new Fila('8', Metodo.ANCLADA, "P43", "", "", "REFORM §3.3", ""));
-        t.put('a', new Fila('a', Metodo.SOLO_VERIFICAR, "", "", "", "§12.1", ""));
-        t.put('b', d.tomada("PA-24")
-                ? new Fila('b', Metodo.ANCLADA, "P49", "RF-CAL-14/15 (PA-24)", "PA-24",
-                "REFORM §3.4; PA-24: " + d.decision("PA-24").texto(), AVISO_B_PA24)
-                : new Fila('b', Metodo.SOLO_VERIFICAR, "P49", "", "PA-24", "REFORM §3.4; PA-24 sin decidir",
-                "PA-24 sin decidir: el b no se escribe (sólo verificar). " + AVISO_B));
-        t.put('c', new Fila('c', Metodo.SOLO_VERIFICAR, "", "", "", "§12.1", ""));
-        t.put('d', new Fila('d', Metodo.SOLO_VERIFICAR, "", "", "", "§12.1", ""));
+        t.put('6', Fila.simple('6', Metodo.GRADO1_O_ANCLADA, "P86", "PA-16", ""));
+        t.put('7', Fila.simple('7', Metodo.SOLO_VERIFICAR, "", "§12.1", ""));
+        t.put('8', new Fila('8', Metodo.ANCLADA, "P43", "", Collections.<Decisiones.Alcance>emptyList(), "", (char) 0,
+                true, false, "REFORM §3.3", "El 8 va solo y primero; el b y el 5, en un acta posterior (P12 §6.3)"));
+        t.put('a', Fila.simple('a', Metodo.SOLO_VERIFICAR, "", "§12.1", ""));
+        Decisiones.Decision pa24 = d.decision("PA-24", equipo);
+        String regla = d.valor("REMEDIDA-b", equipo);
+        boolean reglaOk = "RF-CAL-18".equals(regla) || "CERTIFICADO".equals(regla);
+        if (pa24 != null && reglaOk) {
+            t.put('b', new Fila('b', Metodo.ANCLADA, "P49", "RF-CAL-14 (PA-24)", pa24.alcance, regla, '8', false, false,
+                    "REFORM §3.4; " + pa24.texto() + "; re-medida: " + d.decision("REMEDIDA-b", equipo).texto(),
+                    "Dispensa limitada a su alcance: " + alcanceTexto(pa24.alcance) + ". Re-medida del b por "
+                            + regla + ("RF-CAL-18".equals(regla) ? ": sólo comprueba la reproducción de la campaña y "
+                            + "la curva escrita, no el certificado (P12 §4.2)" : "")));
+        } else {
+            t.put('b', Fila.simple('b', Metodo.SOLO_VERIFICAR, "P49", "REFORM §3.4",
+                    (pa24 == null ? "PA-24 sin decidir" : "falta la regla de la re-medida del b (REMEDIDA-b)")
+                            + " en decisiones.csv: el b no se escribe. " + AVISO_B));
+        }
+        t.put('c', Fila.simple('c', Metodo.SOLO_VERIFICAR, "", "§12.1", ""));
+        t.put('d', Fila.simple('d', Metodo.SOLO_VERIFICAR, "", "§12.1", ""));
         return t;
+    }
+
+    private static String alcanceTexto(List<Decisiones.Alcance> l) {
+        StringBuilder sb = new StringBuilder();
+        for (Decisiones.Alcance a : l) {
+            sb.append(sb.length() == 0 ? "" : "; ").append(a.texto());
+        }
+        return sb.length() == 0 ? "nada" : sb.toString();
     }
 
     public static Fila fila(char k) {
         return tabla().get(k);
     }
 
-    public static Fila fila(char k, Decisiones d) {
-        return tabla(d).get(k);
+    public static Fila fila(char k, Decisiones d, String equipo) {
+        return tabla(d, equipo).get(k);
     }
 
     // ------------------------------------------------------ codigos heredados (T-C41)

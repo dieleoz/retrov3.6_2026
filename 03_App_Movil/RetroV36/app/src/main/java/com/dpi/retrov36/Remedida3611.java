@@ -82,7 +82,7 @@ public final class Remedida3611 {
      */
     public static Resultado evaluarConDispensa(String patron, double cert, List<double[]> xPorCol, List<double[]> rPorCol,
                                                double xBanco, int kBanco, double sRepRel, String origenSrep,
-                                               Ecuacion curva, String dispensa) {
+                                               Ecuacion curva, String dispensa, Decisiones.Alcance alcance) {
         double xRem = mediaDeMedias(xPorCol);
         double rMed = mediaDeMedias(rPorCol);
         List<double[]> pred = new ArrayList<>();
@@ -105,13 +105,17 @@ public final class Remedida3611 {
         boolean ok18 = Math.abs(rMed - rPred) <= tol18;
         double lim3 = Math.max(0.10 * cert, 2);
         boolean fuera = Math.abs(rMed - cert) > lim3;
+        double dev = 100 * (rMed - cert) / cert;
+        // P12 §5.2: "dispensado" solo dentro del alcance que Diego firmo para ese patron; fuera, no conforme.
+        boolean dispensado = fuera && alcance != null && alcance.cubre("RF-CAL-14", patron, dev);
         String t = String.format(Locale.US, "%s: x %.1f frente a %.1f del banco (%+.1f %%, límite ±%.1f) %s; RF-CAL-18 frente a "
                         + "la curva escrita: R %.1f, predicha %.1f (%+.1f, tolerancia ±%.1f) %s; frente al certificado %.0f: "
                         + "%+.1f %% (límite ±%.1f)%s",
                 patron, xRem, xBanco, 100 * (xRem - xBanco) / xBanco, lim2, ok2 ? "OK" : "FALLA", rMed, rPred, rMed - rPred,
                 tol18, ok18 ? "OK" : "FALLA", cert, 100 * (rMed - cert) / cert, lim3,
-                fuera ? " INCUMPLE, dispensado por " + dispensa : " cumple");
-        return new Resultado(ok2 && ok18 ? "CONFORME" : "NO_CONFORME", xRem, rMed, t);
+                !fuera ? " cumple" : dispensado ? " INCUMPLE, dispensado por " + dispensa + " (alcance " + alcance.texto() + ")"
+                        : " INCUMPLE FUERA DE LO DISPENSADO" + (alcance == null ? "" : " (alcance " + alcance.texto() + ")"));
+        return new Resultado(ok2 && ok18 && (!fuera || dispensado) ? "CONFORME" : "NO_CONFORME", xRem, rMed, t);
     }
 
     /** Agrega las colocaciones validas (media de medias) y evalua. */

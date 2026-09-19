@@ -144,7 +144,8 @@ public class AdminActivity extends Base {
                 v -> startActivity(new android.content.Intent(this, CalibrarActivity.class)));
         btnAceptar = boton("Aceptar acta: en Calibrar este equipo",
                 v -> startActivity(new android.content.Intent(this, CalibrarActivity.class)));
-        btnRechazar = boton("Rechazar acta (no se graba fecha)", v -> rechazarActa());
+        btnRechazar = boton("Rechazar acta: en Calibrar este equipo (restaura lo escrito)",
+                v -> startActivity(new android.content.Intent(this, CalibrarActivity.class)));
         fila(btnAceptar, btnRechazar);
         txtActa = texto("");
         txtActa.setTypeface(Typeface.MONOSPACE);
@@ -224,13 +225,14 @@ public class AdminActivity extends Base {
         txtCal.setText(s.datosCalibracion() + (v362 ? "" : "\nGrabar serie y restaurar temperatura exigen la 3.6.2."));
         btnSerie.setEnabled(ab && !ocupado && v362);
         Acta acta = s.acta;
-        txtActa.setText(acta == null ? "Sin acta: se abre con el primer #S." : acta.texto()
-                + (acta.cerrada() ? "" : "\nPara aceptar: " + (acta.motivoNoAceptable() == null ? "listo"
-                : acta.motivoNoAceptable())));
+        txtActa.setText(acta == null ? "Sin acta en curso (el acta se lleva en Calibrar este equipo)." : acta.texto()
+                + (acta.cerrada() ? "" : "\nPara aceptar (en Calibrar este equipo): "
+                + (acta.motivoNoAceptableSalvoVerificacionFinal() == null ? "falta sólo la verificación final"
+                : acta.motivoNoAceptableSalvoVerificacionFinal())));
         Acta.Codigo ult = acta == null || acta.codigos().isEmpty() ? null : acta.codigos().get(acta.codigos().size() - 1);
         btnRemedida.setEnabled(ab && !ocupado && ult != null && !acta.cerrada());
         btnAceptar.setEnabled(!ocupado && acta != null && !acta.cerrada());
-        btnRechazar.setEnabled(ab && !ocupado && acta != null && !acta.cerrada());
+        btnRechazar.setEnabled(!ocupado && acta != null && !acta.cerrada());
         if (ult != null) {
             List<String> et = new ArrayList<>();
             patronesRemedida = new ArrayList<>();
@@ -532,387 +534,8 @@ public class AdminActivity extends Base {
         refrescar();
     }
 
-    private void confirmarEscritura() {
-        if (propuesta != null || propuesta == null) {
-            alerta("Escribir", "Desde la 3.6.13 las curvas se escriben sólo en \"Calibrar este equipo\" (tabla RF-CAL-37).");
-            return;
-        }
-        final Asistente.Propuesta p = propuesta;
-        if (p == null || !p.escribible()) {
-            return;
-        }
-        final char k = p.codigo;
-        final Tramas.TramaS ts = Tramas.tramaS(k, p.ajuste.ecuacion);
-        if (ts == null) {
-            alerta("Trama", "La trama #S no cabe en " + Tramas.MAX_TRAMA + " bytes.");
-            return;
-        }
-        String fw = Asistente.criterioFirmwareS(ts.enviada);
-        if (fw != null) {
-            // Mismo criterio que #S del firmware 3.6.1: no se envia nada que vaya a dar #ERR sin explicacion.
-            alerta("No se escribe", fw);
-            return;
-        }
-        Ecuacion ant = Sesion.get().ecuacionVigente(k);
-        Ecuacion nue = ts.enviada;
-        StringBuilder m = new StringBuilder();
-        m.append("Código ").append(k).append(" (").append(Fabrica.nombre(k)).append(")\n\n");
-        m.append("         actual            nuevo\n");
-        String[] nom = {"c3", "c2", "c1", "c0"};
-        double[] a = ant.comoVector();
-        double[] n = nue.comoVector();
-        for (int i = 0; i < 4; i++) {
-            m.append(nom[i]).append("  ").append(Tramas.coeficiente(a[i])).append("  ")
-                    .append(Tramas.coeficiente(n[i])).append('\n');
-        }
-        m.append("\nR sobre los patrones (actual -> nuevo, certificado):\n");
-        for (Asistente.Punto q : p.puntos) {
-            m.append(String.format(Locale.US, "%s: %.0f -> %.0f  (%.0f)\n", q.patron.nombre,
-                    (double) ant.respuestaFloat32((int) Math.round(q.x)),
-                    (double) nue.respuestaFloat32((int) Math.round(q.x)), q.patron.valor));
-        }
-        m.append("\nTrama: ").append(ts.texto).append("\n\nAntes de escribir se guarda una copia de los 12 juegos y de la temperatura. "
-                + "Ajuste contra patrones, no calibración trazable.");
-        new AlertDialog.Builder(this).setTitle("Confirmar escritura en EEPROM")
-                .setMessage(m.toString())
-                .setPositiveButton("Escribir", (d, w) -> conformidadYEscribir(k, ts, p))
-                .setNegativeButton("Cancelar", null).show();
-    }
-
-    /**
-     * Si la curva incumple RF-CAL-14/15/16 (propuestos), la app avisa pero no bloquea: pide la
-     * conformidad del superadministrador con una nota, que queda en el acta (3.6.9, decision de
-     * Diego para el blanco grado 1).
-     */
-    private void conformidadYEscribir(char k, Tramas.TramaS ts, Asistente.Propuesta p) {
-        if (p.incumplimientos.isEmpty()) {
-            escribir(k, ts, p.metodo, "");
-            return;
-        }
-        LinearLayout c = new LinearLayout(this);
-        c.setOrientation(LinearLayout.VERTICAL);
-        c.setPadding(dp(16), dp(8), dp(16), 0);
-        TextView t = new TextView(this);
-        StringBuilder sb = new StringBuilder("La curva incumple criterios propuestos (no bloquean):\n");
-        for (String s : p.incumplimientos) {
-            sb.append("- ").append(s).append('\n');
-        }
-        t.setText(sb.toString());
-        c.addView(t);
-        final CheckBox ok = new CheckBox(this);
-        ok.setText("El superadministrador da su conformidad");
-        c.addView(ok);
-        final EditText nota = new EditText(this);
-        nota.setHint("Nota obligatoria (quién y por qué)");
-        c.addView(nota);
-        new AlertDialog.Builder(this).setTitle("Conformidad del superadministrador").setView(c)
-                .setPositiveButton("Escribir", (d, w) -> {
-                    String n = nota.getText().toString().trim();
-                    if (!ok.isChecked() || n.isEmpty()) {
-                        alerta("Conformidad", "Hace falta marcar la conformidad y escribir la nota.");
-                        return;
-                    }
-                    escribir(k, ts, p.metodo, "Conformidad del superadministrador pese a incumplir "
-                            + String.join("; ", p.incumplimientos) + ". Nota: " + n);
-                })
-                .setNegativeButton("Cancelar", null).show();
-    }
-
-    /** Relee #G,k#; null si no se pudo. */
-    private Ecuacion releer(char k) throws IOException, InterruptedException {
-        Cliente.Respuesta g = Cliente.instancia().pedir("#G," + k + "#", Tramas.Tipo.ADMIN, Cliente.TIMEOUT_ADMIN_MS);
-        Ecuacion e = g.valida() ? Tramas.parsearG(g.trama, k) : null;
-        if (e != null) {
-            Sesion.get().leidas[Fabrica.indice(k)] = e;
-        }
-        return e;
-    }
-
-    /**
-     * Condicion C3: si la relectura no coincide con lo escrito, se vuelve al
-     * estado anterior: #F,k# si el anterior era el de fabrica (RF-APP-18: nunca
-     * se reescribe fabrica con #S); si no, #S con los coeficientes anteriores.
-     */
-    private String restaurar(char k, Ecuacion anterior) throws IOException, InterruptedException {
-        boolean eraFabrica = anterior.igualFloat32(Fabrica.ecuacion(k));
-        String trama;
-        if (eraFabrica) {
-            trama = "#F," + k + "#";
-        } else {
-            Tramas.TramaS ts = Tramas.tramaS(k, anterior);
-            if (ts == null) {
-                return "no se pudo formar la trama de restauración";
-            }
-            trama = ts.texto;
-        }
-        Cliente.Respuesta r = Cliente.instancia().pedir(trama, Tramas.Tipo.ADMIN, 5000);
-        String res = resultado(r);
-        Ecuacion e = releer(k);
-        // #F repone el valor de ROM (misma impresion: ULP_G). #S con los valores
-        // anteriores pasa otra vez por strtod: impresion + strtod + impresion.
-        boolean ok = e != null && e.igualFloat32(anterior, eraFabrica ? Ecuacion.ULP_G
-                : Ecuacion.ULP_S + Ecuacion.ULP_G);
-        return "restauración con " + (eraFabrica ? "#F," + k + "#" : "#S (valores anteriores)") + " -> " + res
-                + (ok ? "; la relectura coincide con el estado anterior" : "; la relectura NO coincide con el estado anterior: "
-                + (e == null ? "sin relectura" : e.toString()));
-    }
-
-    /**
-     * Comprobacion por evaluacion tras #S (la que importa de verdad): #E,k,x en
-     * x = 500, 1000, 2000, 3000, 4000 tiene que dar lo mismo que la curva que la
-     * app queria escribir, emulada en float32, con +/-1 cuenta.
-     * @return null si cuadra; si no, el detalle.
-     */
-    private String comprobarPorE(char k, Ecuacion enviada) throws IOException, InterruptedException {
-        StringBuilder mal = new StringBuilder();
-        for (int x : Pruebas.X_COMPROBACION) {
-            Cliente.Respuesta r = Cliente.instancia().pedir("#E," + k + "," + x + "#", Tramas.Tipo.ADMIN,
-                    Cliente.TIMEOUT_ADMIN_MS);
-            Integer v = r.valida() ? Tramas.parsearE(r.trama, k) : null;
-            int esperado = enviada.respuestaFloat32(x);
-            if (v == null) {
-                mal.append(" x=").append(x).append(": ").append(r.describir()).append(';');
-            } else if (Math.abs(v - esperado) > 1) {
-                mal.append(" x=").append(x).append(": #E=").append(v).append(", esperado ").append(esperado).append(';');
-            }
-        }
-        return mal.length() == 0 ? null : "#E no reproduce la curva enviada:" + mal;
-    }
-
-    private void escribir(char k, Tramas.TramaS ts, String metodo, String conformidad) {
-        op("Escribir código " + k, true, () -> {
-            Sesion ses = Sesion.get();
-            if (ses.acta == null || ses.acta.cerrada()) {
-                Acta en = Campanas.actaEnCurso(this);
-                if (en == null) {
-                    Campanas.adjuntarActa(this, nuevaActa());
-                }
-                Registro.nota("acta abierta:\n" + ses.acta.texto());
-            }
-            String no = ses.acta.motivoNoEscribir(k);
-            if (no != null) {
-                return "No se escribe: " + no;
-            }
-            String copia = leerTodo("copia antes de escribir el codigo " + k);
-            Registro.nota("copia previa: " + copia);
-            Ecuacion anterior = Sesion.get().leidas[Fabrica.indice(k)];
-            if (anterior == null) {
-                return "no se pudo leer el estado anterior del código " + k + ": no se escribe nada";
-            }
-            ses.acta.escribiendo(k, anterior, ts.enviada);
-            Cliente.Respuesta r = Cliente.instancia().pedir(ts.texto, Tramas.Tipo.ADMIN, 5000);
-            String res = resultado(r);
-            Ecuacion e = releer(k);
-            String estado = e == null ? "la relectura #G falló"
-                    : (e.igualFloat32(ts.enviada, Ecuacion.ULP_S) ? "la relectura coincide con lo enviado"
-                    : (e.igualFloat32(anterior) ? "la relectura coincide con el estado ANTERIOR"
-                    : "la relectura no coincide ni con lo enviado ni con lo anterior: " + e));
-            String salida;
-            if (!"OK".equals(res)) {
-                // Ante #ERR o sin respuesta no se puede afirmar que no haya cambiado nada.
-                salida = "#S -> " + res + ". Estado tras releer: " + estado + ".";
-                if (e == null || !e.igualFloat32(anterior)) {
-                    salida += " Se restaura el estado anterior: " + restaurar(k, anterior);
-                }
-            } else if (e != null && e.igualFloat32(ts.enviada, Ecuacion.ULP_S)) {
-                String porE = comprobarPorE(k, ts.enviada);
-                if (porE == null) {
-                    Acta acta = Sesion.get().acta;
-                    String tramaG = "#G," + k + "," + Tramas.coeficiente(e.c3) + "," + Tramas.coeficiente(e.c2) + ","
-                            + Tramas.coeficiente(e.c1) + "," + Tramas.coeficiente(e.c0) + "#";
-                    Ecuacion fab = Fabrica.ecuacion(k);
-                    String osc = String.format(Locale.US, "Oscuro (x = %.0f): R %.1f (fábrica %.1f), valor que acepta Diego (P9-B13)",
-                            Asistente.X_OSCURO, e.evaluar(Asistente.X_OSCURO), fab.evaluar(Asistente.X_OSCURO));
-                    acta.escrito(k, tramaG, e, osc, metodo, conformidad);
-
-                    salida = "#S OK y " + estado + " (" + Ecuacion.ULP_S + " ulp); #E en 5 puntos coincide con la curva "
-                            + "enviada (±1). Ahora: re-medida de verificación del código " + k + " (RF-CAL-18). "
-                            + "No se escribe otro código antes (P9-B8). La fecha de calibración se graba al aceptar el acta.";
-                } else {
-                    salida = "#S OK pero " + porE + ". Se restaura el estado anterior: " + restaurar(k, anterior);
-                }
-            } else {
-                salida = "#S OK pero " + estado + ". Se restaura el estado anterior: " + restaurar(k, anterior);
-            }
-            if (!salida.startsWith("#S OK y") && Sesion.get().acta.escribiendo() == k) {
-                Sesion.get().acta.sinEscribir(k, salida);
-            }
-            Sesion.get().guardarCoeficientes(this, "despues de escribir el codigo " + k);
-            final String aviso = salida;
-            if (!salida.startsWith("#S OK y")) {
-                enUi(() -> alerta("Escritura del código " + k, aviso));
-            }
-            return salida;
-        });
-    }
-
-    // ------------------------------------------------------------------ acta (3.6.8)
-
-    /** Acta nueva con el protocolo de la campana de este equipo (P9-B3). */
-    private Acta nuevaActa() {
-        Sesion s = Sesion.get();
-        int[] pr = {1, 9};
-        Campana c = Campanas.abierta();
-        if (c != null && c.esDeEsteEquipo(s.mac)) {
-            pr = c.protocolo();
-        }
-        return new Acta(s.serie(), s.mac, s.firmware(), pr[0], pr[1], s.disparosAsentamiento, Sesion.ahoraIso());
-    }
-
-    /**
-     * RF-CAL-18: re-medida del ultimo codigo escrito sobre un patron de su clase, con el
-     * protocolo fijo del acta. En cada disparo: 'e' (x) y el codigo (R).
-     */
-    private void remedida() {
-        final Sesion s = Sesion.get();
-        final Acta acta = s.acta;
-        if (acta == null || acta.codigos().isEmpty() || !leerParametros()) {
-            return;
-        }
-        final Acta.Codigo cod = acta.codigos().get(acta.codigos().size() - 1);
-        int pos = spRemedida.getSelectedItemPosition();
-        if (pos < 0 || pos >= patronesRemedida.size()) {
-            alerta("Re-medida", "Elija un patrón de la clase del código " + cod.k + ".");
-            return;
-        }
-        final Patron p = patronesRemedida.get(pos);
-        new AlertDialog.Builder(this).setTitle("Re-medida del código " + cod.k)
-                .setMessage("Coloque " + p + ". Protocolo del acta: " + acta.colocaciones + " colocaciones × "
-                        + acta.disparos + " disparos, " + acta.asentamiento + " de asentamiento.")
-                .setPositiveButton("OK", (d, w) -> {
-                    ocupado = true;
-                    refrescar();
-                    Cliente.instancia().ejecutar(() -> colocacionRemedida(acta, cod, p, 1,
-                            new ArrayList<double[]>(), new ArrayList<double[]>()));
-                })
-                .setNegativeButton("Cancelar", null).show();
-    }
-
-    private void colocacionRemedida(Acta acta, Acta.Codigo cod, Patron p, int k, List<double[]> rs, List<double[]> xs) {
-        Sesion s = Sesion.get();
-        String error = null;
-        try {
-            for (int i = 0; i < acta.asentamiento; i++) {
-                Cliente.Respuesta a = Cliente.instancia().pedir("e", Tramas.Tipo.MEDIDA, Cliente.TIMEOUT_MEDIDA_MS);
-                Registro.nota("re-medida: disparo de asentamiento, descartado: " + a.describir());
-            }
-            List<Double> r = new ArrayList<>();
-            List<Double> x = new ArrayList<>();
-            for (int i = 0; i < acta.disparos; i++) {
-                Cliente.Respuesta re = Cliente.instancia().pedir("e", Tramas.Tipo.MEDIDA, Cliente.TIMEOUT_MEDIDA_MS);
-                Cliente.Respuesta rk = Cliente.instancia().pedir(String.valueOf(cod.k), Tramas.Tipo.MEDIDA,
-                        Cliente.TIMEOUT_MEDIDA_MS);
-                Integer vx = re.valida() ? Tramas.valorMedida(re.trama) : null;
-                Integer vr = rk.valida() ? Tramas.valorMedida(rk.trama) : null;
-                if (vx != null && vx > 0 && vr != null) {
-                    x.add((double) vx);
-                    r.add((double) vr);
-                } else {
-                    Registro.nota("re-medida: par no válido: e -> " + re.describir() + ", " + cod.k + " -> " + rk.describir());
-                }
-            }
-            xs.add(Estadistica.aVector(x));
-            rs.add(Estadistica.aVector(r));
-        } catch (IOException | InterruptedException | RuntimeException e) {
-            error = EnlaceSerie.descripcion(e);
-        }
-        final String ferr = error;
-        enUi(() -> {
-            if (ferr == null && k < acta.colocaciones) {
-                new AlertDialog.Builder(this).setTitle("Colocación " + (k + 1) + " de " + acta.colocaciones)
-                        .setMessage("Levante el equipo y vuelva a apoyarlo sobre " + p.nombre + ". Pulse OK cuando esté apoyado.")
-                        .setCancelable(false)
-                        .setPositiveButton("OK", (d, w) -> Cliente.instancia().ejecutar(
-                                () -> colocacionRemedida(acta, cod, p, k + 1, rs, xs)))
-                        .show();
-                return;
-            }
-            ocupado = false;
-            if (ferr != null) {
-                alerta("Re-medida", "Interrumpida: " + ferr + ". No cuenta; repítala.");
-            } else {
-                Acta.Remedida rm = Acta.evaluarRemedida(p.nombre, rs, xs, cod.leida, Asistente.S_REP_REL);
-                acta.remedida(cod.k, rm);
-                Registro.nota("re-medida código " + cod.k + ": " + rm.texto);
-                alerta("Re-medida del código " + cod.k, rm.texto);
-            }
-            refrescar();
-        });
-    }
-
-    private void aceptarActa() {
-        final Acta acta = Sesion.get().acta;
-        if (acta == null || acta.motivoNoAceptable() != null) {
-            return;
-        }
-        new AlertDialog.Builder(this).setTitle("Aceptar el acta")
-                .setMessage(acta.texto() + "\nAl aceptar se graba la fecha de calibración de hoy (#SC), una sola vez.")
-                .setPositiveButton("Aceptar y grabar fecha", (d, w) -> op("Aceptar acta", true, () -> {
-                    String t = grabarFechaHoy();
-                    acta.aceptar(Sesion.ahoraIso(), ultimaFechaGrabada);
-                    guardarActa(acta);
-                    return t;
-                }))
-                .setNegativeButton("Cancelar", null).show();
-    }
-
-    private void rechazarActa() {
-        final Acta acta = Sesion.get().acta;
-        if (acta == null || acta.cerrada()) {
-            return;
-        }
-        final EditText e = new EditText(this);
-        e.setHint("Motivo");
-        new AlertDialog.Builder(this).setTitle("Rechazar el acta").setView(e)
-                .setMessage("No se grabará fecha de calibración. Lo escrito sigue en el equipo: restaure a fábrica "
-                        + "si no debe quedar.")
-                .setPositiveButton("Rechazar", (d, w) -> {
-                    acta.rechazar(Sesion.ahoraIso(), e.getText().toString().trim());
-                    guardarActa(acta);
-                    refrescar();
-                })
-                .setNegativeButton("Cancelar", null).show();
-    }
-
-    private void guardarActa(Acta acta) {
-        try {
-            java.io.File f = Campanas.guardarActa(this, acta.texto());
-            Registro.nota("acta guardada en " + f.getName() + ":\n" + acta.texto());
-        } catch (IOException e) {
-            Registro.nota("no se pudo guardar el acta: " + e.getMessage() + "\n" + acta.texto());
-        }
-    }
-
-    // ------------------------------------------------------ serie y fecha (3.6.2)
-
-    /**
-     * Tras una calibracion verificada: #SC con la fecha de hoy y relectura #GC.
-     * Llamar desde el hilo de trabajo. Devuelve el texto para el operador.
-     */
-    private volatile String ultimaFechaGrabada;
-
-    private String grabarFechaHoy() throws IOException, InterruptedException {
-        ultimaFechaGrabada = null;
-        Sesion s = Sesion.get();
-        if (!s.es362()) {
-            return "Firmware " + s.firmware() + ": no tiene #SC, la fecha de calibración NO se graba.";
-        }
-        String hoy = Calibracion.hoy();
-        Cliente.Respuesta r = Cliente.instancia().pedir("#SC," + hoy + "#", Tramas.Tipo.ADMIN, 5000);
-        String res = resultado(r);
-        Cliente.Respuesta g = Cliente.instancia().pedir("#GC#", Tramas.Tipo.ADMIN, Cliente.TIMEOUT_ADMIN_MS);
-        String leida = Calibracion.fechaDe(g.trama);
-        if (leida != null) {
-            s.fechaCalibracion = leida;
-        }
-        if ("OK".equals(res) && hoy.equals(leida)) {
-            ultimaFechaGrabada = hoy;
-            return "Fecha de calibración " + hoy + " grabada y verificada con #GC# (vence "
-                    + Calibracion.vencimiento(hoy) + ").";
-        }
-        return "ATENCIÓN: la fecha de calibración no quedó grabada (#SC -> " + res + ", #GC# -> "
-                + g.describir() + ").";
-    }
+    // 3.6.14 (QA-3613-09, P12 §5.3): Avanzado ya no escribe curvas ni lleva actas. Se borro el codigo muerto
+    // de escritura, re-medida y aceptacion/rechazo de actas: todo eso vive en "Calibrar este equipo".
 
     private void grabarSerie() {
         final String serie = edSerie.getText().toString().trim();
@@ -1009,6 +632,11 @@ public class AdminActivity extends Base {
 
                         @Override
                         public void cerrar(Acta a) {
+                        }
+
+                        @Override
+                        public boolean aceptadoAntes(char c) {
+                            return false;
                         }
                     }, null, todos, k);
                     leerTodo("despues de " + trama);

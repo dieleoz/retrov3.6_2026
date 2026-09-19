@@ -129,6 +129,9 @@ public final class ImportadorCampana {
             }
             String org = "importada de " + origen + ", serie " + s.id;
             c.cerrar(n, s.veredicto, s.aceptada, s.nota.isEmpty() ? org : s.nota + " | " + org);
+            if (s.anulada != null) {
+                c.anular(n, s.anulada, "importada");   // 3.6.14: la anulada se trae anulada, con su motivo
+            }
             if (todo.elegida(s.patron) == s) {
                 if (yaElegidos.contains(s.patron)) {
                     r.avisos.add(s.patron + ": se mantiene la serie elegida por el operador");

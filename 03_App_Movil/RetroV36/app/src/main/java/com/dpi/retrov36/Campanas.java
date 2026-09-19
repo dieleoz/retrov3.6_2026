@@ -282,6 +282,33 @@ public final class Campanas {
         return guardarActa(ctx, "App RTV " + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")\n" + a.texto());
     }
 
+    /**
+     * P12 §6.3: true si entre las actas archivadas de este equipo (diarios acta_<clave>_*_diario.csv) hay una
+     * ACEPTADA con el codigo k conforme y no restaurado.
+     */
+    public static synchronized boolean aceptadoAntes(Context ctx, char k) throws IOException {
+        File curso = ficheroActaEnCurso(ctx);
+        File dir = curso.getParentFile();
+        String prefijo = curso.getName().replace("_curso.csv", "_");
+        File[] fs = dir == null ? null : dir.listFiles();
+        if (fs == null) {
+            return false;
+        }
+        for (File f : fs) {
+            if (!f.getName().startsWith(prefijo) || !f.getName().endsWith("_diario.csv")) {
+                continue;
+            }
+            try (InputStreamReader r = new InputStreamReader(new FileInputStream(f), StandardCharsets.UTF_8)) {
+                Acta a = Acta.leer(r);
+                Acta.Codigo c = a == null ? null : a.codigo(k);
+                if (a != null && a.aceptada() && c != null && c.conforme() && c.restaurado == null) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private static void archivarActa(File f) throws IOException {
         String sello = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
         File dest = new File(f.getParentFile(), f.getName().replace("_curso.csv", "_" + sello + "_diario.csv"));

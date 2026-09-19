@@ -135,6 +135,11 @@ public class CalibrarActivity extends Base {
             public void cerrar(Acta a) throws IOException {
                 Campanas.cerrarActaEnDisco(yo, a);
             }
+
+            @Override
+            public boolean aceptadoAntes(char k) throws IOException {
+                return Campanas.aceptadoAntes(yo, k);
+            }
         };
         FlujoCalibracion.Reloj reloj = new FlujoCalibracion.Reloj() {
             @Override
@@ -173,12 +178,36 @@ public class CalibrarActivity extends Base {
 
             @Override
             public boolean apagarYEncender() throws IOException, InterruptedException {
-                if (CalibrarActivity.this.preguntar("Persistencia", "Apague el equipo, espere 5 s y enciéndalo. Pulse OK "
-                        + "cuando esté encendido (la app vuelve a conectar sola).", "OK", "Cancelar", null) != 0) {
+                // P12 §5.1: hay que VER caer el enlace. Un vigia mira el enlace mientras el dialogo esta abierto.
+                EnlaceSerie en = EnlaceSerie.instancia();
+                final boolean[] cayo = {false};
+                Thread vigia = new Thread(() -> {
+                    long lim = SystemClock.elapsedRealtime() + 120000;
+                    while (SystemClock.elapsedRealtime() < lim && !Thread.currentThread().isInterrupted()) {
+                        if (!en.estaConectado()) {
+                            cayo[0] = true;
+                            return;
+                        }
+                        try {
+                            Thread.sleep(200);
+                        } catch (InterruptedException e) {
+                            return;
+                        }
+                    }
+                });
+                vigia.start();
+                if (CalibrarActivity.this.preguntar("Apagar y encender", "Apague el equipo (la app verá caer la conexión), "
+                        + "espere 5 s y enciéndalo. Pulse OK cuando esté encendido: la app vuelve a conectar sola.", "OK",
+                        "Cancelar", null) != 0) {
+                    vigia.interrupt();
                     return false;
                 }
+                vigia.join(1000);
+                vigia.interrupt();
+                if (!cayo[0] && en.estaConectado()) {
+                    return false;   // no se vio caer el enlace: no se apago de verdad
+                }
                 Sesion s = Sesion.get();
-                EnlaceSerie en = EnlaceSerie.instancia();
                 long limite = SystemClock.elapsedRealtime() + 45000;
                 while (!en.estaConectado() && SystemClock.elapsedRealtime() < limite) {
                     if (!en.estaConectando()) {
@@ -289,7 +318,8 @@ public class CalibrarActivity extends Base {
             final EditText e = campoPin();
             new AlertDialog.Builder(this).setTitle("PIN del equipo (una vez por conexión)").setView(e)
                     .setPositiveButton("Seguir", (d, w) -> {
-                        Sesion.get().pinAdmin = e.getText().toString().trim();
+                        String pin = e.getText().toString().trim();
+                        Sesion.get().pinAdmin = pin.isEmpty() ? null : pin;
                         flujo.pin(Sesion.get().pinAdmin);
                         accion(titulo, a, false);
                     })
@@ -312,8 +342,11 @@ public class CalibrarActivity extends Base {
             } catch (IOException | InterruptedException | RuntimeException e) {
                 fin = titulo + " interrumpido: " + EnlaceSerie.descripcion(e) + ". El acta queda en disco; al volver se retoma.";
             }
-            if (fin != null && fin.startsWith("PIN rechazado")) {
-                Sesion.get().pinAdmin = null;
+            if (flujo.necesitaPin()) {
+                Sesion.get().pinAdmin = null;   // QA-3613-02: cualquier fallo de #L vuelve a pedir el PIN
+            }
+            if ("Aceptar".equals(titulo) && fin != null && fin.startsWith("Acta ACEPTADA")) {
+                exportarTrasAceptar();
             }
             final String f = fin;
             Registro.nota("calibrar (" + titulo + "): " + f);
@@ -348,15 +381,23 @@ public class CalibrarActivity extends Base {
         final EditText e = new EditText(this);
         e.setHint("Motivo");
         caja.addView(e);
-        final CheckBox rest = new CheckBox(this);
-        rest.setText("Restaurar lo escrito a su curva anterior (verificado con #G)");
-        rest.setChecked(true);
-        caja.addView(rest);
         new AlertDialog.Builder(this).setTitle("Rechazar el acta").setView(caja)
-                .setMessage("No se grabará fecha. Si no restaura, lo escrito sigue en el equipo.")
+                .setMessage("No se grabará fecha. Todo lo escrito (también un #S sin resolver) vuelve a su curva "
+                        + "anterior, verificado con #G (P12 §6.8).")
                 .setPositiveButton("Rechazar", (d, w) -> accion("Rechazar",
-                        () -> flujo.rechazar(e.getText().toString().trim(), rest.isChecked()), rest.isChecked()))
+                        () -> flujo.rechazar(e.getText().toString().trim()), true))
                 .setNegativeButton("Cancelar", null).show();
+    }
+
+    /** P12 §6 (3.6.14): el ZIP se exporta al aceptar el acta (con la copia en Download/RTV/). */
+    private void exportarTrasAceptar() {
+        try {
+            Sesion s = Sesion.get();
+            Campanas.Exportacion ex = Campanas.exportarConHuellas(this, s.serie(), s.mac);
+            enUi(() -> compartirZip(ex, "Acta aceptada de " + s.serie() + ": ZIP de la campaña"));
+        } catch (IOException | RuntimeException e) {
+            Registro.nota("no se pudo exportar el ZIP al aceptar: " + e.getMessage());
+        }
     }
 
     /** Mientras el flujo escribe o re-mide, Atras no sale. */

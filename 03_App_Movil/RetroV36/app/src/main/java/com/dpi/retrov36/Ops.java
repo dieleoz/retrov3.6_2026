@@ -39,7 +39,29 @@ public final class Ops {
 
     /** #L,pin#: true si #OK#. */
     public boolean login(String pin) throws IOException, InterruptedException {
-        return pin != null && Tramas.esOk(pedir("#L," + pin + "#").trama);
+        return entrar(pin) == null;
+    }
+
+    /**
+     * #L,pin# (QA-3613-02): null si #OK#; si no, el motivo, distinguiendo el equipo mudo (enlace viejo tras
+     * apagar), el PIN rechazado y el PIN bloqueado tras 5 fallos (P12 §5.3, hay que apagar y encender).
+     */
+    public String entrar(String pin) throws IOException, InterruptedException {
+        if (pin == null || pin.isEmpty()) {
+            return "Falta el PIN del equipo.";
+        }
+        Cliente.Respuesta r = pedir("#L," + pin + "#");
+        if (!r.valida()) {
+            return "El equipo no respondió a #L (" + r.describir() + "): reconecte y vuelva a intentarlo.";
+        }
+        if (Tramas.esOk(r.trama)) {
+            return null;
+        }
+        String m = Tramas.motivoError(r.trama);
+        if ("PIN".equals(m)) {
+            return "PIN rechazado: vuelva a teclearlo (el firmware se bloquea tras 5 fallos).";
+        }
+        return "El equipo no admite el PIN (" + r.trama + "): si lleva 5 fallos, apague y encienda el equipo.";
     }
 
     /** #V#: la informacion, o null si no respondio bien. */

@@ -219,8 +219,8 @@ public final class BancoCola {
      */
     public Paso siguiente(Map<Integer, String> estados, int despuesDe) {
         for (Paso p : pasos) {
-            if (!estados.containsKey(p.orden)) {
-                return p;
+            if (!estados.containsKey(p.orden) || "REHACER".equals(estados.get(p.orden))) {
+                return p;   // REHACER: la serie se anulo y el paso vuelve a la cola (3.6.14)
             }
         }
         List<Paso> s = saltados(estados);

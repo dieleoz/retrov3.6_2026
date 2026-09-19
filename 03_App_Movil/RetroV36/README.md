@@ -4,7 +4,7 @@
 V3.6 no se puede probar: el firmware V3.6 no existe todavía en ningún equipo. Lo que sí debe funcionar
 es la medida contra un V3 2020 (SLV-002), y eso tampoco se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 3613`, `versionName 3.6.13` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.13 → 3613) (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 3614`, `versionName 3.6.14` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.14 → 3614) (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -29,7 +29,7 @@ no se versionan.
 
 ### Tests JVM
 
-`app/src/test/`: 13 clases, 146 tests en la 3.6.13, entre ellas `FlujoCalibracionTest` (el flujo "Calibrar este equipo" de
+`app/src/test/`: 15 clases, 169 tests en la 3.6.14, entre ellas `FlujoCalibracionTest` (el flujo "Calibrar este equipo" de
 extremo a extremo contra `EquipoSimulado`).
 `./gradlew testDebugUnitTest` **no arranca en esta máquina**: el ejecutor de Gradle 6.5 no encuentra su
 clase `GradleWorkerMain` porque la carpeta de usuario lleva `ñ` (`C:\Users\Diego.Zuñiga`). Se compilan
@@ -41,7 +41,8 @@ mkdir -p libtest   # copiar aquí (fuera de build/: clean lo borra) junit-4.13.2
 cd app && "$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;build/intermediates/javac/debugUnitTest/classes;../libtest/junit-4.13.2.jar;../libtest/hamcrest-core-1.3.jar" \
   org.junit.runner.JUnitCore com.dpi.retrov36.CalculoTest com.dpi.retrov36.ReceptorTest \
   com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest com.dpi.retrov36.CoherenciaRealTest com.dpi.retrov36.CampanaTest com.dpi.retrov36.Version367Test com.dpi.retrov36.Version368Test com.dpi.retrov36.Version369Test com.dpi.retrov36.Version3610Test \
-  com.dpi.retrov36.Version3611Test com.dpi.retrov36.Version3612Test com.dpi.retrov36.FlujoCalibracionTest
+  com.dpi.retrov36.Version3611Test com.dpi.retrov36.Version3612Test com.dpi.retrov36.FlujoCalibracionTest \
+  com.dpi.retrov36.TS00Test com.dpi.retrov36.BancoRehacerTest
 ```
 
 `FabricaTest` compara las 12 ecuaciones de la app con el **texto** de
@@ -114,6 +115,40 @@ Reglas que salen de ahí, en el código:
   envía sólo `1`-`8`, `a`-`d` y `9`.
 - Tras 3 peticiones seguidas sin un solo byte, la app aconseja apagar y encender el equipo y lo anota
   en el registro.
+
+## Cambios de la 3.6.14 (rehacer en el banco; QA-App-3.6.13; REVISION-Arquitectura-P12-V3.6.md)
+
+**Nada de esto se ha probado contra un equipo.** El flujo corre contra un `EquipoSimulado` que ya reproduce el
+registro real T4 (T-S00: 132 de 132 tramas `#`, `#G` 38/38; `TS00Test`).
+
+- **Rehacer en el banco (petición de Diego).** "Rehacer el paso anterior" (siempre visible) y "Rehacer patrón…"
+  (cualquier paso HECHO): la serie queda **ANULADA** en el diario (evento `ANULA`) con un motivo obligatorio, sale
+  del ajuste, de la A5 y de la s_rep, y el paso vuelve a la cola; la nueva serie pasa a ser la elegida. Preferencia
+  "Confirmar cada patrón antes de pasar al siguiente" ("¿Era P45? Sí / No, rehacer"), desactivada por defecto. El
+  resumen y `campana.csv` muestran las anuladas con su motivo; importar un ZIP las trae anuladas. Nada se borra.
+  Si la app se cierra entre el `ANULA` y el paso, al volver el paso ya está en la cola.
+- **P12 §5.1:** la persistencia y el apagado de T-C41 exigen **ver caer el enlace**; un OK sin apagar no vale.
+- **P12 §5.2 / QA-3612-06:** la dispensa del b cubre sólo su **alcance** en `decisiones.csv` (criterio, patrón o
+  tipo, desviación y margen; hoy `RF-CAL-14 P39 +15 ±3; RF-CAL-14 P49 −10 ±3`, margen fijado por la app). Lo demás
+  (RF-CAL-15, RF-CAL-16, otro patrón, otra cifra) no queda dispensado. La **regla de la re-medida del b**
+  (`REMEDIDA-b`: RF-CAL-18 o CERTIFICADO) va en `decisiones.csv`; **no está: el b no se escribe** hasta que
+  Diego la confirme. Si su RMS de tipo I sale fuera de 6 %, tampoco, salvo que Diego añada `RF-CAL-15 I …`.
+- **QA-3613-03:** decisiones y tabla **por equipo** (columna `equipo`). Para otro equipo que no sea SLV-002 todo
+  queda en "sólo verificar".
+- **P12 §6:** el 8 va **solo y primero**; el b y el 5 sólo tras un acta ACEPTADA del 8. T-C41 empieza apagando y
+  encendiendo. El 5 exige **sus 13 pasos** del banco y el acta declara su rango ("rango 5": 0-102, tipos IV, IX y
+  XI). "Rechazar" **siempre** restaura, también un `#S` sin resolver (QA-3613-01). El ZIP se exporta al aceptar.
+- **QA-3613-02:** cualquier fallo de `#L` (mudo, PIN rechazado, bloqueado tras 5) olvida el PIN y la pantalla lo
+  vuelve a pedir; los mensajes distinguen el caso. QA-3613-04 y -09: Avanzado ya no rechaza actas y se borró su
+  código muerto de escritura. QA-3613-05: un acta retomada recibe los datos que le falten. QA-3613-06: la batería
+  leída en "Calibrar" manda aunque la campaña esté cerrada. QA-3613-08: una conformidad por código.
+- **Pruebas:** `FlujoCalibracionTest` (38) sin rellenar el Contexto a mano (`FlujoCalibracion.identificar` lee
+  `#V#`, `#GC#` y `#GN#` del simulado), sin llamar a `plan()`, con "Parar aquí" y "No", persistencia que corta el
+  enlace, T-S15 (caducidad del modo administrador). `TS00Test` (T-S00 y el simulador: PIN bloqueado, caducidad,
+  EEPROM separada). `BancoRehacerTest` (5).
+- Abierto: QA-3613-07 (el ajuste del 5 incluye su patrón de re-medida P81; C-3613-2, Diego); RF-CAL-43
+  incompleto; T-C41 y T-C43 en SLV-002.
+- Entrega: `RTV-V3.6.14.apk` y `RTV-V3.6.14-3614.apk`.
 
 ## Cambios de la 3.6.13 (arreglo de P11 y de QA-App-3.6.12)
 
