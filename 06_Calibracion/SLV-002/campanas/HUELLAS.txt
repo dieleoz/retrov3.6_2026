@@ -15,3 +15,7 @@ campana_SLV-002_20260919_121009.zip
 md5    9d05c173e5751058f8f7dccb50ab7185
 sha256 532dac66fac55ea03d30f99eb8fe6f6410f4daa73c266f9396c32c2628bcdbaa
 Estado intermedio: codigo 1 escrito sin re-medida; serie SLV-02 por error. Copiado de 07 pruebas/19092026_1210/ el 19-sep-2026.
+
+campana_SLV-002_20260919_151045.zip
+md5    f04fc0145aeafe951b4898607f4082da
+App 3.6.11. Banco en curso: tipo I 20/20, blanco 5/16, amarillo 1/24; resto pendiente. #V# = CAL mascara 0003 y #GC 2026-09-19: primera confirmacion en campo de que los codigos 1 y 2 persisten (T-C41).
