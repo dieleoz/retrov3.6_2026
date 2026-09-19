@@ -10,7 +10,7 @@ registrada, y no en una casilla del operador (P11 §3, QA-3612).
 | D-B1 | Código 1: grado 1 aceptado pese a incumplir RF-CAL-14/15/16 | 19-sep-2026 11:20 | "acepto el blanco" |
 | D-A5 | Criterio de reproducibilidad: el que sale de la A5 | 19-sep-2026 11:20 | "y el criterio de la A5" |
 | **PA-24** | **Código b (rojo tipo I): se escribe con recta anclada en oscuro pese a incumplir RF-CAL-14 (P39 +15 %, P49 −10 %)** | **19-sep-2026 ~14:10** | "Sí, escribirla: mucho mejor que fábrica" |
-| **PA-14** | **Código 5 (azul intenso): se ajusta con recta anclada en oscuro, con la regla de cobertura relajada para este caso** | **19-sep-2026 ~14:10** | "si es lo que se debe ajustar" (interpretado como sí; Diego puede corregirlo) |
+| **PA-14** | **Código 5 (azul intenso): se ajusta con recta anclada en oscuro, con la regla de cobertura relajada para este caso** | **19-sep-2026 ~14:10** | "Sí, relajar la regla y ajustarlo con una recta que pase por el negro, como el amarillo [...] es ajustarlo, claro que sí" (confirmado ~14:15) |
 | D-FW | Grabar firmware aunque se pierda la calibración de la EEPROM | 19-sep-2026 ~12:45 | "graba, todo se puede perder" / "no pasa nada en el firmware" |
 | D-VENC | Calibración vencida: avisa y marca el registro, no bloquea | 19-sep-2026 | respuesta a la pregunta |
 | D-SFT | La fuente del indicador es `D:\onedrive\gdrive\sft` | 19-sep-2026 | respuesta a la pregunta |
