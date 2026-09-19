@@ -22,16 +22,21 @@ import java.util.concurrent.Executors;
  */
 public final class Cliente implements EnlaceSerie.OyenteRx, Canal {
 
-    public static final long PAUSA_ENTRE_ENVIOS_MS = 1500;
-    public static final long PAUSA_TRAS_RX_MS = 600;
+    // RTV 1.0.0-rc3: los valores y la decision viven en Ritmo, que es Java puro y se puede EJECUTAR en la
+    // JVM. Aqui quedan como alias para no romper a quien los usaba.
+    public static final long PAUSA_ENTRE_ENVIOS_MS = Ritmo.PAUSA_ENTRE_ENVIOS_MS;
+    public static final long PAUSA_TRAS_RX_MS = Ritmo.PAUSA_TRAS_RX_MS;
     /** Limite de respuesta de una medida (prueba 3: menos de 2,5 s). */
     public static final long TIMEOUT_MEDIDA_MS = 2500;
     public static final long TIMEOUT_ADMIN_MS = 2000;
     /**
-     * Entre dos tramas '#' seguidas con un V3.6 ya detectado basta una pausa
-     * corta: segun el contrato (§3 y O-05) una trama '#' nunca dispara medida.
+     * Entre dos tramas '#' seguidas con un protocolo que administra basta una pausa corta.
+     *
+     * La justificacion original decia "segun el contrato (§3 y O-05) una trama '#' nunca dispara medida".
+     * En la V3.6 es cierto; en la V4.6 NO, porque "#X,k#" mide. Contradiccion abierta: ver Ritmo y
+     * 05_Documentacion/CONTRADICCIONES-ABIERTAS-RTV.md.
      */
-    public static final long PAUSA_ENTRE_ALMOHADILLAS_MS = 150;
+    public static final long PAUSA_ENTRE_ALMOHADILLAS_MS = Ritmo.PAUSA_ENTRE_ALMOHADILLAS_MS;
 
     private static final Charset LATIN1 = Charset.forName("ISO-8859-1");
     private static final Cliente INSTANCIA = new Cliente();
@@ -123,8 +128,8 @@ public final class Cliente implements EnlaceSerie.OyenteRx, Canal {
                     + (proto == null ? "la detección" : proto.nombre()) + ")");
         }
         EnlaceSerie enlace = EnlaceSerie.instancia();
-        boolean almohadilla = peticion.startsWith("#");
-        boolean corta = almohadilla && ultimaFueAlmohadilla && proto != null && proto.administra();
+        boolean almohadilla = Ritmo.esAlmohadilla(peticion);
+        boolean corta = Ritmo.pausaCorta(peticion, ultimaFueAlmohadilla, proto);
         esperarPausa(enlace, corta);
         ultimaFueAlmohadilla = almohadilla;
         receptor.vaciar();
@@ -197,8 +202,8 @@ public final class Cliente implements EnlaceSerie.OyenteRx, Canal {
     }
 
     private void esperarPausa(EnlaceSerie enlace, boolean corta) throws InterruptedException, IOException {
-        long pausaEnvio = corta ? PAUSA_ENTRE_ALMOHADILLAS_MS : PAUSA_ENTRE_ENVIOS_MS;
-        long pausaRx = corta ? 0 : PAUSA_TRAS_RX_MS;
+        long pausaEnvio = Ritmo.pausaEnvioMs(corta);
+        long pausaRx = Ritmo.pausaRxMs(corta);
         while (true) {
             if (!enlace.estaConectado()) {
                 throw new IOException("no hay conexión");

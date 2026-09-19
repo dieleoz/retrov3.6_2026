@@ -54,6 +54,25 @@ public interface Protocolo {
     /** x de la respuesta; null si no cuadra. */
     Double valorX(String trama, char k);
 
+    /**
+     * RTV 1.0.0-rc3 (decision de Diego: el diario anota la temperatura de cada disparo). Trama que lee la
+     * temperatura, o null si este firmware no tiene ninguna que devuelva la LECTURA del sensor.
+     *
+     * Hoy solo la V4.6, con "#T#". La V3.6 tiene #GT#, #ST y #FT, pero las tres leen o escriben los
+     * COEFICIENTES del factor de temperatura, no el sensor (PROTOCOLO-V3.6.md:48-50, verificado: cero
+     * apariciones de #T# en ese documento). Del V4 original no sale por @LEERV. Donde no se puede leer, la
+     * columna va VACIA con su motivo ({@link #motivoSinTemperatura()}): nunca 0, y nunca omitida.
+     */
+    String tramaTemperatura();
+
+    Tramas.Tipo tipoTemperatura();
+
+    /** Temperaturas de la respuesta; null si no cuadra. */
+    Tramas.Temperatura valorTemperatura(String trama);
+
+    /** Por que este firmware no da la temperatura; "" si la da. */
+    String motivoSinTemperatura();
+
     /** Trama de bateria; null si el firmware no la tiene. */
     String tramaBateria();
 

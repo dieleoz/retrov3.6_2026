@@ -414,6 +414,9 @@ public class BancoActivity extends Base {
                 cambiarCola(def, false);
             }
         }
+        // RTV 1.0.0-rc3: queda dicho UNA vez, al abrir el banco, si el firmware da temperatura y, si no, por
+        // que. Asi la columna vacia de las filas DISPARO tiene su explicacion en el mismo diario.
+        anotarDisponibilidadTemperatura(campana, s);
         boolean empezado = !campana.pasos().isEmpty();
         grupos = gruposApk();
         if (!campana.cerrada() && (!campana.colaElegida() || !def.name().equals(campana.colaTipo()))) {
@@ -757,6 +760,67 @@ public class BancoActivity extends Base {
         Cliente.instancia().ejecutar(() -> colocacion(m, notaForzada));
     }
 
+    /**
+     * RTV 1.0.0-rc3: una linea TEMPERATURA por campana, con el firmware ya detectado. Si no se puede escribir
+     * no se para el banco: el banco importa mas que su anotacion.
+     */
+    private static void anotarDisponibilidadTemperatura(Campana campana, Sesion s) {
+        Protocolo p = s.protocolo;
+        boolean hay = p != null && p.tramaTemperatura() != null;
+        try {
+            campana.anotarTemperatura(Sesion.ahoraIso(), hay,
+                    hay ? Campana.T_APERTURA + "+" + Campana.T_CIERRE : Campana.T_ESTADO_SIN,
+                    hay ? "Temperatura con " + p.tramaTemperatura() + " (" + p.nombre() + "), una lectura al "
+                            + "abrir la serie y otra al cerrarla: el canal se refresca cada 10 s y los disparos "
+                            + "van cada ~2 s, asi que por disparo daria el mismo numero varias veces"
+                            : p == null ? "sin protocolo detectado" : p.motivoSinTemperatura());
+        } catch (IOException | RuntimeException e) {
+            Registro.nota("banco: no se pudo anotar la disponibilidad de temperatura: " + e.getMessage());
+        }
+    }
+
+    /**
+     * RTV 1.0.0-rc3: temperatura de la serie. Se lee UNA vez al abrirla y otra al cerrarla, no por disparo.
+     *
+     * El motivo no es el coste -medido: una "#T#" intercalada anade 75 ms por disparo, un +1,6 % en el banco
+     * (Ritmo, RitmoTest)-, sino que POR DISPARO NO APORTA DATO: el canal de temperatura del firmware se
+     * refresca cada 10 s (V4.6:Aplicacion.h:14,16 usados en Aplicacion.c:193) y los disparos van cada ~2 s,
+     * asi que devolveria el mismo numero cinco veces seguidas. La pareja apertura/cierre acota la deriva
+     * dentro de la serie y da el RECORRIDO de TO, que es lo que el ajuste necesita.
+     *
+     * Nunca devuelve null: si el firmware no da temperatura, devuelve la lectura vacia con su motivo. Un
+     * timeout de "#T#" tampoco tira la serie (Cliente lo devuelve como respuesta TIMEOUT, no como excepcion):
+     * se pierde la temperatura, no las medidas.
+     */
+    private static Ops.LecturaT temperaturaDeSerie(Sesion s, String momento)
+            throws IOException, InterruptedException {
+        Protocolo p = s.protocolo;
+        if (p == null) {
+            return new Ops.LecturaT(null, "sin protocolo detectado");
+        }
+        if (p.tramaTemperatura() == null) {
+            return new Ops.LecturaT(null, p.motivoSinTemperatura());
+        }
+        Ops.LecturaT t = new Ops(Cliente.instancia(), p).temperatura();
+        if (!t.hay()) {
+            Registro.nota("banco: sin temperatura en la " + momento + " de la serie: " + t.motivo);
+        }
+        return t;
+    }
+
+    /** Anota la lectura de temperatura de la serie sin tirar el banco si el diario falla. */
+    private static void anotarT(Medicion m, String momento, Ops.LecturaT t) {
+        if (m.serie == null) {
+            return;
+        }
+        try {
+            m.campana.anotarTemperaturaSerie(Sesion.ahoraIso(), m.serie.id, momento, t.optica(), t.circuito(),
+                    t.estado(), t.motivo);
+        } catch (IOException | RuntimeException e) {
+            Registro.nota("banco: no se pudo anotar la temperatura de la serie: " + e.getMessage());
+        }
+    }
+
     /** Una colocacion en el hilo de trabajo: asentamiento (con el filtro de patron presente) + M disparos. */
     private static void colocacion(Medicion m, String notaForzada) {
         Sesion s = Sesion.get();
@@ -784,6 +848,8 @@ public class BancoActivity extends Base {
             }
             if (ausente == null && !m.cancelada) {
                 List<Double> xs = new ArrayList<>();
+                // RTV 1.0.0-rc3: lectura de apertura de la serie; vacia mientras no haya serie abierta.
+                Ops.LecturaT apertura = new Ops.LecturaT(null, "serie sin abrir");
                 for (int i = 0; i < m.mEf && !m.cancelada; i++) {
                     progreso("Midiendo " + m.nombre + ": colocación " + m.k + " de " + m.kEf + ", disparo " + (i + 1)
                             + " de " + m.mEf + "...");
@@ -796,12 +862,28 @@ public class BancoActivity extends Base {
                         m.serie = m.campana.nuevaSerie(Sesion.ahoraIso(), s.serie(), s.mac, s.firmware(), m.nombre, 0,
                                 l.codigo);
                         Registro.nota("banco: paso " + p.orden + " -> serie " + m.serie.id);
+                        // RTV 1.0.0-rc3: temperatura al ABRIR la serie. Es la que rellena las columnas de sus
+                        // disparos, y queda dicho en el diario que es la de apertura, no la de cada disparo.
+                        apertura = temperaturaDeSerie(s, Campana.T_APERTURA);
+                        anotarT(m, Campana.T_APERTURA, apertura);
                     }
-                    m.campana.agregarDisparo(m.serie, m.k, Sesion.ahoraIso(), l.respuesta.trama, l.x);
+                    // Si la respuesta de "#X" trae la TO (RF-FW-B13, "#X,k,x,TO,a#"), esa SI es la del propio
+                    // disparo y no cuesta ni un viaje: manda sobre la de apertura. El candidato de hoy manda
+                    // tres campos, asi que hoy este camino no se toma.
+                    Double to = l.traeTemperatura() ? l.temperaturaOptica : apertura.optica();
+                    Double tc = l.traeTemperatura() ? null : apertura.circuito();
+                    String estadoT = l.traeTemperatura() ? Campana.T_ESTADO_OK : apertura.estado();
+                    m.campana.agregarDisparo(m.serie, m.k, Sesion.ahoraIso(), l.respuesta.trama, l.x,
+                            to, tc, estadoT);
                     xs.add(l.x);
                 }
                 if (!m.cancelada) {
                     m.hechas.add(Estadistica.aVector(xs));
+                }
+                // RTV 1.0.0-rc3: temperatura al CERRAR la serie. Con la de apertura acota la deriva de la
+                // serie; las dos juntas dan el recorrido de TO de la campana.
+                if (m.serie != null) {
+                    anotarT(m, Campana.T_CIERRE, temperaturaDeSerie(s, Campana.T_CIERRE));
                 }
             } else if (ausente != null) {
                 Registro.nota("banco: " + ausente);

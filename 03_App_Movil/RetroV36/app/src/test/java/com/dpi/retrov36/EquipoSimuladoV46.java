@@ -26,6 +26,22 @@ final class EquipoSimuladoV46 implements Canal {
     /** Todas las tramas, tambien las @LEERV y las propias de la V4.6. */
     final List<String> recibidas = new ArrayList<>();
 
+    /**
+     * RTV 1.0.0-rc3. Temperatura de CIRCUITO: 0 por defecto, que es lo que hace el candidato de verdad
+     * (ST_TEMPCIRC_AP inalcanzable). Se deja cambiable para poder probar el dia que el firmware la asigne.
+     */
+    double tempCircuito = 0.0;
+    /** Temperatura OPTICA, la que si es real en el candidato (V4.6:Temp_Optica.c:60). */
+    double tempOptica = 24.5;
+    /** true para emitir el tercer campo de estado de RF-FW-B13 ("OK"); el candidato aun no lo manda. */
+    boolean conEstado;
+    /** true para emitir estado DESC: el firmware fuerza TO = 0 y ese 0 NO es una temperatura. */
+    boolean descOptica;
+    /** true para emitir "#X,k,x,TO,a#" (RF-FW-B13) en vez de "#X,k,x#" (candidato de hoy). */
+    boolean xConTemperatura;
+    /** Ajuste por temperatura aplicado, en cuentas, cuando #X lo trae. */
+    double ajusteT = 3.5;
+
     EquipoSimuladoV46(EquipoSimulado base) {
         this.base = base;
     }
@@ -81,14 +97,29 @@ final class EquipoSimuladoV46 implements Canal {
             return r.valida() ? valida(t, r.trama.replace("#V,3.6,", "#V,4.6,")) : r;
         }
         if (t.startsWith("#X,") && t.length() == 5 && t.endsWith("#") && Fabrica.esCodigo(t.charAt(3))) {
-            return valida(t, "#X," + t.charAt(3) + "," + String.format(Locale.US, "%.8E", base.x) + "#");
+            String x = String.format(Locale.US, "%.8E", base.x);
+            if (!xConTemperatura) {
+                // Forma del CANDIDATO, verificada: tres campos (V4.6:Calibracion.c:774-781).
+                return valida(t, "#X," + t.charAt(3) + "," + x + "#");
+            }
+            // Forma del BORRADOR (RF-FW-B13): la TO y el ajuste aplicado viajan dentro de la respuesta.
+            return valida(t, "#X," + t.charAt(3) + "," + x + "," + num(tempOptica) + "," + num(ajusteT) + "#");
         }
         if (t.equals("#GB#")) {
             return valida(t, "#GB," + base.bateriaN + "#");
         }
         if (t.equals("#T#")) {
-            return valida(t, "#T,25.0,25.0#");
+            // RTV 1.0.0-rc3: la forma REAL del candidato, "#T,<Tcirc>,<TO>#" (V4.6:Calibracion.c:986,988):
+            // circuito PRIMERO y optica SEGUNDA, y el circuito SIEMPRE 0, porque ST_TEMPCIRC_AP es inalcanzable
+            // (V4.6:Aplicacion.c:205-216). Hasta la rc2 esto respondia "#T,25.0,25.0#": simetrico, y por eso no
+            // podia delatar que la app tuviera los dos campos cambiados de sitio. Ahora si.
+            String est = descOptica ? "," + Tramas.T_DESC : conEstado ? ",OK" : "";
+            return valida(t, "#T," + num(tempCircuito) + "," + num(descOptica ? 0.0 : tempOptica) + est + "#");
         }
         return base.pedir(t, tipo, timeoutMs);
+    }
+
+    private static String num(double v) {
+        return String.format(Locale.US, "%.8E", v);
     }
 }

@@ -86,8 +86,8 @@ public class CalibrarActivity extends Base {
                 () -> flujo.persistencia(), true));
         btnAceptar = boton("Aceptar y grabar fecha", v -> confirmarAceptar());
         btnRechazar = boton("Rechazar", v -> rechazar());
-        btnCerrar = boton("Cerrar sin restaurar (firma de Diego)", v -> cerrarSinRestaurar());
-        btnLiberar = boton("Liberar tras el cierre sin restaurar (firma de Diego)", v -> liberar());
+        btnCerrar = boton("Cerrar sin restaurar (PIN de administrador)", v -> cerrarSinRestaurar());
+        btnLiberar = boton("Liberar tras el cierre sin restaurar (PIN de administrador)", v -> liberar());
         titulo("Acta");
         txtActa = texto("");
         txtActa.setTypeface(Typeface.MONOSPACE);
@@ -548,43 +548,64 @@ public class CalibrarActivity extends Base {
         return err;
     }
 
-    /** F-03: Diego libera el equipo tras un cierre SIN RESTAURAR, con su PIN o su frase. */
+    /**
+     * RTV 1.0.0-rc3 (decision FIRMA-ACTA): campo del nombre de quien firma. El acta lo cita tal cual, asi que
+     * es el de la persona que esta delante, no el de quien calibro ni un literal.
+     */
+    private EditText campoNombre() {
+        EditText n = new EditText(this);
+        n.setSingleLine(true);
+        n.setHint("Nombre de quien firma");
+        n.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+        return n;
+    }
+
+    /** F-03: se libera el equipo tras un cierre SIN RESTAURAR, con el PIN de administrador. */
     private void liberar() {
         LinearLayout caja = new LinearLayout(this);
         caja.setOrientation(LinearLayout.VERTICAL);
         final EditText clave = campoPin();
-        clave.setHint("PIN del equipo o frase de Diego");
+        clave.setHint("PIN de administrador del equipo");
         clave.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         caja.addView(clave);
+        final EditText nombre = campoNombre();
+        caja.addView(nombre);
         final EditText mot = new EditText(this);
         mot.setSingleLine(true);
         mot.setHint("Motivo (qué se comprobó)");
         caja.addView(mot);
         new AlertDialog.Builder(this).setTitle("Liberar tras el cierre sin restaurar").setView(caja)
-                .setMessage("El equipo quedó con códigos en estado desconocido. Solo Diego lo libera.")
+                .setMessage("El equipo quedó con códigos en estado desconocido. Lo libera quien tenga el PIN de "
+                        + "administrador, y el diario del acta anterior citará su nombre.")
                 .setPositiveButton("Liberar", (d, w) -> accion("Liberar",
-                        () -> flujo.liberarTrasCierre(clave.getText().toString(), mot.getText().toString().trim()), false))
+                        () -> flujo.liberarTrasCierre(clave.getText().toString(), mot.getText().toString().trim(),
+                                nombre.getText().toString()), false))
                 .setNegativeButton("Cancelar", null).show();
     }
 
-    /** "Cerrar sin restaurar": solo con un rechazo pendiente y la firma de Diego (P14-06/-10). */
+    /** "Cerrar sin restaurar": solo con un rechazo pendiente y el PIN de administrador (P14-06/-10). */
     private void cerrarSinRestaurar() {
         LinearLayout caja = new LinearLayout(this);
         caja.setOrientation(LinearLayout.VERTICAL);
-        // F-02: no vale un nombre tecleado: el PIN del equipo (comprobado con #L) o la frase registrada de Diego.
+        // RTV 1.0.0-rc3: no vale un nombre tecleado como autorizacion; autoriza el PIN (comprobado con #L). El
+        // nombre es aparte y va al acta: autorizar y firmar son dos cosas distintas.
         final EditText firma = campoPin();
-        firma.setHint("PIN del equipo o frase de Diego");
+        firma.setHint("PIN de administrador del equipo");
         firma.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         caja.addView(firma);
+        final EditText nombre = campoNombre();
+        caja.addView(nombre);
         final EditText mot = new EditText(this);
         mot.setSingleLine(true);
         mot.setHint("Motivo");
         caja.addView(mot);
         new AlertDialog.Builder(this).setTitle("Cerrar sin restaurar").setView(caja)
                 .setMessage("El acta queda RECHAZADA y lo que no se pudo restaurar se queda en el equipo tal cual, "
-                        + "anotado en el acta. Solo con la firma de Diego.")
+                        + "anotado en el acta. Hace falta el PIN de administrador, y el acta citará el nombre que "
+                        + "escriba.")
                 .setPositiveButton("Cerrar", (d, w) -> accion("Cerrar sin restaurar",
-                        () -> flujo.cerrarSinRestaurar(firma.getText().toString(), mot.getText().toString().trim()),
+                        () -> flujo.cerrarSinRestaurar(firma.getText().toString(), mot.getText().toString().trim(),
+                                nombre.getText().toString()),
                         false))
                 .setNegativeButton("Cancelar", null).show();
     }

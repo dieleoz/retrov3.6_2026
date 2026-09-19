@@ -80,6 +80,28 @@ public class ProtocoloV36 implements Protocolo {
         return v == null ? null : (double) v;
     }
 
+    /** La V3.6 no tiene ninguna orden que devuelva la lectura del sensor (RTV 1.0.0-rc3). */
+    @Override
+    public String tramaTemperatura() {
+        return null;
+    }
+
+    @Override
+    public Tramas.Tipo tipoTemperatura() {
+        return null;
+    }
+
+    @Override
+    public Tramas.Temperatura valorTemperatura(String trama) {
+        return null;
+    }
+
+    @Override
+    public String motivoSinTemperatura() {
+        return "El firmware V3.6 no devuelve la lectura del sensor: #GT#, #ST y #FT son los COEFICIENTES del "
+                + "factor de temperatura, no la temperatura (PROTOCOLO-V3.6.md:48-50).";
+    }
+
     @Override
     public String tramaBateria() {
         return "9";

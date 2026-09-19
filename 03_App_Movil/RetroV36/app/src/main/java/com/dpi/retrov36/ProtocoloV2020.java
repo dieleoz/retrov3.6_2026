@@ -37,6 +37,13 @@ public final class ProtocoloV2020 extends ProtocoloV36 {
         return null;
     }
 
+    /** RTV 1.0.0-rc3: el V3 de 2020 no habla "#...#", asi que ni siquiera tiene donde pedir la temperatura. */
+    @Override
+    public String motivoSinTemperatura() {
+        return "El firmware V3 de 2020 no tiene órdenes \"#...#\": no hay ninguna trama con la que pedirle la "
+                + "temperatura.";
+    }
+
     @Override
     public boolean administra() {
         return false;

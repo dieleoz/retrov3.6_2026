@@ -21,7 +21,15 @@ import java.util.Map;
  *
  * Eventos:
  *   SERIE,id,fecha,equipo,mac,firmware,patron,orientacion,codigo
- *   DISPARO,id,idx,fecha,respuesta_bruta,x[,colocacion]   (colocacion desde 3.6.7; si falta, 1)
+ *   DISPARO,id,idx,fecha,respuesta_bruta,x[,colocacion][,to,tc,t_estado]   (colocacion desde 3.6.7; si
+ *                                     falta, 1. to/tc/t_estado desde la RTV 1.0.0-rc3: temperatura optica y
+ *                                     de circuito, VACIAS si no las hay -nunca 0-, y su estado OK/DESC/SIN.
+ *                                     Los valores son los de la APERTURA de la serie, no los de este disparo:
+ *                                     el canal se refresca cada 10 s y los disparos van cada ~2 s)
+ *   TEMP_SERIE,fecha,serie_id,APERTURA|CIERRE,to,tc,estado,motivo  (RTV 1.0.0-rc3: la pareja acota la deriva
+ *                                     dentro de la serie y da el recorrido de TO de la campana)
+ *   TEMPERATURA,fecha,SI|NO,origen,motivo  (RTV 1.0.0-rc3: una vez por campana; dice si el firmware da
+ *                                     temperatura y, si no, por que. El motivo no se repite por fila)
  *   DESCARTE,id,idx,motivo
  *   VEREDICTO,id,veredicto,aceptada(0/1),nota
  *   REASIGNA,id,patron_nuevo,nota
@@ -53,6 +61,18 @@ public final class Campana {
         public final int colocacion;
         public boolean descartado;
         public String motivo = "";
+        /**
+         * RTV 1.0.0-rc3: temperatura optica del disparo; null = no la hay (columna vacia), NUNCA 0. El motivo
+         * esta en el evento TEMPERATURA de la campana. Hoy solo la da la V4.6, con "#T#".
+         */
+        public Double temperaturaOptica;
+        /** RTV 1.0.0-rc3: temperatura de circuito; null = no la hay. Nunca 0 por defecto. */
+        public Double temperaturaCircuito;
+        /**
+         * Estado de la temperatura: "OK", "DESC" (sensor desconectado o >= 70 C: el firmware fuerza TO = 0 y
+         * ese 0 NO es una temperatura) o "SIN". Tercera columna de la RTV 1.0.0-rc3.
+         */
+        public String estadoTemperatura = T_ESTADO_SIN;
 
         Disparo(int idx, String fecha, String bruta, double x, int colocacion) {
             this.idx = idx;
@@ -87,6 +107,23 @@ public final class Campana {
         public String anulada;
         /** Fecha de la anulacion (QA-3614-07: la importacion la conserva). */
         public String anuladaFecha = "";
+        /**
+         * RTV 1.0.0-rc3: temperatura optica al ABRIR la serie; null si no la hay. Es la que rellena la
+         * columna de sus disparos.
+         */
+        public Double temperaturaApertura;
+        /** Temperatura de circuito al abrir; null si no la hay. */
+        public Double temperaturaCircuitoApertura;
+        /** Temperatura optica al CERRAR la serie; con la de apertura acota la deriva de la serie. */
+        public Double temperaturaCierre;
+        /** "OK", "DESC" o "SIN". */
+        public String estadoTemperatura = T_ESTADO_SIN;
+
+        /** Deriva de TO dentro de la serie, en grados; NaN si falta alguna de las dos lecturas. */
+        public double derivaTemperatura() {
+            return temperaturaApertura == null || temperaturaCierre == null ? Double.NaN
+                    : temperaturaCierre - temperaturaApertura;
+        }
 
         Serie(String id, String fecha, String equipo, String mac, String firmware, String patron,
               int orientacion, char codigo) {
@@ -149,6 +186,19 @@ public final class Campana {
             List<double[]> g = colocaciones();
             return g.size() <= 1 ? Estadistica.desviacion(validos()) : Veredicto.sEntre(g);
         }
+    }
+
+    /** RTV 1.0.0-rc3: true si el firmware de esta campana da temperatura (evento TEMPERATURA). */
+    private boolean hayTemperatura;
+    /** Por que no la da, si no la da. */
+    private String motivoTemperatura = "";
+
+    public boolean hayTemperatura() {
+        return hayTemperatura;
+    }
+
+    public String motivoTemperatura() {
+        return motivoTemperatura;
     }
 
     private final Map<String, Patron> catalogo = new LinkedHashMap<>();
@@ -609,11 +659,69 @@ public final class Campana {
     }
 
     public Disparo agregarDisparo(Serie s, int colocacion, String fecha, String bruta, double x) throws IOException {
+        return agregarDisparo(s, colocacion, fecha, bruta, x, null, null, T_ESTADO_SIN);
+    }
+
+    /**
+     * Estado de la temperatura del disparo (RTV 1.0.0-rc3, tercera columna).
+     *
+     * No es adorno. Cuando el sensor optico da una lectura cruda >= 70 C el firmware fuerza TO = 0
+     * (V4.6:Temp_Optica.c:63-66), de modo que UN SENSOR MUERTO SE PARECE A UN DIA FRESCO. Sin esta columna,
+     * un ajuste hecho con el sensor averiado saldria plano y se leeria como "aqui no hay deriva".
+     */
+    public static final String T_ESTADO_OK = "OK";
+    /** El firmware dice DESC: sensor desconectado o >= 70 C. TO va VACIA, no a 0. */
+    public static final String T_ESTADO_DESC = "DESC";
+    /** No hay temperatura: este firmware no la da, o no respondio. El motivo esta en el evento TEMPERATURA. */
+    public static final String T_ESTADO_SIN = "SIN";
+
+    /**
+     * RTV 1.0.0-rc3: disparo con su temperatura (TO, TC y estado). Los tres campos nuevos van AL FINAL, igual
+     * que se anadio `colocacion` en la 3.6.7: un diario anterior se sigue leyendo igual.
+     *
+     * to y tc null = columna VACIA. Nunca 0. Los valores son los de la lectura de APERTURA de la serie
+     * (evento TEMP_SERIE), no los de este disparo: el canal de temperatura del firmware se refresca cada 10 s
+     * (V4.6:Aplicacion.h:14,16 -> TIME_TEMP_OPT 1000 x PERIOD_APLICACION 10 ms, usado en Aplicacion.c:193) y
+     * los disparos van cada ~2 s, asi que pedirla por disparo devolveria el mismo numero cinco veces seguidas.
+     * Lo que el ajuste necesita es el RECORRIDO de TO, y eso lo da la pareja apertura/cierre.
+     */
+    public Disparo agregarDisparo(Serie s, int colocacion, String fecha, String bruta, double x,
+                                  Double to, Double tc, String estadoT) throws IOException {
         comprobarAbierta();
         Disparo d = new Disparo(s.disparos.size() + 1, fecha, bruta, x, colocacion);
+        d.temperaturaOptica = to;
+        d.temperaturaCircuito = tc;
+        d.estadoTemperatura = estadoT == null || estadoT.isEmpty() ? T_ESTADO_SIN : estadoT;
         s.disparos.add(d);
-        evento("DISPARO", s.id, d.idx, fecha, bruta, Double.isNaN(x) ? "" : fmt(x), colocacion);
+        evento("DISPARO", s.id, d.idx, fecha, bruta, Double.isNaN(x) ? "" : fmt(x), colocacion,
+                to == null ? "" : fmt(to), tc == null ? "" : fmt(tc), d.estadoTemperatura);
         return d;
+    }
+
+    /** Momentos en los que se lee la temperatura de una serie. */
+    public static final String T_APERTURA = "APERTURA";
+    public static final String T_CIERRE = "CIERRE";
+
+    /**
+     * RTV 1.0.0-rc3: temperatura al ABRIR y al CERRAR la serie. La pareja acota la deriva dentro de la serie
+     * y da el recorrido de TO a lo largo de la campana, que es lo que el ajuste necesita.
+     */
+    public void anotarTemperaturaSerie(String fecha, String serieId, String momento, Double to, Double tc,
+                                       String estado, String motivo) throws IOException {
+        comprobarAbierta();
+        evento("TEMP_SERIE", fecha, serieId, momento, to == null ? "" : fmt(to), tc == null ? "" : fmt(tc),
+                estado == null || estado.isEmpty() ? T_ESTADO_SIN : estado, motivo == null ? "" : motivo);
+    }
+
+    /**
+     * RTV 1.0.0-rc3: queda dicho UNA vez por campana si el firmware da temperatura y, si no, por que. El
+     * motivo no se repite en cada fila DISPARO: alli la columna va vacia y la explicacion esta aqui.
+     */
+    public void anotarTemperatura(String fecha, boolean disponible, String origen, String motivo)
+            throws IOException {
+        comprobarAbierta();
+        evento("TEMPERATURA", fecha, disponible ? "SI" : "NO", origen == null ? "" : origen,
+                motivo == null ? "" : motivo);
     }
 
     public void descartar(Serie s, int idx, String motivo) throws IOException {
@@ -1149,6 +1257,22 @@ public final class Campana {
         return v == Math.rint(v) ? String.valueOf((long) v) : String.format(Locale.US, "%.2f", v);
     }
 
+    /**
+     * RTV 1.0.0-rc3: el numero de un campo del diario, o null si viene vacio o ilegible. Devuelve null, NUNCA
+     * 0: una temperatura vacia tiene que seguir vacia al releer el diario.
+     */
+    static Double numONull(String s) {
+        if (s == null || s.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            double v = Double.parseDouble(s.trim());
+            return Double.isNaN(v) || Double.isInfinite(v) ? null : v;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     // ---------------------------------------------------------------- lectura
 
     /** Reconstruye la campana leyendo el diario. Las lineas que no se entienden se cuentan y se saltan. */
@@ -1196,8 +1320,13 @@ public final class Campana {
                 }
                 String xs = c.get(5);
                 int col = c.size() > 6 && !c.get(6).isEmpty() ? Integer.parseInt(c.get(6)) : 1;
-                s.disparos.add(new Disparo(Integer.parseInt(c.get(2)), c.get(3), c.get(4),
-                        xs.isEmpty() ? Double.NaN : Double.parseDouble(xs), col));
+                Disparo dd = new Disparo(Integer.parseInt(c.get(2)), c.get(3), c.get(4),
+                        xs.isEmpty() ? Double.NaN : Double.parseDouble(xs), col);
+                // RTV 1.0.0-rc3: to, tc y origen van al final y pueden no estar (diarios hasta la rc2).
+                dd.temperaturaOptica = c.size() > 7 ? numONull(c.get(7)) : null;
+                dd.temperaturaCircuito = c.size() > 8 ? numONull(c.get(8)) : null;
+                dd.estadoTemperatura = c.size() > 9 && !c.get(9).isEmpty() ? c.get(9) : T_ESTADO_SIN;
+                s.disparos.add(dd);
                 return true;
             }
             case "DESCARTE": {
@@ -1289,6 +1418,35 @@ public final class Campana {
                 hayBateria = true;
                 ultimaBateriaN = c.get(2).isEmpty() ? null : Integer.parseInt(c.get(2));
                 baterias.add(c.get(1) + "  " + (c.size() > 3 ? c.get(3) : ""));
+                return true;
+            // RTV 1.0.0-rc3: TEMP_SERIE,fecha,serie_id,APERTURA|CIERRE,to,tc,estado,motivo
+            case "TEMP_SERIE": {
+                if (c.size() < 7) {
+                    return false;
+                }
+                Serie s = serie(c.get(2));
+                if (s == null) {
+                    return false;
+                }
+                boolean apertura = T_APERTURA.equals(c.get(3));
+                Double to = numONull(c.get(4));
+                Double tc = numONull(c.get(5));
+                if (apertura) {
+                    s.temperaturaApertura = to;
+                    s.temperaturaCircuitoApertura = tc;
+                } else {
+                    s.temperaturaCierre = to;
+                }
+                s.estadoTemperatura = c.get(6);
+                return true;
+            }
+            // RTV 1.0.0-rc3: TEMPERATURA,fecha,SI|NO,origen,motivo (una por campana)
+            case "TEMPERATURA":
+                if (c.size() < 3) {
+                    return false;
+                }
+                hayTemperatura = "SI".equals(c.get(2));
+                motivoTemperatura = c.size() > 4 ? c.get(4) : "";
                 return true;
             default:
                 return false;

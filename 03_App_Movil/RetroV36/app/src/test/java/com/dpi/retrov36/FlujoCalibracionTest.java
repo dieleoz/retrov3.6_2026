@@ -1187,24 +1187,32 @@ public class FlujoCalibracionTest {
         almacen = almacen.reabrir();
         FlujoCalibracion g = flujo();
         assertTrue(g.rechazoPendiente());
-        // salida terminal: solo con la firma de Diego, que es el PIN del equipo (F-02), no un nombre tecleado
-        assertTrue(g.cerrarSinRestaurar("Operador", "x").contains("lo firma Diego"));
-        assertTrue(g.cerrarSinRestaurar("no soy diego", "x").contains("lo firma Diego"));
+        // RTV 1.0.0-rc3 (FIRMA-ACTA): autoriza el PIN de admin, no un nombre tecleado; y el nombre de quien
+        // firma es obligatorio y va al acta tal cual.
+        assertEquals(FlujoCalibracion.FALTA_NOMBRE, g.cerrarSinRestaurar("1234", "x", "  "));
+        assertTrue(g.cerrarSinRestaurar("Operador", "x", "Ana Ruiz").contains("PIN de administrador"));
+        assertTrue(g.cerrarSinRestaurar("no soy diego", "x", "Ana Ruiz").contains("PIN de administrador"));
         assertNotNull(g.acta());
-        String c = g.cerrarSinRestaurar("1234", "el #F no entra; se revisa en taller");
+        String c = g.cerrarSinRestaurar("1234", "el #F no entra; se revisa en taller", "Ana Ruiz");
         assertTrue(c, c.startsWith("Acta cerrada SIN RESTAURAR") && c.contains("8"));
         assertNull(g.acta());
-        assertTrue(almacen.cerradas.get(0).contains("RECHAZADA SIN RESTAURAR, firmado por Diego (PIN del equipo"));
+        assertTrue(almacen.cerradas.get(0), almacen.cerradas.get(0).contains(
+                "RECHAZADA SIN RESTAURAR, firmado por Firmado por \"Ana Ruiz\", ITVIAL SAS, "
+                        + FlujoCalibracion.hoyDe(reloj)));
         assertEquals(0, sim.cuantas("#SC,"));
-        assertTrue(g.cerrarSinRestaurar("1234", "x").startsWith("Solo se cierra"));
+        assertTrue(g.cerrarSinRestaurar("1234", "x", "Ana Ruiz").startsWith("Solo se cierra"));
         // F-03: no se calibra al instante; Diego libera con su PIN y entonces si
         int s1 = sim.cuantas("#S,");
         assertTrue(g.motivoPrevias(), g.motivoPrevias() != null && g.motivoPrevias().contains("SIN RESTAURAR"));
         String r3 = g.calibrar(sel('8'), "Diego", "x");
         assertTrue(r3, r3.contains("SIN RESTAURAR"));
         assertEquals(s1, sim.cuantas("#S,"));
-        assertTrue(g.liberarTrasCierre("0000", "x").contains("No se libera"));
-        assertTrue(g.liberarTrasCierre("1234", "curva del 8 comprobada con #G").startsWith("Liberado por Diego"));
+        assertEquals(FlujoCalibracion.FALTA_NOMBRE, g.liberarTrasCierre("1234", "x", ""));
+        assertTrue(g.liberarTrasCierre("0000", "x", "Luis Gomez").contains("no se libera"));
+        // el acta anterior la cerro Ana; hoy libera Luis, y el diario lo dice con SU nombre
+        String lib = g.liberarTrasCierre("1234", "curva del 8 comprobada con #G", "Luis Gomez");
+        assertTrue(lib, lib.startsWith("Liberado por Firmado por \"Luis Gomez\", ITVIAL SAS, "
+                + FlujoCalibracion.hoyDe(reloj)));
         assertNull(g.bloqueoSinRestaurar());
     }
 
@@ -1438,9 +1446,14 @@ public class FlujoCalibracionTest {
         assertTrue(r2, r2.startsWith("Sesión completa: 8 ACEPTADO;"));
     }
 
-    /** F-02: la frase registrada de Diego (FRASE-DIEGO, su SHA-256 en decisiones.csv) tambien firma. */
+    /**
+     * RTV 1.0.0-rc3 (FIRMA-ACTA): la "frase registrada" (fila FRASE-DIEGO de decisiones.csv) YA NO FIRMA. Esa
+     * fila nunca existio en el asset -la inyectaba esta misma prueba-, asi que el codigo prometia una barrera
+     * que el dato no sostenia. Decision de Diego: con el PIN de admin basta. Esta prueba sustituye a
+     * f02LaFraseRegistradaDeDiegoFirma y la invierte: ahora comprueba que la frase NO abre.
+     */
     @Test
-    public void f02LaFraseRegistradaDeDiegoFirma() throws Exception {
+    public void laFraseRegistradaYaNoFirma() throws Exception {
         String h = PaquetesZip.sha256("frase larga de diego".getBytes(StandardCharsets.UTF_8));
         decisiones = Decisiones.leer(decisionesDelApk() + "FRASE-DIEGO,SLV-002," + h + ",2026-09-20,Diego,DOC.md,,\n");
         FlujoCalibracion f = flujo();
@@ -1448,9 +1461,30 @@ public class FlujoCalibracionTest {
         sim.inyectar("#F,8#", EquipoSimulado.Falla.OK_SIN_HACER, 10);
         f.rechazar("prueba");
         assertTrue(f.rechazoPendiente());
-        assertTrue(f.cerrarSinRestaurar("frase corta", "x").contains("lo firma Diego"));
-        String c = f.cerrarSinRestaurar("frase larga de diego", "x");
-        assertTrue(c, c.startsWith("Acta cerrada SIN RESTAURAR (firmado por Diego (frase registrada"));
+        // ni una frase cualquiera ni la registrada abren: hace falta el PIN
+        assertTrue(f.cerrarSinRestaurar("frase corta", "x", "Ana").contains("PIN de administrador"));
+        assertTrue(f.cerrarSinRestaurar("frase larga de diego", "x", "Ana").contains("PIN de administrador"));
+        assertNotNull("con la frase no se cierra", f.acta());
+        String c = f.cerrarSinRestaurar("1234", "x", "Ana");
+        assertTrue(c, c.startsWith("Acta cerrada SIN RESTAURAR"));
+    }
+
+    /** FIRMA-ACTA: el formato literal de la linea de firma, con la fecha del dia. */
+    @Test
+    public void laLineaDeFirmaLlevaNombreEmpresaYFechaDelDia() throws Exception {
+        FlujoCalibracion f = flujo();
+        f.calibrar(sel('8'), "Diego", "x");
+        sim.inyectar("#F,8#", EquipoSimulado.Falla.OK_SIN_HACER, 10);
+        f.rechazar("prueba");
+        String c = f.cerrarSinRestaurar("1234", "motivo", "  Ana Ruiz  ");
+        String esperada = "Firmado por \"Ana Ruiz\", ITVIAL SAS, " + FlujoCalibracion.hoyDe(reloj);
+        assertTrue(c, c.contains(esperada));
+        assertTrue(almacen.cerradas.get(0), almacen.cerradas.get(0).contains(esperada));
+        // la fecha es la del dia, AAAA-MM-DD, del mismo reloj del acta: ni la hora ni la del certificado
+        assertEquals(10, FlujoCalibracion.hoyDe(reloj).length());
+        assertTrue(reloj.ahoraIso().startsWith(FlujoCalibracion.hoyDe(reloj)));
+        // y no cita a Diego salvo que sea quien este delante
+        assertFalse(esperada, esperada.contains("Diego"));
     }
 
     /** F-04: el #SC del acta del 8 es una escritura: el T-C41 del b apaga el suyo. */

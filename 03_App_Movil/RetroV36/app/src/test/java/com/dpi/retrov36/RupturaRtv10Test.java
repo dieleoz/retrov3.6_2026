@@ -133,13 +133,21 @@ public class RupturaRtv10Test {
                 Deteccion.detectar(EquipoSimulado.slv002(), null, null, false).firmware);
         assertEquals(Protocolo.Firmware.F46,
                 Deteccion.detectar(EquipoSimuladoV46.enBlanco(), null, null, false).firmware);
-        Deteccion.Resultado v4 = Deteccion.detectar(new EquipoSimuladoV4(), null, null, false);
+        // A-5 de la revision de la rc2, y el defecto era MIO: aqui habia un bucle sobre "new EquipoSimuladoV4()",
+        // una instancia recien creada y vacia, asi que no iteraba nunca y su fail() era inalcanzable. Y el
+        // comentario que lo acompanaba era falso: la deteccion SI envia tramas (#V#, 9, 6 y la sonda); lo que no
+        // envia es 'e' ni una '@' que no sea la sonda. Ahora se conserva el canal y se comprueba de verdad.
+        EquipoSimuladoV4 canal = new EquipoSimuladoV4();
+        Deteccion.Resultado v4 = Deteccion.detectar(canal, null, null, false);
         assertEquals(Protocolo.Firmware.V4_ORIGINAL, v4.firmware);
         assertTrue(v4.protocolo instanceof ProtocoloV4Original);
-        // y el V4 original se identifica sin haber enviado jamas 'e' ni una '@' que no sea la sonda
-        for (String t : new EquipoSimuladoV4().recibidas) {
-            fail("no deberia haber tramas aqui: " + t);
+        assertFalse("la deteccion tuvo que enviar algo", canal.recibidas.isEmpty());
+        for (String t : canal.recibidas) {
+            assertTrue("trama que la deteccion no puede enviar: " + t, Deteccion.permitida(t));
+            assertFalse("'e' enviado a un equipo sin identificar", "e".equals(t));
+            assertTrue("'@' que no es la sonda: " + t, t.indexOf('@') < 0 || Tramas.SONDA_V4.equals(t));
         }
+        assertFalse("el V4.1 no se bloquea con la sonda de tipo 2", canal.bloqueado);
     }
 
     /**

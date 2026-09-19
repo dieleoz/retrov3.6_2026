@@ -79,15 +79,153 @@ public final class Tramas {
         }
     }
 
-    /** "#X,k,x#" (PROTOCOLO-V4.6 §4.4) -> x; null si no cuadra o k no coincide. */
+    /**
+     * "#X,k,x#" o "#X,k,x,TO,a#" (PROTOCOLO-V4.6 §4.4) -> x; null si no cuadra o k no coincide.
+     *
+     * RTV 1.0.0-rc3: se admiten LAS DOS formas a proposito. El candidato del firmware emite tres campos
+     * (V4.6:Calibracion.c:774-781, verificado) y el borrador ya especifica cinco, con la temperatura optica y
+     * el ajuste aplicado dentro de la propia respuesta (RF-FW-B13, PROTOCOLO-V4.6-BORRADOR.md:215,251). La app
+     * tiene que hablar con los dos: con el de hoy, para medir el banco esta noche, y con el de manana sin
+     * tener que reprogramarla.
+     */
     public static Double parsearX(String trama, char k) {
+        XCompleta x = parsearXCompleta(trama, k);
+        return x == null ? null : x.x;
+    }
+
+    /** Respuesta de "#X": la x y, si el firmware la trae, la temperatura optica y el ajuste aplicado. */
+    public static final class XCompleta {
+        public final double x;
+        /** Temperatura optica del propio disparo; null si el firmware no la manda (forma de 3 campos). */
+        public final Double temperaturaOptica;
+        /** Ajuste por temperatura ya aplicado, en cuentas (a = x_corregida - x_cruda); null si no viene. */
+        public final Double ajuste;
+
+        XCompleta(double x, Double to, Double a) {
+            this.x = x;
+            this.temperaturaOptica = to;
+            this.ajuste = a;
+        }
+
+        /** true si esta respuesta ya trae la temperatura: entonces no hace falta pedir "#T#" por el disparo. */
+        public boolean traeTemperatura() {
+            return temperaturaOptica != null;
+        }
+    }
+
+    public static XCompleta parsearXCompleta(String trama, char k) {
         String[] c = campos(trama);
-        if (c == null || c.length != 3 || !"X".equals(c[0]) || !String.valueOf(k).equals(c[1])) {
+        if (c == null || (c.length != 3 && c.length != 5) || !"X".equals(c[0])
+                || !String.valueOf(k).equals(c[1])) {
             return null;
         }
         try {
-            return num(c[2]);
+            double x = num(c[2]);
+            if (c.length == 3) {
+                return new XCompleta(x, null, null);
+            }
+            // RF-FW-B13: el cuarto campo es TO y el quinto el ajuste aplicado, en cuentas.
+            return new XCompleta(x, numONull(c[3]), numONull(c[4]));
         } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /**
+     * RTV 1.0.0-rc3: temperaturas de "#T,<TO>,<TC>#" (V4.6). TO es la optica y TC la de circuito.
+     *
+     * Cada una puede venir ausente o ilegible por separado, y entonces vale null CON SU MOTIVO: no se
+     * sustituye por 0. Un 0 en esta columna es una cifra que alguien ajustaria manana como si fuese una
+     * medida; un hueco con motivo es un dato.
+     */
+    public static final class Temperatura {
+        /** Temperatura optica, en las unidades del firmware; null si no vino o no se pudo leer. */
+        public final Double optica;
+        /** Temperatura de circuito; null si no vino o no se pudo leer. */
+        public final Double circuito;
+        /** "" si las dos se leyeron; si no, por que falta la que falta. */
+        public final String motivo;
+        /** Estado del sensor optico: "OK", "DESC" (RF-FW-B13) o "SIN". Tercera columna del diario. */
+        public final String estado;
+
+        Temperatura(Double optica, Double circuito, String motivo, String estado) {
+            this.optica = optica;
+            this.circuito = circuito;
+            this.motivo = motivo == null ? "" : motivo;
+            this.estado = estado;
+        }
+
+        public boolean hayOptica() {
+            return optica != null;
+        }
+    }
+
+    /** Motivo cuando el valor viene pero no es un numero finito. */
+    public static final String T_ILEGIBLE = "el firmware devolvió un valor que no es un número";
+    /** Motivo cuando el campo no viene en la respuesta. */
+    public static final String T_AUSENTE = "la respuesta #T no trae ese campo";
+    /** Estado "DESC" de RF-FW-B13: lectura cruda >= 70 C, que el firmware fuerza a TO = 0. */
+    public static final String T_DESC = "DESC";
+    /**
+     * Motivo cuando el firmware dice DESC. El 0 que manda NO es una temperatura: es el centinela de
+     * V4.6:Temp_Optica.c:63-66. Por eso la columna va vacia y no con ese 0.
+     */
+    public static final String T_MOTIVO_DESC = "sensor óptico desconectado o lectura cruda >= 70 C (estado DESC): "
+            + "el firmware fuerza TO = 0 y ese 0 no es una temperatura";
+    /**
+     * En el candidato del firmware la temperatura de circuito vale SIEMPRE 0: se emite ap.fTempCircuit
+     * (V4.6:Calibracion.c:986) y el unico sitio que la asigna (V4.6:Aplicacion.c:216) esta dentro de
+     * ST_TEMPCIRC_AP, un estado al que no se llega desde ningun cambiarEstado(). Verificado dos veces.
+     */
+    public static final String T_CIRCUITO_ESTRUCTURAL =
+            "en el candidato del firmware la temperatura de circuito es siempre 0 (estado ST_TEMPCIRC_AP "
+                    + "inalcanzable, V4.6:Aplicacion.c:205-216): no se ajusta con ella";
+
+    /**
+     * "#T,&lt;Tcirc&gt;,&lt;TO&gt;#" o "#T,&lt;Tcirc&gt;,&lt;TO&gt;,&lt;estado&gt;#" -> temperaturas.
+     * null si no es una respuesta #T en absoluto.
+     *
+     * ORDEN: la de CIRCUITO va PRIMERO y la OPTICA SEGUNDA. Se comprueba en el fuente del firmware
+     * (V4.6:Calibracion.c:986 enviarNumero(ap.fTempCircuit), :988 enviarNumero(opt.fTempOpt)) y en el
+     * contrato (PROTOCOLO-V4.6-BORRADOR.md:215,251). La rc3 lo tuvo invertido un rato: con la V4.6 real eso
+     * habria metido el 0 estructural del circuito en la columna optica, que es la que se ajusta. Una prueba
+     * con el simulador simetrico ("#T,25.0,25.0#") no lo habria visto nunca; por eso el simulador ya no es
+     * simetrico.
+     *
+     * El tercer campo es de RF-FW-B13 y el candidato todavia no lo manda: se admiten las dos formas.
+     */
+    public static Temperatura parsearT(String trama) {
+        String[] c = campos(trama);
+        if (c == null || c.length < 3 || c.length > 4 || !"T".equals(c[0])) {
+            return null;
+        }
+        Double tc = numONull(c[1]);
+        Double to = numONull(c[2]);
+        String estado = c.length == 4 ? c[3].trim() : "";
+        StringBuilder m = new StringBuilder();
+        String est = to == null ? "SIN" : "OK";
+        if (T_DESC.equalsIgnoreCase(estado)) {
+            // El 0 del centinela no entra en la columna: vacia, con motivo, y marcada DESC. Sin esta marca un
+            // sensor muerto se lee igual que un dia fresco, y un ajuste hecho asi saldria plano.
+            to = null;
+            est = T_DESC;
+            m.append("TO: ").append(T_MOTIVO_DESC);
+        } else if (to == null) {
+            m.append("TO: ").append(T_ILEGIBLE);
+        }
+        if (tc == null) {
+            m.append(m.length() > 0 ? "; " : "").append("TC: ").append(T_ILEGIBLE);
+        } else if (tc == 0.0) {
+            m.append(m.length() > 0 ? "; " : "").append("TC: ").append(T_CIRCUITO_ESTRUCTURAL);
+        }
+        return new Temperatura(to, tc, m.toString(), est);
+    }
+
+    /** El numero del campo, o null si no es finito o no se puede leer (nunca 0 por defecto). */
+    private static Double numONull(String s) {
+        try {
+            return num(s);
+        } catch (NumberFormatException | NullPointerException e) {
             return null;
         }
     }

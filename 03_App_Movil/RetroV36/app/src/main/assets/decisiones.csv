@@ -4,8 +4,9 @@
 # alcance: lo unico que se dispensa, "criterio patron|tipo cifra% margen" separados por ';'. La cifra es un
 # TECHO con margen (mismo signo y |dev| <= |cifra| + margen): decision de Diego, c836cae (P13-02).
 # "EXCLUYE Pxx" saca un patron del ajuste (P81 del 5, c836cae); "REPITE Pxx" lo manda volver a medir (6048453).
-# FRASE-DIEGO (3.6.17, F-02): valor = SHA-256 en hex de la frase de Diego para "Cerrar sin restaurar" y "Liberar";
-# sin esa fila solo vale el PIN del equipo, comprobado con #L.
+# FIRMA-ACTA (RTV 1.0.0-rc3, 19-sep-2026): "Cerrar sin restaurar" y "Liberar" los autoriza el PIN de
+# administrador del equipo, comprobado con #L, y nada mas. La fila FRASE-DIEGO de la 3.6.17 se ha retirado:
+# nunca llego a existir en este fichero, y el codigo que la consultaba prometia una barrera inexistente.
 id,equipo,valor,fecha,firmante,documento,alcance,texto
 PA-24,SLV-002,SI,2026-09-19,Diego,"06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (8af526d; ampliada y margen en c836cae; RF-CAL-15 estricto en 6048453)","RF-CAL-14 P39 +15 3; RF-CAL-14 P49 -10 3; RF-CAL-15 I 11.5 0","Codigo b (rojo tipo I): se escribe con recta anclada en oscuro pese a incumplir RF-CAL-14 (P39 +15 %, P49 -10 %, techo con +-3) y RF-CAL-15 (RMS de tipo I 11,5 % estricto, sin margen: fila RF-CAL-15-b). Diego: Si, escribirla: mucho mejor que fabrica; ok si de 1 a 4; ok si a todo"
 PA-14,SLV-002,SI,2026-09-19,Diego,"06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (8af526d, 37f827d; P81 en c836cae)",EXCLUYE P81,"Codigo 5 (azul intenso): recta anclada en oscuro con la cobertura relajada; P81 sale del ajuste y queda solo de verificacion y re-medida. Diego, ~14:10, confirmado ~14:15: Si, relajar la regla y ajustarlo con una recta que pase por el negro, como el amarillo; ~15:40: ok si de 1 a 4"

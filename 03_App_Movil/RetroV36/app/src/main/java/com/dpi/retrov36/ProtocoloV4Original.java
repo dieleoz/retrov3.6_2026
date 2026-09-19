@@ -85,6 +85,28 @@ public final class ProtocoloV4Original implements Protocolo {
         return null;
     }
 
+    /** El V4 original solo responde @LEERV: ninguna trama devuelve la temperatura (RTV 1.0.0-rc3). */
+    @Override
+    public String tramaTemperatura() {
+        return null;
+    }
+
+    @Override
+    public Tramas.Tipo tipoTemperatura() {
+        return null;
+    }
+
+    @Override
+    public Tramas.Temperatura valorTemperatura(String trama) {
+        return null;
+    }
+
+    @Override
+    public String motivoSinTemperatura() {
+        return "El V4 original sólo responde a @LEERV, que devuelve un entero y nada más: su temperatura sólo "
+                + "aparece en las trazas que el equipo emite al disparar desde su propia pantalla.";
+    }
+
     @Override
     public String tramaBateria() {
         return null;

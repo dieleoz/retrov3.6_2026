@@ -21,6 +21,14 @@ public final class LecturaX {
         public final String metodo;
         /** Vacio si valida; motivo si no. */
         public final String error;
+        /**
+         * RTV 1.0.0-rc3: temperatura optica que venia DENTRO de la respuesta de "#X" (RF-FW-B13,
+         * "#X,k,x,TO,a#"); null con el candidato de hoy, que solo manda tres campos. Cuando viene, es la del
+         * propio disparo y no hace falta pedir "#T#" detras: ese es el camino barato, y el unico exacto.
+         */
+        public Double temperaturaOptica;
+        /** Ajuste por temperatura ya aplicado a x, en cuentas; null si el firmware no lo manda. */
+        public Double ajusteTemperatura;
 
         Lectura(char codigo, Cliente.Respuesta respuesta, double x, double u, String metodo, String error) {
             this.codigo = codigo;
@@ -33,6 +41,11 @@ public final class LecturaX {
 
         public boolean valida() {
             return error.isEmpty();
+        }
+
+        /** true si la propia respuesta de medida ya trajo la temperatura de este disparo. */
+        public boolean traeTemperatura() {
+            return temperaturaOptica != null;
         }
     }
 
@@ -69,10 +82,21 @@ public final class LecturaX {
             Double x = r.valida() ? p.valorX(r.trama, clave) : null;
             String metodo = tx + " directa";
             if (x == null) {
-                return new Lectura(clave, r, Double.NaN, Double.NaN, metodo, r.valida() ? "no cuadra: " + r.trama
-                        : r.describir());
+                // RTV 1.0.0-rc3: si el equipo dijo #ERR,OCUPADO# se dice asi, no como "trama rara". La V4.6
+                // lo responde a un #X que llega con una medida en curso (V4.6:Calibracion.c:980).
+                String err = r.valida() ? Tramas.motivoError(r.trama) : null;
+                return new Lectura(clave, r, Double.NaN, Double.NaN, metodo,
+                        err != null ? "el equipo respondió #ERR," + err + "#: no midió"
+                                : r.valida() ? "no cuadra: " + r.trama : r.describir());
             }
-            return new Lectura(clave, r, x, 0, metodo, "");
+            Lectura l = new Lectura(clave, r, x, 0, metodo, "");
+            // RF-FW-B13: si la respuesta trae la TO y el ajuste, son los del propio disparo.
+            Tramas.XCompleta xc = Tramas.parsearXCompleta(r.trama, clave);
+            if (xc != null && xc.traeTemperatura()) {
+                l.temperaturaOptica = xc.temperaturaOptica;
+                l.ajusteTemperatura = xc.ajuste;
+            }
+            return l;
         }
         char k = tx != null ? tx.charAt(0) : '6';
         Cliente.Respuesta r = Cliente.instancia().pedir(String.valueOf(k), Tramas.Tipo.MEDIDA,

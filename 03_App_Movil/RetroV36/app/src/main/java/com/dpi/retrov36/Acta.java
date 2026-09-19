@@ -557,7 +557,7 @@ public final class Acta {
 
     /**
      * P14-05/06/10: un rechazo cuya restauracion no se verifico deja el acta ABIERTA con este estado: no se escribe
-     * ningun codigo ni se acepta; solo se puede volver a rechazar o cerrar sin restaurar con la firma de Diego.
+     * ningun codigo ni se acepta; solo se puede volver a rechazar o cerrar sin restaurar con el PIN de admin.
      */
     private String rechazoPendiente;
 

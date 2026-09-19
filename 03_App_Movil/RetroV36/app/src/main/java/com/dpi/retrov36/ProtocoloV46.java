@@ -90,6 +90,27 @@ public final class ProtocoloV46 implements Protocolo {
         return Tramas.parsearX(trama, k);
     }
 
+    /** RTV 1.0.0-rc3: la V4.6 es el unico firmware que devuelve la lectura del sensor, con "#T#". */
+    @Override
+    public String tramaTemperatura() {
+        return "#T#";
+    }
+
+    @Override
+    public Tramas.Tipo tipoTemperatura() {
+        return Tramas.Tipo.ADMIN;
+    }
+
+    @Override
+    public Tramas.Temperatura valorTemperatura(String trama) {
+        return Tramas.parsearT(trama);
+    }
+
+    @Override
+    public String motivoSinTemperatura() {
+        return "";
+    }
+
     @Override
     public String tramaBateria() {
         return "#GB#";

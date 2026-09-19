@@ -946,7 +946,7 @@ public final class FlujoCalibracion {
         if (acta != null && acta.rechazoPendiente() != null) {
             // P14-06: con un rechazo pendiente no se continua la calibracion.
             return "Hay un rechazo pendiente (" + acta.rechazoPendiente() + "): vuelva a pulsar Rechazar, o ciérrela sin "
-                    + "restaurar con la firma de Diego. No se calibra.";
+                    + "restaurar, firmándola con el PIN de administrador. No se calibra.";
         }
         for (char k : sel) {
             Acta vig = aceptadaVigente(k);
@@ -1551,7 +1551,7 @@ public final class FlujoCalibracion {
             // QA-3613-01 / P13-05: con una restauracion NO verificada el acta no se cierra: el equipo puede
             // tener una curva sin acta. Queda abierta, con la restauracion fallida anotada, para reintentarlo.
             // P14-05/06: queda un RECHAZO PENDIENTE: no se escribe nada mas ni se continua; solo Rechazar otra vez o
-            // cerrar sin restaurar con la firma de Diego (P14-10). El motivo queda anotado.
+            // cerrar sin restaurar, firmado con el PIN de administrador (P14-10). El motivo queda anotado.
             acta.rechazoPendiente(reloj.ahoraIso(), (motivo == null ? "" : motivo) + " | " + t);
             return "NO se rechaza: RESTAURACIÓN NO VERIFICADA del código " + fallos + " (" + t + "). El acta queda con un "
                     + "rechazo pendiente: vuelva a pulsar Rechazar para reintentarlo; si no se resuelve, avise a Diego "
@@ -1564,17 +1564,26 @@ public final class FlujoCalibracion {
     }
 
     /**
-     * P14-10: salida terminal de un rechazo pendiente. Cierra el acta como RECHAZADA SIN RESTAURAR, firmada por
-     * Diego, con los codigos en estado desconocido. Solo con un rechazo pendiente.
+     * P14-10: salida terminal de un rechazo pendiente. Cierra el acta como RECHAZADA SIN RESTAURAR, con los
+     * codigos en estado desconocido. Solo con un rechazo pendiente.
+     *
+     * RTV 1.0.0-rc3 (decision FIRMA-ACTA de Diego): firma quien tenga el PIN de admin, y el acta dice SU nombre.
+     * El nombre es parametro y no un campo de la clase a proposito: esta pantalla puede abrirse en una sesion en
+     * la que nadie ha calibrado, y firmar con el nombre de quien calibro seria la misma atribucion falsa que
+     * esta decision cierra.
      */
-    public String cerrarSinRestaurar(String clave, String motivo) throws IOException, InterruptedException {
+    public String cerrarSinRestaurar(String clave, String motivo, String nombre)
+            throws IOException, InterruptedException {
         if (acta == null || acta.rechazoPendiente() == null) {
             return "Solo se cierra sin restaurar un acta con un rechazo pendiente.";
         }
-        String firmante = firmaDeDiego(clave);
+        if (nombre == null || nombre.trim().isEmpty()) {
+            return FALTA_NOMBRE;
+        }
+        String firmante = firma(clave, nombre);
         if (firmante == null) {
-            return "Cerrar sin restaurar lo firma Diego con el PIN del equipo o con su frase registrada en "
-                    + "decisiones.csv (FRASE-DIEGO). Lo tecleado no vale: no se cierra.";
+            return "Cerrar sin restaurar lo firma quien tenga el PIN de administrador del equipo. "
+                    + "El PIN tecleado no vale: no se cierra.";
         }
         StringBuilder desconocidos = new StringBuilder();
         if (acta.escribiendo() != 0) {
@@ -1594,21 +1603,37 @@ public final class FlujoCalibracion {
                 + desconocidos.toString().trim() + ": avise a Diego antes de calibrar otra vez.";
     }
 
+    /** RTV 1.0.0-rc3: lo que se responde cuando falta el nombre de quien firma. */
+    public static final String FALTA_NOMBRE = "Escriba el nombre de quien firma. El acta lo cita tal cual.";
+
+    /** La empresa que consta en la firma del acta (decision FIRMA-ACTA de Diego, 19-sep-2026). */
+    public static final String EMPRESA = "ITVIAL SAS";
+
     /**
-     * 3.6.17 (F-02): la firma de Diego para "Cerrar sin restaurar" y "Liberar". Vale su frase registrada (fila
-     * FRASE-DIEGO de decisiones.csv: valor = SHA-256 en hex de la frase) o el PIN del equipo, comprobado con #L.
-     * null si no vale.
+     * RTV 1.0.0-rc3 (decision FIRMA-ACTA): la firma de "Cerrar sin restaurar" y "Liberar". La autoriza el PIN de
+     * administrador del equipo, comprobado con #L, y **nada mas**: hasta la rc2 valia tambien una "frase
+     * registrada" en la fila FRASE-DIEGO de decisiones.csv, que NUNCA HA EXISTIDO en el asset. Se ha quitado
+     * entera: una barrera que el codigo promete y el dato no sostiene es peor que no tenerla, porque el que la
+     * lea creera que protege algo.
+     *
+     * El texto que devuelve es el que el acta cita literalmente:
+     * {@code Firmado por "<nombre>", ITVIAL SAS, <AAAA-MM-DD>} — el nombre de quien esta delante, no un literal
+     * cableado, y la fecha del dia, del mismo reloj que el resto del acta. null si el PIN no entra.
      */
-    private String firmaDeDiego(String clave) throws IOException, InterruptedException {
-        if (clave == null || clave.trim().isEmpty()) {
+    private String firma(String clave, String nombre) throws IOException, InterruptedException {
+        if (clave == null || clave.trim().isEmpty() || nombre == null || nombre.trim().isEmpty()) {
             return null;
         }
-        String h = decisiones.valor("FRASE-DIEGO", equipo());
-        if (h != null && h.equalsIgnoreCase(PaquetesZip.sha256(clave.trim().getBytes(java.nio.charset.StandardCharsets.UTF_8)))) {
-            return "Diego (frase registrada en decisiones.csv)";
+        if (ops.entrar(clave.trim()) != null) {
+            return null;
         }
-        String e = ops.entrar(clave.trim());
-        return e == null ? "Diego (PIN del equipo, verificado con #L)" : null;
+        return "Firmado por \"" + Csv.unaLinea(nombre.trim()) + "\", " + EMPRESA + ", " + hoyDe(reloj);
+    }
+
+    /** La fecha del dia, AAAA-MM-DD, del mismo reloj que el resto del acta (decision FIRMA-ACTA). */
+    static String hoyDe(Reloj r) {
+        String iso = r.ahoraIso();
+        return iso != null && iso.length() >= 10 ? iso.substring(0, 10) : iso;
     }
 
     /** F-03: motivo del bloqueo tras un cierre SIN RESTAURAR; null si no lo hay. */
@@ -1617,7 +1642,7 @@ public final class FlujoCalibracion {
             Acta u = almacen.ultimaCerrada();
             if (u != null && u.sinRestaurarPendiente()) {
                 return "La última acta se cerró SIN RESTAURAR: el equipo tiene códigos en estado desconocido. No se "
-                        + "calibra hasta que Diego lo libere (\"Liberar tras el cierre\", con su PIN o su frase).";
+                        + "calibra hasta que se libere (\"Liberar tras el cierre\", con el PIN de administrador).";
             }
         } catch (IOException e) {
             return "No se pudo leer la última acta cerrada: " + e.getMessage();
@@ -1625,15 +1650,27 @@ public final class FlujoCalibracion {
         return null;
     }
 
-    /** F-03: Diego libera el equipo tras un cierre SIN RESTAURAR (queda en el diario de esa acta). */
-    public String liberarTrasCierre(String clave, String motivo) throws IOException, InterruptedException {
+    /**
+     * F-03: se libera el equipo tras un cierre SIN RESTAURAR (queda en el diario de esa acta).
+     *
+     * RTV 1.0.0-rc3: el nombre es parametro, y aqui la razon se ve mejor que en ningun otro sitio: la linea
+     * LIBERADA se anade al diario de un acta ANTERIOR, que pudo cerrarse otro dia y con otra persona delante.
+     * Un acta liberada mostrara dos nombres, el de la conformidad de entonces y el de quien libera hoy, y eso
+     * es lo correcto.
+     */
+    public String liberarTrasCierre(String clave, String motivo, String nombre)
+            throws IOException, InterruptedException {
         Acta u = almacen.ultimaCerrada();
         if (u == null || !u.sinRestaurarPendiente()) {
             return "No hay ningún cierre SIN RESTAURAR pendiente.";
         }
-        String firmante = firmaDeDiego(clave);
+        if (nombre == null || nombre.trim().isEmpty()) {
+            return FALTA_NOMBRE;
+        }
+        String firmante = firma(clave, nombre);
         if (firmante == null) {
-            return "Liberar lo firma Diego con el PIN del equipo o con su frase registrada. No se libera.";
+            return "Liberar lo firma quien tenga el PIN de administrador del equipo. El PIN tecleado no vale: "
+                    + "no se libera.";
         }
         almacen.anadirAUltimaCerrada(Acta.lineaLiberada(reloj.ahoraIso(), "liberado por " + firmante + ": "
                 + (motivo == null ? "" : motivo)));

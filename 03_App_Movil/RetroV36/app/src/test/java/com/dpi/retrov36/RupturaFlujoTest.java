@@ -349,14 +349,14 @@ public class RupturaFlujoTest {
         p("  rechazoPendiente=" + f.rechazoPendiente() + " puedeRechazar=" + f.puedeRechazar());
         p("4 Rechazar otra vez (#F aun falla): " + f.rechazar("otra"));
         p("4b Rechazar (3a, #F aun falla): " + cortar(f.rechazar("otra")));
-        // 3.6.17 (F-02): un texto con "diego" ya no firma; hace falta el PIN del equipo (o la frase registrada).
-        String c5 = f.cerrarSinRestaurar("Operador", "x");
-        String c6 = f.cerrarSinRestaurar("no soy diego", "x");
+        // RTV 1.0.0-rc3 (FIRMA-ACTA): un texto no firma; autoriza el PIN de admin, y el nombre va aparte.
+        String c5 = f.cerrarSinRestaurar("Operador", "x", "Ana Ruiz");
+        String c6 = f.cerrarSinRestaurar("no soy diego", "x", "Ana Ruiz");
         p("5 cerrar 'Operador': " + c5);
         p("6 cerrar 'no soy diego': " + c6);
-        org.junit.Assert.assertTrue(c6, c6.contains("lo firma Diego"));
+        org.junit.Assert.assertTrue(c6, c6.contains("PIN de administrador"));
         org.junit.Assert.assertTrue(f.rechazoPendiente());
-        String c7 = f.cerrarSinRestaurar("1234", "el #F,b no entra; se revisa en taller");
+        String c7 = f.cerrarSinRestaurar("1234", "el #F,b no entra; se revisa en taller", "Ana Ruiz");
         p("6b cerrar con el PIN: " + c7);
         org.junit.Assert.assertTrue(c7, c7.startsWith("Acta cerrada SIN RESTAURAR"));
         p("  " + estado(f) + " curva b en equipo=" + sim.curvas.get('b'));

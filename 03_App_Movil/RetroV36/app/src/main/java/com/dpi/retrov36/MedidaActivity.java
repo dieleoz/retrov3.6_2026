@@ -239,6 +239,36 @@ public class MedidaActivity extends Base {
     }
 
     /**
+     * RTV 1.0.0-rc3: la temperatura de la TANDA, leida una sola vez antes de la primera medida, con su marca
+     * de hora. Se anota en todas las lineas de la tanda, y se dice expresamente que es de la tanda y no de
+     * cada medida: quien ajuste manana con estos datos tiene que saberlo.
+     *
+     * Devuelve el texto que se pega a cada linea; "" si el firmware no da temperatura (y entonces el motivo
+     * va al registro una sola vez, no en cada linea).
+     */
+    private static String temperaturaDeTanda(Sesion s, Protocolo proto) {
+        if (proto == null || proto.tramaTemperatura() == null) {
+            Registro.nota("medida R: sin temperatura. "
+                    + (proto == null ? "sin protocolo detectado" : proto.motivoSinTemperatura()));
+            return "";
+        }
+        String hora = Sesion.ahoraIso();
+        try {
+            Ops.LecturaT t = new Ops(Cliente.instancia(), proto).temperatura();
+            if (!t.hay()) {
+                Registro.nota("medida R: sin temperatura de tanda: " + t.motivo);
+                return "; sin temperatura de tanda (" + t.motivo + ")";
+            }
+            String tc = t.circuito() == null ? "" : String.format(Locale.US, ", TC %.1f", t.circuito());
+            return String.format(Locale.US, "; TO %.1f%s (lectura de TANDA a las %s, NO de esta medida)",
+                    t.optica(), tc, hora);
+        } catch (IOException | InterruptedException | RuntimeException e) {
+            Registro.nota("medida R: sin temperatura de tanda: " + EnlaceSerie.descripcion(e));
+            return "; sin temperatura de tanda (" + EnlaceSerie.descripcion(e) + ")";
+        }
+    }
+
+    /**
      * RF-APP-U07/U08: medida de R con @LEERV (V4 original). El entero se guarda como entero. El tipo 1 lleva su
      * etiqueta y no se compara con el certificado; cada medida de otros papeles lleva la previa de tipo 1 (el
      * error oculto del V4.1) o "estado previo desconocido".
@@ -270,6 +300,11 @@ public class MedidaActivity extends Base {
         Registro.nota("medida R de " + p.nombre + " con " + proto.tramaMedida(k) + " x" + total + " (" + s.identidad() + ")");
         Cliente.instancia().ejecutar(() -> {
             String fin = "Terminado.";
+            // RTV 1.0.0-rc3: UNA lectura de temperatura para toda la tanda, no una por medida. Aqui se mide
+            // con @LEERV, que no es trama '#', asi que una "#T#" detras de cada lectura pagaria la pausa larga
+            // (1500 + 600 ms) y doblaria el tiempo del operador. Esta pantalla no alimenta el ajuste; el banco
+            // si, y alli si va por disparo. La marca de hora se anota para que se vea a que momento pertenece.
+            final String etiquetaT = temperaturaDeTanda(s, proto);
             for (int i = 0; i < total && !parar; i++) {
                 final int q = i + 1;
                 enUi(() -> txtEstado.setText("Midiendo " + p.nombre + ": lectura " + q + " de " + total + "..."));
@@ -282,8 +317,8 @@ public class MedidaActivity extends Base {
                     String cmp = v == null || Tramas.esTipo1(k) ? ""
                             : String.format(Locale.US, "; frente al certificado %.0f: %+.1f %%", p.valor,
                             100.0 * (v - p.valor) / p.valor);
-                    String linea = String.format(Locale.US, "%s %s: %s [%s]%s; %s", p.nombre, proto.tramaMedida(k),
-                            v == null ? r.describir() : String.valueOf(v), et, cmp, nota);
+                    String linea = String.format(Locale.US, "%s %s: %s [%s]%s; %s%s", p.nombre, proto.tramaMedida(k),
+                            v == null ? r.describir() : String.valueOf(v), et, cmp, nota, etiquetaT);
                     Registro.nota("medida R: " + linea + " (" + s.identidad() + ")");
                     synchronized (medidasR) {
                         medidasR.add(linea);

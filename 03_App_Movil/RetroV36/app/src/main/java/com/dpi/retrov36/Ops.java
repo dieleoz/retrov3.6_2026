@@ -141,6 +141,66 @@ public final class Ops {
                 : Bateria.interpretarSinUnidad(n, t);
     }
 
+    /**
+     * RTV 1.0.0-rc3: lectura de temperatura, con su procedencia, para el diario.
+     *
+     * Nunca se rellena con 0. Si no hay temperatura, {@link #t} es null y {@link #motivo} dice por que; el
+     * diario escribe la columna vacia y el motivo queda anotado una vez por campana.
+     */
+    public static final class LecturaT {
+        /** null si no se pudo leer. */
+        public final Tramas.Temperatura t;
+        /** "" si se leyo bien. */
+        public final String motivo;
+
+        LecturaT(Tramas.Temperatura t, String motivo) {
+            this.t = t;
+            this.motivo = motivo == null ? "" : motivo;
+        }
+
+        public boolean hay() {
+            return t != null && t.hayOptica();
+        }
+
+        public Double optica() {
+            return t == null ? null : t.optica;
+        }
+
+        public Double circuito() {
+            return t == null ? null : t.circuito;
+        }
+
+        /** "OK", "DESC" o "SIN": la tercera columna del diario (RTV 1.0.0-rc3). */
+        public String estado() {
+            return t == null ? "SIN" : t.estado;
+        }
+    }
+
+    /**
+     * Temperatura del equipo (RTV 1.0.0-rc3). Solo la V4.6 la da, con "#T#". En los demas firmwares no se
+     * envia nada: se devuelve el motivo del protocolo, que es lo que va al diario.
+     */
+    public LecturaT temperatura() throws IOException, InterruptedException {
+        String t = protocolo.tramaTemperatura();
+        if (t == null) {
+            return new LecturaT(null, protocolo.motivoSinTemperatura());
+        }
+        Cliente.Respuesta r = canal.pedir(t, protocolo.tipoTemperatura(), TIMEOUT_ADMIN_MS);
+        if (!r.valida()) {
+            return new LecturaT(null, t + " sin respuesta válida: " + r.describir());
+        }
+        String err = Tramas.motivoError(r.trama);
+        if (err != null) {
+            // La V4.6 contesta #ERR,OCUPADO# a una trama que llega durante una medida: se ve, no se inventa.
+            return new LecturaT(null, t + " respondió #ERR," + err + "#");
+        }
+        Tramas.Temperatura v = protocolo.valorTemperatura(r.trama);
+        if (v == null) {
+            return new LecturaT(null, t + " respondió algo que no cuadra con el contrato: " + r.trama);
+        }
+        return new LecturaT(v, v.motivo);
+    }
+
     /** Resultado de una restauracion: ok solo si la relectura #G coincide con lo que habia. */
     public static final class Restauracion {
         public final boolean ok;
