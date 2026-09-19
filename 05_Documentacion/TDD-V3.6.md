@@ -1617,3 +1617,143 @@ firmware 3.6.1**) y las nuevas: C-36 (qué lleva SLV-002; T-C37), C-37 (versión
 C-38 (asentamiento; T-C38), C-39 (XI desordenados; T-C28), C-40 (P24; T-A40), C-41 (P32; T-C39), C-42
 (rangos de `x`; T-A41, T-C39), C-43 (umbrales de cobertura; T-C39), C-44 (T-A23 "cerrada"), C-46
 (regla del descolgado; T-A39) y C-47 (C1 frente al rodeo de la app; revisión de arquitectura).
+
+---
+
+## 7. App única (V3.6 y V4.6)
+
+**Añadido 19-sep-2026, tarde. Ninguna de estas pruebas existe todavía, y ninguna trama V4 se ha visto
+en un terminal serie.** Requisitos: [`SPEC-App-Unica-V36-V46.md`](SPEC-App-Unica-V36-V46.md)
+(RF-APP-U01 a U14). Firmwares F-2020, F-36, F-40, F-41 y F-46 como en su §1. Recetas: R-JVM (nivel A),
+R-SIM (nivel S, simulador del equipo con un perfil por firmware) y R-TERM / R-APP (nivel C). En nivel
+S, el simulador V4.1 debe reproducir **el bloqueo por `@` sin `LEERV`, el `0x00` tras `/n/r`, el
+segundo de espera antes de medir y el `error` arrastrado** (`V4.1:Serial.c:31-40,87-100,182-188`,
+`V4.1:Aplicacion.c:270-271,297-298`); si no, la prueba no vale.
+
+### 7.1 Pruebas (T-U)
+
+**T-U01 — Detección de F-36.** RF-APP-U01 · S · R-SIM · **PENDIENTE**
+- Pasos: conectar al simulador F-36 3.6.2.
+- Esperado: tramas `#V#`, `#GC#`, `#GN#` y ninguna más; versión V3.6 3.6.2.
+- Pasa: registro idéntico a lo esperado.
+
+**T-U02 — Detección de F-46.** RF-APP-U01 · S · R-SIM · **PENDIENTE**
+- Pasos: simulador F-46 que responde `#V,4.6,2026-10-01,CAL,0003#`.
+- Esperado: sólo las tramas `#` de identidad; ninguna `@`, `9` ni `6`; `ProtocoloV46`.
+
+**T-U03 — Detección de F-2020.** RF-APP-U01 · S · R-SIM · **PENDIENTE**
+- Pasos: simulador F-2020 que calla a `#V#` y responde `:3:` a `9`.
+- Esperado: `#V#`, `9`; ninguna `@`, ninguna `e`. Variante con `9` mudo y `::512` a `6`: `#V#`, `9`, `6`.
+
+**T-U04 — Detección de V4 original.** RF-APP-U01, U04, U05 · S · R-SIM · **PENDIENTE**
+- Pasos: simulador V4.1 que calla a `#V#`, `9` y `6`, y responde a la sonda a los 3,2 s con
+  `@LEERV,212@/n/r` + `0x00`.
+- Esperado: V4 original; `ProtocoloV4`; la espera de la sonda es ≥ 5 s. Con la app 3.6.14 falla
+  (espera 3000 + 180 ms, `RTV:Pruebas.java:321`, `RTV:Receptor.java:14`).
+
+**T-U05 — Nadie contesta.** RF-APP-U01, U03 · S · R-SIM · **PENDIENTE**
+- Esperado: `#V#`, `9`, `6`, sonda y **nada más**; mensaje de RF-APP-U03 con la mención al módulo BT.
+
+**T-U06 — Lista de lo que nunca se envía en la detección.** RF-APP-U01 · A · R-JVM · **PENDIENTE**
+- Pasos: recorrer las 5 ramas de la detección con un `Enlace` falso que registra.
+- Esperado: en ninguna rama aparece `e`, un `@` sin `LEERV`, ni un byte distinto de `9` y `6`.
+
+**T-U07 — Perfil por MAC.** RF-APP-U02 · S · R-SIM · **PENDIENTE**
+- Pasos: (a) MAC del V3-2 con perfil "sólo sonda"; (b) MAC con perfil F-36 y simulador V4.1.
+- Esperado: (a) registro = sólo la sonda; (b) sin operar, "el equipo no responde como su perfil".
+
+**T-U08 — Parser `@LEERV` estricto.** RF-APP-U05 · A · R-JVM · **PENDIENTE**
+- Entradas → esperado: `@LEERV,BLA,1@` → nada (eco); `@LEERV,127@/n/r` + `0x00` → 127;
+  `***** RETROREFLECTOMETRO VERTICAL *****\r\nOFFSET= 12.30\r\n\r\n@LEERV,5@/n/r` → 5;
+  `@LEERV,127,45@` → rechazada; `@LEERV,@` → rechazada.
+- Con la 3.6.14 falla el primero: `RTV:Tramas.java:40` acepta `[^@]*`.
+
+**T-U09 — Restos entre respuestas.** RF-APP-U05 · S · R-SIM · **PENDIENTE**
+- Pasos: dos medidas seguidas con el simulador V4.1.
+- Esperado: la segunda respuesta no empieza por `/n/r` ni por `0x00`; el valor es el de la segunda.
+
+**T-U10 — `permitida()` del V4 original.** RF-APP-U06 · A · R-JVM · **PENDIENTE**
+- Entradas: las 12 `@LEERV` válidas; y `#V#`, `9`, `6`, `e`, `@VERS@`, `@?@`, `@LEERV@`,
+  `@LEERV,BL,1@`, `@LEERV,BLA,3@`, `@LEERV,BLA,1@@`, `@leerv,BLA,1@`, `@LEERV,BLA,1@\r\n`.
+- Esperado: sólo las 12 pasan, byte a byte.
+
+**T-U11 — Sin `esV36` fuera de `Protocolo`.** RF-APP-U06 · A · revisión de código · **PENDIENTE**
+- Esperado: `grep` de `esV36` y de `Version.V4` fuera de las implementaciones: 0 resultados.
+
+**T-U12 — V4 original: medir sin calibrar.** RF-APP-U07 · S · R-SIM · **PENDIENTE**
+- Pasos: sesión completa con el simulador V4.1: 12 medidas, banco de verificación, intento de abrir
+  "Calibrar este equipo" y Avanzado.
+- Esperado: 0 tramas `#`, `9` y `e`; los dos botones deshabilitados con "Equipo V4 sin firmware V4.6:
+  sólo medir y verificar".
+
+**T-U13 — Etiqueta del tipo 1.** RF-APP-U07 · A · R-JVM · **PENDIENTE**
+- Esperado: una medida `BLA,1` de V4.1 lleva "señal tipo 1, cuentas/10, no es retrorreflexión" y no
+  entra en ninguna comparación con certificado; en el perfil del V3-2, "tipo 1 sin interpretar".
+
+**T-U14 — Diario del estado oculto.** RF-APP-U08 · A · R-JVM · **PENDIENTE**
+- Pasos: (a) sonda `BLA,1` y luego `AMA,2`; (b) `AMA,2` como primera medida.
+- Esperado: (a) la de `AMA,2` lleva "previa: BLA,1 = <n> (sonda)"; (b) "estado previo desconocido", y
+  el resumen lo avisa.
+
+**T-U15 — Mismo banco con dos protocolos.** RF-APP-U09 · S · R-SIM · **PENDIENTE**
+- Pasos: el banco de 3 patrones con `ProtocoloV36` (simulador F-36) y con `ProtocoloV46` (F-46).
+- Esperado: las mismas pantallas y el mismo número de toques; F-36 usa `e` y bytes, F-46 `#X` y
+  `@LEERV`; ninguna trama del otro protocolo.
+
+**T-U16 — Catálogo y coherencia en `DEF` por perfil.** RF-APP-U09 · A · R-JVM · **PENDIENTE**
+- Esperado: con F-46 en `DEF` la coherencia usa `#E` frente al literal de `V4.1:Ecuaciones.c`, no
+  `#G` a 1 ulp; el catálogo F-46 no tiene la columna `codigo_equipo` de la V3.6.
+
+**T-U17 — Cola de verificación V4.** RF-APP-U10 · A · R-JVM · **PENDIENTE**
+- Esperado: ninguna fila con `e` ni uso AJUSTE; su ZIP no se importa como campaña de ajuste.
+
+**T-U18 — Serie declarada.** RF-APP-U11 · A · R-JVM · **PENDIENTE**
+- Esperado: con F-36 3.6.1 y con V4 original, registros, ZIP y acta dicen "serie declarada, no leída
+  del equipo"; con F-46 y 3.6.2, no.
+
+**T-U19 — Campaña sin MAC.** RF-APP-U12 · A · R-JVM · **PENDIENTE**
+- Esperado: `esDeEsteEquipo("00:21:13:00:00:01")` de una campaña con MAC vacía → falso. Con la
+  3.6.14 falla (`Campana.java:186-188` en `HEAD`).
+
+**T-U20 — V4.6 en blanco.** RF-APP-U13 · S · R-SIM · **PENDIENTE**
+- Pasos: simulador F-46 con `#V,4.6,2026-10-01,DEF,0000#`, `#GN,NONE#`, `#GC,NONE#`.
+- Esperado: no abre campaña hasta el alta de serie; 0 `#S`, `#SC`, `#F` antes; "sin fecha de
+  calibración".
+
+### 7.2 Aceptación (ISTQB)
+
+Nivel C salvo que se diga. Cada caso se registra como en §0 (fecha, equipo, versión detectada, md5 del
+APK, tramas en crudo). **AT-U05 y AT-U06 son encargos de medida**: su resultado cambia la SPEC.
+
+| ID | Requisito | Precondición | Pasos | Resultado esperado |
+| :--- | :--- | :--- | :--- | :--- |
+| **AT-U01** | U01 | SLV-002 con V3.6.2, emparejado | Conectar con la app | Detecta V3.6 3.6.2; registro: `#V#`, `#GC#`, `#GN#` y nada más |
+| **AT-U02** | U01 | Equipo con V3 de 2020 (si queda alguno) o simulador F-2020 | Conectar | Detecta V3 2020; registro sin `@` ni `e` |
+| **AT-U03 (negativo)** | U01, U04 | **V4 original sin identificar**, sin perfil en `equipos.csv`; terminal serie en paralelo si se puede | Conectar | Registro: `#V#`, `9`, `6`, sonda. Responde la sonda → V4 original. El equipo **sigue respondiendo** a una segunda medida `@LEERV,BLA,2@` (no se ha bloqueado) |
+| **AT-U04 (negativo)** | U01, U03 | Equipo apagado o módulo BT sin equipo | Conectar | "Sin respuesta válida…" con la mención a la velocidad del módulo; ninguna trama tras la sonda |
+| **AT-U05** | U02 | **V3-2** con su firmware original; **terminal serie** del PC por el BT; visto bueno de Diego | (1) Enviar a mano `@LEERV,BLA,2@`; (2) `@LEERV,BLA,1@`; (3) `@LEERV,BLA,2@`. **No** enviar `#V#`, `9`, `6` ni ninguna `@` sin `LEERV` | (1)-(3) responden `@LEERV,<n>@/n/r` con el `0x00`; el valor de (3) frente a (1) dice si el V3-2 arrastra `error`. Con eso se escribe su perfil en `equipos.csv` |
+| **AT-U06 (negativo)** | U05 | Cualquier V4 original, terminal serie | Medir con la app y mirar los bytes en el terminal | Termina en `/n/r` literal (2F 6E 2F 72) y `00`, **no** en 0D 0A; la app muestra el entero y la siguiente medida no arrastra el resto |
+| **AT-U07 (negativo)** | U06, U07 | V4 original conectado | Intentar "Calibrar este equipo", Avanzado y el terminal de diagnóstico con `@VERS@` | Los dos botones deshabilitados con su motivo; el terminal **rechaza** `@VERS@` antes de enviarlo (0 bytes en el enlace) |
+| **AT-U08** | U09 | F-46 grabado (tras P7 de la V4.6) | Banco de 3 patrones y "Calibrar este equipo" de un código en simulador y luego en el equipo | Mismo flujo, pantallas y toques que con SLV-002 |
+| **AT-U09 (negativo)** | U12 | Campaña de SLV-002 abierta con 2 series | Desconectar, conectar a otro equipo y pulsar Medir | 0 medidas añadidas a la campaña de SLV-002; la app ofrece la campaña del equipo nuevo |
+| **AT-U10 (negativo)** | U13 | F-46 con la EEPROM en blanco (en simulador; en equipo tras P7) | Conectar y abrir el banco | Pide el alta de serie; hasta entonces 0 `#S`, `#SC`, `#F`; tras el alta, `#GN#` releído coincide |
+| **AT-U11 (negativo)** | U01 | V4.1 **ya bloqueado** por una `@` sin `LEERV` enviada por otro medio (sólo en simulador) | Conectar | Sin respuesta a nada → RF-APP-U03; la app no intenta desbloquearlo con más tramas |
+
+### 7.3 Requisito → pruebas
+
+| Requisito | Pruebas |
+| :--- | :--- |
+| RF-APP-U01 | T-U01 a T-U06, AT-U01 a AT-U04, AT-U11 |
+| RF-APP-U02 | T-U07, AT-U05 |
+| RF-APP-U03 | T-U05, AT-U04 |
+| RF-APP-U04 | T-U04, AT-U03 |
+| RF-APP-U05 | T-U08, T-U09, AT-U06 |
+| RF-APP-U06 | T-U10, T-U11, AT-U07 |
+| RF-APP-U07 | T-U12, T-U13, AT-U07 |
+| RF-APP-U08 | T-U14 |
+| RF-APP-U09 | T-U15, T-U16, AT-U08 |
+| RF-APP-U10 | T-U17 |
+| RF-APP-U11 | T-U18 |
+| RF-APP-U12 | T-U19, AT-U09 |
+| RF-APP-U13 | T-U20, AT-U10 |
+| RF-APP-U14 | Decisión de Diego; sin prueba |
