@@ -1,9 +1,9 @@
 Memory Summary:
-    Program space        used  D304h ( 54020) of 20000h bytes   ( 41.2%)
-    Data space           used   972h (  2418) of  2000h bytes   ( 29.5%)
+    Program space        used  DEA4h ( 56996) of 20000h bytes   ( 43.5%)
+    Data space           used   9A0h (  2464) of  2000h bytes   ( 30.1%)
     Configuration bits   used     5h (     5) of     5h words   (100.0%)
     EEPROM space         used     0h (     0) of   400h bytes   (  0.0%)
     ID Location space    used    10h (    16) of    10h bytes   (100.0%)
-    Data stack space     used     0h (     0) of  1640h bytes   (  0.0%)
+    Data stack space     used     0h (     0) of  1580h bytes   (  0.0%)
  Estimated maximum stack depth 11
  Estimated maximum stack depth 16

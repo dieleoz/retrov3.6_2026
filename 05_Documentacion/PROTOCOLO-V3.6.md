@@ -47,6 +47,11 @@ Tramas ASCII **entre `#` y `#`**, campos separados por `,`, **como máximo 48 by
 | `#F,<k>#` o `#F,*#` | `#OK#`. Restaura los coeficientes de fábrica de `k` o de todos | **Sí** |
 | `#GT#` | `#GT,<x2>,<x1>,<x0>#`, el factor de temperatura (`gui.c:41-43`) | No |
 | `#ST,<x2>,<x1>,<x0>#` | `#OK#` / `#ERR,...#` | **Sí** |
+| `#FT#` | `#OK#` / `#ERR,BLOQUEADO#` / `#ERR,EEPROM#`. Firmware 3.6.2: repone el factor de temperatura de fábrica (`gui.c:42-44`) en RAM y EEPROM y limpia el bit 12 de la máscara de `#V#`; el PIN no cambia | **Sí** |
+| `#SC,<AAAA-MM-DD>#` o `#SC,NONE#` | `#OK#` / `#ERR,FORMATO#` / `#ERR,BLOQUEADO#` / `#ERR,EEPROM#`. Firmware 3.6.2: graba la fecha de calibración en EEPROM (0x200, registro con CRC). Año 2020-2099, mes 1-12, día según el mes. `NONE` la borra. `#F` y `#FT` no la tocan. El vencimiento lo calcula la app | **Sí** |
+| `#GC#` | `#GC,<AAAA-MM-DD>#` o `#GC,NONE#` (EEPROM en blanco, CRC mala o fecha fuera de rango). Firmware 3.6.2 | No |
+| `#SN,<serie>#` | `#OK#` / `#ERR,FORMATO#` / `#ERR,BLOQUEADO#` / `#ERR,EEPROM#`. Firmware 3.6.2: graba la serie del equipo en EEPROM (0x1EE, registro con CRC). 1-12 caracteres ASCII 0x20-0x7E sin `#` ni `,`; `NONE` no se admite. La pantalla STONE sigue mostrando `SLH-046` (`gui.c:198`) | **Sí** |
+| `#GN#` | `#GN,<serie>#` o `#GN,NONE#` (EEPROM en blanco o CRC mala). Firmware 3.6.2 | No |
 | `#P,<pin_actual>,<pin_nuevo>#` | `#OK#` / `#ERR,PIN#`. PIN de 4 dígitos | **Sí** |
 
 **Registro de la pantalla STONE (ingeniería inversa de botones), añadido el 18-sep-2026:**

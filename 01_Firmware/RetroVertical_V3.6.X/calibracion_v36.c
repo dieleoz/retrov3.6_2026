@@ -474,6 +474,116 @@ static void enviarFecha(void) {
     sendUartStr(f);
 }
 
+/* ------------------------------------------------------------------------- */
+/* V3.6.2: serie del equipo y fecha de calibracion en EEPROM                  */
+/*                                                                            */
+/*  0x1EE  serie: longitud (1..12), 12 caracteres, 3 ceros + CRC-16           */
+/*  0x200  fecha: anio (2 bytes, byte bajo primero), mes, dia, 12 ceros       */
+/*         + CRC-16                                                           */
+/*  Mismo formato que los demas registros (16 datos + CRC-16/CCITT-FALSE,     */
+/*  byte bajo primero). Fuera de la cabecera V36: no dependen de ella, y ni   */
+/*  guardarEeprom() ni #F ni #FT los tocan. CRC mala o contenido fuera de     */
+/*  rango: se responde NONE. Todo a 0xFF (chip recien grabado): NONE.         */
+/* ------------------------------------------------------------------------- */
+#define EE_SERIE       0x1EE
+#define EE_FECHA       0x200
+#define SERIE_MAX      12
+
+/* Lee los 16 bytes de datos del registro en d; 1 si la CRC cuadra. */
+static unsigned char regExtraLeer(unsigned int dir, unsigned char *d) {
+    unsigned int crc = 0xFFFF;
+    unsigned char j;
+    for (j = 0; j < 16; j++) {
+        d[j] = DATAEE_ReadByte(dir + j);
+        crc = crc16Paso(crc, d[j]);
+    }
+    return (DATAEE_ReadByte(dir + 16) == (unsigned char)(crc & 0xFF) &&
+            DATAEE_ReadByte(dir + 17) == (unsigned char)(crc >> 8)) ? 1 : 0;
+}
+
+/* Escribe el registro (solo los bytes que cambian) y lo relee. d == 0 lo
+ * borra (18 bytes a 0xFF). 1 si la relectura coincide. */
+static unsigned char regExtraEscribir(unsigned int dir, const unsigned char *d) {
+    unsigned int crc = 0xFFFF;
+    unsigned char j, b[18];
+    for (j = 0; j < 16; j++) {
+        b[j] = d ? d[j] : 0xFF;
+        crc = crc16Paso(crc, b[j]);
+    }
+    b[16] = d ? (unsigned char)(crc & 0xFF) : 0xFF;
+    b[17] = d ? (unsigned char)(crc >> 8) : 0xFF;
+    for (j = 0; j < 18; j++) eeEscribirSiDistinto(dir + j, b[j]);
+    for (j = 0; j < 18; j++) {
+        if (DATAEE_ReadByte(dir + j) != b[j]) return 0;
+    }
+    return 1;
+}
+
+static unsigned char caracterSerieValido(char c) {
+    return (c >= 0x20 && c <= 0x7E && c != '#' && c != ',') ? 1 : 0;
+}
+
+/* Fecha AAAA-MM-DD con anio 2020-2099, mes 1-12 y dia segun el mes. */
+static unsigned char fechaValida(unsigned int a, unsigned char m, unsigned char d) {
+    static const unsigned char diasMes[12] = {31,28,31,30,31,30,31,31,30,31,30,31};
+    unsigned char dm;
+    if (a < 2020 || a > 2099 || m < 1 || m > 12 || d < 1) return 0;
+    dm = diasMes[m - 1];
+    if (m == 2 && (a % 4) == 0) dm = 29;      /* 2020-2099: bisiesto si a % 4 == 0 */
+    return (d <= dm) ? 1 : 0;
+}
+
+static unsigned char leerFecha(const char *c, unsigned char *d) {
+    unsigned char i;
+    unsigned int a;
+    if (strlen(c) != 10 || c[4] != '-' || c[7] != '-') return 0;
+    for (i = 0; i < 10; i++) {
+        if (i == 4 || i == 7) continue;
+        if (c[i] < '0' || c[i] > '9') return 0;
+    }
+    a = (unsigned int)(c[0] - '0') * 1000 + (unsigned int)(c[1] - '0') * 100 +
+        (unsigned int)(c[2] - '0') * 10 + (unsigned int)(c[3] - '0');
+    memset(d, 0, 16);
+    d[0] = (unsigned char)(a & 0xFF);
+    d[1] = (unsigned char)(a >> 8);
+    d[2] = (unsigned char)((c[5] - '0') * 10 + (c[6] - '0'));
+    d[3] = (unsigned char)((c[8] - '0') * 10 + (c[9] - '0'));
+    return fechaValida(a, d[2], d[3]);
+}
+
+static void responderFecha(void) {
+    unsigned char d[16];
+    unsigned int a;
+    char f[12];
+    responder("#GC,");
+    if (regExtraLeer(EE_FECHA, d)) {
+        a = (unsigned int)d[0] | ((unsigned int)d[1] << 8);
+        if (fechaValida(a, d[2], d[3])) {
+            sprintf(f, "%04u-%02u-%02u", a, (unsigned int)d[2], (unsigned int)d[3]);
+            sendUartStr(f);
+            UART1_Write('#');
+            return;
+        }
+    }
+    responder("NONE#");
+}
+
+static void responderSerie(void) {
+    unsigned char d[16], j;
+    responder("#GN,");
+    if (regExtraLeer(EE_SERIE, d) && d[0] >= 1 && d[0] <= SERIE_MAX) {
+        for (j = 1; j <= d[0]; j++) {
+            if (!caracterSerieValido((char)d[j])) break;
+        }
+        if (j > d[0]) {
+            for (j = 1; j <= d[0]; j++) UART1_Write(d[j]);
+            UART1_Write('#');
+            return;
+        }
+    }
+    responder("NONE#");
+}
+
 static void hacerCopia(void) {
     memcpy(copiaCoef, coefCal, sizeof(copiaCoef));
     copiaTemp[0] = X_2; copiaTemp[1] = X_1; copiaTemp[2] = X_0;
@@ -602,6 +712,50 @@ void adminProcesarTrama(char *trama, unsigned char len) {
             for (i = 0; i < 4; i++) coefCal[k][i] = coefFabrica[k][i];
         }
         guardarYResponder();
+    }
+    else if (strcmp(campo[0], "FT") == 0 && nc == 1) {
+        /* V3.6.2: factor de temperatura de fabrica (gui.c:42-44, copiado al
+         * arrancar en tempFabrica). Como #F: se reescribe el registro con los
+         * valores de ROM y el bit 12 de la mascara vuelve a 0. El PIN, que va
+         * en el mismo registro, no cambia. */
+        if (!modoAdmin) { responder("#ERR,BLOQUEADO#"); return; }
+        hacerCopia();
+        X_2 = tempFabrica[0];
+        X_1 = tempFabrica[1];
+        X_0 = tempFabrica[2];
+        guardarYResponder();
+    }
+    else if (strcmp(campo[0], "GC") == 0 && nc == 1) {
+        responderFecha();
+    }
+    else if (strcmp(campo[0], "GN") == 0 && nc == 1) {
+        responderSerie();
+    }
+    else if (strcmp(campo[0], "SC") == 0 && nc == 2) {
+        /* V3.6.2: fecha de calibracion. #SC,NONE# la borra. */
+        unsigned char d[16];
+        if (!modoAdmin) { responder("#ERR,BLOQUEADO#"); return; }
+        if (strcmp(campo[1], "NONE") == 0) {
+            responder(regExtraEscribir(EE_FECHA, 0) ? "#OK#" : "#ERR,EEPROM#");
+            return;
+        }
+        if (!leerFecha(campo[1], d)) { adminErrorFormato(); return; }
+        responder(regExtraEscribir(EE_FECHA, d) ? "#OK#" : "#ERR,EEPROM#");
+    }
+    else if (strcmp(campo[0], "SN") == 0 && nc == 2) {
+        /* V3.6.2: serie del equipo, 1 a 12 caracteres ASCII imprimibles sin '#' ni ','.
+         * "NONE" se rechaza: es lo que responde #GN# sin serie. */
+        unsigned char d[16];
+        size_t n = strlen(campo[1]);
+        if (!modoAdmin) { responder("#ERR,BLOQUEADO#"); return; }
+        if (n < 1 || n > SERIE_MAX || strcmp(campo[1], "NONE") == 0) { adminErrorFormato(); return; }
+        memset(d, 0, sizeof(d));
+        d[0] = (unsigned char)n;
+        for (i = 0; i < (unsigned char)n; i++) {
+            if (!caracterSerieValido(campo[1][i])) { adminErrorFormato(); return; }
+            d[1 + i] = (unsigned char)campo[1][i];
+        }
+        responder(regExtraEscribir(EE_SERIE, d) ? "#OK#" : "#ERR,EEPROM#");
     }
     else if (strcmp(campo[0], "GT") == 0 && nc == 1) {
         responder("#GT,");

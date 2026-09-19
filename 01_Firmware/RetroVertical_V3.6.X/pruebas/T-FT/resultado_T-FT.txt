@@ -1,0 +1,22 @@
+difRom (X_2,X_1,X_0 tras #FT frente a los literales de gui.c:42-44, bits distintos) = 0
+difRom2 (lo mismo tras rearrancar desde la EEPROM) = 0
+#V#                          -> #V,3.6,2026-09-19,DEF,0000#
+#FT#                         -> #ERR,BLOQUEADO#
+#L,2026#                     -> #OK#
+#ST,0,5.0E-04,9.5E-01#       -> #OK#
+#GT#                         -> #GT,0.00000000E+00,5.00000000E-04,9.49999953E-01#
+#V#                          -> #V,3.6,2026-09-19,CAL,1000#
+#FT,1#                       -> #ERR,FORMATO#
+#FT#                         -> #OK#
+#GT#                         -> #GT,0.00000000E+00,4.32120039E-04,9.01486480E-01#
+#V#                          -> #V,3.6,2026-09-19,DEF,0000#
+#P,2026,1234#                -> #OK#
+#ST,0,5.0E-04,9.5E-01#       -> #OK#
+#FT#                         -> #OK#
+#V#                          -> #V,3.6,2026-09-19,DEF,0000#
+#Q#                          -> #OK#
+#FT#                         -> #ERR,BLOQUEADO#
+#V#                          -> #V,3.6,2026-09-19,DEF,0000#
+#GT#                         -> #GT,0.00000000E+00,4.32120039E-04,9.01486480E-01#
+#L,1234#                     -> #OK#
+#OK?#                        -> #ERR,FORMATO#

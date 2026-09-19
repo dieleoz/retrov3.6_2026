@@ -1,0 +1,11 @@
+device PIC18F47K42
+hwtool SIM
+program "C:\Users\DIEGO~1.ZUI\AppData\Local\Temp\claude\D---Proyect-IT-P-RetroReflectometro-Vertical\be31a279-437b-4b73-afa4-7fb36ab499fb\scratchpad\sim362\ft\h.elf"
+break hFT.c:62
+run
+wait 1800000
+print difRom
+print difRom2
+print nReg
+print registro
+quit

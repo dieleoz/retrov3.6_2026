@@ -1,8 +1,9 @@
 # CAMBIOS de la V3.6 frente a la base de 2020
 
-**Estado: la V3.6.1 (§7) está compilada y probada sólo en simulador (MPLAB SIM); no se ha grabado en
-ningún equipo.** La V3.6 (md5 `680b6a7d…`) sí corre en SLV-002 desde el 19-sep-2026. Lo que exige el
-equipo delante está en la sección 5 y queda pendiente.
+**Estado: SLV-002 lleva la V3.6.1 (§7, md5 `8736c05d…`) desde el 19-sep-2026 a las 09:36** (fuente en
+el commit `8860445`, acta de grabación en `869d3c6`). **La V3.6.2 (§8) está compilada y probada sólo en
+simulador (MPLAB SIM); no se ha grabado en ningún equipo.** Lo que exige el equipo delante está en la
+sección 5 y queda pendiente.
 
 **Primero, lo que no cuadra:** la ida y vuelta de un coeficiente por `#S` → `#G` **puede superar los
 5 ulp** que tolera la app 3.6.2 (`Ecuacion.ULP_S`): medido en simulador hasta 5 ulp, y la emulación
@@ -160,15 +161,19 @@ Un byte suelto en esa ventana sigue disparando otra medida, como en 2020.
 
 ## 6. Entregable
 
-**V3.6.1 (19-sep-2026, vigente):** `hex/RetroVertical_V3.6.hex`, md5 `8736c05d0273fdda66d5988f472d41e1`
-(`hex/RetroVertical_V3.6.hex.md5`). ROM 54 020 B de 131 072 (41,2 %), RAM 2 418 B de 8 192 (29,5 %), pila
+**V3.6.2 (19-sep-2026, vigente, sin grabar):** `hex/RetroVertical_V3.6.hex`, md5
+`9d5d5e3951c8aa83d1465f16f3733d27`. Añade `#FT#`, `#SC#`/`#GC#` y `#SN#`/`#GN#` (§8). ROM 57 009 B
+de 131 072 (43,5 %), RAM 2 464 B de 8 192 (30,1 %), pila 11/16. Configuración e IDLOC iguales. Detalle en
+`hex/memoria.txt`; md5 de cada fuente en `hex/fuente.md5` (sólo cambia `calibracion_v36.c`).
+
+*V3.6.1 (19-sep-2026, la que lleva SLV-002 desde las 09:36; fuente `8860445`, acta `869d3c6`):* md5
+`8736c05d0273fdda66d5988f472d41e1`. ROM 54 020 B de 131 072 (41,2 %), RAM 2 418 B de 8 192 (29,5 %), pila
 hardware estimada 11 niveles en `main` y 16 con interrupción (igual que la base). Bits de configuración
 e IDLOC idénticos a la V3.6 (`EC FF F7 FF 9F FF FF DF FE FF`). `#V#` sigue respondiendo `3.6`
 (`FW_VERSION_STR`, `calibracion_v36.h:16`); lo que distingue la 3.6.1 es la fecha de compilación
-(`#V,3.6,2026-09-19,...#`). Detalle en `hex/memoria.txt`; md5 de cada fuente en `hex/fuente.md5` (sólo
-cambia `calibracion_v36.c`).
+(`#V,3.6,2026-09-19,...#`).
 
-*V3.6 (18-sep-2026, la que lleva SLV-002):* md5 `680b6a7d3a387ccddf066a2ebc0899d1`, commit `f75ff88`.
+*V3.6 (18-sep-2026; SLV-002 la llevó hasta el 19-sep):* md5 `680b6a7d3a387ccddf066a2ebc0899d1`, commit `f75ff88`.
 ROM 49 060 B (37,4 %), RAM 2 373 B (29,0 %). Se recupera de git.
 
 ## 7. V3.6.1: límites de `#ST` y `#S` (C4) y medida de la ida y vuelta (C1)
@@ -310,3 +315,99 @@ temperatura no hay orden: `#F` sólo repone coeficientes.
 - `#S` es más estricto: una calibración del código `2` con forma parecida a la de fábrica, o cualquier
   curva que dé más de 4000 o menos de 0 entre x = 600 y 4300, será rechazada con `#ERR,FORMATO#`.
 - Nada nuevo en la ruta de medida: T-A20 da 0 diferencias. El código añadido sólo corre con `#S` y `#ST`.
+
+## 8. V3.6.2: `#FT#`, serie y fecha de calibración
+
+Sólo cambia `calibracion_v36.c`. No se tocan la ruta de medida, la pantalla STONE (sigue mostrando la
+constante `SLH-046`, `gui.c:189,198`) ni el formato de `#V#`. Probado sólo en simulador. Filas nuevas
+en `05_Documentacion/PROTOCOLO-V3.6.md`, tabla de órdenes.
+
+| Líneas | Cambio |
+| :--- | :--- |
+| `:477-585` | Registros de serie y fecha: `regExtraLeer`, `regExtraEscribir`, validación y respuestas |
+| `:716-727` | `#FT#` |
+| `:728-759` | `#GC#`, `#GN#`, `#SC#`, `#SN#` |
+
+### 8.1 `#FT#`: factor de temperatura de fábrica
+
+**El hueco que cierra:** tras un `#ST`, ninguna orden devolvía la temperatura a fábrica; `#F` sólo repone
+coeficientes, así que `#V#` se quedaba en `CAL` con el bit 12 (§7.3).
+
+Hace lo mismo que `#F,k#` para un código. Exige sesión de administrador (`#ERR,BLOQUEADO#` sin ella),
+copia en `X_2`, `X_1`, `X_0` los valores de ROM (`tempFabrica`, que `calibracionIniciar()` toma de los
+literales de `gui.c:42-44` al arrancar) y guarda con `guardarYResponder()`: reescribe el registro de
+temperatura (0x1DC) con esos valores y su CRC, lo relee y responde `#OK#`, o `#ERR,EEPROM#` con la RAM
+como estaba. **El registro no se invalida** porque comparte CRC con el PIN (§2.1): invalidarlo devolvería
+el PIN a `2026`. Con los valores de ROM en RAM, la máscara pierde el bit 12 (`mascaraAjustes`,
+comparación bit a bit); si ningún código está tocado, `#V#` vuelve a `DEF,0000`. `#FT` con argumentos da
+`#ERR,FORMATO#`.
+
+### 8.2 Serie (`#SN`/`#GN`) y fecha de calibración (`#SC`/`#GC`)
+
+Dos registros nuevos en la zona libre de la EEPROM (0x1EE-0x3FF según
+`05_Documentacion/SPEC-Registro-Indicador-Interventoria.md` §3.2; el bloque heredado de
+`eeprom_manager.h:9-23` acaba en el byte 73), con el formato de los demás (16 bytes + CRC-16/CCITT-FALSE,
+byte bajo primero):
+
+| Dirección | Registro | Datos |
+| :--- | :--- | :--- |
+| 0x1EE-0x1FF | Serie | longitud (1-12), 12 caracteres, 3 ceros |
+| 0x200-0x211 | Fecha de calibración | año (2 bytes, byte bajo primero), mes, día, 12 ceros |
+
+- **Órdenes:** las propuestas, sin cambios de nombre: no chocan con ninguna existente (`S`, `ST`, `G`,
+  `GT`, `F` y `FT` se comparan enteras con `strcmp`). `#SC` y `#SN` exigen sesión de administrador;
+  `#GC` y `#GN` son libres, como `#G`.
+- **Fecha:** `AAAA-MM-DD` exacto (10 caracteres), año 2020-2099, mes 1-12, día según el mes (29 de
+  febrero sólo si el año es múltiplo de 4, que en 2020-2099 es la regla completa). Cualquier otra cosa da
+  `#ERR,FORMATO#` sin tocar la EEPROM. El firmware no calcula vencimientos.
+- **Serie:** 1-12 caracteres ASCII 0x20-0x7E sin `#` ni `,`. **Ajuste sobre la propuesta:** `#SN,NONE#`
+  se rechaza, porque `NONE` es lo que responde `#GN#` cuando no hay serie y sería ambiguo. No hay orden
+  para borrar la serie. El bloque heredado de serie (`eeprom_manager.h:11`, `writeSerial` sin llamadas)
+  ni se usa ni se toca.
+- **Lectura:** `NONE` si la CRC no cuadra o el contenido está fuera de rango (fecha imposible, longitud
+  fuera de 1-12, carácter no admitido). Con la EEPROM a 0xFF la CRC no cuadra, así que `NONE`. Los
+  registros no dependen de la cabecera `V36`.
+- **Escritura:** sólo de los bytes que cambian, relectura de los 18 y `#OK#`, o `#ERR,EEPROM#` si no
+  cuadra (no hay estado en RAM que deshacer).
+- **Restaurar a fábrica (propuesta):** `#F`, `#F,*` y `#FT` **no tocan** ni la serie ni la fecha. La
+  fecha registra lo que hizo el superadmin, no describe los coeficientes; si el firmware la borrase al
+  reponer fábrica, se perdería la huella de que hubo una calibración. La incoherencia la detecta la app:
+  **fecha presente y `#V#` en `DEF`** significa que se repusieron los de fábrica después de calibrar, y
+  la medida debe tratarse como no calibrada. Para borrarla a propósito está **`#SC,NONE#`** (admin), que
+  deja el registro a 0xFF.
+
+### 8.3 Pruebas en simulador
+
+Todas con el `calibracion_v36.c` real, tramas por `adminProcesarTrama` y EEPROM simulada en RAM.
+
+- **`#FT`** (`pruebas/T-FT/`): sin sesión, `#ERR,BLOQUEADO#`; `#ST,0,5.0E-04,9.5E-01#` da `#OK#`, `#GT` lo
+  devuelve y `#V#` da `CAL,1000`; `#FT#` da `#OK#`, `X_2`, `X_1` y `X_0` quedan **iguales bit a bit a los
+  literales de ROM** y `#V#` da `#V,3.6,2026-09-19,DEF,0000#`. Tras rearrancar desde la EEPROM, otra vez
+  iguales a ROM y `DEF,0000`, con el PIN cambiado antes por `#P` conservado. Tras `#Q#`, `BLOQUEADO`.
+- **Serie y fecha** (`pruebas/T-SN-SC/`, 56 tramas): EEPROM en blanco, `#GC,NONE#` y `#GN,NONE#`; sin
+  sesión, `BLOQUEADO`; ida y vuelta de `2026-09-19`, `2028-02-29`, `SLV-002`, `ABCDEFGHIJKL` y `SLV 002`;
+  rechazo (`FORMATO`, sin cambiar lo guardado) de `2026-02-29`, `2019-12-31`, `2100-01-01`, `2026-13-01`,
+  `2026-04-31`, `2026-09-00`, `2026-9-19`, `2026/09/19`, fecha vacía, campo de más, serie vacía, de 13
+  caracteres, `NONE`, con coma y con un carácter de control; `#F,*#` y `#FT#` no tocan serie ni fecha;
+  las dos persisten tras rearrancar; un bit cambiado en cada registro da `NONE` sin colgarse, y se puede
+  volver a escribir; `#SC,NONE#` deja `NONE`. **Los bytes 0x000-0x1ED (cabecera, 12 códigos y
+  temperatura/PIN) no cambian en ninguna escritura de serie o fecha** (0 bytes distintos, con coeficientes
+  y temperatura ya escritos).
+- **T-A30:** mismas tramas que en §7.3; salida idéntica a `pruebas/T-A23_T-A30/resultado_T-A30.txt`.
+- **T-A20:** el arnés regenerado con `pruebas/T-A20_gen_equiv.py` es idéntico byte a byte al archivado; 4 grupos,
+  786 432 comparaciones, **0 diferencias**, y las cuatro sumas iguales a las de `pruebas/T-A20.md`.
+- Bits de configuración (`EC FF F7 FF 9F FF FF DF FE FF`) e IDLOC iguales. `#V#` sigue en `3.6`; la
+  cadena `Sep 19 2026` está en el `.hex`.
+
+**Para quien lea `#GT` tras `#FT`:** imprime `4.32120039E-04` y `9.01486480E-01`, no el texto de la
+fuente. Son los `float` de ROM, bit a bit, impresos con el error de `%.8E` de XC8 (§7.2); con `ULP_G = 4`
+la app los da por iguales a fábrica.
+
+### 8.4 Riesgos para grabar
+
+- **`#V#` no distingue la 3.6.2 de la 3.6.1:** las dos se compilaron el 19-sep y dan
+  `#V,3.6,2026-09-19,…#`. Para saber cuál lleva un equipo: `#GC#` responde `#GC,…#` en la 3.6.2 y
+  `#ERR,FORMATO#` en la 3.6.1. Tras grabar, comprobar el md5 de la lectura ICSP.
+- Si el borrado es completo, la EEPROM vuelve a 0xFF: `DEF`, PIN `2026`, serie y fecha `NONE`. Antes de
+  grabar, leer `#V#`, `#G` de los 12 códigos y `#GT#`.
+- Ninguna orden anterior cambia de comportamiento; la ruta de medida no se toca.

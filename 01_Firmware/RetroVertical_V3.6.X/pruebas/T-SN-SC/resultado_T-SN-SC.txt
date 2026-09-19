@@ -1,0 +1,58 @@
+pisados (bytes 0x000-0x1ED cambiados por #SC/#SN, pasos 9-37) = 0
+pisados2 (bytes 0x000-0x1ED cambiados por #SC,NONE#) = 0
+ 1 #GC#                     -> #GC,NONE#
+ 2 #GN#                     -> #GN,NONE#
+ 3 #V#                      -> #V,3.6,2026-09-19,DEF,0000#
+ 4 #SC,2026-09-19#          -> #ERR,BLOQUEADO#
+ 5 #SN,SLV-002#             -> #ERR,BLOQUEADO#
+ 6 #L,2026#                 -> #OK#
+ 7 #S,1,0.00000000E+00,-8.65409966E-05,6.19668126E-01,-3.02000000E+02# -> #OK#
+ 8 #ST,0,5.0E-04,9.5E-01#   -> #OK#
+ 9 #SC,2026-09-19#          -> #OK#
+10 #GC#                     -> #GC,2026-09-19#
+11 #SN,SLV-002#             -> #OK#
+12 #GN#                     -> #GN,SLV-002#
+13 #SC,2026-02-29#          -> #ERR,FORMATO#
+14 #SC,2028-02-29#          -> #OK#
+15 #GC#                     -> #GC,2028-02-29#
+16 #SC,2019-12-31#          -> #ERR,FORMATO#
+17 #SC,2100-01-01#          -> #ERR,FORMATO#
+18 #SC,2026-13-01#          -> #ERR,FORMATO#
+19 #SC,2026-04-31#          -> #ERR,FORMATO#
+20 #SC,2026-09-00#          -> #ERR,FORMATO#
+21 #SC,2026-9-19#           -> #ERR,FORMATO#
+22 #SC,2026/09/19#          -> #ERR,FORMATO#
+23 #SC,#                    -> #ERR,FORMATO#
+24 #SC,2026-09-19,x#        -> #ERR,FORMATO#
+25 #GC#                     -> #GC,2028-02-29#
+26 #SC,2026-09-19#          -> #OK#
+27 #SN,#                    -> #ERR,FORMATO#
+28 #SN,ABCDEFGHIJKLM#       -> #ERR,FORMATO#
+29 #SN,NONE#                -> #ERR,FORMATO#
+30 #SN,A,B#                 -> #ERR,FORMATO#
+31 #SN,AB#                 -> #ERR,FORMATO#
+32 #GN#                     -> #GN,SLV-002#
+33 #SN,ABCDEFGHIJKL#        -> #OK#
+34 #GN#                     -> #GN,ABCDEFGHIJKL#
+35 #SN,SLV 002#             -> #OK#
+36 #GN#                     -> #GN,SLV 002#
+37 #SN,SLV-002#             -> #OK#
+38 #F,*#                    -> #OK#
+39 #FT#                     -> #OK#
+40 #V#                      -> #V,3.6,2026-09-19,DEF,0000#
+41 #GC#                     -> #GC,2026-09-19#
+42 #GN#                     -> #GN,SLV-002#
+43 #Q#                      -> #OK#
+44 #GC#                     -> #GC,2026-09-19#
+45 #GN#                     -> #GN,SLV-002#
+46 #GC#                     -> #GC,2026-09-19#
+47 #GN#                     -> #GN,SLV-002#
+48 #V#                      -> #V,3.6,2026-09-19,DEF,0000#
+49 #GC#                     -> #GC,NONE#
+50 #GN#                     -> #GN,NONE#
+51 #L,2026#                 -> #OK#
+52 #SC,2026-09-20#          -> #OK#
+53 #GC#                     -> #GC,2026-09-20#
+54 #SC,NONE#                -> #OK#
+55 #GC#                     -> #GC,NONE#
+56 #GN#                     -> #GN,NONE#
