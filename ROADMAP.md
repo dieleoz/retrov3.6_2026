@@ -39,6 +39,13 @@ STONE y la app del cliente siguen funcionando igual. Después, los dos V4, en su
   `#E` debe coincidir exactamente con fábrica; la pantalla STONE debe funcionar igual.
 - Después: `#K#` para mapear los botones de su pantalla, T-A23/C1 antes de calibrar, y P8.
 
+## Decisión de calibración (Diego, 19-sep-2026)
+
+**Opción C: compromiso entre XI e IV/IX** para las curvas intensas de blanco (código 1) y amarillo
+(código 2). Una sola curva no puede corregir a la vez el XI (+2-3 %) y el IV/IX (+25-50 %): se ajusta
+por mínimos cuadrados con todos los patrones, sin ponderar por tipo, y el acta declara el error
+residual de cada tipo. Verde, azul y rojo (un solo nivel de patrón) sólo se comprueban.
+
 ## AHORA
 
 1. SPEC y revisión de arquitectura (P1, P2).

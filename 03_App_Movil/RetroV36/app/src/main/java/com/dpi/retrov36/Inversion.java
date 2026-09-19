@@ -8,7 +8,7 @@ import java.util.List;
  *
  * El firmware trabaja con x entera (reflectivityValue es unsigned int) y trunca
  * el resultado de la ecuacion. Por eso no se resuelve la ecuacion: se recorren
- * todas las x enteras de 0 a X_MAX y se guardan las que dan exactamente R. El
+ * todas las x enteras de X_MIN a X_MAX y se guardan las que dan exactamente R. El
  * resultado es un intervalo (o varios, si la ecuacion no es monotona) y su
  * centro es la estimacion de x; su semiancho es la resolucion del codigo.
  *
@@ -18,6 +18,12 @@ import java.util.List;
 public final class Inversion {
 
     public static final int X_MAX = 4400;
+    /**
+     * x = (ADC + 200) * F (measurement.c:246-247, gui.c:298-300), con F ~ 0,90-1,01:
+     * no puede bajar de ~180. Por debajo no se buscan intervalos, para no ver
+     * ambiguedades imposibles (p. ej. 'b', rojo opaco, que baja y sube hacia x = 336).
+     */
+    public static final int X_MIN = 180;
 
     private Inversion() { }
 
@@ -48,7 +54,7 @@ public final class Inversion {
     public static List<int[]> intervalos(Ecuacion e, int r) {
         List<int[]> out = new ArrayList<>();
         int inicio = -1;
-        for (int x = 0; x <= X_MAX; x++) {
+        for (int x = X_MIN; x <= X_MAX; x++) {
             boolean da = e.respuestaFirmware(x) == r;
             if (da && inicio < 0) {
                 inicio = x;
@@ -73,7 +79,7 @@ public final class Inversion {
         }
         List<int[]> iv = intervalos(e, r);
         if (iv.isEmpty()) {
-            return new Resultado(false, 0, 0, 0, "ninguna x entre 0 y " + X_MAX + " da " + r);
+            return new Resultado(false, 0, 0, 0, "ninguna x entre " + X_MIN + " y " + X_MAX + " da " + r);
         }
         int[] mejor = iv.get(0);
         if (!Double.isNaN(referencia)) {
