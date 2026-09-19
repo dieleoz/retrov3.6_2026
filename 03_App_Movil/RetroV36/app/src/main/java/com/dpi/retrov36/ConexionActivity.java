@@ -75,6 +75,7 @@ public class ConexionActivity extends Base {
             esperandoConexion = false;
             EnlaceSerie en = EnlaceSerie.instancia();
             Sesion.get().reiniciar(en.getNombre(), en.getMac());
+            Cliente.instancia().reiniciarCuenta();
             Registro.nota("sesion nueva: " + Sesion.get().identidad());
             Intent i = new Intent(this, PruebasActivity.class);
             i.putExtra(PruebasActivity.EXTRA_AUTO, true);

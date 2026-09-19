@@ -11,7 +11,7 @@ está en [`TDD-V3.6.md`](TDD-V3.6.md).
 **[NUEVO r1.1]**. El estado de cada requisito frente al código (implementado / parcial / no), con su
 `archivo:línea`, está en las tablas de §2.4 y §3.8. Las condiciones de la revisión de arquitectura
 (G1-G5 para grabar, C1-C5 para calibrar) están en §6 bis. *No confundir* las condiciones C1-C5 con las
-contradicciones C-01…C-33 de §9, que llevan guion y dos cifras.
+contradicciones C-01…C-35 de §9, que llevan guion y dos cifras.
 
 **Qué manda sobre qué.** **[MOD r1.1]** `PROTOCOLO-V3.6.md` es el contrato y **su revisión 1.1 (§4
 bis) manda sobre su versión 1.0 y sobre esta SPEC**. Esta revisión de la SPEC integra la 1.1: las
@@ -886,7 +886,8 @@ T-C26, T-C31, T-C32, T-C35) sólo con C1-C5 cumplidas. Orden detallado en `TDD-V
 ## 6 bis. Condiciones de la revisión de arquitectura (P2) [NUEVO r1.1]
 
 Veredicto de P2, 18-sep-2026 19:48: **APROBADO CON CONDICIONES.** Estado de cada condición a las
-20:05 del mismo día.
+20:05 del mismo día. En `ROADMAP.md`, G1-G5 están en la puerta P7 y C1-C5 en la puerta **P7-bis**
+("Condiciones para calibrar"); esta sección les da criterio de aceptación y prueba.
 
 ### Para grabar (G1-G5)
 
@@ -905,7 +906,7 @@ Veredicto de P2, 18-sep-2026 19:48: **APROBADO CON CONDICIONES.** Estado de cada
 | **C1** | T-A23: 9 cifras en `printf` y `strtod` de XC8, ida y vuelta **exacta** (0 ulp); T-A24: EEPROM (cabecera, CRC por registro) | RF-FW-22, 24 | T-A23, T-A24 | **T-A23 falla** (±2 ulp al imprimir, ±3 al leer; `CAMBIOS` §3.3). T-A24 hecha en simulador (`CAMBIOS` §3.2) |
 | **C2** | La curva se valida en todo el rango de `x` (200-4400) y con grado + 2 niveles distintos | RF-APP-15 | T-A13, T-A14 | **Implementada** en la app (`Asistente.java:99-147,186-189`; `Ajuste.java:48-52`); pruebas JVM en verde. Queda C-27 (negativos bajo la `x` mínima) |
 | **C3** | Si `#G` no coincide tras `#S`, restauración automática del estado anterior | RF-APP-17 | T-A32, T-C23 | **Implementada** (`AdminActivity.java:442-495`). Sin prueba automática: la lógica vive en la actividad (T-A32 pendiente) |
-| **C4** | Límites de `#ST`: `F(T)` en [0,5 ; 1,5] para `T` de 0 a 831 | RF-FW-19, RF-APP-23 | T-A30, T-A37, T-C32 | **Parcial**: firmware y app sólo limitan `X_0` (`calibracion_v36.c:299-300,542`; `Tramas.java:228-240`). La app no ofrece `#ST` |
+| **C4** | Límites de `#ST`: `F(T)` en [0,5 ; 1,5] para `T` de 0 a 831 | RF-FW-19, RF-APP-23 | T-A30, T-A37, T-C32 | **Parcial**: firmware y app sólo limitan `X_0` (`calibracion_v36.c:299-300,542`; `Tramas.java:228-240`). La app no ofrece `#ST`. `ROADMAP.md` P7-bis la da por cumplida en la app (C-34) |
 | **C5** | T-C05 con `#E` y T-C23 | RF-FW-04, 28, 19 | T-C05, T-C23 | **Pendiente** (tras grabar) |
 
 ### No bloqueantes (anotados en la revisión)
@@ -968,8 +969,13 @@ abierta**: §4 del contrato aún cita `eeprom_manager.h:9-19` (C-23). Observacio
 
 ## 8. Fuera de alcance
 
-- **Equipos V4** (v4.0, V4.1): irán a una V4.6 en el repositorio `P_RetroReflectometro_Vertical`.
-  La app V3.6 los detecta (RF-APP-03) y no opera con ellos.
+- **Equipos V4** (v4.0, V4.1): **[MOD r1.1]** irán a la **V4.6, que es un proyecto propio**:
+  `D:\IT\P_RetroVertical_V4.6\`, con remoto privado `github.com/dieleoz/retrov4.6_2026`, y sus
+  borradores `05_Documentacion/SPEC-V4.6-BORRADOR.md`, `TDD-V4.6-BORRADOR.md` y
+  `PROTOCOLO-V4.6-BORRADOR.md` (comprobado el 18-sep-2026). Lo aprendido aquí que le aplica va a
+  `APRENDIDO-DE-V3.6.md` de ese proyecto. La app V3.6 los detecta (RF-APP-03) y no opera con ellos.
+  *Texto r1.0:* «irán a una V4.6 en el repositorio `P_RetroReflectometro_Vertical`.» Era un error: ese
+  repositorio es el de la línea V4.1/V5.
 - **Cambios de la pantalla STONE** (`04_Pantalla_STONE/`): no se tocan.
 - **Mejoras de la app** más allá de la paridad (`ROADMAP-MEJORAS-App.md`): después de la V3.6.
 - La placa y su hardware (ganancia, LED): no se cambian.
@@ -1076,6 +1082,13 @@ Las que tienen decisión la llevan; las demás quedan abiertas.
   (RF-FW-27 r1.1). Esto cierra C-05 y CA7.
 - **C-33 — `::0` con `e`.** RF-APP-05 y `LecturaX.java:52-55` dicen "saturado o negativo"; con `e` sólo
   puede ser saturación (RF-APP-06 r1.1). **Decidido:** manda RF-APP-06 r1.1.
+- **C-34 — C4 "cumplida".** `ROADMAP.md` P7-bis dice que la app ya cumple C2-C4. En la app, C4 se
+  cumple **sólo porque no ofrece `#ST`** (RF-APP-23), y su `tramaST` limita sólo `X_0`
+  (`Tramas.java:237-240`). En el firmware, `#ST` acepta cualquier `X_1` y `X_2` finitos
+  (`calibracion_v36.c:536-548`; `CAMBIOS-V3.6.md` §4.4 lo reconoce). Con el criterio de RF-FW-19 r1.1,
+  **C4 está parcial**. Abierta hasta T-A30.
+- **C-35 — Destino de la V4.6.** §8 r1.0 mandaba la V4.6 al repositorio `P_RetroReflectometro_Vertical`;
+  es un proyecto propio (`D:\IT\P_RetroVertical_V4.6\`). **Decidido:** §8 r1.1.
 
 ---
 

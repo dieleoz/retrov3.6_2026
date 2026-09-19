@@ -276,6 +276,11 @@ public class CalculoTest {
         assertTrue(Tramas.peticionPermitida(Tramas.SONDA_V4));
         assertFalse(Tramas.peticionPermitida("@"));
         assertFalse(Tramas.peticionPermitida("@LEERV,BLA,2@"));
+        // 'e' solo a un V3.6 identificado.
+        assertFalse(Tramas.peticionPermitida("e", false));
+        assertTrue(Tramas.peticionPermitida("e", true));
+        assertTrue(Tramas.peticionPermitida("6", false));
+        assertFalse(Tramas.peticionPermitida("@", true));
     }
 
     @Test

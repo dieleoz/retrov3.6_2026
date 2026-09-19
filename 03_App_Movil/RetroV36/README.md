@@ -4,7 +4,7 @@
 V3.6 no se puede probar: el firmware V3.6 no existe todavía en ningún equipo. Lo que sí debe funcionar
 es la medida contra un V3 2020 (SLV-002), y eso tampoco se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 360`, `versionName 3.6.0`.
+- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 361`, `versionName 3.6.1` (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -30,8 +30,8 @@ con Gradle y se ejecutan con JUnit a mano:
 
 ```bash
 ./gradlew compileDebugUnitTestJavaWithJavac --offline
-mkdir -p build/libtest   # copiar aquí junit-4.13.2.jar y hamcrest-core-1.3.jar de ~/.gradle/caches
-cd app && "$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;build/intermediates/javac/debugUnitTest/classes;../build/libtest/junit-4.13.2.jar;../build/libtest/hamcrest-core-1.3.jar" \
+mkdir -p libtest   # copiar aquí (fuera de build/: clean lo borra) junit-4.13.2.jar y hamcrest-core-1.3.jar de ~/.gradle/caches
+cd app && "$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;build/intermediates/javac/debugUnitTest/classes;../libtest/junit-4.13.2.jar;../libtest/hamcrest-core-1.3.jar" \
   org.junit.runner.JUnitCore com.dpi.retrov36.CalculoTest com.dpi.retrov36.ReceptorTest \
   com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest
 ```
@@ -62,7 +62,7 @@ que queda anotado en el registro. Medir con NO APTO pide una confirmación.
 | # | Prueba | Qué hace | Criterio |
 | :--- | :--- | :--- | :--- |
 | 1 | Enlace | Comprueba que el socket SPP está abierto; muestra nombre, MAC y serie (lo que sigue al último `_` del nombre) | Socket abierto |
-| 2 | Versión | Orden de la SPEC (RF-APP-03), con ≥ 1500 ms entre envíos: `#V#` → si `#V,3.6,...#`, V3.6. Si no, `e` → si `::n`, V3 2020 con `e`. Si no, `6` → si `::n`, V3 2020 sin `e` (SLV-002). Si no, `@LEERV,BLA,1@` → si `@LEERV,...@`, V4 (la app no aplica). **Ninguna otra trama con `@`** | V3.6 o V3 2020 |
+| 2 | Versión | Con ≥ 1500 ms entre envíos: `#V#` → si `#V,3.6,...#`, V3.6. Si no, `9` → si `:n:`, V3 2020. Si no, `6` → si `::n`, V3 2020. **Nunca `e`** (ver Lección). Si no, `@LEERV,BLA,1@` → si `@LEERV,...@`, V4 (la app no aplica). **Ninguna otra trama con `@`** | V3.6 o V3 2020 |
 | 3 | Códigos | Envía `1`-`8`, `a`-`d` y, si el equipo la tiene, `e` | Los 12 responden `::n` en < 2,5 s. En V3.6 `e` es obligatoria |
 | 4 | Coherencia | Invierte las 12 respuestas a `x` con las ecuaciones vigentes (fábrica en V3 2020; las leídas con `#G` en V3.6) | Cada código a ±tolerancia (15 por defecto, editable) **más su resolución** de la referencia: la `x` de `e` si la hay, si no la mediana. Así `b` (rojo opaco, ~15 cuentas por unidad de R hacia x ≈ 600) no se castiga. Un 0 es "no evaluable". Hacen falta 6 evaluables |
 | 5 | Sólo V3.6 | `#GT#`; `#G,k#` de los 12; marca `CAL`/`DEF` y máscara de `#V#`; `#E,k,x#` en x = 500, 1000, 2000, 3000, 4000 | Todo se analiza. Un código que la máscara da por "fábrica" debe coincidir con la tabla de fábrica a 1 ulp de float32. Cada `#E` debe dar **exactamente** lo que la app calcula en float32, en el orden de 2020 |
@@ -74,7 +74,8 @@ calcula el firmware, y lo cruza con los coeficientes leídos.
 ## Línea base previa a grabar (G3)
 
 En la pantalla de Pruebas, botón **"Línea base"**. Pensada para el firmware ORIGINAL (V3 2020 de
-SLV-002), antes de grabar la V3.6. Si la versión aún no se ha detectado, la detecta primero.
+SLV-002), antes de grabar la V3.6. Si la versión aún no se ha detectado, la detecta primero; si la detección
+falla, ofrece forzar "V3 2020 sin e". Hay además un botón que fuerza sin detectar. Nunca envía `e`.
 
 1. **T-B03:** con el equipo sobre el patrón elegido, los 12 códigos.
 2. **T-B09:** la respuesta a `9`, tres veces.
@@ -84,9 +85,25 @@ Cada petición va al registro de tramas y a `lineabase_<serie>_<fecha>.csv`, con
 `LINEA_BASE_PRE_GRABACION`, la respuesta literal, el desenlace, el tiempo y la `x` invertida con la
 ecuación de fábrica.
 
+## Lección del 18-sep-2026: `e` a un equipo sin identificar
+
+Con la app 3.6.0 (detección `#V#`, `e`, `6`, `@LEERV,BLA,1@`, el orden de la SPEC RF-APP-03), SLV-002
+**no respondió a nada**, aunque en el barrido `6` respondía siempre (`::14`, ~918 ms). En el barrido,
+tras el byte 0x65 (`e`) tampoco respondió ningún byte más; tras `#` y otros bytes desconocidos sí.
+**Hipótesis sin confirmar:** en esa variante, `e` deja el equipo sin Bluetooth hasta apagarlo.
+
+Reglas que salen de ahí, en el código:
+- La detección no envía `e`: `#V#` → `9` → `6` → `@LEERV,BLA,1@`. Se aparta de RF-APP-03 a propósito.
+- `Tramas.peticionPermitida(p, esV36)` y `Cliente.pedir` **rechazan `e`** si el equipo no está
+  identificado como V3.6. En V3 2020 la `x` se lee siempre con `6` e inversión.
+- La línea base se puede **forzar como V3 2020 sin `e`**, sin detectar o tras una detección fallida:
+  envía sólo `1`-`8`, `a`-`d` y `9`.
+- Tras 3 peticiones seguidas sin un solo byte, la app aconseja apagar y encender el equipo y lo anota
+  en el registro.
+
 ## Lectura de la `x`
 
-- Con `e` (V3.6, o V3 2020 que responda a `e`): `x` directa. Un 0 es saturado o negativo, no se guarda.
+- Con `e` (sólo V3.6): `x` directa. Un 0 es saturado o negativo, no se guarda.
 - Sin `e` (SLV-002): se envía `6` (naranja intenso, monótono y sin techo de x = 500 a 4300) y se
   invierte **de forma exacta**: se recorren las `x` enteras de 0 a 4400 y se guardan las que dan esa
   respuesta. La `x` es el centro del intervalo y su semiancho, la resolución (≤ 3 cuentas hacia

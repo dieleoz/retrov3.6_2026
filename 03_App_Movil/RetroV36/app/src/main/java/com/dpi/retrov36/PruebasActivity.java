@@ -28,6 +28,7 @@ public class PruebasActivity extends Base implements Pruebas.Oyente {
     private final List<TextView> filas = new ArrayList<>();
     private Spinner spPatronLb;
     private Button btnLineaBase;
+    private Button btnLineaBaseForzada;
     private TextView txtLineaBase;
     private List<Patron> patrones = new ArrayList<>();
     private volatile boolean lineaBaseEnCurso;
@@ -71,6 +72,7 @@ public class PruebasActivity extends Base implements Pruebas.Oyente {
         ad.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spPatronLb.setAdapter(ad);
         btnLineaBase = boton("Línea base", v -> lineaBase());
+        btnLineaBaseForzada = boton("Línea base forzando V3 2020 sin e (sin detectar)", v -> lineaBaseForzada());
         txtLineaBase = texto("");
         txtLineaBase.setTypeface(Typeface.MONOSPACE);
 
@@ -95,8 +97,8 @@ public class PruebasActivity extends Base implements Pruebas.Oyente {
         if (Pruebas.get().enCurso()) {
             return;
         }
-        if (!s.versionMedible() && s.version != Sesion.Version.SIN_DETECTAR) {
-            alerta("Firmware no admitido", "Firmware: " + s.firmware());
+        if (s.version == Sesion.Version.V4) {
+            alerta("Firmware no admitido", "Es un V4: esta app no aplica.");
             return;
         }
         int pos = spPatronLb.getSelectedItemPosition();
@@ -106,13 +108,34 @@ public class PruebasActivity extends Base implements Pruebas.Oyente {
         final Patron p = patrones.get(pos);
         new AlertDialog.Builder(this).setTitle("Línea base: T-B03 y T-B09")
                 .setMessage("Firmware: " + s.firmware() + (s.version == Sesion.Version.SIN_DETECTAR
-                        ? " (se detectará primero: #V#, e, 6)" : "") + "\n\nColoque el equipo sobre " + p.nombre
+                        ? " (se detectará primero: #V#, 9, 6; nunca e)" : "") + "\n\nColoque el equipo sobre " + p.nombre
                         + " y no lo mueva ni toque el gatillo. Se enviarán los 12 códigos y después 9.")
                 .setPositiveButton("Empezar", (d, w) -> fase1(p))
                 .setNegativeButton("Cancelar", null).show();
     }
 
+    private void lineaBaseForzada() {
+        if (!EnlaceSerie.instancia().estaConectado() || Pruebas.get().enCurso()) {
+            return;
+        }
+        int pos = spPatronLb.getSelectedItemPosition();
+        if (pos < 0 || pos >= patrones.size()) {
+            return;
+        }
+        final Patron p = patrones.get(pos);
+        new AlertDialog.Builder(this).setTitle("Línea base forzada")
+                .setMessage("No se detecta la versión: se trata el equipo como V3 2020 sin e. Se envían los 12 "
+                        + "códigos (1-8, a-d) y 9; nunca e ni #.\n\nColoque el equipo sobre " + p.nombre + ".")
+                .setPositiveButton("Empezar", (d, w) -> fase1(p, true))
+                .setNegativeButton("Cancelar", null).show();
+    }
+
     private void fase1(Patron p) {
+        fase1(p, false);
+    }
+
+    /** @param forzar true: no se detecta; se trata el equipo como V3 2020 sin 'e'. */
+    private void fase1(Patron p, boolean forzar) {
         lineaBaseEnCurso = true;
         pantallaEncendida(true);
         cambio();
@@ -122,12 +145,36 @@ public class PruebasActivity extends Base implements Pruebas.Oyente {
             try {
                 String det = "";
                 Sesion s = Sesion.get();
-                if (s.version == Sesion.Version.SIN_DETECTAR) {
+                if (forzar) {
+                    s.version = Sesion.Version.V3_2020;
+                    s.eDisponible = false;
+                    det = "Versión FORZADA por el operador: V3 2020 sin e (la detección no identificó el equipo).\n";
+                    Registro.nota(LineaBase.ETIQUETA + " version forzada por el operador: V3 2020 sin e");
+                } else if (s.version == Sesion.Version.SIN_DETECTAR || s.version == Sesion.Version.DESCONOCIDA) {
                     progresoLb("detección de versión...");
                     det = "Detección:\n" + Pruebas.get().detectar(s) + "\n";
                     Registro.nota(LineaBase.ETIQUETA + " deteccion: " + det);
                     if (!s.versionMedible()) {
-                        throw new IOException("firmware no admitido: " + s.firmware());
+                        final String detF = det;
+                        final boolean esV4 = s.version == Sesion.Version.V4;
+                        enUi(() -> {
+                            lineaBaseEnCurso = false;
+                            pantallaEncendida(false);
+                            btnLineaBase.setText("Línea base");
+                            txtLineaBase.setText(detF + Cliente.instancia().consejoSiMudo());
+                            cambio();
+                            if (esV4) {
+                                alerta("Es un V4", "La detección identificó un V4: esta app no aplica.");
+                                return;
+                            }
+                            new AlertDialog.Builder(this).setTitle("Detección sin resultado")
+                                    .setMessage(detF + Cliente.instancia().consejoSiMudo()
+                                            + "\n\n¿Forzar V3 2020 (sin e) y enviar igualmente los 12 códigos y 9? "
+                                            + "Nunca se envía e.")
+                                    .setPositiveButton("Forzar V3 2020", (d, w) -> fase1(p, true))
+                                    .setNegativeButton("Cancelar", null).show();
+                        });
+                        return;
                     }
                 }
                 r = det + "T-B03 (" + p.nombre + "):\n" + LineaBase.codigos(this, "T-B03", p, this::progresoLb)
@@ -178,7 +225,7 @@ public class PruebasActivity extends Base implements Pruebas.Oyente {
         lineaBaseEnCurso = false;
         pantallaEncendida(false);
         btnLineaBase.setText("Línea base");
-        txtLineaBase.setText(res + "\n\nGuardado en " + (Sesion.get().csvLineaBase() == null ? "(sin fichero)"
+        txtLineaBase.setText(res + Cliente.instancia().consejoSiMudo() + "\n\nGuardado en " + (Sesion.get().csvLineaBase() == null ? "(sin fichero)"
                 : Sesion.get().csvLineaBase().getName()) + ". Use Compartir para sacarlo del teléfono.");
         Registro.nota("=== " + LineaBase.ETIQUETA + " terminada ===");
         cambio();
@@ -223,6 +270,7 @@ public class PruebasActivity extends Base implements Pruebas.Oyente {
         btnIniciar.setEnabled(!curso && !lineaBaseEnCurso && EnlaceSerie.instancia().estaConectado());
         if (btnLineaBase != null) {
             btnLineaBase.setEnabled(!curso && !lineaBaseEnCurso && EnlaceSerie.instancia().estaConectado());
+            btnLineaBaseForzada.setEnabled(!curso && !lineaBaseEnCurso && EnlaceSerie.instancia().estaConectado());
         }
         btnCancelar.setEnabled(curso);
         edTolerancia.setEnabled(!curso);

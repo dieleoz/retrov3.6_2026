@@ -86,7 +86,7 @@ public class MedidaActivity extends Base {
             } else if (!s.versionMedible()) {
                 txtEstado.setText("Firmware " + s.version.texto + ": esta app no mide con él.");
             } else {
-                txtEstado.setText("Listo. Método: " + (s.eDisponible ? "'e' directa" : "'6' invertido"));
+                txtEstado.setText("Listo. Método: " + (s.version == Sesion.Version.V36 ? "'e' directa" : "'6' invertido"));
             }
         }
     }
@@ -169,7 +169,7 @@ public class MedidaActivity extends Base {
             if (parar) {
                 fin = "Parado por el operador.";
             }
-            final String f = fin;
+            final String f = fin + Cliente.instancia().consejoSiMudo();
             enUi(() -> {
                 midiendo = false;
                 pantallaEncendida(false);

@@ -39,6 +39,17 @@ public final class Tramas {
     private static final Pattern P_ADMIN = Pattern.compile("#([^#]+)#");
     private static final Pattern P_LEERV = Pattern.compile("@LEERV,[^@]*@");
 
+    /**
+     * 'e' solo a un equipo identificado como V3.6. En SLV-002 (V3 2020 sin 'e')
+     * el equipo dejo de responder tras 'e' (18-sep-2026; hipotesis sin confirmar).
+     */
+    public static boolean peticionPermitida(String p, boolean esV36) {
+        if ("e".equals(p) && !esV36) {
+            return false;
+        }
+        return peticionPermitida(p);
+    }
+
     /** true si la peticion puede enviarse: sin '@', salvo la sonda de V4. */
     public static boolean peticionPermitida(String p) {
         return p.indexOf('@') < 0 || SONDA_V4.equals(p);

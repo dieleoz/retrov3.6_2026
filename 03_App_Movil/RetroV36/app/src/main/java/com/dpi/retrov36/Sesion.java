@@ -115,7 +115,7 @@ public final class Sesion {
                 return "V3.6 " + fechaFirmware + " " + marca
                         + (mascara >= 0 ? String.format(Locale.US, " mascara %04X", mascara) : "");
             case V3_2020:
-                return "V3 2020" + (eDisponible ? " (con e)" : " (sin e)");
+                return "V3 2020 (sin e)";
             default:
                 return version.texto;
         }

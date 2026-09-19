@@ -50,7 +50,7 @@ public final class Pruebas {
 
     private Pruebas() {
         lista.add(new Prueba(1, "Enlace SPP abierto, nombre y MAC"));
-        lista.add(new Prueba(2, "Detección de versión (#V#, e, 6, @LEERV,BLA,1@)"));
+        lista.add(new Prueba(2, "Detección de versión (#V#, 9, 6, @LEERV,BLA,1@; nunca e)"));
         lista.add(new Prueba(3, "Cada código de medida responde en menos de 2,5 s"));
         lista.add(new Prueba(4, "Coherencia de fórmulas: las 12 dan la misma x"));
         lista.add(new Prueba(5, "Solo V3.6: #GT#, #G,k# de los 12 juegos, marca y máscara, #E en 5 puntos"));
@@ -197,7 +197,7 @@ public final class Pruebas {
                 }
             }
             Repetibilidad.Resultado r6 = Repetibilidad.evaluar(Estadistica.aVector(xs), fallidas);
-            d6.append("Código ").append(s.eDisponible ? "e" : "6 (invertido)").append(". ").append(r6.texto);
+            d6.append("Código ").append(s.version == Sesion.Version.V36 ? "e" : "6 (invertido)").append(". ").append(r6.texto);
             poner(6, r6.apto ? Estado.OK : Estado.FALLO, d6.toString());
 
             boolean apto = p(1).estado == Estado.OK && p(2).estado == Estado.OK
@@ -230,7 +230,7 @@ public final class Pruebas {
     private void terminar(boolean apto, String resumen) {
         Sesion s = Sesion.get();
         s.apto = apto;
-        s.resumenPruebas = resumen;
+        s.resumenPruebas = resumen + Cliente.instancia().consejoSiMudo();
         Registro.nota("=== pruebas del equipo: " + resumen + " " + s.identidad() + " ===");
         enCurso = false;
         avisar();
@@ -270,14 +270,16 @@ public final class Pruebas {
             d.append("Responde a #V# con versión ").append(iv.version).append(": no es la del contrato.");
             return d.toString();
         }
-        // En un V3 2020, #V#, e y 6 disparan una medida (gui.c:295); la pausa
-        // de Cliente (>= 1500 ms desde el envio) protege el siguiente envio.
-        Cliente.Respuesta re = c.pedir("e", Tramas.Tipo.MEDIDA, Cliente.TIMEOUT_MEDIDA_MS);
-        d.append("e -> ").append(re.describir()).append('\n');
-        if (re.valida()) {
+        // NUNCA se envia 'e' a un equipo sin identificar: en SLV-002 (V3 2020
+        // sin 'e'), tras 'e' el equipo dejo de responder a todo (18-sep-2026,
+        // app 3.6.0 y barrido; hipotesis sin confirmar). En un V3 2020, #V#, 9
+        // y 6 disparan una medida; la pausa de Cliente protege el siguiente envio.
+        Cliente.Respuesta r9 = c.pedir("9", Tramas.Tipo.BATERIA, Cliente.TIMEOUT_MEDIDA_MS);
+        d.append("9 -> ").append(r9.describir()).append('\n');
+        if (r9.valida()) {
             s.version = Sesion.Version.V3_2020;
-            s.eDisponible = true;
-            d.append("Versión V3 2020 con e (se medirá con e).");
+            s.eDisponible = false;
+            d.append("Versión V3 2020 (responde :n: a 9). Se medirá con 6 invertido; nunca con e.");
             return d.toString();
         }
         Cliente.Respuesta r6 = c.pedir("6", Tramas.Tipo.MEDIDA, Cliente.TIMEOUT_MEDIDA_MS);
@@ -285,7 +287,7 @@ public final class Pruebas {
         if (r6.valida()) {
             s.version = Sesion.Version.V3_2020;
             s.eDisponible = false;
-            d.append("Versión V3 2020 sin e (variante de SLV-002): se medirá con 6 invertido.");
+            d.append("Versión V3 2020 (responde ::n a 6). Se medirá con 6 invertido; nunca con e.");
             return d.toString();
         }
         Cliente.Respuesta r4 = c.pedir(Tramas.SONDA_V4, Tramas.Tipo.LEERV, 3000);
@@ -416,7 +418,7 @@ public final class Pruebas {
         }
         comprobarCancelacion();
         Integer xE = null;
-        if (s.version == Sesion.Version.V36 || s.eDisponible) {
+        if (s.version == Sesion.Version.V36) {
             Cliente.Respuesta re = c.pedir("e", Tramas.Tipo.MEDIDA, Cliente.TIMEOUT_MEDIDA_MS);
             xE = re.valida() ? Tramas.valorMedida(re.trama) : null;
             d.append("e (lectura interna): ").append(re.describir());
@@ -426,7 +428,7 @@ public final class Pruebas {
                         : "  <- respondió en la detección y ahora no");
             }
         } else {
-            d.append("e: no se envía (la detección vio que este V3 2020 no la tiene)");
+            d.append("e: no se envía nunca a un V3 2020 (en SLV-002 deja el equipo sin responder)");
         }
         poner(3, ok ? Estado.OK : Estado.FALLO, d.toString());
         return xE;

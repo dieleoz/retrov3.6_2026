@@ -40,6 +40,14 @@ public final class Cliente implements EnlaceSerie.OyenteRx {
     private final Object aviso = new Object();
     private volatile long ultimoRx;
     private volatile boolean ultimaFueAlmohadilla;
+    /** Timeouts seguidos (sin un solo byte recibido). Se pone a 0 al recibir algo. */
+    private volatile int timeoutsSeguidos;
+    private volatile boolean consejoAnotado;
+    /** A partir de cuantos timeouts seguidos se aconseja apagar y encender. */
+    public static final int TIMEOUTS_PARA_CONSEJO = 3;
+    public static final String CONSEJO_MUDO = "El equipo no responde a nada ("
+            + TIMEOUTS_PARA_CONSEJO + " o más peticiones seguidas sin respuesta). Apáguelo y enciéndalo, "
+            + "espere unos segundos y vuelva a conectar.";
 
     private Cliente() {
         EnlaceSerie.instancia().agregarOyenteRx(this);
@@ -105,8 +113,9 @@ public final class Cliente implements EnlaceSerie.OyenteRx {
      */
     public Respuesta pedir(String peticion, Tramas.Tipo tipo, long timeoutMs)
             throws IOException, InterruptedException {
-        if (!Tramas.peticionPermitida(peticion)) {
-            throw new IllegalArgumentException("peticion con '@' no permitida: " + peticion);
+        if (!Tramas.peticionPermitida(peticion, Sesion.get().version == Sesion.Version.V36)) {
+            throw new IllegalArgumentException("peticion no permitida: " + peticion
+                    + " ('@' fuera de la sonda V4, o 'e' a un equipo que no es V3.6)");
         }
         EnlaceSerie enlace = EnlaceSerie.instancia();
         boolean almohadilla = peticion.startsWith("#");
@@ -155,7 +164,32 @@ public final class Cliente implements EnlaceSerie.OyenteRx {
         }
         Registro.nota("peticion " + peticion + " -> " + r.describir()
                 + (receptor.desbordado() ? " (entrada desbordada, recortada)" : ""));
+        if (d == Receptor.Desenlace.TIMEOUT && bruto.isEmpty()) {
+            timeoutsSeguidos++;
+            if (timeoutsSeguidos >= TIMEOUTS_PARA_CONSEJO && !consejoAnotado) {
+                consejoAnotado = true;
+                Registro.nota("AVISO: " + timeoutsSeguidos + " timeouts seguidos. " + CONSEJO_MUDO);
+            }
+        } else {
+            timeoutsSeguidos = 0;
+            consejoAnotado = false;
+        }
         return r;
+    }
+
+    public int timeoutsSeguidos() {
+        return timeoutsSeguidos;
+    }
+
+    /** "" si el equipo responde; el consejo de apagar y encender si lleva varios timeouts seguidos. */
+    public String consejoSiMudo() {
+        return timeoutsSeguidos >= TIMEOUTS_PARA_CONSEJO ? "\n" + CONSEJO_MUDO : "";
+    }
+
+    /** Al conectar de nuevo, la cuenta empieza de cero. */
+    public void reiniciarCuenta() {
+        timeoutsSeguidos = 0;
+        consejoAnotado = false;
     }
 
     private void esperarPausa(EnlaceSerie enlace, boolean corta) throws InterruptedException, IOException {

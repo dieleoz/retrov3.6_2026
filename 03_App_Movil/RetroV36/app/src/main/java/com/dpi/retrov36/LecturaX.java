@@ -37,7 +37,9 @@ public final class LecturaX {
     }
 
     public static Lectura leer(Sesion s) throws IOException, InterruptedException {
-        char k = s.eDisponible ? 'e' : '6';
+        // 'e' SOLO en V3.6. En SLV-002 (V3 2020) 'e' deja el equipo sin
+        // responder por Bluetooth (hipotesis del 18-sep-2026, sin confirmar).
+        char k = s.version == Sesion.Version.V36 && s.eDisponible ? 'e' : '6';
         Cliente.Respuesta r = Cliente.instancia().pedir(String.valueOf(k), Tramas.Tipo.MEDIDA,
                 Cliente.TIMEOUT_MEDIDA_MS);
         String metodo = k == 'e' ? "e directa" : "6 invertido";
