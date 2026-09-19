@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * Campana de calibracion (3.6.5). Series reales de SLV-002 del 19-sep-2026
- * (07 pruebas/19092026_0900/medidas_SLV-002_20260919_*.csv) donde se indica.
+ * (fixture src/test/resources/medidas_SLV-002_20260919_consolidado.csv) donde se indica.
  */
 public class CampanaTest {
 
@@ -204,20 +204,15 @@ public class CampanaTest {
         assertEquals(21, r2.yaEnCampana);                    // las 21 filas de las dos copias
     }
 
-    /** Los CSV reales del 19-sep-2026 (copias crecientes de cada "Compartir"). */
+    /**
+     * Las 180 filas unicas de los CSV reales del 19-sep-2026 (08:59:24-09:25:12, SLV-002),
+     * consolidadas en src/test/resources/medidas_SLV-002_20260919_consolidado.csv; el origen
+     * de cada fila esta en la cabecera del fixture. No depende de "07 pruebas/" (no versionado).
+     */
     private static List<String> csvDeHoy() throws Exception {
-        List<String> l = new ArrayList<>();
-        for (String d : new String[]{"../../../07 pruebas/19092026_0900", "../../../07 pruebas/19092026_0900/p29_p24_p23_p5"}) {
-            java.io.File[] fs = new java.io.File(d).listFiles();
-            assertNotNull("no existe " + new java.io.File(d).getAbsolutePath(), fs);
-            Arrays.sort(fs);
-            for (java.io.File f : fs) {
-                if (f.getName().startsWith("medidas_SLV-002_20260919_") && f.getName().endsWith(".csv")) {
-                    l.addAll(java.nio.file.Files.readAllLines(f.toPath(), StandardCharsets.UTF_8));
-                }
-            }
-        }
-        return l;
+        java.io.File f = new java.io.File("src/test/resources/medidas_SLV-002_20260919_consolidado.csv");
+        assertTrue("falta el fixture " + f.getAbsolutePath(), f.exists());
+        return java.nio.file.Files.readAllLines(f.toPath(), StandardCharsets.UTF_8);
     }
 
     @Test
