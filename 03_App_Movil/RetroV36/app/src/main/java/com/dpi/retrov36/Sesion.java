@@ -87,6 +87,7 @@ public final class Sesion {
     public synchronized void reiniciar(String nombre, String mac) {
         this.nombre = nombre;
         this.mac = mac;
+        serieManual = "";
         version = Version.SIN_DETECTAR;
         fechaFirmware = "";
         marca = "";
@@ -111,7 +112,23 @@ public final class Sesion {
     }
 
     /** "SLV-002" de "COVIANDINA_SLV-002": lo que sigue al ultimo '_'. */
+    /** Serie tecleada por el operador cuando el nombre SPP no la trae; vacia si no. */
+    public volatile String serieManual = "";
+
+    /** true si se sabe la serie (del nombre "..._<serie>" o tecleada). */
+    public boolean serieConocida() {
+        if (!serieManual.isEmpty()) {
+            return true;
+        }
+        String n = nombre == null ? "" : nombre;
+        int i = n.lastIndexOf('_');
+        return i >= 0 && i < n.length() - 1;
+    }
+
     public String serie() {
+        if (!serieManual.isEmpty()) {
+            return serieManual;
+        }
         String n = nombre == null ? "" : nombre;
         int i = n.lastIndexOf('_');
         return (i >= 0 && i < n.length() - 1) ? n.substring(i + 1) : n;
@@ -164,6 +181,22 @@ public final class Sesion {
             }
         }
         return patrones;
+    }
+
+    /**
+     * Medidas para el asistente de ajuste: las series elegidas de la campana
+     * abierta si es de ESTE equipo y tiene alguna; si no, las de la sesion.
+     * Nunca las de otro equipo.
+     */
+    public List<Medida> medidasParaAjuste() {
+        Campana c = Campanas.abierta();
+        if (c != null && c.esDeEsteEquipo(mac)) {
+            List<Medida> l = c.medidasElegidas();
+            if (!l.isEmpty()) {
+                return l;
+            }
+        }
+        return medidas();
     }
 
     public List<Medida> medidas() {

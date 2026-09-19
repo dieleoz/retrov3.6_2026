@@ -401,7 +401,7 @@ public class AdminActivity extends Base {
             alerta("Patrones", "No se pudo leer el catálogo de patrones: sin él no se ajusta.");
             return;
         }
-        propuesta = Asistente.proponer(k, grado, s.medidas(), s.ecuacionVigente(k), cat);
+        propuesta = Asistente.proponer(k, grado, s.medidasParaAjuste(), s.ecuacionVigente(k), cat);
         txtAjuste.setText(propuesta.informe);
         Registro.nota("asistente: " + propuesta.informe);
         refrescar();

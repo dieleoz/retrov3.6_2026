@@ -236,6 +236,15 @@ public final class Pruebas {
         s.apto = apto;
         s.resumenPruebas = resumen + Cliente.instancia().consejoSiMudo();
         Registro.nota("=== pruebas del equipo: " + resumen + " " + s.identidad() + " ===");
+        StringBuilder t = new StringBuilder("=== Pruebas del equipo, " + Sesion.ahoraIso() + " - " + s.identidad()
+                + "\nResultado: " + s.resumenPruebas + "\n");
+        for (Prueba x : lista) {
+            t.append(x.numero).append(". ").append(x.titulo).append(": ").append(x.estado).append('\n');
+            if (!x.detalle.isEmpty()) {
+                t.append("   ").append(x.detalle.replace("\n", "\n   ")).append('\n');
+            }
+        }
+        Campanas.anotarPruebas(s.mac, t.toString());
         enCurso = false;
         avisar();
     }

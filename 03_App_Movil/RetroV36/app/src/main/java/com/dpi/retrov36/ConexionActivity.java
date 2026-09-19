@@ -32,6 +32,7 @@ public class ConexionActivity extends Base {
     private Button btnPruebas;
     private Button btnMedir;
     private Button btnBotones;
+    private Button btnCampana;
     private Button btnAdmin;
     /** true entre el toque del operador y el final de connect(). */
     private boolean esperandoConexion;
@@ -43,6 +44,8 @@ public class ConexionActivity extends Base {
                 + "Mide patrones y, sólo con firmware V3.6, calibra.");
         btnPruebas = boton("1. Pruebas del equipo", v -> startActivity(new Intent(this, PruebasActivity.class)));
         btnMedir = boton("2. Medida de patrones", v -> startActivity(new Intent(this, MedidaActivity.class)));
+        btnCampana = boton("3. Campaña de calibración (guiada, un solo envío)",
+                v -> startActivity(new Intent(this, CampanaActivity.class)));
         btnBotones = boton("Botones de pantalla (sólo V3.6)", v -> startActivity(new Intent(this, BotonesActivity.class)));
         btnAdmin = boton("Modo administrador (sólo V3.6)", v -> startActivity(new Intent(this, AdminActivity.class)));
         boton("Compartir registro y datos", v -> compartirTodo());
@@ -59,6 +62,7 @@ public class ConexionActivity extends Base {
         listaDispositivos = new LinearLayout(this);
         listaDispositivos.setOrientation(LinearLayout.VERTICAL);
         raiz.addView(listaDispositivos);
+        Campanas.iniciar(this);
         pedirPermisos();
     }
 
@@ -77,6 +81,14 @@ public class ConexionActivity extends Base {
             Sesion.get().reiniciar(en.getNombre(), en.getMac());
             Cliente.instancia().reiniciarCuenta();
             Registro.nota("sesion nueva: " + Sesion.get().identidad());
+            // La campana de ESTE equipo se abre al conectar, para que las pruebas queden en ella.
+            if (Sesion.get().serieConocida()) {
+                try {
+                    Campanas.abrir(this, Sesion.get().serie(), en.getMac());
+                } catch (java.io.IOException | RuntimeException e) {
+                    Registro.nota("no se pudo abrir la campaña: " + e.getMessage());
+                }
+            }
             Intent i = new Intent(this, PruebasActivity.class);
             i.putExtra(PruebasActivity.EXTRA_AUTO, true);
             startActivity(i);

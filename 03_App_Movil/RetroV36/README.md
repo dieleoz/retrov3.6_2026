@@ -4,7 +4,7 @@
 V3.6 no se puede probar: el firmware V3.6 no existe todavía en ningún equipo. Lo que sí debe funcionar
 es la medida contra un V3 2020 (SLV-002), y eso tampoco se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 364`, `versionName 3.6.4` (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 365`, `versionName 3.6.5` (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -23,7 +23,7 @@ export JAVA_HOME="D:/@Proyect/Baliza/7 sw apk/jdk-11/jdk-11.0.24+8"
 
 ### Tests JVM
 
-`app/src/test/`: `CalculoTest`, `ReceptorTest`, `AsistenteTest`, `FabricaTest` (56 tests).
+`app/src/test/`: `CalculoTest`, `ReceptorTest`, `AsistenteTest`, `FabricaTest` (68 tests).
 `./gradlew testDebugUnitTest` **no arranca en esta máquina**: el ejecutor de Gradle 6.5 no encuentra su
 clase `GradleWorkerMain` porque la carpeta de usuario lleva `ñ` (`C:\Users\Diego.Zuñiga`). Se compilan
 con Gradle y se ejecutan con JUnit a mano:
@@ -33,7 +33,7 @@ con Gradle y se ejecutan con JUnit a mano:
 mkdir -p libtest   # copiar aquí (fuera de build/: clean lo borra) junit-4.13.2.jar y hamcrest-core-1.3.jar de ~/.gradle/caches
 cd app && "$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;build/intermediates/javac/debugUnitTest/classes;../libtest/junit-4.13.2.jar;../libtest/hamcrest-core-1.3.jar" \
   org.junit.runner.JUnitCore com.dpi.retrov36.CalculoTest com.dpi.retrov36.ReceptorTest \
-  com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest com.dpi.retrov36.CoherenciaRealTest
+  com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest com.dpi.retrov36.CoherenciaRealTest com.dpi.retrov36.CampanaTest
 ```
 
 `FabricaTest` compara las 12 ecuaciones de la app con el **texto** de
@@ -106,6 +106,37 @@ Reglas que salen de ahí, en el código:
   envía sólo `1`-`8`, `a`-`d` y `9`.
 - Tras 3 peticiones seguidas sin un solo byte, la app aconseja apagar y encender el equipo y lo anota
   en el registro.
+
+## Campaña de calibración (3.6.5)
+
+Pantalla "3. Campaña de calibración". **Sin probar en el equipo.**
+
+- **Una campaña por equipo** (serie + MAC). La óptica cambia de un equipo a otro: nunca se mezclan
+  series, el ajuste de un equipo sólo usa las suyas (`Sesion.medidasParaAjuste`) y el import sólo
+  toma las filas con su MAC. Si el nombre Bluetooth no trae la serie, la app la pide.
+- **Diario de sólo añadir** en `files/campanas/campana_<serie>_<mac>.csv`: cada disparo se escribe
+  al llegar; sobrevive a cerrar la app y se retoma. Reasignar ("era otro patrón") o elegir otra serie
+  son eventos nuevos: el registro original queda.
+- **Modo guiado:** "Coloque P27 — blanco IX — cert. 471 — orientación 0°" → OK → asentamiento + N
+  disparos (9 por defecto) → veredicto. Si es OK, se acepta y pasa solo al siguiente; si no, "Repetir",
+  "Aceptar con nota" (obligatoria) o "Era otro patrón". "Saltar" lo deja para el final.
+- **Cola** (`Cola`): 1) imprescindibles pendientes: huecos de x (hoy P27, P28), series aceptadas en
+  conflicto (P24: 2065 y 2443) y orden de certificados contradicho fuera de los XI (P29 y P30, los dos
+  porque no se sabe cuál está mal); 2) tipo I que ajustan (amarillo P34, P37, P43, P44; rojo P38, P39,
+  P49); 3) resto de tipo I, comprobación; 4) giro de P5 a 0° y 90°; 5) lo demás sin medir o por repetir.
+  Lo medido bien se salta.
+- **Veredicto al momento** (`Veredicto`): disparo descolgado a más de 5·s robusta (1,4826·MAD) de la
+  mediana → descartado con su motivo (P7: 3031); s > 15 → repetir; "¿es este el patrón?": orden de
+  certificados dentro del mismo color y tipo (3 % configurable) y parecido ±1 % a otro patrón del mismo
+  color y clase con certificado distinto, salvo que esté más cerca de la x esperada (recta
+  x-certificado del mismo color y tipo). En un XI el aviso dice que puede ser la orientación, pero sale.
+- **Un solo envío:** "Exportar campaña" → `campana_<serie>_<fecha>.zip` con `resumen.txt` (abre con
+  serie, MAC, firmware y fecha), `campana.csv` (todas las series: serie_id, orientación, descartado y
+  motivo, veredicto, nota, aceptada, elegida), `pruebas.txt` (cada "Pruebas del equipo" hecha con la
+  campaña abierta), `tramas/` (todos los registros desde el inicio de la campaña) y el diario.
+- **Importar CSV antiguos** (`Importador`): quita las filas repetidas de las copias crecientes, agrupa
+  en series (mismo patrón, < 5 s entre disparos), pasa el mismo veredicto y sólo acepta las OK. Con los
+  CSV del 19-sep: 1176 filas, 996 duplicadas, 180 únicas, 26 series.
 
 ## Novedades de la 3.6.4
 
