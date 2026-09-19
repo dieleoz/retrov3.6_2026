@@ -27,8 +27,8 @@
 
 - Cerrar en simulador **T-A23** (conversión `float` ↔ texto) y **T-A30** (límites de `#ST` sobre todo el
   rango de T). Hasta entonces **no ejecutar T-C32** ni escribir `#ST`.
-- **Decisión pendiente de Diego:** contra qué tipo de lámina se ajusta la curva intensa del blanco y
-  del amarillo (XI frente a IV/IX).
+- **Decidido por Diego (19-sep-2026): opción C**, un compromiso entre XI e IV/IX para la curva intensa
+  del blanco y del amarillo (`ROADMAP.md`).
 - Medir P1-P31 con `e` (ya existe en la V3.6) y ajustar en la app (grado+2 puntos); escribir con
   `#S`; volver a medir; acta.
 

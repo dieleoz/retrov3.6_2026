@@ -1,7 +1,7 @@
 # ROADMAP — V3.6: qué se hace y en qué orden
 
-**Actualizado:** 18-sep-2026. Lo que no está aquí no está en ejecución. **Nada se ha grabado ni
-probado en un equipo con V3.6.**
+**Actualizado:** 19-sep-2026. Lo que no está aquí no está en ejecución. SLV-002 lleva la V3.6
+(G4 cerrada); **aún sin calibrar**.
 
 ## Objetivo
 
