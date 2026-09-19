@@ -1,0 +1,21 @@
+=============================== 
+VGUS2019 development tool version number: 20190325
+Compile time: 2020 year12 month07 day1440 minutes36 seconds
+================================
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Generate video files-successful 
+
+Generate user data files-successful 
+
+Transform - 0.JPG-successful 
+
+Configuration file was generated-successfully
+Checksum file generate - successfully
+Generate the size of project:0.26 MB!

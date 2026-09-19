@@ -1,0 +1,1718 @@
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月04日15时10分07秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Transform0.JPG-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.26 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月04日15时10分45秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.26 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月04日15时10分48秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.26 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月04日15时10分48秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.26 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月04日15时10分49秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.26 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月04日15时10分49秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.26 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月04日15时12分12秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Transform0INICIO.JPG-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.26 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月04日15时13分06秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Transform0.JPG-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.30 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月04日16时12分32秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Transform1.JPG-successful 
+
+Transform2.JPG-successful 
+
+Transform3.JPG-successful 
+
+Transform4.JPG-successful 
+
+Transform5.JPG-successful 
+
+Transform6.JPG-successful 
+
+Transform7.JPG-successful 
+
+Transform8.JPG-successful 
+
+Transform9.JPG-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.74 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月05日10时29分29秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.44 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月05日10时29分38秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.44 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月05日10时37分51秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Transform4.JPG-successful 
+
+Transform5.JPG-successful 
+
+Transform6.JPG-successful 
+
+Transform7.JPG-successful 
+
+Transform8.JPG-successful 
+
+Transform9.JPG-successful 
+
+Transform10_4 - COPIA.JPG-successful 
+
+Transform11_5 - COPIA.JPG-successful 
+
+Transform12_6 - COPIA.JPG-successful 
+
+Transform13_7 - COPIA.JPG-successful 
+
+Transform14_8 - COPIA.JPG-successful 
+
+Transform15_9 - COPIA.JPG-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.08 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月05日10时48分09秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.08 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月05日10时51分48秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.08 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日10时36分11秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.08 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日11时02分57秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.08 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日11时11分28秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.08 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日11时26分45秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.08 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日13时13分02秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Transform3.JPG-successful 
+
+Transform4.JPG-successful 
+
+Transform5.JPG-successful 
+
+Transform6.JPG-successful 
+
+Transform7.JPG-successful 
+
+Transform8.JPG-successful 
+
+Transform9.JPG-successful 
+
+Transform10_4 - COPIA.JPG-successful 
+
+Transform11_5 - COPIA.JPG-successful 
+
+Transform12_6 - COPIA.JPG-successful 
+
+Transform13_7 - COPIA.JPG-successful 
+
+Transform14_8 - COPIA.JPG-successful 
+
+Transform15_9 - COPIA.JPG-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.06 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日14时08分55秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.06 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日14时25分45秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.06 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日14时32分01秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.06 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日14时58分45秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.06 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日14时59分21秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.06 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日14时59分24秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.06 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日15时03分04秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.06 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日15时05分01秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.06 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日15时05分03秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.06 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日15时18分32秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.06 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日15时19分13秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.06 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日15时23分42秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.06 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日15时29分52秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Transform4.JPG-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.49 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日15时32分28秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.49 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日15时49分01秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.49 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日15时51分08秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.49 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日15时51分25秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.49 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日16时08分33秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.49 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日16时12分45秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.49 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月08日10时55分39秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.49 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月10日21时18分49秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.49 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月10日21时27分24秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:0.49 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月11日00时06分01秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Transform5.JPG-successful 
+
+Transform6.JPG-successful 
+
+Transform7.JPG-successful 
+
+Transform8.JPG-successful 
+
+Transform9.JPG-successful 
+
+Transform10_4 - COPIA.JPG-successful 
+
+Transform11_5 - COPIA.JPG-successful 
+
+Transform12_6 - COPIA.JPG-successful 
+
+Transform13_7 - COPIA.JPG-successful 
+
+Transform14_8 - COPIA.JPG-successful 
+
+Transform15_9 - COPIA.JPG-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.06 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月11日21时44分21秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.06 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月11日22时25分15秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Transform2.JPG-successful 
+
+Transform16_BRILLO2.JPG-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.10 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月11日22时26分28秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.10 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月11日22时33分49秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.10 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月11日22时37分04秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.10 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月11日22时42分16秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.10 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月17日12时03分31秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.10 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月17日13时38分34秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.10 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月17日14时12分23秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.10 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年07月17日14时28分15秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.10 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月05日14时28分14秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.10 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月05日14时39分17秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Transform3.JPG-successful 
+
+Transform17_BRILLO3.JPG-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.10 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月05日14时41分17秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.10 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月05日14时41分29秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.10 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月05日15时31分47秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Transform2.JPG-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.10 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月05日15时44分48秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.10 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月05日15时48分44秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Transform2.JPG-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.11 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月05日15时53分59秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.11 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月05日15时54分26秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.11 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月05日16时28分44秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.11 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月11日13时10分34秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.11 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月11日13时10分43秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.11 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月12日09时27分28秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Transform18_CALIBRACION.JPG-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.15 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月12日09时43分06秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Transform19_PANTALLAVACIA.JPG-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.16 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月12日09时43分39秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Transform2.JPG-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.16 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月12日10时02分41秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.16 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月12日10时06分13秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.16 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月12日10时21分07秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Transform19PANTALLAVACIA.JPG-successful 
+
+Transform20_B.JPG-successful 
+
+Transform21_G.JPG-successful 
+
+Transform22_R.JPG-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.21 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月12日10时24分24秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Transform3.JPG-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.21 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月12日14时13分10秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Transform0DIAPOSITIVA1.JPG-successful 
+
+Transform1DIAPOSITIVA2.JPG-successful 
+
+Transform2DIAPOSITIVA4.JPG-successful 
+
+Transform3DIAPOSITIVA6.JPG-successful 
+
+Transform23_DIAPOSITIVA13.JPG-successful 
+
+Transform5DIAPOSITIVA14.JPG-successful 
+
+Transform6DIAPOSITIVA15.JPG-successful 
+
+Transform7DIAPOSITIVA16.JPG-successful 
+
+Transform8DIAPOSITIVA17.JPG-successful 
+
+Transform9DIAPOSITIVA18.JPG-successful 
+
+Transform10DIAPOSITIVA13.JPG-successful 
+
+Transform11DIAPOSITIVA14.JPG-successful 
+
+Transform12DIAPOSITIVA15.JPG-successful 
+
+Transform13DIAPOSITIVA16.JPG-successful 
+
+Transform14DIAPOSITIVA17.JPG-successful 
+
+Transform15DIAPOSITIVA18.JPG-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.22 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月12日14时23分21秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.22 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月12日14时28分55秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.22 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月12日14时30分56秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.22 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月12日14时34分44秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.22 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月12日14时56分30秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.22 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2020年08月12日15时30分00秒
+===============================
+Start compiling projects...
+Save file-successful 
+
+Legitimacy detection-successful 
+
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Configuration file generates successfully
+Checksum file generation - successful
+Generate the size of project:1.22 MB!

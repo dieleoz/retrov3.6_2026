@@ -1,0 +1,219 @@
+graph TD
+    %% =========================================================================
+    %% MAPA ESTRUCTURAL Y DE ARQUITECTURA - RETRORREFLECTOMETRO VERTICAL, GENERACION V3
+    %% SAT-LUX/V3 K42: PIC18F47K42, placa SATLUX H-IoT, pantalla STONE
+    %% Linea V3.6 (2026) sobre el firmware base de 2020 (RetroVertical1.X, md5 d089f962...)
+    %% NADA DE ESTE MAPA ESTA MEDIDO EN UN EQUIPO salvo lo marcado como visto en SLV-002.
+    %% Sale de leer el fuente el 18-sep-2026. Toda afirmacion lleva archivo:linea.
+    %% Rutas de firmware relativas a 01_Firmware/base_2020_d089f962/RetroVertical1.X/
+    %% salvo que se indique otra. Se ignoran build/ y dist/.
+    %% FUERA DE ALCANCE: 01_Firmware/RetroVertical_V3.6.X/ (en obra por otro agente).
+    %% =========================================================================
+
+    subgraph RUTAS [REPOSITORIO]
+        R_V36["D:\IT\P_RetroVertical_V3.6<br>Repositorio de la linea V3.6. Rama master SIN NINGUN COMMIT<br>el 18-sep-2026: todo el arbol esta sin versionar."]
+        R_HERM["D:\IT\P_RetroReflectometro_Vertical<br>Repositorio hermano de la linea V4.1/V5 (PIC18F47K42, 115200,<br>protocolo @LEERV). Su codigo NO es intercambiable con este."]
+        R_ARCH["D:\@Proyect\IT\old\VERTICAL\<br>Archivo del que sale todo lo copiado aqui (README.md, Procedencia).<br>Se conserva intacto. No se edita."]
+        R_BASE["01_Firmware/base_2020_d089f962/<br>Fuente 2020 SIN TOCAR + hex/RetroVertical1.X.production.hex<br>md5 d089f9625090a1213291c090eae7ac01 (comprobado).<br>gui.c, measurement.c, ecuacionesCalibracion.c, main.c, uart_module.c,<br>uart_stone.c, adcc.c, uart1.c y eeprom_manager.h son IDENTICOS byte a byte<br>(cmp) a los de old\VERTICAL\2_V3.3_18F47K42_2020\...\1_RetroVertical_2020(modificada)."]
+        R_V36X["01_Firmware/RetroVertical_V3.6.X/<br>Proyecto de la V3.6, EN OBRA. No entra en este mapa."]
+        R_ARCH -->|copia| R_BASE
+        R_BASE -->|base de| R_V36X
+        R_V36 -.->|hermano| R_HERM
+    end
+
+    subgraph FLUJO [FLUJO REAL DE EJECUCION - firmware 2020]
+        FL_MAIN["main.c:16-36<br>SYSTEM_Initialize, interrupciones, y bucle plano de 4 protothreads:<br>executeIOModule, executeGuiModule, executePantalla, executeUartModule.<br>startMeasurement() COMENTADO (main.c:29)."]
+        FL_TICK["TMR0: HFINTOSC 16 MHz / 64, periodo TMR0H = 249 en modo 8 bits<br>tmr0.c:17,20,35 => 1 ms por tick para getMillis() (timming.c:5-13)"]
+        FL_IO["io.c:6-16 - LED_ROJO (RC6) conmuta cada 200 ms: latido"]
+        FL_GUI["taskGui - gui.c:493-523<br>temperatura, PWM5 y PWM7 a 0 (gui.c:505-506),<br>espera FIJA de 2 s (gui.c:508-509), bateria a la var. 207 de la STONE,<br>y PT_SPAWN de measure (gui.c:518), que NO retorna nunca."]
+        FL_MEAS["measure - gui.c:260-363<br>Bucle: temperatura (gui.c:281-282) -> limpia pantalla si llego trama STONE<br>(gui.c:284-293) -> si gatillo O byte Bluetooth, mide (gui.c:294-347)<br>-> bateria cada 200 vueltas a la STONE (gui.c:348-357)."]
+        FL_RXBT["taskUartRx - uart_module.c:69-97<br>Copia bytes de UART1 a bufferData[50]"]
+        FL_RXST["taskPantallaRx - uart_stone.c:140-171<br>Copia bytes de UART2 a bufferPantalla[50].<br>leer2 usa __delay_ms(20) BLOQUEANTE (uart_stone.c:100)."]
+        FL_MAIN --> FL_IO
+        FL_MAIN --> FL_GUI --> FL_MEAS
+        FL_MAIN --> FL_RXST
+        FL_MAIN --> FL_RXBT
+        FL_TICK -.->|getMillis| FL_GUI
+    end
+
+    subgraph ADQ [CADENA DE MEDIDA - la x de los doce polinomios]
+        AQ_LUZ["Enciende SALIDA15 (RC2) y espera 400 ms<br>measurement.c:222-226"]
+        AQ_RAP["16 muestras de INREFLECT15 (RA1, canal 0x1), 1 ms entre ellas<br>measurement.c:228-232. Descarta la primera, promedia 15 (:233-237)."]
+        AQ_OOB["DEFECTO: tempSamples se declara de 15 (measurement.c:212)<br>y el bucle escribe 16 (i = 0..15, :228-231).<br>tempSamples[15] ESCRIBE FUERA DEL ARRAY. Efecto sin determinar:<br>depende de que variable coloque el enlazador detras."]
+        AQ_IIR["IIR alfa = 0,995 sobre 599 muestras, arrancando del promedio<br>measurement.c:239-245. filtroAcumulado es float: no trunca en el bucle."]
+        AQ_200["Apaga la luz y SUMA 200: reflectivity15Adc = (int)filtro + 200<br>measurement.c:246-247"]
+        AQ_ADC["ADC 12 bits RECOMPUESTO A MANO<br>MCC deja resultado justificado a la IZQUIERDA (adcc.c:107-108, ADCON0 = 0x80;<br>MyConfig.mc3:11540-11542 ADFM = left) y adcc.c:159 devuelve<br>(ADRESH &lt;&lt; 4) + (ADRESL &gt;&gt; 4). Regenerar con MCC borra esa linea.<br>VREF+ EXTERNO (adcc.c:101-102, ADREF = 0x02). Su valor en esta placa:<br>sin verificar; measurement.c:143 comenta 4,096/4096 para la bateria.<br>Reloj FOSC/2 = 8 MHz (adcc.c:105-106): TAD sin cotejar con la hoja de datos."]
+        AQ_FT["FACTOR DE TEMPERATURA - gui.c:298-300<br>x = reflectivity15Adc x (X_2 T^2 + X_1 T + X_0)<br>X_2 = 0, X_1 = 0,00043212, X_0 = 0,90148651 (gui.c:41-43).<br>Factor = 1 con T = 228,5. Si T va en decimas de grado (comentario de<br>gui.c:503), es 22,85 C. SIN VERIFICAR (ver CA3)."]
+        AQ_X["x ES ENTERA: reflectivityValue es unsigned int (gui.c:30);<br>gui.c:298 y :300 truncan. Esa x entra en la ecuacion."]
+        AQ_NORM["Normalizacion negro/blanco MUERTA<br>acquireReflectivity15Value (gui.c:297) calcula reflectivity15Value<br>(measurement.c:275-286) con adcBlack = adcWhite = 0: divide por cero<br>en coma flotante en cada medida. NADIE usa el resultado:<br>gui.c:298 lee getReflectivity15Adc()."]
+        AQ_LUZ --> AQ_RAP --> AQ_IIR --> AQ_200 --> AQ_FT --> AQ_X
+        AQ_RAP -.-> AQ_OOB
+        AQ_ADC -.->|cuentas| AQ_RAP
+        AQ_200 -.-> AQ_NORM
+    end
+
+    subgraph ECUS [LAS DOCE ECUACIONES - ecuacionesCalibracion.c:3-42, cableadas]
+        EC_INT["INTENSAS, :3-20 - codigos 0x01-0x06 / Bluetooth 1-6<br>amarillo :3-5 (grado 3), blanco :6-8 (grado 2), naranja :9-11 (2),<br>rojo :12-14 (3), azul :15-17 (3), verde :18-20 (3)"]
+        EC_OPA["OPACAS, :25-42 - codigos 0x07-0x0D / Bluetooth 7, 8, a-d<br>amarillo :25-27 (3), blanco :28-30 (2), naranja :31-33 (2),<br>rojo :34-36 (2), azul :37-39 (3), verde :40-42 (3)"]
+        EC_PAR["TRES PAREJAS IDENTICAS: naranja :9-11 = :31-33,<br>azul :15-17 = :37-39, verde :18-20 = :40-42.<br>Solo 9 curvas distintas."]
+        EC_TECHO["TECHO DEL BLANCO INTENSO (:7): -8,6541E-05 x^2 + 0,6197 x - 303<br>tiene maximo 806 en x = 3580. Ninguna x da mas de 806.<br>P4 (828, XI, blanco) es INALCANZABLE con esa ecuacion."]
+        EC_SAT["arreglar_dato() - :49-54: todo valor &gt; 4000 pasa a 0.<br>Un 0 puede ser saturacion."]
+        EC_NEG["Un resultado negativo se asigna a unsigned int (gui.c:30):<br>comportamiento indefinido en C. Lo previsible es un numero enorme<br>que arreglar_dato manda a 0. No comprobado sobre el codigo generado."]
+        EC_INT --- EC_PAR
+        EC_OPA --- EC_PAR
+        EC_INT --> EC_TECHO
+        EC_INT --> EC_SAT
+        EC_OPA --> EC_SAT
+        EC_SAT -.-> EC_NEG
+    end
+
+    subgraph DESP [DESPACHO - quien elige la ecuacion]
+        DS_ANY["CUALQUIER BYTE por Bluetooth DISPARA UNA MEDIDA<br>gui.c:295 (activador O bufferIndex &gt; 0). Si no casa con ningun codigo,<br>mide y no contesta. Tambien '#', '@' o CR/LF."]
+        DS_ST["PANTALLA: bufferPantalla[8] - ecuacionesCalibracion.c:73-130<br>Solo con el GATILLO (BOTON_INICIO, RE1; gui.c:294,311-315).<br>Resultado a la STONE (presentarDato, gui.c:235-257), NUNCA por Bluetooth.<br>0x09 NO EXISTE (salto de :108 a :112). 0x0E: sin ecuacion (:128-130)."]
+        DS_STPERS["El color elegido en pantalla NO SE BORRA NUNCA:<br>borrarBuffer() esta vacia (uart_stone.c:32-35).<br>Tras el arranque bufferPantalla[8] = 0: el gatillo mide y no muestra nada."]
+        DS_BT["BLUETOOTH: PRIMER BYTE de bufferData - ecuacionesCalibracion.c:137-198<br>1-6 intensas (:141-164), 7, 8, a-d opacas (:167-190),<br>e SIN ECUACION: devuelve la x (:191-193)."]
+        DS_RESP["RESPUESTA ::&lt;n&gt; SIN TERMINADOR - conversionDatoEnviar :56-67<br>sprintf %u + '::' delante, sendUartStr, y pitido de 80 ms (gui.c:45-56).<br>El cliente cierra la respuesta por silencio."]
+        DS_BAT["'9' BATERIA - gui.c:328-340, responde :&lt;n&gt;: (un solo ':' delante)<br>ROTO: parte de batteryVoltage ya reescalado a 0-99 en gui.c:349-350,<br>la lectura fresca esta comentada (:329-330), y nivel[2] (gui.c:267)<br>DESBORDA con cualquier valor de dos o mas cifras (gui.c:335)."]
+        DS_DOBLE["GATILLO PULSADO + BYTE Bluetooth a la vez: se aplican DOS ecuaciones<br>seguidas, la de pantalla (gui.c:311-315) y la del byte (gui.c:325-327),<br>sobre la misma reflectivityValue. Con 'e' sale la de pantalla."]
+        DS_ANY --> DS_BT --> DS_RESP
+        DS_ANY --> DS_BAT
+        DS_ST --> DS_STPERS
+        DS_ST -.-> DS_DOBLE
+        DS_BT -.-> DS_DOBLE
+    end
+
+    subgraph SERIE [CANALES SERIE]
+        SE_U1["UART1 - Bluetooth - 9600 8N1<br>Fosc 16 MHz (mcc.c:68,74; device_config.h:50), U1CON0 = 0xB0 BRGS = 1,<br>U1BRG = 0x01A0 = 416 (uart1.c:115,124,127): 16E6/(4 x 417) = 9592 baud.<br>PPS: TX1 = RC1, RX1 = RC0 (pin_manager.c:92,95)."]
+        SE_U2["UART2 - STONE - 9600 8N1 (uart2.c:106,115,118, mismos valores)<br>PPS: TX2 = RB0, RX2 = RB1 (pin_manager.c:90-91).<br>Escritura de variables: A5 5A 05 82 00 dirL valH valL<br>(enviarDatos2, uart_stone.c:109-138). Byte alto de direccion fijo a 00."]
+        SE_RX["RECEPCION SIN LIMITE - uart_module.c:51-57<br>bufferData[50] (:19) y bufferIndex++ sin comprobar.<br>Mas de 50 bytes entre dos medidas ESCRIBEN FUERA DEL BUFFER.<br>Igual en la STONE: uart_stone.c:87-95."]
+        SE_TO["El vaciado por tiempo de 2 s EXISTE pero NO SE LLAMA:<br>taskUartTimeout (uart_module.c:27-39) comentado en :109.<br>El buffer solo se vacia al acabar cada medida (gui.c:342-344),<br>tras la cual hay 500 ms fijos (gui.c:345-346)."]
+        SE_U1 --> SE_RX --> SE_TO
+    end
+
+    subgraph STONE [PANTALLA STONE - 04_Pantalla_STONE/lcd_RetroVertical_2020/lcd_RetroVertical.vt]
+        ST_NOTOCA["LA STONE NO SE MODIFICA (README.md, Estructura).<br>La V3.6 tiene que seguir respondiendo a los mismos codigos."]
+        ST_OTROS["OTROS PAPELES - pag. 3, boton y 59-108: envia 0x02 -> pag. 23<br>Ciclo por la barra de color (strings del .vt, KeyCodeReturn):<br>23 envia 0x01 -> 6 ; 6 0x04 -> 8 ; 8 0x05 -> 5 ; 5 0x03 -> 9 ;<br>9 0x06 -> 7 ; 7 0x02 -> 23. => INTENSAS, 0x01-0x06."]
+        ST_TIPO1["PAPEL TIPO I - pag. 3, boton y 140-185: envia 0x08 -> pag. 10<br>10 envia 0x07 -> 12 ; 12 0x0B -> 14 ; 14 0x0C -> 11 ; 11 0x0A -> 15 ;<br>15 0x0D -> 13 ; 13 0x08 -> 10. => OPACAS: 0x07, 0x08, 0x0A-0x0D.<br>0x09 no lo envia ningun boton (coherente con el firmware)."]
+        ST_OCULTA["PAGINA OCULTA 'PRUEBA ADC'<br>pag. 3 engranaje (4,5)-(43,39) -> pag. 17 -> zona (290,0)-(320,14) -> pag. 19<br>(tambien desde pag. 1, zona (143,0)-(188,14)). En pag. 19 la zona<br>(0,0)-(26,20) envia 0x0E y abre la pag. 18 (IMAGE/18_calibracion.jpg).<br>Pag. 18 muestra las variables 199, 205, 210, 215: con gatillo da la x."]
+        ST_COD["Valor de cada KeyCodeReturn = 0x10NN: el byte BAJO es el codigo.<br>Que aterrice en bufferPantalla[8] se deduce del formato de trama<br>STONE (A5 5A 06 83 dir dir len valH valL): SIN VER EN UN TERMINAL."]
+        ST_VAR["Variables: 199, 205, 210 medidas; 215 promedio (gui.c:239-256);<br>207 bateria (gui.c:355,516). Todas presentes en el .vt."]
+        ST_OTROS --> ST_COD
+        ST_TIPO1 --> ST_COD
+        ST_OCULTA --> ST_COD
+        ST_NOTOCA -.-> ST_COD
+    end
+
+    subgraph MEM [EEPROM - firmware 2020]
+        EE_MAP["Mapa declarado - eeprom_manager.h:9-23<br>0 modelo, 1 propietario (16), 18 serie (16), 36 geometria,<br>37-44 patrones negro/blanco 15 y 30, 45-48 offsets, 49 factor bateria (4),<br>54, 60, 64, 70 porcentajes de bateria (float). Ultimo byte usado: 73."]
+        EE_NO["EL FIRMWARE EN MARCHA NO LEE NI ESCRIBE LA EEPROM.<br>Los unicos lectores estan en codigo muerto: guiOwner (gui.c:174),<br>guiSerial (:192), getBatteryPercentage (measurement.c:115),<br>startMeasurement (:353, comentado en main.c:29).<br>writeFunction15Params / 30Params (eeprom_manager.c:150,160): sin llamadas."]
+        EE_CAL["NINGUNA CONSTANTE DE CALIBRACION EN EEPROM.<br>Cambiarla exige recompilar y grabar por ICSP. Es lo que la V3.6 resuelve."]
+        EE_MAP --> EE_NO --> EE_CAL
+    end
+
+    subgraph MUERTO [CODIGO MUERTO - comprobado con grep y con Grep, dos herramientas]
+        MU_LIST["Definidas y NUNCA LLAMADAS:<br>calibrate (gui.c:94), guiWelcome (:150), guiOwner (:169), guiSerial (:187),<br>checkTemperatureDiff (:206), chooseUserGeometry (:365),<br>taskCharger (:410), estadoBateria (:450), startupTemperature (:483).<br>Tambien acquireReflectivity30Value (measurement.c:338),<br>acquireLm35TemperatureValue (:79). acquireRemoteTemperatureValue (:153)<br>solo la llaman funciones muertas (gui.c:213,488)."]
+        MU_TXT["Los textos 'HORIZONTAL V3.3', 'AIM' y 'SLH-046' (gui.c:158,160,179,197)<br>son de funciones muertas: NO identifican el firmware.<br>La pantalla de caracteres (lcdInit, gui.c:527) solo se usa desde ellas."]
+        MU_LIST --> MU_TXT
+    end
+
+    subgraph EQUIPOS [EQUIPOS Y PATRONES]
+        EQ_SLV["SLV-002 - SAT-LUX/V3 - visto con el equipo delante el 18-sep-2026<br>PIC18F47K42 rev A001, STONE STA035WT-01, PCB 'SATLUX H-IoT' (HISTORIA.md).<br>Barrido de 255 bytes con RTV Diag BT: responden 1-9 y a-d, NO responde 'e'.<br>=> VARIANTE 2020 SIN 'e', que no esta en el archivo.<br>Las 12 respuestas invertidas con :3-42 dan la misma x: FORMULAS IGUALES AL FUENTE.<br>Bluetooth a 9600: correcto (coincide con SE_U1)."]
+        EQ_ICSP["LECTURA ICSP - lecturas_equipos/SLV-002/SLV-002_lectura_2026-09-18.hex<br>Programa 128 KB y EEPROM 1024 B leidos TODO A 0x00: CHIP PROTEGIDO.<br>Configuracion EC FF F7 FF 9F FF FF DF FE FF = IDENTICA a la del<br>.hex base (comprobado parseando los dos). CONFIG5L = FE: CP activo,<br>igual que device_config.c:97 (CP = ON). WDT apagado (device_config.c:77)."]
+        EQ_HEXE["El .hex base SI tiene 'e': tabla de cadenas en 0xFFE1-0xFFFE<br>con '::', '%u', '1','2','4','7','8','a','b','c','d','e','9'<br>('3','5','6' se comparten con colas de otras cadenas)."]
+        EQ_PAT["PATRONES P1-P31 - 06_Calibracion/patrones_certificados_P1-P31.csv<br>17 XI, 9 IV, 5 IX (recuento del CSV). Color por inspeccion, NO certificado.<br>Amarillo 14 (334-782), blanco 8 (378-828), verde 4, azul 3, rojo 2, naranja 0.<br>Solo amarillo y blanco permiten ajustar curva. NO son los testigos P2-P40 de 2018."]
+        EQ_HOJA["SLV-002 EN LAS HOJAS DE 2020<br>2020_Hoja de referencia (posiblemente regulares).xlsx, pestana 'COVIANDES S.A',<br>celdas B89 y B151, con FECHA 43136 = 5-feb-2018 y 43903 = 13-mar-2020.<br>Ver CA5."]
+        EQ_SLV --> EQ_ICSP
+        EQ_ICSP -.-> EQ_HEXE
+        EQ_SLV -.->|se calibra con| EQ_PAT
+        EQ_SLV -.-> EQ_HOJA
+    end
+
+    subgraph V36 [V3.6 - ESPECIFICACION, SIN CODIGO REVISADO EN ESTE MAPA]
+        V_OBJ["OBJETIVO - PROTOCOLO-V3.6.md:6-7<br>Calibracion en EEPROM, cambiable desde la app en modo administrador,<br>sin reprogramar el PIC. Todo lo demas igual que 2020.<br>Grabarla en SLV-002 BORRA el original sin vuelta atras (README.md)."]
+        V_COMP["COMPATIBILIDAD TOTAL - PROTOCOLO-V3.6.md:9-20<br>1-8, a-d: ::&lt;n&gt; sin terminador y pitido. 9: :&lt;n&gt;:. e: la x.<br>STONE 0x01-0x0E igual: la pantalla no se toca.<br>La app del cliente y la pantalla actual, sin cambios."]
+        V_POLI["FORMA GENERAL - PROTOCOLO-V3.6.md:22-27<br>R = c3 x^3 + c2 x^2 + c1 x + c0 para los 12 codigos.<br>Las 12 de ecuacionesCalibracion.c:3-42 caben (grado maximo 3):<br>son los valores de fabrica."]
+        V_ORD["ORDENES NUEVAS ENTRE # Y # - PROTOCOLO-V3.6.md:29-49<br>#V#, #L,pin#, #Q#, #G,k#, #S,k,c3,c2,c1,c0#, #F,k# o #F,*#,<br>#GT#, #ST,x2,x1,x0#, #P,actual,nuevo#. Maximo 48 bytes.<br>Una trama que empieza por # NUNCA mide. Incompleta: se descarta a 2 s.<br>Numeros en notacion cientifica, 7 cifras."]
+        V_ADMIN["ADMIN POR PIN - PROTOCOLO-V3.6.md:38,41-45,51<br>#S, #F, #ST y #P exigen #L con PIN. PIN de fabrica 2026, en EEPROM.<br>Se bloquea con #Q# o al apagar."]
+        V_EE["EEPROM DESDE 0x100 - PROTOCOLO-V3.6.md:53-59<br>Marca V36, version, 12 x 4 float, 3 float de temperatura, PIN, CRC-16.<br>Marca o CRC malos => valores de fabrica y #V# responde DEF:<br>un chip recien grabado mide igual que el de 2020.<br>0x100 queda por encima del ultimo byte declarado en 2020 (73)."]
+        V_SEG["SEGURIDAD - PROTOCOLO-V3.6.md:61-67<br>Recepcion con limite de 50 bytes (2020 no lo tenia: SE_RX).<br>Nunca se envia '@'. Bits de configuracion identicos a 2020,<br>incluida la proteccion de codigo."]
+        V_DET["DETECCION DESDE LA APP, consecuencia del codigo 2020:<br>un equipo 2020 que recibe #V# MIDE Y NO CONTESTA (gui.c:295;<br>'#' no casa en ecuacionesColoresApp :141-193). El silencio a #V#<br>identifica firmware 2020 sin riesgo."]
+        V_OBJ --> V_COMP
+        V_OBJ --> V_POLI --> V_EE
+        V_OBJ --> V_ORD --> V_ADMIN --> V_EE
+        V_ORD --> V_SEG
+        V_ORD -.-> V_DET
+    end
+
+    subgraph HW [HARDWARE - PENDIENTE]
+        HW_PCB["02_Hardware/PCB_Proteus_3.3/Retro Basico Horizontal v3.2 ..pdsprj<br>Es el diseno del HORIZONTAL (nombre del fichero; LEAME_original_2020.txt:<br>'el circuito ... es el mismo practicamente'). No abierto en este mapa."]
+        HW_PIN["Pines segun el firmware (pin_manager.h):<br>RA0 INREFLECT30 (:25), RA1 INREFLECT15 (:45), RA4 TEMLOCAL1 (:77),<br>RA5 TEMLOCAL2 (:97), RA6 BATERIA (:117), RC2 SALIDA15 (:185),<br>RC3 SALIDA30 (:205), RC6 LED_ROJO (:249), RD1 BUZZER (:309),<br>RE0 BOTON_SELECCION (:449), RE1 BOTON_INICIO = gatillo (:469).<br>PWM7 en RC4 y PWM5 en RC5 (pin_manager.c:93-94), puestos a 0 (gui.c:505-506)."]
+        HW_DOC["HARDWARE-V3-SATLUX-H-IoT.md (repo hermano, 05_Documentacion)<br>NO EXISTIA al cerrar este mapa. El mapeo de la placa H-IoT que<br>anuncia el README (Estructura, 02_Hardware) tampoco esta en este arbol."]
+        HW_PCB --> HW_PIN
+        HW_PIN -.-> HW_DOC
+    end
+
+    subgraph ABIERTO [CONTRADICCIONES ABIERTAS - no se eligen por escrito]
+        CA1["CA1 - EL FUENTE EXACTO DE SLV-002 NO ESTA EN EL ARCHIVO.<br>El equipo no responde a 'e'; el fuente (:191-193) y el .hex base (0xFFF9) si.<br>El chip esta protegido: no hay copia. Se desconoce que mas cambia.<br>=> Grabar el fuente 2020 tal cual NO reproduce lo que lleva el equipo."]
+        CA2["CA2 - LA GEOMETRIA DE LOS CERTIFICADOS P1-P31 NO CONSTA.<br>patrones_certificados_P1-P31.csv:4: angulos, unidades y certificado<br>de origen SIN IDENTIFICAR. Sin eso no se sabe si el equipo mide<br>en la misma geometria que el certificado."]
+        CA3["CA3 - QUE SENSOR MIDE T Y EN QUE UNIDADES.<br>measurement.c:64-73 lee INREFLECT30 (RA0, canal 0x0), cuyo nombre es<br>el del canal optico de 30 grados, y divide por 4,928. El comentario de :66<br>dice que la senal de temperatura 'se manda por inreflect'. gui.c:503<br>habla de decimas de grado. Nada lo confirma en la placa.<br>Decide el factor de temperatura, luego la x, luego la calibracion."]
+        CA4["CA4 - REPRODUCIBILIDAD DE LA COMPILACION CON XC8 2.10, PENDIENTE.<br>nbproject/configurations.xml:102 fija XC8 2.10. No se ha compilado<br>el fuente base para comparar con d089f962. Sin eso, ningun .hex de la<br>V3.6 se puede comparar byte a byte contra la base."]
+        CA5["CA5 - FECHAS Y PROPIETARIO DE SLV-002.<br>La hoja de 2020 registra SLV-002 el 5-feb-2018 y el 13-mar-2020<br>(pestana COVIANDES S.A), ANTES de los fuentes del K42 (ficheros de<br>ago-2020). HISTORIA.md lo da como Concesionaria Vial Andina.<br>O el equipo cambio de placa, o el numero se reutilizo, o son dos clientes."]
+        CA6["CA6 - TIENE SLV-002 LA PAGINA 'PRUEBA ADC' (0x0E)?<br>HISTORIA.md: 'las pantallas coinciden con los disenos STONE de 2020'.<br>El ARQUITECTURA.map hermano (X15) afirma que no la tiene.<br>No hay aqui evidencia de ninguna de las dos. Se cierra con el equipo."]
+        CA7["CA7 - DOS .hex DE 2020 CON EL MISMO NOMBRE.<br>d089f962 (este repositorio) y 43f9f74b (segun el INDICE.md de old,<br>citado en PROCEDIMIENTO:195-197). La diferencia no esta explicada<br>y el segundo no esta en este arbol."]
+    end
+
+    subgraph ERRORES [ERRORES CORREGIDOS - la version erronea junto a la buena]
+        ER1["Se dijo: 'es un 18F4550', porque sus textos de pantalla estan en el fuente CCS.<br>ES: PIC18F47K42. En la STONE los textos son IMAGENES (HISTORIA.md)."]
+        ER2["Se dijo: 'el firmware 2020 tiene modo de calibracion negro/blanco'.<br>ES: calibrate() (gui.c:94-148) no se llama nunca (MU_LIST)."]
+        ER3["Se dijo: 'el Bluetooth va a otra velocidad', porque 'e' no contestaba.<br>ES: 9600 (SE_U1). En SLV-002 NO EXISTE el comando 'e'."]
+        ER4["PROCEDIMIENTO-Calibracion-V3-K42.md:20 dice 'El fuente no esta en este<br>repositorio'. YA ESTA: base_2020_d089f962, identico byte a byte al citado."]
+        ER5["PROCEDIMIENTO-Calibracion-V3-K42.md:208-209 dice 21 XI, 6 IV y 4 IX.<br>EL CSV DA 17 XI, 9 IV y 5 IX. La tabla de colores de :215-222 si cuadra."]
+        ER6["HISTORIA.md dice que responden '1-9 y a-d con ::n'.<br>EL CODIGO responde '9' con :n: (gui.c:336-339), no ::n. Sin repetir con el equipo."]
+        ER7["PROTOCOLO-V3.6.md:55 limita el mapa de 2020 a eeprom_manager.h:9-19 (0-52).<br>EL FICHERO SIGUE en :20-23 (54, 60, 64, 70; hasta el byte 73).<br>No choca con 0x100, pero la cita esta incompleta."]
+    end
+
+    subgraph DOCS [DOCUMENTACION]
+        D_README["README.md - que es la linea V3.6, estructura, procedencia, reglas"]
+        D_HIST["HISTORIA.md - familias del Vertical, sesion con SLV-002, errores"]
+        D_PROT["05_Documentacion/PROTOCOLO-V3.6.md - contrato firmware/app de la V3.6.<br>Manda sobre firmware y app. Nada implementado ni probado."]
+        D_PROC["05_Documentacion/PROCEDIMIENTO-Calibracion-V3-K42.md<br>Calibracion del firmware 2020 via 'e'. Revisado por un segundo agente.<br>Sin ejecutar en un equipo. Ver ER4 y ER5."]
+        D_LEAME["05_Documentacion/LEAME_original_2020.txt - nota del autor de 2020:<br>circuito del Horizontal, offset y PWM de compensacion a cero."]
+        D_BLAN["Blancos medidos en SLV-002 (XI +2 a +3 %, IV y IX +28 a +50 %):<br>HISTORIA.md remite a 06_Calibracion/, pero ALLI NO HAY hoja del 18-sep-2026.<br>Las tres .xlsx son de 2020. El dato no tiene soporte en el arbol."]
+        D_HIST -.-> D_BLAN
+    end
+
+    %% INTERCONEXIONES PRINCIPALES
+    FL_MEAS --> AQ_LUZ
+    AQ_X --> DS_ST
+    AQ_X --> DS_BT
+    DS_ST --> EC_INT
+    DS_ST --> EC_OPA
+    DS_BT --> EC_INT
+    DS_BT --> EC_OPA
+    FL_RXBT --> SE_RX
+    FL_RXBT -.->|bufferIndex| DS_ANY
+    FL_RXST -.->|bufferPantalla| DS_ST
+    SE_U2 --> ST_COD
+    ST_VAR -.-> SE_U2
+    ST_OCULTA -.->|0x0E| DS_ST
+    DS_RESP --> SE_U1
+    EE_CAL -.->|motiva| V_OBJ
+    ECUS -.->|valores de fabrica| V_POLI
+    AQ_FT -.->|ordenes GT y ST| V_ORD
+    SE_RX -.->|se corrige en| V_SEG
+    SE_TO -.->|comportamiento nuevo| V_ORD
+    ST_NOTOCA -.-> V_COMP
+    EQ_ICSP -.->|misma configuracion| V_SEG
+    EQ_SLV -.-> CA1
+    EQ_PAT -.-> CA2
+    AQ_FT -.-> CA3
+    R_BASE -.-> CA4
+    EQ_HOJA -.-> CA5
+    ST_OCULTA -.-> CA6
+    R_BASE -.-> CA7
+    EQ_PAT -.-> EC_TECHO
+    HW_PIN -.-> CA3
+    D_PROT -.->|especifica| V36
+    D_PROC -.->|calibra| ECUS
+    D_HIST -.-> EQ_SLV
+    ERRORES -.->|corrige| DOCS

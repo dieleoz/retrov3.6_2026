@@ -1,0 +1,11 @@
+# Artefactos de MPLAB X (se regeneran). El .hex de referencia vive en base_2020_d089f962/hex/
+**/build/
+**/dist/
+**/debug/
+**/nbproject/private/
+# Android
+*.apk
+.gradle/
+**/app/build/
+local.properties
+.idea/

@@ -1,0 +1,17 @@
+EL CIRCUITO ES SIMILAR AL HORIZONTAL, ESTE NO TIENE TANTOS PROBLEMAS CON LA TEMPERATURA,
+PERO SE VE AFECTADA POR LA TEMPERATURA ASI QUE QUEDE SER COMPENZADO AL MULTIPLICAR POR UN VALOR
+EL VOLTAJE OFFSET DEBERA SER CERO Y EL VOLTAJE DE COMPENSACION PWM DEBERA SER CERO
+
+*******************************************************************************
+el programa fue realizado en MPLABX y el diagrama se puede ver en proteus
+la lcd es de la marca stone su comunicacion es serial.
+*******************************************************************************
+el circuito se puede ver en retros horizontales es el mismo practicamente
+
+*******************************************************************************
+*)  1_RetrosAnteriores encuentra el trabajo hecho anteriormente
+*)  DISEÑOS PANTALLA encuentra las imagenes de la pantalla
+*)  lcd_RetroVertical  esta el programa para cargar el programa en la LCD STONE USAR PROGRAMA
+*)  RETRO ESTADOUNIDENSE  se encuentran los diseños de compañias estadounidenses para fabricar sus equipos
+*)  RetroVertical1.X esta el programa hecho en MPLAB X solo abrir con este programa
+*******************************************************************************

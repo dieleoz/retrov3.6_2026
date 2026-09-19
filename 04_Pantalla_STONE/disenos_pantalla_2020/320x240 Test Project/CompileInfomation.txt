@@ -1,0 +1,160 @@
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2018年12月04日15时36分44秒
+===============================
+开始编译工程...
+保存文件-成功
+
+合法性检测-成功
+
+生成中显配置文件-成功
+
+生成图标文件-成功
+
+生成字库文件-成功
+
+生成用户数据文件-成功
+
+转换—37.JPG-成功
+
+转换—38.JPG-成功
+
+转换—39.JPG-成功
+
+转换—41.JPG-成功
+
+转换—42.JPG-成功
+
+转换—43.JPG-成功
+
+转换—44.JPG-成功
+
+转换—45.JPG-成功
+
+转换—46.JPG-成功
+
+转换—47.JPG-成功
+
+转换—48.JPG-成功
+
+转换—49.JPG-成功
+
+转换—50.JPG-成功
+
+转换—51.JPG-成功
+
+转换—52.JPG-成功
+
+转换—53.JPG-成功
+
+转换—54.JPG-成功
+
+转换—55.JPG-成功
+
+转换—56.JPG-成功
+
+转换—57.JPG-成功
+
+转换—60.JPG-成功
+
+配置文件生成-成功
+校验和文件生成-成功
+生成工程文件大小：9.38 MB!
+===============================
+VGUS4.3开发工具版本号:20180403
+编译时间:2018年12月04日15时37分39秒
+===============================
+开始编译工程...
+保存文件-成功
+
+合法性检测-成功
+
+生成中显配置文件-成功
+
+生成图标文件-成功
+
+生成字库文件-成功
+
+生成用户数据文件-成功
+
+配置文件生成-成功
+校验和文件生成-成功
+生成工程文件大小：9.38 MB!
+===============================
+VGUS2019开发工具版本号:20191225
+编译时间:2019年02月26日13时43分19秒
+===============================
+开始编译工程...
+保存文件-成功
+
+合法性检测-成功
+
+生成中显配置文件-成功
+
+生成图标文件-成功
+
+生成字库文件-成功
+
+生成用户数据文件-成功
+
+配置文件生成-成功
+校验和文件生成-成功
+生成工程文件大小：9.38 MB!
+=============================== 
+VGUS2019 development tool version number: 20190325
+Compile time: 2019 year12 month02 day1808 minutes55 seconds
+================================
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Generate video files-successful 
+
+Generate user data files-successful 
+
+Transform - 01.JPG-successful 
+
+Transform - 320_240.JPG-successful 
+
+Configuration file was generated-successfully
+Generate the size of project:10.91 MB!
+=============================== 
+VGUS2019 development tool version number: 20190325
+Compile time: 2019 year12 month03 day1833 minutes46 seconds
+================================
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Generate video files-successful 
+
+Generate user data files-successful 
+
+Configuration file was generated-successfully
+Generate the size of project:10.91 MB!
+=============================== 
+VGUS2019 development tool version number: 20190325
+Compile time: 2019 year12 month04 day1029 minutes40 seconds
+================================
+Generate ViewTech configuration file-successful 
+
+Generate Icon file-successful 
+
+Generate Font file-successful 
+
+Generate Audio file-successful 
+
+Generate video files-successful 
+
+Generate user data files-successful 
+
+Configuration file was generated-successfully
+Generate the size of project:10.91 MB!

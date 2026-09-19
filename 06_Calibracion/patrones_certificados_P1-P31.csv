@@ -1,0 +1,37 @@
+# Patrones con valor certificado, P1-P31. Entregados por Diego el 18-sep-2026 ("de Datos certificados").
+# En la transcripcion original: "p" = patron; "t" = etiqueta de tipo de lamina, seguida del tipo en romano (I a XI, NTC 4739). Aclarado por Diego el 18-sep-2026.
+# El certificado NO indica el color. La columna "color" la aporto Diego el 18-sep-2026 por inspeccion de cada patron: NO es dato certificado.
+# SIN IDENTIFICAR: geometria del certificado (angulo de observacion y de entrada), unidades y certificado de origen.
+# No confundir con los testigos P2-P40 de "lista de calibracion retros.xlsx" (2018): mismos nombres, valores distintos (P19 = 85 aqui, 746,22 alli).
+patron,valor_certificado,tipo_lamina,color
+P1,762,XI,blanco
+P2,414,IV,blanco
+P3,378,IV,blanco
+P4,828,XI,blanco
+P5,740,XI,amarillo
+P6,772,XI,blanco
+P7,768,XI,blanco
+P8,721,XI,amarillo
+P9,705,XI,amarillo
+P10,680,XI,amarillo
+P11,194,IV,rojo
+P12,227,IV,rojo
+P13,168,XI,verde
+P14,173,XI,verde
+P15,164,XI,verde
+P16,170,XI,verde
+P17,83,XI,azul
+P18,84,XI,azul
+P19,85,XI,azul
+P20,782,XI,amarillo
+P21,375,IV,amarillo
+P22,334,IV,amarillo
+P23,714,XI,amarillo
+P24,593,IV,amarillo
+P25,576,IX,amarillo
+P26,583,IX,amarillo
+P27,471,IX,blanco
+P28,484,IX,blanco
+P29,442,IV,amarillo
+P30,448,IV,amarillo
+P31,573,IX,amarillo
