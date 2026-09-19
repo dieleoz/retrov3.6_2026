@@ -26,6 +26,9 @@ import java.util.Map;
  *   VEREDICTO,id,veredicto,aceptada(0/1),nota
  *   REASIGNA,id,patron_nuevo,nota
  *   ELIGE,id
+ *   CIERRE,fecha                     (3.6.6: la deja de solo lectura)
+ *   EXPORTA,fecha,zip,md5,sha256     (3.6.6)
+ * El formato es compatible hacia atras: un diario de la 3.6.5 se lee igual.
  */
 public final class Campana {
 
@@ -100,6 +103,11 @@ public final class Campana {
     private final List<Serie> series = new ArrayList<>();
     private final Map<String, String> elegidas = new LinkedHashMap<>();
     private Writer diario;
+    /** Cerrada: de solo lectura (evento CIERRE). Se puede exportar, no medir ni importar. */
+    private boolean cerrada;
+    private String fechaCierre = "";
+    /** Exportaciones anteriores con sus hashes (evento EXPORTA), para el resumen. */
+    private final List<String> exportaciones = new ArrayList<>();
     /**
      * Equipo al que pertenece la campana. La optica cambia de un equipo a otro:
      * cada uno tiene su campana y su ajuste, y NUNCA se mezclan series. Con MAC
@@ -169,6 +177,29 @@ public final class Campana {
         }
     }
 
+    public boolean cerrada() {
+        return cerrada;
+    }
+
+    private void comprobarAbierta() {
+        if (cerrada) {
+            throw new IllegalStateException("la campaña está cerrada (" + fechaCierre + "): es de solo lectura");
+        }
+    }
+
+    public void cerrarCampana(String fecha) throws IOException {
+        comprobarAbierta();
+        cerrada = true;
+        fechaCierre = fecha;
+        evento("CIERRE", fecha);
+    }
+
+    /** Anota una exportacion (el ZIP no puede llevar su propio hash: va en la siguiente). */
+    public void anotarExportacion(String fecha, String nombre, String md5, String sha256) throws IOException {
+        exportaciones.add(fecha + "  " + nombre + "  md5 " + md5 + "  sha256 " + sha256);
+        evento("EXPORTA", fecha, nombre, md5, sha256);
+    }
+
     public String nuevoId() {
         return String.format(Locale.US, "S%03d", series.size() + 1);
     }
@@ -177,6 +208,7 @@ public final class Campana {
 
     public Serie nuevaSerie(String fecha, String equipo, String mac, String firmware, String patron,
                             int orientacion, char codigo) throws IOException {
+        comprobarAbierta();
         if (!esDeEsteEquipo(mac)) {
             throw new IllegalArgumentException("serie de otro equipo (MAC " + mac + "); esta campaña es de "
                     + this.equipo + " " + this.mac);
@@ -188,6 +220,7 @@ public final class Campana {
     }
 
     public Disparo agregarDisparo(Serie s, String fecha, String bruta, double x) throws IOException {
+        comprobarAbierta();
         Disparo d = new Disparo(s.disparos.size() + 1, fecha, bruta, x);
         s.disparos.add(d);
         evento("DISPARO", s.id, d.idx, fecha, bruta, Double.isNaN(x) ? "" : fmt(x));
@@ -195,6 +228,7 @@ public final class Campana {
     }
 
     public void descartar(Serie s, int idx, String motivo) throws IOException {
+        comprobarAbierta();
         Disparo d = s.disparos.get(idx - 1);
         d.descartado = true;
         d.motivo = motivo;
@@ -202,6 +236,7 @@ public final class Campana {
     }
 
     public void cerrar(Serie s, String veredicto, boolean aceptada, String nota) throws IOException {
+        comprobarAbierta();
         s.veredicto = veredicto;
         s.aceptada = aceptada;
         s.nota = nota == null ? "" : nota;
@@ -210,6 +245,7 @@ public final class Campana {
 
     /** "Era otro patron": la serie pasa a 'nuevo'; el original queda en patronOriginal y en el diario. */
     public void reasignar(Serie s, String nuevo, String nota) throws IOException {
+        comprobarAbierta();
         if (!catalogo.containsKey(nuevo)) {
             throw new IllegalArgumentException("patron desconocido: " + nuevo);
         }
@@ -219,6 +255,7 @@ public final class Campana {
     }
 
     public void elegir(Serie s) throws IOException {
+        comprobarAbierta();
         elegidas.put(s.patron, s.id);
         evento("ELIGE", s.id);
     }
@@ -464,6 +501,7 @@ public final class Campana {
         if (!mac.isEmpty()) {
             sb.append("Equipo: serie ").append(equipo).append(", MAC ").append(mac).append('\n');
         }
+        sb.append(cerrada ? "Estado: CERRADA el " + fechaCierre + " (solo lectura)\n" : "Estado: abierta\n");
         sb.append("Avance: ").append(avance()).append("\n\n");
         sb.append("patron  cert  tipo color     estado     series  elegida  n   media x    s\n");
         for (Patron p : catalogo.values()) {
@@ -489,6 +527,13 @@ public final class Campana {
                         s.nota.isEmpty() ? "" : "; nota: " + s.nota));
             }
         }
+        sb.append(desvioPorPosicion());
+        if (!exportaciones.isEmpty()) {
+            sb.append("\nExportaciones anteriores (el ZIP no puede llevar su propio hash):\n");
+            for (String e : exportaciones) {
+                sb.append("  ").append(e).append('\n');
+            }
+        }
         Map<String, String> imp = imprescindibles();
         sb.append("\nFalta medir: ");
         int faltan = 0;
@@ -501,6 +546,54 @@ public final class Campana {
         sb.append(faltan == 0 ? "nada" : "").append("\n");
         for (Map.Entry<String, String> e : imp.entrySet()) {
             sb.append("* imprescindible ").append(e.getKey()).append(": ").append(e.getValue()).append('\n');
+        }
+        return sb.toString();
+    }
+
+    /**
+     * T-C38 (efecto del primer disparo): por serie, desvio de cada posicion de
+     * disparo respecto a la mediana de la serie (todos los disparos con lectura,
+     * tambien los descartados), y la media por posicion sobre todas las series.
+     * El disparo de asentamiento no esta aqui: se descarta antes y solo va al
+     * registro de tramas.
+     */
+    public String desvioPorPosicion() {
+        StringBuilder sb = new StringBuilder("\nDesvío por posición de disparo respecto a la mediana de su serie (T-C38):\n");
+        List<List<Double>> porPos = new ArrayList<>();
+        for (Serie s : series) {
+            List<Double> xs = new ArrayList<>();
+            for (Disparo d : s.disparos) {
+                if (!Double.isNaN(d.x)) {
+                    xs.add(d.x);
+                }
+            }
+            if (xs.size() < 2) {
+                continue;
+            }
+            double med = Estadistica.mediana(Estadistica.aVector(xs));
+            sb.append("  ").append(s.id).append(' ').append(s.patron).append(':');
+            for (int i = 0; i < s.disparos.size(); i++) {
+                Disparo d = s.disparos.get(i);
+                if (Double.isNaN(d.x)) {
+                    sb.append(" ").append(i + 1).append(":-");
+                    continue;
+                }
+                double dv = d.x - med;
+                sb.append(String.format(Locale.US, " %d:%+.0f", i + 1, dv));
+                while (porPos.size() <= i) {
+                    porPos.add(new ArrayList<Double>());
+                }
+                porPos.get(i).add(dv);
+            }
+            sb.append('\n');
+        }
+        if (!porPos.isEmpty()) {
+            sb.append("  Media por posición (n series):");
+            for (int i = 0; i < porPos.size(); i++) {
+                double[] v = Estadistica.aVector(porPos.get(i));
+                sb.append(String.format(Locale.US, " %d:%+.1f(%d)", i + 1, Estadistica.media(v), v.length));
+            }
+            sb.append('\n');
         }
         return sb.toString();
     }
@@ -596,6 +689,13 @@ public final class Campana {
                 elegidas.put(s.patron, s.id);
                 return true;
             }
+            case "CIERRE":
+                cerrada = true;
+                fechaCierre = c.get(1);
+                return true;
+            case "EXPORTA":
+                exportaciones.add(c.get(1) + "  " + c.get(2) + "  md5 " + c.get(3) + "  sha256 " + c.get(4));
+                return true;
             default:
                 return false;
         }

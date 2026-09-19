@@ -4,7 +4,7 @@
 V3.6 no se puede probar: el firmware V3.6 no existe todavía en ningún equipo. Lo que sí debe funcionar
 es la medida contra un V3 2020 (SLV-002), y eso tampoco se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 365`, `versionName 3.6.5` (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 366`, `versionName 3.6.6` (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -23,7 +23,7 @@ export JAVA_HOME="D:/@Proyect/Baliza/7 sw apk/jdk-11/jdk-11.0.24+8"
 
 ### Tests JVM
 
-`app/src/test/`: `CalculoTest`, `ReceptorTest`, `AsistenteTest`, `FabricaTest` (68 tests).
+`app/src/test/`: `CalculoTest`, `ReceptorTest`, `AsistenteTest`, `FabricaTest` (71 tests).
 `./gradlew testDebugUnitTest` **no arranca en esta máquina**: el ejecutor de Gradle 6.5 no encuentra su
 clase `GradleWorkerMain` porque la carpeta de usuario lleva `ñ` (`C:\Users\Diego.Zuñiga`). Se compilan
 con Gradle y se ejecutan con JUnit a mano:
@@ -106,6 +106,20 @@ Reglas que salen de ahí, en el código:
   envía sólo `1`-`8`, `a`-`d` y `9`.
 - Tras 3 peticiones seguidas sin un solo byte, la app aconseja apagar y encender el equipo y lo anota
   en el registro.
+
+## Cambios de la 3.6.6
+
+- **Descolgado (C-46):** umbral = máx(5 × 1,4826 × MAD ; 50 cuentas). El ruido medido es s ≈ 5 y el
+  descolgado real (P7, 3031) está a ~200; con sólo 5 MAD se marcaban disparos buenos de P2.
+- **T-C38:** `resumen.txt` lleva, por serie, el desvío de cada posición de disparo respecto a la mediana
+  de la serie y la media por posición. El asentamiento por defecto sigue en 1.
+- **Cerrar campaña:** evento `CIERRE` en el diario; la deja de solo lectura (se puede exportar).
+- **Huellas del ZIP:** md5 y SHA-256 en pantalla, en el texto del envío, en el registro de tramas y en
+  el diario (`EXPORTA`), que las lleva al `resumen.txt` de la exportación siguiente: un ZIP no puede
+  contener su propia huella.
+- **Actualizar encima de la 3.6.5 conserva la campaña:** el diario vive en `files/campanas/` del
+  almacenamiento propio (mismo `applicationId` y misma firma de depuración, comprobada con apksigner),
+  y el formato es compatible hacia atrás (test con un diario de la 3.6.5).
 
 ## Campaña de calibración (3.6.5)
 

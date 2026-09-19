@@ -53,6 +53,8 @@ public class CampanaActivity extends Base {
     private LinearLayout lista;
     private Cola.Paso paso;
     private volatile boolean midiendo;
+    private Button btnCerrar;
+    private Button btnImportar;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -79,9 +81,11 @@ public class CampanaActivity extends Base {
         boton("Exportar campaña (un solo ZIP con todo)", v -> exportar());
         texto("El ZIP lleva las series, las pruebas del equipo, todos los registros de tramas de la campaña y "
                 + "el resumen. Después de exportar no hace falta compartir nada más.");
+        btnCerrar = boton("Cerrar campaña (queda de solo lectura)", v -> cerrarCampana());
         Button imp = boton("Importar CSV de medidas antiguas", v -> importar());
         Button nueva = boton("Nueva campaña (archiva la actual)", v -> nueva());
         fila(imp, nueva);
+        btnImportar = imp;
 
         titulo("Lista de patrones");
         spColor = new Spinner(this);
@@ -199,8 +203,14 @@ public class CampanaActivity extends Base {
                     + "\n(" + paso.motivo + "; quedan " + cola.size() + ")");
         }
         boolean con = EnlaceSerie.instancia().estaConectado();
-        btnOk.setEnabled(paso != null && !midiendo && con);
-        btnSaltar.setEnabled(paso != null && !midiendo);
+        boolean abiertaC = !campana.cerrada();
+        btnOk.setEnabled(abiertaC && paso != null && !midiendo && con);
+        btnSaltar.setEnabled(abiertaC && paso != null && !midiendo);
+        btnCerrar.setEnabled(abiertaC && !midiendo);
+        btnImportar.setEnabled(abiertaC && !midiendo);
+        if (!abiertaC) {
+            txtColoque.setText("Campaña CERRADA: de solo lectura. Puede exportarla; para medir, \"Nueva campaña\".");
+        }
         pintarLista();
     }
 
@@ -264,6 +274,10 @@ public class CampanaActivity extends Base {
         new AlertDialog.Builder(this).setTitle("Series de " + p.nombre + " (toque una aceptada para elegirla)")
                 .setItems(t, (d, w) -> {
                     Campana.Serie s = ls.get(w);
+                    if (campana.cerrada()) {
+                        aviso("La campaña está cerrada (solo lectura).");
+                        return;
+                    }
                     if (!s.aceptada) {
                         aviso("Sólo se puede elegir una serie aceptada.");
                         return;
@@ -297,6 +311,10 @@ public class CampanaActivity extends Base {
 
     private void medir(final Patron p, final int orientacion) {
         final Sesion s = Sesion.get();
+        if (campana != null && campana.cerrada()) {
+            alerta("Campaña cerrada", "La campaña está cerrada (solo lectura).");
+            return;
+        }
         if (!EnlaceSerie.instancia().estaConectado() || !s.versionMedible()) {
             alerta("No se puede medir", "Conecte con el equipo y pase las pruebas (firmware: " + s.firmware() + ").");
             return;
@@ -478,12 +496,16 @@ public class CampanaActivity extends Base {
             return;
         }
         File zip;
+        Campanas.Exportacion ex;
         try {
-            zip = Campanas.exportar(this, campana.equipo, campana.mac);
+            ex = Campanas.exportarConHuellas(this, campana.equipo, campana.mac);
+            zip = ex.zip;
         } catch (IOException | RuntimeException e) {
             alerta("Exportar", "No se pudo preparar el ZIP: " + e.getMessage());
             return;
         }
+        String huellas = zip.getName() + "\nmd5 " + ex.md5 + "\nsha256 " + ex.sha256;
+        txtResultado.setText("ZIP preparado:\n" + huellas);
         Uri u;
         try {
             u = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".ficheros", zip);
@@ -496,7 +518,8 @@ public class CampanaActivity extends Base {
         i.putExtra(Intent.EXTRA_STREAM, u);
         i.putExtra(Intent.EXTRA_SUBJECT, "Campaña " + campana.equipo + " - " + zip.getName());
         i.putExtra(Intent.EXTRA_TEXT, "Campaña de calibración de " + campana.equipo + " (" + campana.mac + "), "
-                + s.firmware() + ". Avance: " + campana.avance());
+                + s.firmware() + ". Avance: " + campana.avance()
+                + (campana.cerrada() ? ". Campaña CERRADA." : "") + "\n" + huellas);
         i.setClipData(ClipData.newRawUri(zip.getName(), u));
         i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         try {
@@ -561,6 +584,24 @@ public class CampanaActivity extends Base {
                 pintar();
             });
         });
+    }
+
+    private void cerrarCampana() {
+        if (campana == null || campana.cerrada()) {
+            return;
+        }
+        new AlertDialog.Builder(this).setTitle("Cerrar campaña")
+                .setMessage("La campaña de " + campana.equipo + " queda de solo lectura: no se podrá medir, importar ni "
+                        + "elegir series. Se puede seguir exportando. ¿Cerrar?")
+                .setPositiveButton("Cerrar campaña", (d, w) -> {
+                    try {
+                        Campanas.cerrarCampana(this, campana.equipo, campana.mac);
+                    } catch (IOException | RuntimeException e) {
+                        alerta("Campaña", "No se pudo cerrar: " + e.getMessage());
+                    }
+                    pintar();
+                })
+                .setNegativeButton("Cancelar", null).show();
     }
 
     private void nueva() {

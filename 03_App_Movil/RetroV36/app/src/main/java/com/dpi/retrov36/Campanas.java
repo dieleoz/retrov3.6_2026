@@ -167,6 +167,36 @@ public final class Campanas {
      * Un unico ZIP con el CSV de todas las series, el diario, resumen.txt y los
      * registros de tramas escritos desde el inicio de la campana.
      */
+    /** ZIP exportado y sus huellas. */
+    public static final class Exportacion {
+        public final File zip;
+        public final String md5;
+        public final String sha256;
+
+        Exportacion(File zip, String md5, String sha256) {
+            this.zip = zip;
+            this.md5 = md5;
+            this.sha256 = sha256;
+        }
+    }
+
+    /** "Cerrar campana": la deja de solo lectura (evento CIERRE en el diario). */
+    public static synchronized void cerrarCampana(Context ctx, String serie, String mac) throws IOException {
+        abrir(ctx, serie, mac).cerrarCampana(Sesion.ahoraIso());
+        Registro.nota("campana cerrada (solo lectura)");
+    }
+
+    public static synchronized Exportacion exportarConHuellas(Context ctx, String serie, String mac) throws IOException {
+        File zip = exportar(ctx, serie, mac);
+        String md5 = Resumen.hex(zip, "MD5");
+        String sha = Resumen.hex(zip, "SHA-256");
+        // El ZIP no puede llevar su propia huella: se anota en el diario (sale en el
+        // resumen de la siguiente exportacion), en el registro y en el texto del envio.
+        abierta.anotarExportacion(Sesion.ahoraIso(), zip.getName(), md5, sha);
+        Registro.nota("campana exportada: " + zip.getName() + " md5 " + md5 + " sha256 " + sha);
+        return new Exportacion(zip, md5, sha);
+    }
+
     public static synchronized File exportar(Context ctx, String serie, String mac) throws IOException {
         Campana c = abrir(ctx, serie, mac);
         File dir = new File(ctx.getFilesDir(), "registros");

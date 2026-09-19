@@ -8,8 +8,12 @@ import java.util.Map;
 /**
  * Veredicto de una serie al momento, antes de guardarla (campana, 3.6.5). Java puro.
  *
- * 1. Disparo descolgado (el operador levanta la pistola): a mas de K_MAD
- *    sigmas robustas de la mediana de su serie; sigma robusta = 1,4826 * MAD.
+ * 1. Disparo descolgado (el operador levanta la pistola): a mas de
+ *    max(K_MAD * 1,4826 * MAD ; UMBRAL_MIN) cuentas de la mediana de su serie.
+ *    Origen (C-46, 19-sep-2026): el ruido medido es s ~ 5 cuentas y el
+ *    descolgado real (P7: 3031 entre ~3230) esta a ~200. Con solo 5 MAD, un
+ *    MAD pequeno dejaba el umbral en ~10-15 cuentas y marcaba disparos buenos
+ *    (serie real de P2: 1999 ... 2022). El suelo de 50 cuentas es 10 s.
  *    Caso real: P7, 3031 entre valores de ~3230 (registro del 19-sep-2026).
  * 2. Serie ruidosa: s > SD_MAX cuentas (sin los descolgados) -> REPETIR.
  * 3. "Es este el patron?", frente a lo ya medido en la campana:
@@ -30,8 +34,8 @@ public final class Veredicto {
     public static final double SD_MAX = 15;
     public static final double TOL_ORDEN = 0.03;
     public static final double TOL_PARECIDO = 0.01;
-    /** Suelo de la sigma robusta, en cuentas: con MAD = 0 no se descarta por 1 cuenta. */
-    public static final double SIGMA_MIN = 1.5;
+    /** Suelo del umbral de descolgado, en cuentas (C-46): 10 veces el ruido medido (s ~ 5). */
+    public static final double UMBRAL_MIN = 50;
     /** Con menos disparos no se buscan descolgados. */
     public static final int N_MIN_DESCOLGADOS = 4;
 
@@ -75,11 +79,11 @@ public final class Veredicto {
             dev[i] = Math.abs(x[i] - med);
         }
         double mad = Estadistica.mediana(dev);
-        double sigma = Math.max(1.4826 * mad, SIGMA_MIN);
+        double umbral = Math.max(K_MAD * 1.4826 * mad, UMBRAL_MIN);
         for (int i = 0; i < x.length; i++) {
-            if (dev[i] > K_MAD * sigma) {
-                m[i] = String.format(Locale.US, "descolgado: %.0f a %.0f cuentas de la mediana %.0f (limite %.0f = 5 s robusta)",
-                        x[i], dev[i], med, K_MAD * sigma);
+            if (dev[i] > umbral) {
+                m[i] = String.format(Locale.US, "descolgado: %.0f a %.0f cuentas de la mediana %.0f (límite %.0f = máx(5 s robusta; %.0f))",
+                        x[i], dev[i], med, umbral, UMBRAL_MIN);
             }
         }
         return m;

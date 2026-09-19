@@ -304,4 +304,74 @@ public class CampanaTest {
         assertEquals(0, r2.otroEquipo);
         assertTrue(r2.series > 0);
     }
+
+    @Test
+    public void descolgadoC46P2RealNoSaltaP7Si() {
+        // C-46: serie real de P2 (09:17:21-09:17:34). Con 5 MAD sin suelo se marcaba un disparo bueno.
+        double[] p2 = {1999, 2017, 2004, 2014, 2022, 2016, 2014, 2017, 2016};
+        for (String m : Veredicto.descolgados(p2)) {
+            assertNull(m);
+        }
+        // P7 (09:19:26-09:19:39): el 3031 esta ~200 por debajo y sigue saltando.
+        String[] m7 = Veredicto.descolgados(new double[]{3209, 3225, 3225, 3229, 3237, 3236, 3231, 3233, 3031});
+        assertNotNull(m7[8]);
+        assertEquals(50.0, Veredicto.UMBRAL_MIN, 0);
+    }
+
+    /** Diario escrito por la 3.6.5 (mismo formato que Csv.unir de esa version). */
+    private static final String DIARIO_365 =
+            "# inicio_ms,1758290000000\n"
+            + Campana.CABECERA_DIARIO + "\n"
+            + "SERIE,S001,\"2026-09-19T10:00:00-0500\",SLV-002,\"00:21:13:05:19:3B\",\"V3.6 2026-09-18 (3.6.0, sin límites de #S) DEF mascara 0000\",P2,0,e\n"
+            + "DISPARO,S001,1,\"2026-09-19T10:00:02-0500\",\"::1999\",1999\n"
+            + "DISPARO,S001,2,\"2026-09-19T10:00:03-0500\",\"::2017\",2017\n"
+            + "DISPARO,S001,3,\"2026-09-19T10:00:05-0500\",\"::2004\",2004\n"
+            + "DESCARTE,S001,3,descolgado (regla 3.6.5)\n"
+            + "VEREDICTO,S001,OK,1,\n"
+            + "SERIE,S002,\"2026-09-19T10:01:00-0500\",SLV-002,\"00:21:13:05:19:3B\",V3.6,P27,90,e\n"
+            + "DISPARO,S002,1,\"2026-09-19T10:01:02-0500\",\"::2100\",2100\n";
+
+    @Test
+    public void laCampanaDeLa365SobreviveALaActualizacion() throws Exception {
+        List<Patron> cat = catalogo();
+        StringWriter nuevo = new StringWriter();
+        nuevo.write(DIARIO_365);
+        Campana c = new Campana(cat, "SLV-002", "00:21:13:05:19:3B");
+        assertEquals(0, c.leerDiario(new StringReader(DIARIO_365)));
+        assertEquals(2, c.series().size());
+        assertEquals(Campana.Estado.MEDIDO, c.estado("P2"));
+        assertTrue(c.serie("S001").disparos.get(2).descartado);   // lo descartado queda descartado
+        assertEquals(Campana.Estado.REPETIR, c.estado("P27"));    // serie sin veredicto: se cortó
+        assertFalse(c.cerrada());
+        // Se sigue en el mismo diario con la 3.6.6.
+        c.escribirEn(nuevo);
+        Campana.Serie s = c.nuevaSerie("f", "SLV-002", "00:21:13:05:19:3B", "V3.6", "P28", 0, 'e');
+        assertEquals("S003", s.id);
+        c.agregarDisparo(s, "f", "::2150", 2150);
+        c.cerrar(s, "OK", true, "");
+        c.anotarExportacion("f", "campana_SLV-002_x.zip", "abc", "def");
+        c.cerrarCampana("2026-09-19T12:00:00-0500");
+        Campana r = new Campana(cat, "SLV-002", "00:21:13:05:19:3B");
+        assertEquals(0, r.leerDiario(new StringReader(nuevo.toString())));
+        assertTrue(r.cerrada());
+        assertEquals(3, r.series().size());
+        assertTrue(r.resumen(), r.resumen().contains("CERRADA"));
+        assertTrue(r.resumen(), r.resumen().contains("md5 abc"));
+        try {
+            r.nuevaSerie("f", "SLV-002", "00:21:13:05:19:3B", "V3.6", "P1", 0, 'e');
+            org.junit.Assert.fail("una campaña cerrada admitió una serie");
+        } catch (IllegalStateException e) {
+            assertTrue(e.getMessage().contains("cerrada"));
+        }
+    }
+
+    @Test
+    public void desvioPorPosicionEnElResumen() throws Exception {
+        Campana c = new Campana(catalogo());
+        medir(c, "P2", 1999, 2017, 2004, 2014, 2022, 2016, 2014, 2017, 2016);   // mediana 2016
+        String t = c.resumen();
+        assertTrue(t, t.contains("Desvío por posición"));
+        assertTrue(t, t.contains("1:-17 2:+1 3:-12"));
+        assertTrue(t, t.contains("Media por posición"));
+    }
 }
