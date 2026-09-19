@@ -9,7 +9,6 @@
   commit `f75ff88`. IPE dio *Program Succeeded*. El "Verify failed" posterior es normal, por la
   protección de código. **El firmware original se perdió** (autorizado).
 - **G4 CERRADA el 19-sep-2026:** V3.6 detectada, coeficientes de fábrica, `#E` 60/60 exacto, 13 comandos y repetibilidad de 4 cuentas (acta en `06_Calibracion/SLV-002/`).
-  diferencias frente a 2020, y el descarte del `#` suelto.
 - App **RTV V3.6 3.6.2** (md5 `e5c6ffad…`) en `03_App_Movil\RTV-V3.6.apk`. No usar la 3.6.0.
 - **Línea base "como llegó":** barrido de 255 bytes en oscuro y 8 blancos por pantalla
   (`06_Calibracion`, `ROADMAP.md`). **P4 por Bluetooth no se llegó a medir.**
