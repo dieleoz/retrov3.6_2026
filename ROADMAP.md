@@ -5,7 +5,9 @@ Lo que no está aquí no está en ejecución. **SLV-002 está calibrado sólo en
 acta aceptada a las 12:23:26 y vencimiento el 2027-09-19. **El banco de patrones está a medias** (15:10:
 tipo I completo, blanco 5/16, amarillo 1/24) y los códigos 8, b y 5 siguen con la curva de fábrica.
 **No hay APK entregable hoy:** la 3.6.15 no se entregó y la 3.6.16 está en desarrollo.
-Procedimiento paso a paso: [`RUNBOOK.md`](RUNBOOK.md).
+Procedimiento paso a paso: [`RUNBOOK.md`](RUNBOOK.md). Reglas permanentes del repositorio:
+[`CLAUDE.md`](CLAUDE.md), escrito el 19-sep-2026 por la noche. **Hasta entonces no existía**, y toda
+sesión abierta aquí trabajaba con las reglas globales de la línea V5, que es otro equipo y otra línea.
 
 ## Objetivo
 
