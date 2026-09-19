@@ -166,8 +166,18 @@ public abstract class Base extends AppCompatActivity implements EnlaceSerie.Oyen
     protected int preguntar(String titulo, String mensaje, String positivo, String negativo, String neutro)
             throws InterruptedException {
         final int[] r = {-1};
+        if (isFinishing() || isDestroyed()) {
+            return -1;   // QA-3612-11: sin pantalla no se espera una respuesta que no llegara
+        }
         final java.util.concurrent.CountDownLatch l = new java.util.concurrent.CountDownLatch(1);
+        synchronized (esperas) {
+            esperas.add(l);
+        }
         enUi(() -> {
+            if (isFinishing() || isDestroyed()) {
+                l.countDown();
+                return;
+            }
             AlertDialog.Builder b = new AlertDialog.Builder(this).setTitle(titulo).setMessage(mensaje).setCancelable(false)
                     .setPositiveButton(positivo, (d, w) -> { r[0] = 0; l.countDown(); });
             if (negativo != null) {
@@ -179,7 +189,24 @@ public abstract class Base extends AppCompatActivity implements EnlaceSerie.Oyen
             b.show();
         });
         l.await();
+        synchronized (esperas) {
+            esperas.remove(l);
+        }
         return r[0];
+    }
+
+    private final java.util.List<java.util.concurrent.CountDownLatch> esperas = new java.util.ArrayList<>();
+
+    @Override
+    protected void onDestroy() {
+        // QA-3612-11: si la pantalla muere con un dialogo abierto, el hilo de trabajo recibe -1 y para.
+        synchronized (esperas) {
+            for (java.util.concurrent.CountDownLatch l : esperas) {
+                l.countDown();
+            }
+            esperas.clear();
+        }
+        super.onDestroy();
     }
 
     protected void aviso(String t) {

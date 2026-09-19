@@ -4,7 +4,7 @@
 V3.6 no se puede probar: el firmware V3.6 no existe todavía en ningún equipo. Lo que sí debe funcionar
 es la medida contra un V3 2020 (SLV-002), y eso tampoco se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 3612`, `versionName 3.6.12` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.12 → 3612) (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 3613`, `versionName 3.6.13` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.13 → 3613) (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -29,7 +29,8 @@ no se versionan.
 
 ### Tests JVM
 
-`app/src/test/`: `CalculoTest`, `ReceptorTest`, `AsistenteTest`, `FabricaTest` (100 tests).
+`app/src/test/`: 13 clases, 146 tests en la 3.6.13, entre ellas `FlujoCalibracionTest` (el flujo "Calibrar este equipo" de
+extremo a extremo contra `EquipoSimulado`).
 `./gradlew testDebugUnitTest` **no arranca en esta máquina**: el ejecutor de Gradle 6.5 no encuentra su
 clase `GradleWorkerMain` porque la carpeta de usuario lleva `ñ` (`C:\Users\Diego.Zuñiga`). Se compilan
 con Gradle y se ejecutan con JUnit a mano:
@@ -39,7 +40,8 @@ con Gradle y se ejecutan con JUnit a mano:
 mkdir -p libtest   # copiar aquí (fuera de build/: clean lo borra) junit-4.13.2.jar y hamcrest-core-1.3.jar de ~/.gradle/caches
 cd app && "$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;build/intermediates/javac/debugUnitTest/classes;../libtest/junit-4.13.2.jar;../libtest/hamcrest-core-1.3.jar" \
   org.junit.runner.JUnitCore com.dpi.retrov36.CalculoTest com.dpi.retrov36.ReceptorTest \
-  com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest com.dpi.retrov36.CoherenciaRealTest com.dpi.retrov36.CampanaTest com.dpi.retrov36.Version367Test com.dpi.retrov36.Version368Test com.dpi.retrov36.Version369Test com.dpi.retrov36.Version3610Test
+  com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest com.dpi.retrov36.CoherenciaRealTest com.dpi.retrov36.CampanaTest com.dpi.retrov36.Version367Test com.dpi.retrov36.Version368Test com.dpi.retrov36.Version369Test com.dpi.retrov36.Version3610Test \
+  com.dpi.retrov36.Version3611Test com.dpi.retrov36.Version3612Test com.dpi.retrov36.FlujoCalibracionTest
 ```
 
 `FabricaTest` compara las 12 ecuaciones de la app con el **texto** de
@@ -112,6 +114,60 @@ Reglas que salen de ahí, en el código:
   envía sólo `1`-`8`, `a`-`d` y `9`.
 - Tras 3 peticiones seguidas sin un solo byte, la app aconseja apagar y encender el equipo y lo anota
   en el registro.
+
+## Cambios de la 3.6.13 (arreglo de P11 y de QA-App-3.6.12)
+
+**Nada de esto se ha probado contra un equipo.** El flujo sí ha corrido entero, por primera vez, contra un
+**equipo simulado** en la JVM (`EquipoSimulado`, T-S00 en su parte de emulación: no reproduce todavía un
+registro real). T-C41 y T-C43 en SLV-002 siguen PENDIENTES.
+
+- **El flujo sale de la pantalla:** `FlujoCalibracion` (Java puro) tiene toda la lógica; `CalibrarActivity`
+  sólo pinta y llama a sus acciones (Calibrar, Leer batería, Persistencia, Aceptar, Rechazar). El equipo se
+  habla por `Canal` (en la app, `Cliente`; en las pruebas, el simulado). `OpsEquipo` pasa a `Ops`, pura.
+- **QA-3612-01:** "Aceptar" se habilita con la persistencia hecha; la verificación final (`#V#` en `CAL` con
+  máscara, `#G` de lo certificado y de los heredados) va dentro de la acción.
+- **QA-3612-02:** con pruebas NO APTO no se calibra.
+- **P11-M1 / QA-3612-03:** una restauración cuya relectura `#G` no coincide no resuelve el código: el acta
+  dice "RESTAURACIÓN NO VERIFICADA", no se acepta, y "Continuar" la reintenta. Un `#S` fallido cuya
+  restauración no se verifica deja el corte sin resolver.
+- **P11-M2:** cada escritura, restauración o `#S` fallido anula la persistencia y la verificación hechas.
+- **P11-M3 / QA-3612-10:** oscuro por código ("oscuro 8", "oscuro b"), sin estáticos compartidos entre
+  tarjetas; sin OSCURO de la sesión no se escribe; ya no se cae al OSCURO de toda la campaña. El corte durante
+  `#S` conserva método, oscuro y conformidad.
+- **P11-M4 / QA-3612-04 / QA-3612-08:** no se reescribe un código conforme, restaurado o con una re-medida
+  válida pendiente; las casillas se desmarcan tras el flujo. **Avanzado ya no escribe curvas** (ni el 1 ni el
+  2): se escriben sólo en "Calibrar este equipo". Su `#F` invalida el acta abierta aunque se haya reconectado.
+- **P11-M5 / QA-3612-07:** el b (PA-24) y el 5 (PA-14) sólo se escriben con la decisión de Diego registrada en
+  `assets/decisiones.csv` (id, SI, fecha, firmante Diego, documento, palabras; la firma es el commit), nunca con
+  una casilla. El APK lleva las dos, tomadas el 19-sep (`06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md`,
+  8af526d y 37f827d), y el acta las cita. Sin la línea, el código sólo se verifica y el acta lo dice ("código 5
+  de fábrica, fuera de tolerancia, sin decisión").
+- **El b con PA-24:** la dispensa cubre el ajuste; su re-medida se juzga con RF-CAL-18 frente a la curva escrita
+  más la reproducción de la campaña, y la desviación frente al certificado queda en el acta, como
+  incumplimiento DISPENSADO si pasa de ±10 % (QA-3612-06: el umbral no se toca).
+- **El 5 con PA-14:** recta anclada con la cobertura de RF-APP-42 (el ancla cuenta como un nivel; también para el
+  8 y el b). Como la cola no tiene ningún AJUSTE del 5, el ajuste usa todos sus patrones medidos en el banco,
+  VERIFICACIÓN incluidos. **Decisión de la app que conviene revisar.**
+- **P11-M6 / T-C41:** al empezar se leen `#V#`, `#G` y `#E` de los heredados (1 y 2 de SLV-002) y se cotejan con
+  el acta de las 12:23:26; si no coinciden, no se calibra. Se vuelven a cotejar en la persistencia y antes de
+  `#SC`: un `#F,1`/`#F,2` ya no deja grabar una fecha nueva.
+- **QA-3612-05:** botón "Leer batería" en la pantalla: tras cambiarla, la lectura nueva levanta el bloqueo. Se
+  lee también antes de `#SC`; el aviso con n < 19 sale en pantalla; el acta guarda la batería al inicio y la
+  mínima.
+- QA-3612-09 (repetir un `#S` que no entró), -11 (diálogo sin pantalla: el hilo recibe "parar"), -13 (`#L`
+  antes de cada `#S`), -14 (PIN una vez por conexión; nombre del superadministrador recordado), -15 (tras la
+  persistencia no hace falta repetir las pruebas: la reconexión conserva la versión), -17 ("Rechazar" ofrece
+  restaurar lo escrito, verificado). T-S09: una colocación cortada queda como INTERRUMPIDA.
+- **Pruebas:** `FlujoCalibracionTest` (26) recorre, sólo con acciones del operador: camino feliz del 8 hasta
+  `#SC`; el b sin PA-24; dos NO CONFORME y restauración; restauración no verificada y reintento; corte durante
+  `#S` (entró y no entró); app matada en la re-medida; `#F` desde Avanzado con el acta abierta; heredado tocado
+  antes de aceptar; `#SC` que falla; batería a 0 y cambio; reescribir un conforme; persistencia anulada por
+  otro código; rechazo con restauración; el b con PA-24 y P49 a −10,7 %; el 5 con PA-14; T-S03, S06, S09, S11,
+  S18, S19 y S23. Sin cubrir en la JVM: T-S00
+  (reproducir un registro real), S01-S02, S04-S05, S13, S15, S17, S21, S22.
+- Abierto: RF-CAL-43 incompleto (SHA-256 del ZIP, A5 y deriva por sesión, PIN de fábrica); s_rep de la propia
+  serie con K ≥ 3 (C-P11-7).
+- Entrega: `RTV-V3.6.13.apk` y `RTV-V3.6.13-3613.apk`.
 
 ## Cambios de la 3.6.12 (corte B: calibrar con un botón; REVISION-Arquitectura-P10-V3.6.md)
 

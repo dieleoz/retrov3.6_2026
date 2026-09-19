@@ -414,6 +414,18 @@ public final class Asistente {
         }
         if (catalogo != null) {
             Cobertura cc = cobertura(k, catalogo);
+            if (anclada) {
+                // RF-APP-42 (SPEC-V3.6.md:865): el ancla cuenta como un nivel mas (certificado 0 en la x del
+                // OSCURO). Es la "regla de cobertura relajada" de PA-14 para el 5 (83-102 pasa a 0-102).
+                List<Double> v = new ArrayList<>();
+                for (Patron q : catalogo) {
+                    if (deCodigo(q, k)) {
+                        v.add(q.valor);
+                    }
+                }
+                v.add(R_ANCLA);
+                cc = coberturaValores(k, v);
+            }
             inf.append("Catálogo: ").append(cc.texto()).append('\n');
             if (cc.gradoMaximo < grado) {
                 bloqueos.add(cc.gradoMaximo == 0 ? "no ajustable con el catálogo: " + cc.motivo
@@ -424,6 +436,9 @@ public final class Asistente {
         List<Double> vals = new ArrayList<>();
         for (Punto q : p) {
             vals.add(q.patron.valor);
+        }
+        if (anclada && !p.isEmpty()) {
+            vals.add(R_ANCLA);   // RF-APP-42: el ancla es un nivel medido (el OSCURO de la sesion)
         }
         Cobertura cm = coberturaValores(k, vals);
         if (cm.gradoMaximo < grado) {

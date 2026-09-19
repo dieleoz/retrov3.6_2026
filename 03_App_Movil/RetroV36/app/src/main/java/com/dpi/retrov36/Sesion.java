@@ -98,6 +98,8 @@ public final class Sesion {
     /** El operador acepto medir con NO APTO en esta conexion. */
     public volatile boolean medirNoAptoAceptado;
     public volatile boolean adminDesbloqueado;
+    /** PIN del equipo, una vez por conexion (QA-3612-14). Solo en memoria. */
+    public volatile String pinAdmin;
 
     private final List<Medida> medidas = Collections.synchronizedList(new ArrayList<Medida>());
     private File csvMedidas;
@@ -133,6 +135,7 @@ public final class Sesion {
         overrideAdmin = false;
         medirNoAptoAceptado = false;
         adminDesbloqueado = false;
+        pinAdmin = null;
         medidas.clear();
         csvMedidas = null;
         csvBotones = null;

@@ -116,7 +116,10 @@ public class AdminActivity extends Base {
         rgGrado.check(g1.getId());
         panel.addView(rgGrado);
         Button ajustar = boton("Ajustar", v -> ajustar());
-        btnEscribir = boton("Escribir en el equipo...", v -> confirmarEscritura());
+        // 3.6.13 (QA-3612-08, P11-M4): Avanzado ya no escribe curvas. Se escriben solo en "Calibrar este
+        // equipo", con la tabla RF-CAL-37, el oscuro de la sesion, D-20 y el acta.
+        btnEscribir = boton("Escribir: sólo en Calibrar este equipo",
+                v -> startActivity(new android.content.Intent(this, CalibrarActivity.class)));
         fila(ajustar, btnEscribir);
         txtAjuste = texto("");
         txtAjuste.setTypeface(Typeface.MONOSPACE);
@@ -216,7 +219,7 @@ public class AdminActivity extends Base {
                     : (s.apto ? "" : " Equipo NO APTO: entrar exige confirmación.")));
             txtAcceso.setBackgroundColor(GRIS);
         }
-        btnEscribir.setEnabled(ab && !ocupado && propuesta != null && propuesta.escribible());
+        btnEscribir.setEnabled(!ocupado);
         boolean v362 = s.es362();
         txtCal.setText(s.datosCalibracion() + (v362 ? "" : "\nGrabar serie y restaurar temperatura exigen la 3.6.2."));
         btnSerie.setEnabled(ab && !ocupado && v362);
@@ -530,6 +533,10 @@ public class AdminActivity extends Base {
     }
 
     private void confirmarEscritura() {
+        if (propuesta != null || propuesta == null) {
+            alerta("Escribir", "Desde la 3.6.13 las curvas se escriben sólo en \"Calibrar este equipo\" (tabla RF-CAL-37).");
+            return;
+        }
         final Asistente.Propuesta p = propuesta;
         if (p == null || !p.escribible()) {
             return;
@@ -717,7 +724,7 @@ public class AdminActivity extends Base {
                     String osc = String.format(Locale.US, "Oscuro (x = %.0f): R %.1f (fábrica %.1f), valor que acepta Diego (P9-B13)",
                             Asistente.X_OSCURO, e.evaluar(Asistente.X_OSCURO), fab.evaluar(Asistente.X_OSCURO));
                     acta.escrito(k, tramaG, e, osc, metodo, conformidad);
-                    acta.dato("#V# posterior", OpsEquipo.leerV());
+
                     salida = "#S OK y " + estado + " (" + Ecuacion.ULP_S + " ulp); #E en 5 puntos coincide con la curva "
                             + "enviada (±1). Ahora: re-medida de verificación del código " + k + " (RF-CAL-18). "
                             + "No se escribe otro código antes (P9-B8). La fecha de calibración se graba al aceptar el acta.";
@@ -987,17 +994,24 @@ public class AdminActivity extends Base {
                         + " volverán a las ecuaciones de fábrica de 2020. Antes se guarda una copia de los actuales.\n\nTrama: " + trama)
                 .setPositiveButton("Restaurar", (d, w) -> op("Restaurar " + trama, true, () -> {
                     leerTodo("copia antes de " + trama);
-                    Cliente.Respuesta r = Cliente.instancia().pedir(trama, Tramas.Tipo.ADMIN, 5000);
-                    String res = resultado(r);
-                    if ("OK".equals(res)) {
-                        leerTodo("despues de " + trama);
-                    }
-                    // P10 hallazgo 9: un #F tras la conformidad deja el acta sin valor (lo certificado ya no esta).
-                    Acta acta = Sesion.get().acta;
-                    if (acta != null && !acta.cerrada() && (todos || acta.codigo(k) != null)) {
-                        acta.invalidar(trama + " -> " + res + " después de abrir el acta");
-                        res += ". El acta en curso queda INVALIDADA: recházela";
-                    }
+                    // P10-C5 y P11 §3 caso 3: con un acta abierta (en disco, aunque se haya reconectado) cualquier
+                    // #F la invalida. Mismo codigo que prueban las pruebas JVM.
+                    final AdminActivity yo = this;
+                    String res = FlujoCalibracion.fabricaDesdeAvanzado(Cliente.instancia(), new FlujoCalibracion.AlmacenActa() {
+                        @Override
+                        public Acta enCurso() throws IOException {
+                            return Campanas.actaEnCurso(yo);
+                        }
+
+                        @Override
+                        public void adjuntar(Acta a) {
+                        }
+
+                        @Override
+                        public void cerrar(Acta a) {
+                        }
+                    }, null, todos, k);
+                    leerTodo("despues de " + trama);
                     return res;
                 }))
                 .setNegativeButton("Cancelar", null).show();

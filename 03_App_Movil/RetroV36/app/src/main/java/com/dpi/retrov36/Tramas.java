@@ -202,6 +202,12 @@ public final class Tramas {
         return String.format(Locale.US, "%.8E", v);
     }
 
+    /** "#G,k,c3,c2,c1,c0#" con %.8E (lo que el acta cita como curva certificada). */
+    public static String tramaG(char k, Ecuacion e) {
+        return "#G," + k + "," + coeficiente(e.c3) + "," + coeficiente(e.c2) + "," + coeficiente(e.c1) + ","
+                + coeficiente(e.c0) + "#";
+    }
+
     /** "#G,k,c3,c2,c1,c0#" -> ecuacion; null si no cuadra o k no coincide. */
     public static Ecuacion parsearG(String trama, char k) {
         String[] c = campos(trama);

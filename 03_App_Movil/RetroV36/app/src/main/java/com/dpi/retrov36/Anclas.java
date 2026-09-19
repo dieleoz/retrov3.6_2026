@@ -74,6 +74,9 @@ public final class Anclas {
             if (osc.size() == 1) {
                 return new Valor(Double.NaN, "falta el OSCURO del final de la sesión " + ses + ": no hay ancla");
             }
+            // P11 §5.3 (SPEC-Calibracion-V3.6.md:750-751): con cola, el ancla es la de la sesion; no se cae
+            // al OSCURO de toda la campana.
+            return new Valor(Double.NaN, "no calculable: falta el OSCURO de la sesión " + ses + " del banco");
         }
         Campana.Serie so = c.serieOscuro();
         if (so == null) {

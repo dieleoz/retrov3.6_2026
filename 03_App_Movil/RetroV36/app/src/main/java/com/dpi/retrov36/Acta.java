@@ -38,6 +38,7 @@ public final class Acta {
     public String tabla = "";
     private final List<Codigo> codigos = new ArrayList<>();
     private final List<String> anuladas = new ArrayList<>();
+    private final List<String> notas = new ArrayList<>();
     /** null: pendiente; si no, ACEPTADA o RECHAZADA con fecha. */
     private String cierre;
     private String fechaGrabada;
@@ -50,11 +51,16 @@ public final class Acta {
     /** Campos de RF-CAL-43 (cola, s_rep, bateria, #V# posterior, oscuro...). */
     private final java.util.Map<String, String> datos = new java.util.LinkedHashMap<>();
     /** Campos obligatorios para aceptar en el flujo "Calibrar este equipo" (RF-CAL-43). */
-    public static final String[] DATOS_OBLIGATORIOS = {"md5 de la cola", "s_rep", "batería", "#V# posterior"};
+    public static final String[] DATOS_OBLIGATORIOS = {"md5 de la cola", "s_rep", "batería", "#V# posterior",
+            "heredados (T-C41)", "código 5"};
     /** Codigo con un #S enviado y sin relectura (corte durante #S): 0 si ninguno. */
     private char escribiendo;
     private Ecuacion escribiendoAnterior;
     private Ecuacion escribiendoEnviada;
+    /** P11-M3: metodo, oscuro y conformidad del #S en curso, para no perderlos si se corta. */
+    private String escribiendoMetodo = "";
+    private String escribiendoOscuro = "";
+    private String escribiendoConformidad = "";
     private Writer diario;
 
     public Acta(String equipo, String mac, String firmware, int colocaciones, int disparos, int asentamiento,
@@ -121,6 +127,8 @@ public final class Acta {
         public Remedida remedida;
         /** Curva que habia antes del #S (para restaurar); null si no se conoce. */
         public Ecuacion anterior;
+        /** P11-M1: ultima restauracion intentada que NO se pudo verificar (null si ninguna). */
+        public String restauracionFallida;
 
         Codigo(char k, String tramaG, Ecuacion leida, String oscuro, String metodo, String conformidad) {
             this.k = k;
@@ -158,6 +166,11 @@ public final class Acta {
         /** Tras una re-medida valida NO CONFORME queda una repeticion; tras dos, se restaura. */
         public boolean puedeRepetir() {
             return !conforme() && restaurado == null && validos() < 2;
+        }
+
+        /** Dos re-medidas validas no conformes y todavia sin restaurar (verificado). */
+        public boolean debeRestaurarse() {
+            return !conforme() && restaurado == null && validos() >= 2;
         }
     }
 
@@ -227,6 +240,9 @@ public final class Acta {
                 escribiendo = c.get(1).charAt(0);
                 escribiendoAnterior = new Ecuacion(d(c, 2), d(c, 3), d(c, 4), d(c, 5));
                 escribiendoEnviada = new Ecuacion(d(c, 6), d(c, 7), d(c, 8), d(c, 9));
+                escribiendoMetodo = c.size() > 10 ? c.get(10) : "";
+                escribiendoOscuro = c.size() > 11 ? c.get(11) : "";
+                escribiendoConformidad = c.size() > 12 ? c.get(12) : "";
                 break;
             case "ESCRITO": {
                 char k = c.get(1).charAt(0);
@@ -236,11 +252,22 @@ public final class Acta {
                 nuevo.anterior = escribiendo == k ? escribiendoAnterior : null;
                 codigos.add(nuevo);
                 escribiendo = 0;
+                anularVerificaciones();
                 break;
             }
             case "SIN_ESCRIBIR":
                 escribiendo = 0;
+                anularVerificaciones();
+                notas.add("Código " + c.get(1) + " sin escribir: " + (c.size() > 2 ? c.get(2) : ""));
                 break;
+            case "RESTAURA_FALLA": {
+                Codigo cod = codigo(c.get(1).charAt(0));
+                if (cod != null) {
+                    cod.restauracionFallida = c.get(2);
+                }
+                anularVerificaciones();
+                break;
+            }
             case "INTENTO": {
                 Codigo cod = codigo(c.get(1).charAt(0));
                 if (cod != null) {
@@ -252,7 +279,9 @@ public final class Acta {
                 Codigo cod = codigo(c.get(1).charAt(0));
                 if (cod != null) {
                     cod.restaurado = c.get(2);
+                    cod.restauracionFallida = null;
                 }
+                anularVerificaciones();
                 break;
             }
             case "PERSISTENCIA":
@@ -332,6 +361,22 @@ public final class Acta {
         if (escribiendo != 0) {
             return "hay un #S del código " + escribiendo + " sin resolver (corte durante #S): resuélvalo antes";
         }
+        Codigo mismo = codigo(k);
+        if (mismo != null) {
+            // P11-M4, QA-3612-04: ni reiniciar D-20 ni reescribir lo ya conforme sin una decision expresa.
+            if (mismo.conforme()) {
+                return "el código " + k + " ya está CONFORME en esta acta: para reescribirlo, rechace el acta y abra otra";
+            }
+            if (mismo.restauracionFallida != null) {
+                return "la restauración del código " + k + " no se ha verificado: hay que restaurarlo antes";
+            }
+            if (mismo.restaurado != null) {
+                return "el código " + k + " se restauró tras dos re-medidas no conformes: no se reescribe en esta acta";
+            }
+            if (mismo.validos() > 0) {
+                return "el código " + k + " tiene una re-medida válida NO CONFORME: se repite la re-medida, no la escritura (D-20)";
+            }
+        }
         for (Codigo c : codigos) {
             if (c.k != k && !c.resuelto()) {
                 return "falta la re-medida de verificación conforme del código " + c.k + " (P9-B8: un código cada vez)";
@@ -360,16 +405,49 @@ public final class Acta {
 
     /** Antes de enviar #S: queda anotado para resolver un corte (RF-APP-37). */
     public void escribiendo(char k, Ecuacion anterior, Ecuacion enviada) {
+        escribiendo(k, anterior, enviada, "", "", "");
+    }
+
+    /** P11-M3: con el metodo, el oscuro y la conformidad, que un corte no puede perder. */
+    public void escribiendo(char k, Ecuacion anterior, Ecuacion enviada, String metodo, String oscuro,
+                            String conformidad) {
         escribiendo = k;
         escribiendoAnterior = anterior;
         escribiendoEnviada = enviada;
+        escribiendoMetodo = metodo == null ? "" : metodo;
+        escribiendoOscuro = oscuro == null ? "" : oscuro;
+        escribiendoConformidad = conformidad == null ? "" : conformidad;
         eventoSinFallo("ESCRIBIENDO", String.valueOf(k), anterior.c3, anterior.c2, anterior.c1, anterior.c0,
-                enviada.c3, enviada.c2, enviada.c1, enviada.c0);
+                enviada.c3, enviada.c2, enviada.c1, enviada.c0, escribiendoMetodo, escribiendoOscuro,
+                escribiendoConformidad);
+    }
+
+    public String escribiendoMetodo() {
+        return escribiendoMetodo;
+    }
+
+    public String escribiendoOscuro() {
+        return escribiendoOscuro;
+    }
+
+    public String escribiendoConformidad() {
+        return escribiendoConformidad;
+    }
+
+    /** P11-M2: cualquier cambio en el equipo deja sin valor la persistencia y la verificacion hechas. */
+    private void anularVerificaciones() {
+        persistenciaOk = false;
+        verificacionFinalOk = false;
+        if (persistencia != null) {
+            persistencia = persistencia + " [anulada: hubo cambios después]";
+        }
     }
 
     /** El #S no entro (o se restauro): el codigo queda como estaba. */
     public void sinEscribir(char k, String texto) {
         escribiendo = 0;
+        anularVerificaciones();
+        notas.add("Código " + k + " sin escribir: " + texto);
         eventoSinFallo("SIN_ESCRIBIR", String.valueOf(k), texto);
     }
 
@@ -394,6 +472,7 @@ public final class Acta {
         nuevo.anterior = escribiendo == k ? escribiendoAnterior : null;
         codigos.add(nuevo);
         escribiendo = 0;
+        anularVerificaciones();
         eventoSinFallo("ESCRITO", String.valueOf(k), tramaG, metodo == null ? "" : metodo, oscuro == null ? "" : oscuro,
                 conformidad == null ? "" : conformidad);
     }
@@ -430,7 +509,20 @@ public final class Acta {
             throw new IllegalArgumentException("el código " + k + " no se ha escrito en esta acta");
         }
         c.restaurado = texto;
+        c.restauracionFallida = null;
+        anularVerificaciones();
         eventoSinFallo("RESTAURADO", String.valueOf(k), texto);
+    }
+
+    /** P11-M1: restauracion cuya relectura no coincide: el codigo NO queda resuelto. */
+    public void restauracionFallida(char k, String texto) {
+        Codigo c = codigo(k);
+        if (c == null) {
+            throw new IllegalArgumentException("el código " + k + " no se ha escrito en esta acta");
+        }
+        c.restauracionFallida = texto;
+        anularVerificaciones();
+        eventoSinFallo("RESTAURA_FALLA", String.valueOf(k), texto);
     }
 
     /** P10-C5: un #F (o cualquier cambio fuera del flujo) con el acta abierta la invalida. */
@@ -510,6 +602,18 @@ public final class Acta {
      * 3.6.8, flujo de Avanzado sin persistencia) no se piden persistencia ni verificacion final.
      */
     public String motivoNoAceptable(boolean exigirVerificaciones) {
+        return motivoNoAceptable(exigirVerificaciones, exigirVerificaciones);
+    }
+
+    /**
+     * QA-3612-01: el boton "Aceptar" se habilita con todo lo demas cumplido; la verificacion final
+     * (#V# y #G frescos) se hace DENTRO de la accion de aceptar.
+     */
+    public String motivoNoAceptableSalvoVerificacionFinal() {
+        return motivoNoAceptable(true, false);
+    }
+
+    public String motivoNoAceptable(boolean exigirVerificaciones, boolean exigirFinal) {
         if (cerrada()) {
             return "el acta ya está cerrada (" + cierre + ")";
         }
@@ -524,6 +628,10 @@ public final class Acta {
         }
         boolean alguno = false;
         for (Codigo c : codigos) {
+            if (c.restauracionFallida != null) {
+                return "RESTAURACIÓN NO VERIFICADA del código " + c.k + ": " + c.restauracionFallida
+                        + ". El equipo puede tener una curva desconocida: no se acepta";
+            }
             if (!c.resuelto()) {
                 return c.intentos.isEmpty() ? "falta la re-medida de verificación del código " + c.k
                         : "la re-medida del código " + c.k + " no es conforme (queda " + (c.puedeRepetir() ? "una repetición" : "restaurar") + ")";
@@ -540,14 +648,14 @@ public final class Acta {
                 }
             }
             for (Codigo c : certificados()) {
-                if (c.metodo.contains("anclada") && !datos.containsKey("oscuro")) {
-                    return "falta oscuro";
+                if (c.metodo.contains("anclada") && !datos.containsKey("oscuro " + c.k)) {
+                    return "falta oscuro " + c.k;
                 }
             }
             if (!persistenciaOk) {
                 return "falta la persistencia (apagar, encender y releer #V#, #G y #E)";
             }
-            if (!verificacionFinalOk) {
+            if (exigirFinal && !verificacionFinalOk) {
                 return "falta la verificación final (#V# y #G frescos iguales a lo certificado)";
             }
         }
@@ -628,9 +736,18 @@ public final class Acta {
             if (c.restaurado != null) {
                 sb.append("  RESTAURADO: ").append(c.restaurado).append('\n');
             }
+            if (c.restauracionFallida != null) {
+                sb.append("  RESTAURACIÓN NO VERIFICADA: ").append(c.restauracionFallida).append('\n');
+            }
         }
         for (String a : anuladas) {
             sb.append(a).append('\n');
+        }
+        for (String a : notas) {
+            sb.append(a).append('\n');
+        }
+        if (escribiendo != 0) {
+            sb.append("#S del código ").append(escribiendo).append(" SIN RESOLVER (corte durante #S)\n");
         }
         if (persistencia != null) {
             sb.append("Persistencia: ").append(persistenciaOk ? "OK" : "FALLA").append(" - ").append(persistencia).append('\n');

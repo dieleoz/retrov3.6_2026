@@ -73,6 +73,47 @@ public final class Remedida3611 {
         return new Resultado(ok2 && ok3 ? "CONFORME" : "NO_CONFORME", xRem, rMedida, t);
     }
 
+    /**
+     * Codigo con dispensa de RF-CAL-14 decidida por Diego (el b, PA-24): la re-medida no se juzga frente al
+     * certificado (la dispensa cubre esa desviacion) sino con RF-CAL-18 frente a la curva ESCRITA: R medida
+     * frente a la R que da la curva #G en las x medidas, tolerancia max(2 ; 2 s_R) con s_R entre colocaciones.
+     * Se mantiene la comprobacion 2 (reproduccion de la campana). La desviacion frente al certificado se
+     * anota siempre, y si pasa de max(10 % ; 2) se dice como incumplimiento DISPENSADO.
+     */
+    public static Resultado evaluarConDispensa(String patron, double cert, List<double[]> xPorCol, List<double[]> rPorCol,
+                                               double xBanco, int kBanco, double sRepRel, String origenSrep,
+                                               Ecuacion curva, String dispensa) {
+        double xRem = mediaDeMedias(xPorCol);
+        double rMed = mediaDeMedias(rPorCol);
+        List<double[]> pred = new ArrayList<>();
+        for (double[] xs : xPorCol) {
+            double[] p = new double[xs.length];
+            for (int i = 0; i < xs.length; i++) {
+                p[i] = curva.respuestaFloat32((int) Math.round(xs[i]));
+            }
+            pred.add(p);
+        }
+        double rPred = mediaDeMedias(pred);
+        if (Double.isNaN(sRepRel) || sRepRel <= 0 || Double.isNaN(xBanco)) {
+            return new Resultado("NO_EVALUABLE", xRem, rMed, patron + ": falta la s_rep medida o la serie del banco");
+        }
+        int kRem = xPorCol.size();
+        double lim2 = 2 * sRepRel * xBanco * Math.sqrt(1.0 / kRem + 1.0 / kBanco);
+        boolean ok2 = Math.abs(xRem - xBanco) <= lim2;
+        double sR = rPorCol.size() >= 2 ? Veredicto.sEntre(rPorCol) : 0;
+        double tol18 = Math.max(2, 2 * sR);
+        boolean ok18 = Math.abs(rMed - rPred) <= tol18;
+        double lim3 = Math.max(0.10 * cert, 2);
+        boolean fuera = Math.abs(rMed - cert) > lim3;
+        String t = String.format(Locale.US, "%s: x %.1f frente a %.1f del banco (%+.1f %%, límite ±%.1f) %s; RF-CAL-18 frente a "
+                        + "la curva escrita: R %.1f, predicha %.1f (%+.1f, tolerancia ±%.1f) %s; frente al certificado %.0f: "
+                        + "%+.1f %% (límite ±%.1f)%s",
+                patron, xRem, xBanco, 100 * (xRem - xBanco) / xBanco, lim2, ok2 ? "OK" : "FALLA", rMed, rPred, rMed - rPred,
+                tol18, ok18 ? "OK" : "FALLA", cert, 100 * (rMed - cert) / cert, lim3,
+                fuera ? " INCUMPLE, dispensado por " + dispensa : " cumple");
+        return new Resultado(ok2 && ok18 ? "CONFORME" : "NO_CONFORME", xRem, rMed, t);
+    }
+
     /** Agrega las colocaciones validas (media de medias) y evalua. */
     public static Resultado evaluar(String patron, double cert, List<double[]> xPorCol, List<double[]> rPorCol,
                                     double xBanco, int kBanco, double sRepRel, String origenSrep) {

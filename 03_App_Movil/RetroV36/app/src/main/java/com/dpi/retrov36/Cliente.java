@@ -19,7 +19,7 @@ import java.util.concurrent.Executors;
  *   INESPERADA. La trama literal va siempre al registro.
  * - Ninguna peticion con '@' salvo la sonda de V4 (Tramas.peticionPermitida).
  */
-public final class Cliente implements EnlaceSerie.OyenteRx {
+public final class Cliente implements EnlaceSerie.OyenteRx, Canal {
 
     public static final long PAUSA_ENTRE_ENVIOS_MS = 1500;
     public static final long PAUSA_TRAS_RX_MS = 600;
@@ -100,8 +100,9 @@ public final class Cliente implements EnlaceSerie.OyenteRx {
                 case TIMEOUT:
                     return "sin respuesta (timeout)";
                 default:
-                    return "respuesta inesperada: \"" + Hex.ascii(bruto.getBytes(LATIN1)) + "\" ["
-                            + Hex.hex(bruto.getBytes(LATIN1)) + "]";
+                    // ISO-8859-1 sin pasar por Cliente: Respuesta se usa tambien en la JVM (3.6.13).
+                    return "respuesta inesperada: \"" + Hex.ascii(bruto.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1))
+                            + "\" [" + Hex.hex(bruto.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1)) + "]";
             }
         }
     }
@@ -111,6 +112,7 @@ public final class Cliente implements EnlaceSerie.OyenteRx {
      *
      * @throws IOException si no hay enlace o se pierde durante la espera.
      */
+    @Override
     public Respuesta pedir(String peticion, Tramas.Tipo tipo, long timeoutMs)
             throws IOException, InterruptedException {
         if (!Tramas.peticionPermitida(peticion, Sesion.get().version == Sesion.Version.V36)) {

@@ -1,6 +1,5 @@
 package com.dpi.retrov36;
 
-import org.junit.After;
 import org.junit.Test;
 
 import java.io.File;
@@ -28,10 +27,6 @@ public class Version3612Test {
 
     private static final String MAC = "00:21:13:05:19:3B";
 
-    @After
-    public void restaurar() {
-        TablaCalibracion.PA14_ANCLADA_5 = false;
-    }
 
     private static List<Patron> catalogo132() throws Exception {
         try (InputStreamReader r = new InputStreamReader(
@@ -57,7 +52,7 @@ public class Version3612Test {
         Ecuacion ant = Fabrica.ecuacion(k);
         Ecuacion env = curva(0.25, -120);
         a.escribiendo(k, ant, env);
-        a.escrito(k, OpsEquipo.tramaG(k, env), env, "Oscuro (x = 575.0)", "recta anclada en el OSCURO", "");
+        a.escrito(k, Tramas.tramaG(k, env), env, "Oscuro (x = 575.0)", "recta anclada en el OSCURO", "");
         return a;
     }
 
@@ -65,9 +60,10 @@ public class Version3612Test {
 
     @Test
     public void tablaRfCal37() {
-        TablaCalibracion.PA14_ANCLADA_5 = false;
         assertEquals(TablaCalibracion.Metodo.ANCLADA, TablaCalibracion.fila('8').metodo);
-        assertEquals(TablaCalibracion.Metodo.ANCLADA, TablaCalibracion.fila('b').metodo);
+        // 3.6.13 (P11-M5): sin PA-24 decidida por Diego, el b solo se verifica.
+        assertEquals(TablaCalibracion.Metodo.SOLO_VERIFICAR, TablaCalibracion.fila('b').metodo);
+        assertFalse(TablaCalibracion.fila('b').escribible());
         assertEquals("P43", TablaCalibracion.fila('8').remedida);
         assertEquals("P49", TablaCalibracion.fila('b').remedida);
         assertFalse(TablaCalibracion.fila('1').escribible());
@@ -77,9 +73,18 @@ public class Version3612Test {
         }
         assertEquals(TablaCalibracion.Metodo.GRADO1_O_ANCLADA, TablaCalibracion.fila('3').metodo);
         assertFalse(TablaCalibracion.fila('5').escribible());
-        TablaCalibracion.PA14_ANCLADA_5 = true;
-        assertEquals(TablaCalibracion.Metodo.ANCLADA, TablaCalibracion.fila('5').metodo);
-        assertTrue(TablaCalibracion.fila('5').escribible());
+        assertTrue(TablaCalibracion.fila('5').aviso.contains("sin decisión"));
+        Decisiones d = Decisiones.leer("PA-14,SI,2026-09-20,Diego Zuniga,DECISION-PA-14.md\n"
+                + "PA-24,SI,2026-09-20,Diego Zuniga,DECISION-PA-24.md");
+        assertEquals(TablaCalibracion.Metodo.ANCLADA, TablaCalibracion.fila('5', d).metodo);
+        assertTrue(TablaCalibracion.fila('5', d).escribible());
+        assertEquals(TablaCalibracion.Metodo.ANCLADA, TablaCalibracion.fila('b', d).metodo);
+        assertTrue(TablaCalibracion.fila('b', d).aviso.contains("QA-3612-06"));
+        // Una decision sin firmante Diego, sin fecha o sin documento no vale.
+        assertFalse(Decisiones.leer("PA-24,SI,2026-09-20,Operador,DOC.md").tomada("PA-24"));
+        assertFalse(Decisiones.leer("PA-24,SI,,Diego,DOC.md").tomada("PA-24"));
+        assertFalse(Decisiones.leer("PA-24,SI,2026-09-20,Diego,").tomada("PA-24"));
+        assertFalse(Decisiones.leer("PA-24,NO,2026-09-20,Diego,DOC.md").tomada("PA-24"));
         assertEquals(12, TablaCalibracion.tabla().size());
     }
 
@@ -201,7 +206,7 @@ public class Version3612Test {
         assertNull(a.motivoNoEscribir('8'));
         assertNotNull(a.motivoNoEscribir('b'));      // otro codigo: primero la re-medida del 8
         a.escribiendo('8', curva(0.25, -120), curva(0.26, -125));
-        a.escrito('8', OpsEquipo.tramaG('8', curva(0.26, -125)), curva(0.26, -125), "", "recta anclada", "");
+        a.escrito('8', Tramas.tramaG('8', curva(0.26, -125)), curva(0.26, -125), "", "recta anclada", "");
         assertEquals(1, a.codigos().size());
         assertTrue(a.codigo('8').leida.igualFloat32(curva(0.26, -125)));
     }
@@ -244,10 +249,15 @@ public class Version3612Test {
         a.dato("batería", "");                              // desconocido: "no conocido", nunca vacio
         assertEquals("no conocido", a.dato("batería"));
         a.dato("#V# posterior", "#V,3.6.2,...#");
-        assertEquals("falta oscuro", a.motivoNoAceptable(true));
-        a.dato("oscuro", "Oscuro (x = 575.0)");
+        assertTrue(a.motivoNoAceptable(true).contains("heredados"));
+        a.dato("heredados (T-C41)", "OK");
+        a.dato("código 5", "de fábrica, sin decisión");
+        assertEquals("falta oscuro 8", a.motivoNoAceptable(true));
+        a.dato("oscuro 8", "Oscuro (x = 575.0)");
         assertTrue(a.motivoNoAceptable(true).contains("persistencia"));
         a.persistencia(true, "#G igual, #E coincide");
+        // QA-3612-01: el boton se habilita ya; la verificacion final la hace la accion de aceptar.
+        assertNull(a.motivoNoAceptableSalvoVerificacionFinal());
         assertTrue(a.motivoNoAceptable(true).contains("verificación final"));
         a.verificacionFinal(true, "#V# y #G frescos iguales");
         assertNull(a.motivoNoAceptable(true));
