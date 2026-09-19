@@ -1,16 +1,27 @@
 # TDD-V3.6 — Plan de pruebas ejecutable del firmware y la app V3.6
 
-**Estado, 18-sep-2026, 20:20: ninguna prueba se ha ejecutado contra un equipo con V3.6, porque la
-V3.6 no está grabada.** Hechas: las 45 pruebas JVM de la app (en verde; reejecutadas en este trabajo a
-las 19:59), T-A25 (compilación reproducible), T-A20, T-A24 y T-A31 **declaradas** por el agente de
-firmware en simulador, T-A23 hecha y **fallida** (condición C1), y dos pruebas de equipo anteriores a
-este plan (T-B11, barrido; T-B12, lectura ICSP). Todo lo demás está pendiente.
+**Estado, 19-sep-2026, 10:30: ninguna escritura de calibración se ha probado en un equipo, y C1 no se
+cumple por la letra (T-A23 falla el criterio de 0 ulp).** SLV-002 corrió la V3.6 del 18-sep y con ella
+pasó G4 (T-C01, T-C03, T-C04, y `#E` 60/60). A las 09:36 se regrabó con un `.hex` del tamaño de la
+3.6.1, **sin `#V#` leído todavía** (T-C37). Hechas y en verde: las **56 pruebas JVM** de la app 3.6.4
+(ejecutadas en este trabajo), T-A20 (con informe), T-A25 y T-A30. La línea base con el firmware
+original (G3) **ya no se puede hacer**: se borró el 18-sep a las 20:24. Cada ficha que cambia lleva
+una línea **r1.2** debajo de su cabecera con el estado nuevo y su evidencia; el estado anterior queda
+a la izquierda de la flecha.
 
-Requisitos: [`SPEC-V3.6.md`](SPEC-V3.6.md), revisión 1.1. Contrato: [`PROTOCOLO-V3.6.md`](PROTOCOLO-V3.6.md),
-revisión 1.1 (§4 bis). Este documento manda sobre las tablas de §5 de la SPEC.
+*Estado r1.1:* «18-sep-2026, 20:20: ninguna prueba se ha ejecutado contra un equipo con V3.6… Hechas:
+las 45 pruebas JVM… T-A23 hecha y fallida…»
 
-**Recuento: 85 pruebas.** 37 de nivel A (sin equipo), 12 de nivel B (equipo sin grabar) y 36 de
-nivel C (tras grabar).
+Requisitos: [`SPEC-V3.6.md`](SPEC-V3.6.md), **revisión 1.2**; estado de cada requisito frente al
+código en [`MATRIZ-SPEC-codigo-V3.6.md`](MATRIZ-SPEC-codigo-V3.6.md). Contrato:
+[`PROTOCOLO-V3.6.md`](PROTOCOLO-V3.6.md), revisión 1.1 (§4 bis) con las notas de §4 ter. La
+calibración con lo medido (asistente, superadministrador, PDF) tiene su propia especificación,
+[`SPEC-Calibracion-V3.6.md`](SPEC-Calibracion-V3.6.md), en redacción por otro agente. Este documento
+manda sobre las tablas de §5 de la SPEC.
+
+**Recuento: 101 pruebas.** 49 de nivel A (sin equipo), 12 de nivel B (equipo sin grabar) y 40 de
+nivel C (tras grabar). Nuevas en r1.2 (§3 bis): T-A38 a T-A49 y T-C37 a T-C40. *Recuento r1.1: 85
+(37 A, 12 B, 36 C).*
 
 ---
 
@@ -49,6 +60,16 @@ cd D:/IT/P_RetroVertical_V3.6/03_App_Movil/RetroV36
 cd app && "$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;build/intermediates/javac/debugUnitTest/classes;../build/libtest/junit-4.13.2.jar;../build/libtest/hamcrest-core-1.3.jar" \
   org.junit.runner.JUnitCore com.dpi.retrov36.CalculoTest com.dpi.retrov36.ReceptorTest \
   com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest
+```
+
+**[r1.2]** Receta corregida, comprobada el 19-sep a las 10:05 con la app 3.6.4 (`OK (56 tests)`): los
+jar están en `../libtest/`, **no** en `../build/libtest/` (con la ruta de arriba, `JUnitCore` no se
+encuentra), y hay una quinta clase:
+
+```bash
+"$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;build/intermediates/javac/debugUnitTest/classes;../libtest/junit-4.13.2.jar;../libtest/hamcrest-core-1.3.jar" \
+  org.junit.runner.JUnitCore com.dpi.retrov36.CalculoTest com.dpi.retrov36.ReceptorTest \
+  com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest com.dpi.retrov36.CoherenciaRealTest
 ```
 
 Pasa: la última línea es `OK (<N> tests)`. Se ejecuta desde `app/` porque `FabricaTest` lee el fuente
@@ -106,6 +127,18 @@ equivalente). Con cualquier V3: **nunca** una trama de más de 49 bytes antes de
 | **F6 — Escrituras de administración** | T-C21, T-C22, T-C31, T-C29, T-C24, T-C26 (con T-C35), T-C23, T-C19, T-C25; T-C32 sólo con C4 corregida | C1 (T-A23 pasa, o tolerancia decidida) y C4 antes de empezar; C3 y C5 al terminar |
 | **F7 — Calibración (P8)** | T-C10, T-C28, T-C27 | Acta de antes y después |
 
+**[r1.2] Secuencia vigente desde el 19-sep.** F3 ya no se puede hacer en SLV-002 (original borrado);
+F4 se hizo con la V3.6. Lo que queda, en este orden:
+
+| Fase | Pruebas | Puerta de salida |
+| :--- | :--- | :--- |
+| **F0 bis — App en JVM, nuevas** | T-A38, T-A39, T-A40, T-A41 (parte JVM), T-A42 a T-A49 | En verde, o con la contradicción (C-46) cerrada |
+| **F1 bis — Firmware en MDB** | T-A41 (parte MDB) | Veredictos de `#S` iguales en app y firmware |
+| **F4 bis — Regrabación 3.6.0 → 3.6.1** | **T-C37** | `#V#` con fecha `2026-09-19`, `DEF,0000`, PIN `2026`, `#E` 60/60 y `#S,2,<fábrica>#` rechazado. **Si falla, no se escribe nada** |
+| **F5 bis — Método de medida** | **T-C38** (asentamiento), T-C09 con la 3.6.4 | N de asentamiento fijado |
+| **F6** | Como arriba; T-C32 ya ejecutable tras T-C37 | Como arriba |
+| **F7 — Calibración (P8)** | T-C40 (campaña), T-C10, T-C28 (códigos `1` y `2`, opción C), **T-C39** (opacas con tipo I), T-C27 | Acta de antes y después; huecos de `MATRIZ-SPEC-codigo-V3.6.md` §5.1 cerrados |
+
 ---
 
 ## 3. Fichas
@@ -143,7 +176,8 @@ equivalente). Con cualquier V3: **nunca** una trama de más de 49 bytes antes de
   `#S,d,-1.23456789E-07,-8.76543211E-05,`.
 - Pasa: en verde. *Texto r1.0 del criterio (7 cifras, 48 bytes) retirado.*
 
-**T-A10 — Coherencia de las 12 fórmulas.** RF-APP-07 · A · R-JVM · **HECHA-PASA** (con una ampliación pendiente)
+**T-A10 — Coherencia de las 12 fórmulas.** RF-APP-07 · A · R-JVM · **HECHA-PASA** (con una ampliación pendiente) → **[r1.2] HECHA-PASA**
+- **r1.2 (19-sep-2026):** La ampliación está hecha con otro número: `ULP_G = 4`, no 2 (`Ecuacion.java:92`, app 3.6.4; prueba `CalculoTest.igualdadFloat32ConCuatroUlp`), porque XC8 imprime con hasta 3 ulp de error (`CAMBIOS` §7.2). `#E` esperado con la tabla de fábrica: `Pruebas.java:375-393`. Además `CoherenciaRealTest` (7) reproduce con las respuestas literales del 19-sep la prueba 4 con deriva e INVÁLIDA. 56/56 en verde, ejecutadas en este trabajo.
 - Pasos: `CalculoTest.coherenciaAptaConLas12DeFabricaHacia615`, `coherenciaUsaLaXDeE`,
   `rojoOpacoTienePocaResolucionYNoSeCastiga`, `coherenciaDetectaUnCodigoDesplazado`,
   `coherenciaSinRespuestaNoEsApta`, `coherenciaConPatronOscuroNoEsEvaluable`, `coherenciaEnVariosPuntos`,
@@ -155,7 +189,8 @@ equivalente). Con cualquier V3: **nunca** una trama de más de 49 bytes antes de
   la tabla de fábrica, no con lo leído.
 - Pasa: las 8 actuales y las dos ampliaciones en verde.
 
-**T-A05 — Inversión de una respuesta.** RF-APP-10 · A · R-JVM · **PARCIAL**
+**T-A05 — Inversión de una respuesta.** RF-APP-10 · A · R-JVM · **PARCIAL** → **[r1.2] PARCIAL**
+- **r1.2 (19-sep-2026):** Sin cambio en la 3.6.4: la inversión sigue en `double`/Horner (`Inversion.java:58`, C-21).
 - Pasos hoy: `inversionDel1ReproduceLosDatosDeSLV002`, `el1NoEsMonotonoY780EsAmbiguo`,
   `inversionDel6RecuperaLaXDeSLV002`, `el6EsMonotonoYSinTechoDe500a4300`,
   `cadenaCompletaPantallaDel1AlCodigo6`, `ceroNoSeInvierte` (en verde). **Pero la inversión usa `double`
@@ -188,12 +223,14 @@ equivalente). Con cualquier V3: **nunca** una trama de más de 49 bytes antes de
   desde `x` = 1700 sólo avisa, y desde 800 bloquea; `R = x` bloquea (pasa de 4000).
 - Pasa: en verde. Abierta C-27 (P-09).
 
-**T-A12 — Avisos de cobertura.** RF-APP-14 · A · R-JVM · **HECHA-PASA**
+**T-A12 — Avisos de cobertura.** RF-APP-14 · A · R-JVM · **HECHA-PASA** → **[r1.2] HECHA-PASA**
+- **r1.2 (19-sep-2026):** Con el catálogo tipo I (3.6.4): `AsistenteTest.coberturaDelCatalogoConLosTipoI`, `losTipoIVanASuCodigoOpaco`, `rangoEstrechoNoSeAjustaAunqueHayaPuntos`, `codigoNoAjustableBloquea`. Esperado ahora: ajustables `1`, `2` (grado 2), `8` (grado 2) y `b` (grado 1); `7`, `a`, `c`, `d` sólo verificar. El criterio "`7` bloqueado porque ningún patrón es de tipo I" queda retirado.
 - Pasos: `AsistenteTest.soloBlancoYAmarilloIntensosSonAjustables`, `codigoNoAjustableBloquea`.
 - Esperado: sólo `1` y `2` ajustables; `7` bloqueado por "ningún patrón es de tipo I".
 - Pasa: en verde.
 
-**T-A11 — Repetibilidad.** RF-APP-09, RF-APP-27 · A · R-JVM · **PARCIAL**
+**T-A11 — Repetibilidad.** RF-APP-09, RF-APP-27 · A · R-JVM · **PARCIAL** → **[r1.2] PARCIAL**
+- **r1.2 (19-sep-2026):** Sin cambio en la 3.6.4: `Repetibilidad.LECTURAS` = 5 (`Repetibilidad.java:13`).
 - Hoy: `CalculoTest.repetibilidad` (5 lecturas; `{615, 618, 612, 616, 614}` APTO; `{600, 640, 610,
   630, 590}` NO APTO; una fallida, NO APTO).
 - r1.1: `Repetibilidad.LECTURAS` = 10. Serie `{1834, 1835, 1833, 1834, 1834, 1835, 1833, 1834, 1834,
@@ -206,7 +243,8 @@ equivalente). Con cualquier V3: **nunca** una trama de más de 49 bytes antes de
   0x01 y 0x07; `#K,0,#` → vacío; `#K,3,ZZ#` → inválida; 0x01 → "blanco intenso".
 - Pasa: en verde.
 
-**T-A37 — Límites de `#ST` en la app.** RF-APP-23 (C4) · A · R-JVM · **PARCIAL**
+**T-A37 — Límites de `#ST` en la app.** RF-APP-23 (C4) · A · R-JVM · **PARCIAL** → **[r1.2] PARCIAL**
+- **r1.2 (19-sep-2026):** Sin cambio en la 3.6.4 (`Tramas.java:240-254` sólo limita `X_0`). El firmware 3.6.1 ya aplica C4 completa (T-A30), así que el riesgo es sólo de la app si algún día ofrece `#ST`.
 - Hoy: `CalculoTest.tramaSTConLimitesDeX0` (`X_0` = 0,49 y 1,51 rechazados; `NaN` rechazado; fábrica
   aceptada) en verde.
 - r1.1: criterio `F(T)` en [0,5 ; 1,5] para `T` de 0 a 831. Casos: `(0, 1.0E-03, 0.9)` → `F(831)` =
@@ -302,7 +340,8 @@ equivalente). Con cualquier V3: **nunca** una trama de más de 49 bytes antes de
 - Evidencia: `CAMBIOS-V3.6.md` §1: la base compilada con XC8 2.10 da un `.hex` con md5
   `d089f962…` (0 direcciones distintas). P3 cerrada.
 
-**T-A20 — No regresión de las ecuaciones (G2).** RF-FW-04, RF-FW-05, RF-FW-06 · A · R-MDB · **DECLARADA**
+**T-A20 — No regresión de las ecuaciones (G2).** RF-FW-04, RF-FW-05, RF-FW-06 · A · R-MDB · **DECLARADA** → **[r1.2] HECHA-PASA**
+- **r1.2 (19-sep-2026):** `pruebas/T-A20.md`: 4 grupos, 786 432 comparaciones, 0 diferencias, con las sumas de control del simulador iguales a la emulación. Repetida con la 3.6.1 (`CAMBIOS` §7.4). Confirmada en hardware: `#E` 60/60 exacto en SLV-002 el 19-sep (acta, G4). C-19 cerrada.
 - Evidencia: `CAMBIOS-V3.6.md` §3.1 ("0 diferencias"); `pruebas/T-A20_harness_eq.c`,
   `T-A20_gen_equiv.py`, `T-A20_mdb_ejemplo.txt` (commit `319345f`). La tabla y `aplicarEcuacion` del
   arnés coinciden con `calibracion_v36.c:33-46,228-233` actuales (comparado a mano el 18-sep).
@@ -330,7 +369,8 @@ equivalente). Con cualquier V3: **nunca** una trama de más de 49 bytes antes de
 - Esperado: la tabla que consume T-A04.
 - Pasa: se genera y se archiva; el veredicto lo da T-A04.
 
-**T-A27 — `#E` en simulador.** RF-FW-28 · A · R-MDB · **PARCIAL**
+**T-A27 — `#E` en simulador.** RF-FW-28 · A · R-MDB · **PARCIAL** → **[r1.2] PARCIAL**
+- **r1.2 (19-sep-2026):** En SLV-002, prueba 5 de la app 3.6.2: 60 de 60 exactos en `x` = 500, 1000, 2000, 3000 y 4000 para los 12 códigos, en dos pasadas (acta, G4). La tabla de arriba queda confirmada en hardware en esos 60 puntos. Faltan `x` = 0, 200, 4300, 65535 y los 5 rechazos.
 - Hecho (`CAMBIOS` §3.2): `#E,1,1000#` → `#E,1,230#`; `#E,2,4300#` → `#E,2,0#`.
 - Pasos: con el fuente real y dobles de UART, para los 12 códigos y `x` ∈ {0, 200, 500, 1000, 2000,
   3000, 4000, 4300, 65535}, enviar `#E,<k>,<x>#` y comparar con la función de 2020 + `arreglar_dato()`
@@ -374,7 +414,8 @@ equivalente). Con cualquier V3: **nunca** una trama de más de 49 bytes antes de
   → `CAL,0001`; (d) CRC de `"123456789"` → 0x29B1; CRC de los 13 registros recalculados fuera.
 - Pasa: 4/4 con la salida archivada.
 
-**T-A23 — Conversión de números con 9 cifras (C1).** RF-FW-22 · A · R-MDB · **HECHA-FALLA**
+**T-A23 — Conversión de números con 9 cifras (C1).** RF-FW-22 · A · R-MDB · **HECHA-FALLA** → **[r1.2] HECHA-FALLA (medida cerrada)**
+- **r1.2 (19-sep-2026):** Cerrada **como medida** con la 3.6.1 (`CAMBIOS` §7.2, `pruebas/T-A23_T-A30/`): ida y vuelta `#S` → `#G` hasta 5 ulp en simulador (2267 valores) y hasta 7 con la emulación de `strtof`/`efgtoa` validada bit a bit; `%.8E` solo, hasta 3 ulp. **El criterio de 0 ulp (C1) falla.** Lo que se hace con eso: `ULP_G = 4`, `ULP_S = 8` en la app y `#E` tras `#S` (SPEC RF-APP-07 r1.2). Si eso sustituye a C1 **no se decide aquí**: contradicción abierta C-47, para la revisión de arquitectura. SPEC C-44.
 - Pasos: 120 valores (los 35 literales distintos de fábrica y 85 aleatorios de 1e-9 a 1e5 de los dos
   signos): (a) `sprintf("%.8E")` de XC8 frente al texto de 9 cifras correctamente redondeado calculado
   fuera; (b) ese texto → `strtod` de XC8 frente al `float` exacto. Además, `abc`, `nan`, `inf`, `1e5x` y
@@ -384,7 +425,8 @@ equivalente). Con cualquier V3: **nunca** una trama de más de 49 bytes antes de
   49 a 1 ulp, 2 a 2 ulp, 1 a 3 ulp. Rechazos correctos.
 - Falla ⇒ C1 no cumplida. Se repite tras la conversión exacta propia (RF-FW-22 r1.1, P-10).
 
-**T-A30 — Límites de `#ST` (C4).** RF-FW-19 · A · R-MDB · **PARCIAL**
+**T-A30 — Límites de `#ST` (C4).** RF-FW-19 · A · R-MDB · **PARCIAL** → **[r1.2] HECHA-PASA**
+- **r1.2 (19-sep-2026):** Con la 3.6.1 (`calibracion_v36.c:620-621`): los 5 casos de arriba dan lo esperado, más el vértice, los bordes y 240 casos aleatorios que coinciden con un barrido fuera (`pruebas/T-A23_T-A30/resultado_T-A30.txt`, `CAMBIOS` §7.3). **Aviso:** el paso 1 (`#ST` con el texto de fábrica) deja la máscara en `CAL,1000` y en la 3.6.1 no hay orden para volver (C-30): **no se repite en un equipo**.
 - Hecho: rechazo de `X_0` fuera de [0,5 ; 1,5] (`CAMBIOS` §3.2).
 - Pasos, con sesión abierta: `#ST,0.00000000E+00,4.32119996E-04,9.01486516E-01#` → `#OK#`;
   `#ST,0,4.3E-04,4.9E-01#` → `#ERR,FORMATO#`; `#ST,0,1.0E-03,9.0E-01#` → `#ERR,FORMATO#`;
@@ -415,7 +457,8 @@ equivalente). Con cualquier V3: **nunca** una trama de más de 49 bytes antes de
 
 ### F2 — G1
 
-**T-A28 — Fuente y `.hex` atados a un commit (G1).** RF-FW-27 · A · operador con git · **PARCIAL**
+**T-A28 — Fuente y `.hex` atados a un commit (G1).** RF-FW-27 · A · operador con git · **PARCIAL** → **[r1.2] PARCIAL**
+- **r1.2 (19-sep-2026):** Para la 3.6.1 (`8860445`): árbol limpio en `RetroVertical_V3.6.X` en ese commit; `md5sum -c hex/fuente.md5` sin fallos; md5 del blob = `8736c05d…` = declarado; `git check-attr text` → `unset`. Falta el quinto punto: `CAMBIOS-V3.6.md` no cita `8860445` (sólo `f75ff88`, de la 3.6). 4 de 5.
 - Pasos:
   ```bash
   cd D:/IT/P_RetroVertical_V3.6
@@ -447,19 +490,22 @@ existe: la `x` se obtiene con `6` invertido.
 - Resultado: chip protegido (`CP = ON`), sin copia; configuración `EC FF F7 FF 9F FF FF DF FE FF`.
   Archivo: `01_Firmware/lecturas_equipos/SLV-002/SLV-002_lectura_2026-09-18.hex`.
 
-**T-B01 — Detección.** RF-APP-03, RF-APP-26 · B · R-APP · **PENDIENTE**
+**T-B01 — Detección.** RF-APP-03, RF-APP-26 · B · R-APP · **PENDIENTE** → **[r1.2] HECHA-FALLA (18-sep) y ya no realizable**
+- **r1.2 (19-sep-2026):** Con la app 3.6.0, SLV-002 no respondió a `#V#`, `e`, `6` ni `@LEERV` (SPEC RF-APP-03). El firmware original se borró el 18-sep a las 20:24: la prueba no se puede repetir en SLV-002; vale para el segundo V3.
 - Pasos: equipo sobre P1; Pruebas → Iniciar.
 - Esperado en el registro: TX `#V#` → sin respuesta (el equipo enciende la luz y pita); TX `e` → sin
   respuesta; TX `6` → `::<n>` con n > 0 ⇒ "V3 2020 sin `e`". Después, la prueba 3 envía `1` y recibe
   `::<n>`.
 - Pasa: clasificación correcta, ninguna TX con `@`, ninguna TX de más de 49 bytes.
 
-**T-B08 — `#V#` es inocuo en 2020.** RF-FW-09, RF-APP-03 · B · R-TERM · **PENDIENTE**
+**T-B08 — `#V#` es inocuo en 2020.** RF-FW-09, RF-APP-03 · B · R-TERM · **PENDIENTE** → **[r1.2] NO REALIZABLE en SLV-002**
+- **r1.2 (19-sep-2026):** Firmware original borrado. Queda para el segundo V3.
 - Pasos: `#V#`; esperar 3 s; `6`.
 - Esperado: a `#V#`, luz y pitido y **0 bytes** recibidos en 3 s; a `6`, `::<n>` en < 2,5 s.
 - Pasa: las dos cosas.
 
-**T-B06 — Tiempos.** RF-APP-01, RF-APP-02; §1 r1.1 · B · R-TERM · **PENDIENTE**
+**T-B06 — Tiempos.** RF-APP-01, RF-APP-02; §1 r1.1 · B · R-TERM · **PENDIENTE** → **[r1.2] NO REALIZABLE en SLV-002**
+- **r1.2 (19-sep-2026):** Queda para el segundo V3. Los plazos provisionales de RF-APP-02 se sostienen con los registros del 19-sep (respuestas `#` en 93-128 ms; un disparo cada ~1,6 s).
 - Pasos: (a) 50 × `6` sobre P1 con pausa de 1500 ms desde el envío y 600 ms desde el último byte;
   anotar envío → primer byte, envío → último byte, hueco máximo entre bytes de una respuesta.
   (b) `6`; en cuanto llegue `::<n>`, esperar **30 ms** y enviar `6`. (c) `6`; al llegar `::<n>`,
@@ -469,12 +515,14 @@ existe: la `x` se obtiene con `6` invertido.
 - Pasa: (a) sin pérdidas, y se fijan plazo = 1,5 × máximo y silencio ≥ 3 × hueco máximo (mínimo 50 ms);
   (b) y (c) como se esperan. Si (b) o (c) no, se corrige §1 y RF-APP-01.
 
-**T-B09 — Batería (G3).** RF-FW-08, RF-APP-25 · B · R-TERM o R-APP (Línea base) · **PENDIENTE**
+**T-B09 — Batería (G3).** RF-FW-08, RF-APP-25 · B · R-TERM o R-APP (Línea base) · **PENDIENTE** → **[r1.2] NO REALIZABLE (G3)**
+- **r1.2 (19-sep-2026):** Firmware original borrado el 18-sep a las 20:24 sin hacerla.
 - Pasos: `9` diez veces, con la pausa de RF-APP-01.
 - Esperado: diez respuestas `:<n>:` con `<n>` entero; se anotan los literales.
 - Pasa: 10/10 con ese formato. (La línea base de la app hace hoy 3 repeticiones, C-18: poner 10.)
 
-**T-B07 — Negativos y saturación (G3).** RF-FW-06 · B · R-TERM o R-APP (Línea base) · **PENDIENTE**
+**T-B07 — Negativos y saturación (G3).** RF-FW-06 · B · R-TERM o R-APP (Línea base) · **PENDIENTE** → **[r1.2] NO REALIZABLE (G3)**
+- **r1.2 (19-sep-2026):** Firmware original borrado. Lo único que queda: el barrido de 255 bytes en oscuro (T-B11, x ≈ 599-634 por inversión). Con la V3.6, el oscuro sale en x ≈ 575 (acta, G4).
 - Pasos: óptica tapada con una tapa opaca: los 12 códigos. Sobre el patrón más alto (P4, 828,
   blanco XI, "en el techo"): `1` y `2`, cinco veces cada uno.
 - Esperado (emulación, **referencia, no criterio**): en oscuro `x` ≈ 180-200 y los 12 dan `::0`; sobre
@@ -482,25 +530,29 @@ existe: la `x` se obtiene con `6` invertido.
 - Pasa: 12 + 10 respuestas registradas. Si alguna en oscuro no es `::0`, el modelo de negativos no es
   el de T-A21 y se revisa RF-APP-10.
 
-**T-B02 — Coherencia por inversión.** RF-APP-07, RF-APP-25 · B · R-APP (Pruebas y Línea base) · **PENDIENTE**
+**T-B02 — Coherencia por inversión.** RF-APP-07, RF-APP-25 · B · R-APP (Pruebas y Línea base) · **PENDIENTE** → **[r1.2] NO REALIZABLE en SLV-002**
+- **r1.2 (19-sep-2026):** Firmware original borrado; T-B11 hizo la parte esencial (12 códigos en oscuro, x de 599 a 634).
 - Pasos: sobre P1, los 12 códigos (la línea base de la app lo etiqueta hoy "T-B03", C-18).
 - Esperado: los 12 intervalos de `x` se solapan dentro de max(suelo, 2·s) (como el 18-sep: 599-634).
 - Pasa: prueba 4 de la app en verde (≥ 6 evaluables).
 
-**T-B04 — Repetibilidad con Bluetooth.** RF-APP-09, RF-APP-27 · B · R-APP · **PARCIAL**
+**T-B04 — Repetibilidad con Bluetooth.** RF-APP-09, RF-APP-27 · B · R-APP · **PARCIAL** → **[r1.2] PARCIAL, ya no realizable con el original**
+- **r1.2 (19-sep-2026):** Hecho con la V3.6 y `e` en lugar de `6`: ver T-C06 y la sesión de campo del 19-sep (s de 2,7 a 7,7 cuentas en 17 series de 9 sin el primer disparo).
 - Hecho: 8 blancos por pantalla (`x` de 1739 a 3271, ±1).
 - Pasos: 10 × `6` sin mover el equipo sobre P2 (414), P1 (762) y P4 (828).
 - Esperado: por patrón, media de `x`, `s` y CV; se espera `s` ≤ 3 (semianchura de la inversión).
 - Pasa: 30/30 lecturas válidas. Con esto se fija el umbral metrológico (P-04).
 
-**T-B03 — Patrones antes de grabar: "como llegó" (G3).** RF-APP-13, RF-APP-27 · B · R-APP (Medida de patrones) · **PENDIENTE**
+**T-B03 — Patrones antes de grabar: "como llegó" (G3).** RF-APP-13, RF-APP-27 · B · R-APP (Medida de patrones) · **PENDIENTE** → **[r1.2] NO REALIZABLE (G3)**
+- **r1.2 (19-sep-2026):** Firmware original borrado. El "como llegó" que queda son los 8 blancos por pantalla del acta (T-B10).
 - Pasos: oscuro al principio (anotar); por cada P1-P31: N = 10 sin mover; después 3 recolocaciones
   con N = 5; oscuro al final; hora y temperatura ambiente a mano.
 - Esperado: `medidas_<serie>_<fecha>.csv` con cada lectura (respuesta literal, código `6`, `x` y
   semianchura, método "6 invertido"); por patrón, media, `s`, `n`.
 - Pasa: 31 patrones con ≥ 10 lecturas válidas (una lectura `::0` no es válida y se anota como tal).
 
-**T-B10 — Pantalla STONE, línea base (G3).** RF-FW-10 · B · operador con cámara · **PARCIAL**
+**T-B10 — Pantalla STONE, línea base (G3).** RF-FW-10 · B · operador con cámara · **PARCIAL** → **[r1.2] PARCIAL (definitiva)**
+- **r1.2 (19-sep-2026):** Acta de SLV-002: P3, P2, P28, P1 y P7 por pantalla, antes y después. No se puede completar: el original se borró.
 - Hecho: 8 blancos por pantalla.
 - Pasos: fotografiar cada pantalla; sobre P1, tres gatillazos con cada color de OTROS PAPELES (6) y
   de PAPEL TIPO I (6); anotar las cuatro variables (199, 205, 210, 215); buscar la página "PRUEBA ADC"
@@ -515,7 +567,8 @@ G1, para no grabar dos veces.
 
 ### F4 — Grabación y verificación (G4)
 
-**T-C01 — Grabación.** RF-FW-26, RF-FW-27 · C · R-IPE · **PENDIENTE**
+**T-C01 — Grabación.** RF-FW-26, RF-FW-27 · C · R-IPE · **PENDIENTE** → **[r1.2] HECHA-PASA**
+- **r1.2 (19-sep-2026):** 18-sep 20:24:38 (V3.6, `grabacion_V3.6_2026-09-18.log`) y 19-sep 09:36:15 (`.hex` del tamaño de la 3.6.1, `grabacion_V3.6.1_2026-09-19.log`, commit `869d3c6`): *Program Succeeded*. El *Verify* posterior lee ceros por `CP = ON`, como avisaba la ficha: confirmado dos veces, no es fallo.
 - Pasos: comprobar el md5 del `.hex` (el de G1); IPE: *Program*; leer la configuración.
 - Esperado: "Programming complete" con la verificación que IPE hace al programar; configuración
   `EC FF F7 FF 9F FF FF DF FE FF`.
@@ -529,13 +582,15 @@ G1, para no grabar dos veces.
 - Esperado: pantalla igual que en T-B10; **0 bytes** por Bluetooth sin petición.
 - Pasa: las dos.
 
-**T-C03 — Versión (G4).** RF-FW-16, RF-APP-03 · C · R-TERM y R-APP · **PENDIENTE**
+**T-C03 — Versión (G4).** RF-FW-16, RF-APP-03 · C · R-TERM y R-APP · **PENDIENTE** → **[r1.2] HECHA-PASA (con la V3.6)**
+- **r1.2 (19-sep-2026):** 19-sep 08:53, app 3.6.2: `#V,3.6,2026-09-18,DEF,0000#` en 93 ms (registro `rtv36_20260919_090703.txt`). Luz y pitido no anotados. **Con la 3.6.1 grabada a las 09:36, pendiente: T-C37.**
 - Pasos: `#V#`. Después, Pruebas de la app (prueba 2).
 - Esperado: `#V,3.6,2026-09-18,DEF,0000#` en < 2 s (la fecha es la de compilación del `.hex` de G1),
   sin luz ni pitido; la app: "V3.6, marca DEF, ningún código ajustado; temperatura de fábrica".
 - Pasa: literal exacto.
 
-**T-C04 — Coeficientes de fábrica (G4).** RF-FW-18, RF-FW-22, RF-FW-05 · C · R-TERM y R-APP · **PENDIENTE**
+**T-C04 — Coeficientes de fábrica (G4).** RF-FW-18, RF-FW-22, RF-FW-05 · C · R-TERM y R-APP · **PENDIENTE** → **[r1.2] HECHA-PASA (con la V3.6, a 4 ulp)**
+- **r1.2 (19-sep-2026):** 19-sep, app 3.6.2: 12 `#G` y `#GT#` "= fábrica" con `ULP_G = 4`. Literal no exacto, como se preveía con XC8: `#GT` → `4.32120039E-04` (esperado `4.32119996E-04`) y `9.01486480E-01` (esperado `9.01486516E-01`). Con la 3.6.1: T-C37.
 - Pasos: `#G,1#` … `#G,d#` (12) y `#GT#`.
 - Esperado con conversión exacta (T-A23 pasa), literal:
   ```
@@ -561,13 +616,15 @@ G1, para no grabar dos veces.
 
 ### F5 — V3.6 sin escribir nada
 
-**T-C06 — `e`.** RF-FW-07, RF-APP-06 · C · R-TERM · **PENDIENTE**
+**T-C06 — `e`.** RF-FW-07, RF-APP-06 · C · R-TERM · **PENDIENTE** → **[r1.2] PARCIAL**
+- **r1.2 (19-sep-2026):** `e` responde en V3.6: 5 lecturas sobre P1 (3016-3027, s = 4,0; acta) y 180 lecturas de campo el 19-sep. Falta la concordancia con `6` invertido. **Criterio nuevo:** las lecturas de una serie se toman tras el asentamiento de RF-APP-28.
 - Pasos: sobre P1, 10 × `e`; después 10 × `6`.
 - Esperado: `::<x>` con 200 < x ≤ 4000; la media de `x` cae dentro del intervalo de inversión de las
   respuestas a `6` ± max(1, 2·s).
 - Pasa: 10/10 y concordancia.
 
-**T-C05 — No regresión por Bluetooth (C5).** RF-FW-03, RF-FW-04, RF-FW-28 · C · R-TERM · **PENDIENTE**
+**T-C05 — No regresión por Bluetooth (C5).** RF-FW-03, RF-FW-04, RF-FW-28 · C · R-TERM · **PENDIENTE** → **[r1.2] PARCIAL**
+- **r1.2 (19-sep-2026):** (a) cubierta por la prueba 5 de la app: `#E` 60/60 exacto (acta, G4). (b) pendiente: el emparejado `e` → código → `e` sobre P2, P1 y P4.
 - Pre: `DEF,0000`; gatillo sin tocar.
 - Pasos: sobre P2, P1 y P4; para cada código `k` de los 12: `e` → `::<x>`; `#E,<k>,<x>#` →
   `#E,<k>,<R_E>#`; `<k>` → `::<R_k>`; `e` → `::<x'>`.
@@ -581,14 +638,16 @@ G1, para no grabar dos veces.
   de T-B04 propagada por la pendiente de `f_1` y `f_2`.
 - Pasa: las dos.
 
-**T-C08 — Continuidad de la `x` (C-01).** RF-FW-02, RF-FW-30 · C · R-APP · **PENDIENTE**
+**T-C08 — Continuidad de la `x` (C-01).** RF-FW-02, RF-FW-30 · C · R-APP · **PENDIENTE** → **[r1.2] HECHA-FALLA por pantalla (sustituta)**
+- **r1.2 (19-sep-2026):** No se puede hacer como está escrita: el original se borró sin T-B03. Sustituto (acta): mismos patrones por pantalla antes y después, **−80 a −89 cuentas de `x` en x = 1700-2300** (P3, P2, P28), no concluyente en la zona alta. El "como llegó" deja de ser comparable en la zona media. C-01 sigue abierta con esta evidencia.
 - Pasos: repetir T-B03 con `e` sobre al menos 5 patrones que cubran el rango (P17, P13, P2, P1, P4).
 - Esperado: `x` media dentro del intervalo de T-B03 ± (max(1, 2·s) + deriva térmica: 13 cuentas/°C ×
   |ΔT ambiente|, cota de RF-APP-27).
 - Pasa: 5/5. **Falla ⇒ la variante de SLV-002 tenía otra adquisición u otro factor de temperatura; el
   "como llegó" deja de ser comparable** (C-01, R-02) y se dice en el acta.
 
-**T-C09 — Modo de pruebas.** RF-APP-07, RF-APP-09, RF-APP-12, RF-APP-03 · C · R-APP · **PENDIENTE**
+**T-C09 — Modo de pruebas.** RF-APP-07, RF-APP-09, RF-APP-12, RF-APP-03 · C · R-APP · **PENDIENTE** → **[r1.2] HECHA-FALLA (criterio de la app 3.6.2); repetir con la 3.6.4**
+- **r1.2 (19-sep-2026):** Prueba 4 en FALLO el 19-sep (acta): primera pasada con el equipo apoyado a mitad; segunda, 11/12 dentro y deriva 3004 → 3027. Era el criterio. La 3.6.3/3.6.4 cambian la prueba 4 (deriva, resolución local, INVÁLIDA, asentamiento antes de la `e` inicial) y `CoherenciaRealTest` da APTO con las respuestas literales de la segunda pasada. Falta repetirla en el equipo.
 - Pasos: Pruebas → Iniciar sobre P1.
 - Esperado: pruebas 1-6 en verde; prueba 5: 12 `#G` "= fábrica", máscara `0000`, 60 `#E` exactos.
 - Pasa: APTO.
@@ -603,7 +662,8 @@ G1, para no grabar dos veces.
 - Esperado: luz y pitido, 0 bytes; después `::<n>`.
 - Pasa: las dos.
 
-**T-C14 — Pantalla STONE, no regresión.** RF-FW-10 · C · operador con cámara · **PENDIENTE**
+**T-C14 — Pantalla STONE, no regresión.** RF-FW-10 · C · operador con cámara · **PENDIENTE** → **[r1.2] PARCIAL**
+- **r1.2 (19-sep-2026):** Acta: pantalla y Bluetooth coinciden sobre P1 dentro del ruido cerca del techo del blanco (776 por BT, 780-781 por pantalla). Faltan los 12 colores × 3.
 - Pasos: repetir T-B10.
 - Esperado: mismas pantallas; mismos valores dentro de la repetibilidad; "PRUEBA ADC", si existe, da la `x`.
 - Pasa: 12/12 colores.
@@ -717,7 +777,8 @@ Precondición de la fase: C1 cumplida (T-A23 pasa) o decisión escrita de seguir
 - Pasos: `#F,1#`; `#F,*#`; `#V#`; `#G,1#`; T-C05 sólo con el código `1`.
 - Esperado: `#OK#`; `#OK#`; `#V,3.6,…,DEF,0000#`; `#G,1` = T-C04; T-C05 da lo mismo que antes.
 
-**T-C32 — Límites de `#ST` en el equipo (C4).** RF-FW-19 · C · R-TERM · **PENDIENTE, sólo con T-A30 en verde**
+**T-C32 — Límites de `#ST` en el equipo (C4).** RF-FW-19 · C · R-TERM · **PENDIENTE, sólo con T-A30 en verde** → **[r1.2] PENDIENTE, ejecutable sólo con la 3.6.1 confirmada**
+- **r1.2 (19-sep-2026):** T-A30 pasa. Sólo después de T-C37 (que `#V#` confirme la 3.6.1): con la V3.6 del 18-sep, las dos tramas **se escribirían** en EEPROM. No enviar nunca `#ST` con los valores de fábrica (C-30).
 - **Peligro:** con el firmware de hoy, las tramas de rechazo darían `#OK#` y **escribirían en EEPROM
   un factor que anula las medidas**. No se ejecuta hasta que T-A30 pase.
 - Pasos: `#ST,0,1.0E-03,9.0E-01#`; `#ST,0,-5.0E-04,9.0E-01#`; `#GT#`.
@@ -725,11 +786,13 @@ Precondición de la fase: C1 cumplida (T-A23 pasa) o decisión escrita de seguir
 
 ### F7 — Calibración (P8)
 
-**T-C10 — Sesión de patrones con `e`.** RF-APP-13, RF-APP-27 · C · R-APP · **PENDIENTE**
+**T-C10 — Sesión de patrones con `e`.** RF-APP-13, RF-APP-27 · C · R-APP · **PENDIENTE** → **[r1.2] PARCIAL**
+- **r1.2 (19-sep-2026):** Sesión de campo del 19-sep con `e` (V3.6): 17 series de 9 (09:12-09:25) y 9 series de 3 (08:59-09:05) sobre 20 patrones blancos y amarillos. Sin 3 × 5 recolocaciones, sin oscuro, sin temperatura. Hallazgos que cambian el método: primer disparo bajo (RF-APP-28), un descolgado (RF-APP-29), P24 con tres candidatas (RF-APP-30), XI desordenados (SPEC C-39).
 - Pasos: T-B03 con `e`.
 - Esperado: registro completo por patrón; media, `n`, `s` sólo con lecturas de `e`.
 
-**T-C28 — Calibración de extremo a extremo.** RF-APP-15, 16, 17, 21 · C · R-APP · **PENDIENTE**
+**T-C28 — Calibración de extremo a extremo.** RF-APP-15, 16, 17, 21 · C · R-APP · **PENDIENTE** → **[r1.2] PENDIENTE**
+- **r1.2 (19-sep-2026):** Pre adicional r1.2: P-06 decidida (opción C); faltan T-C38 (asentamiento), C-40 (P24) y T-A41 (grado del código `2`).
 - Pre: C1-C5 cumplidas; P-06 y P-09 decididas.
 - Pasos: asistente sobre `1` y `2`; escribir; volver a medir los patrones de esos colores.
 - Esperado: acta de antes y después; residuos tras escribir dentro de lo que mostró el asistente ±
@@ -738,6 +801,191 @@ Precondición de la fase: C1 cumplida (T-A23 pasa) o decisión escrita de seguir
 **T-C27 — Ningún `@`.** RF-FW-25, RF-APP-12 · C · revisión de registros · **PENDIENTE**
 - Pasos: buscar `@` (0x40) en todo lo recibido de T-C01 a T-C36.
 - Esperado: 0 apariciones.
+
+---
+
+## 3 bis. Fichas nuevas de la revisión 1.2
+
+Datos de referencia de estas fichas: `07 pruebas/19092026_0900/p29_p24_p23_p5/medidas_SLV-002_20260919_091213 (3).csv`
+(17 series de 9 disparos con `e`, 09:12-09:25) y `medidas_SLV-002_20260919_085924 (1).csv` (9 series de
+3, 08:59-09:05), ambos de SLV-002 con la V3.6 del 18-sep. **Son los dos ficheros más largos; los demás
+de la carpeta son prefijos suyos** (L-21). Las cifras "esperadas" que salen de ellos las calculó este
+trabajo con Python; son cálculo sobre medidas, no medidas nuevas.
+
+### F0 bis — App en JVM (receta R-JVM)
+
+**T-A38 — Asentamiento.** RF-APP-28 · A · R-JVM · **PENDIENTE**
+- Pre: transporte simulado que responde `::<x>` a cada `e`.
+- Pasos: con N = 0, 1 y 3 (`Sesion.disparosAsentamiento`), (a) una serie de 9 en Medida; (b) la
+  prueba 3 en V3.6.
+- Esperado: (a) se envían N + 9 `e`; el CSV y la media tienen **9** lecturas; el registro tiene N
+  líneas "disparo de asentamiento, descartado"; (b) la `e` inicial que usa la prueba 4 es la N + 1-ésima.
+  Con N fuera de 0-5, la interfaz no deja empezar.
+- Pasa: los 3 valores de N así. Falla: una lectura de asentamiento en el CSV o en la media.
+
+**T-A39 — Disparo descolgado.** RF-APP-29 · A · R-JVM · **PENDIENTE** (cierra C-46)
+- Pasos: aplicar la regla a las 17 series literales (disparos 2-9 de cada una) y a dos sintéticas:
+  `{1000 × 8, 1100}` y `{1000, 1001, 999, 1000, 1002, 1000, 1001, 999, 1000}`.
+- Esperado con la regla de RF-APP-29, max(30, 5 · 1,4826 · MAD): **1** descolgado en las 17 (el 3031
+  de P7, serie de las 09:19:26); **P2 de las 09:17:21 sin descolgados** (su 2004 está a 12 de la
+  mediana 2016); 1 en la primera sintética; 0 en la segunda. La media de P7 sin el 3031 = 3230,9.
+- Pasa: esos cuatro resultados. **Con la regla de `Veredicto` de la 3.6.5 (`ff66f93`: 5 · max(1,4826 ·
+  MAD ; 1,5)) salen 2 descolgados, no 1 (también el 2004 de P2): fallaría.** `CampanaTest.disparoDescolgadoDeP7`
+  no lo ve porque usa la serie de P7 **con** su primer disparo. Se corrige la regla o se decide por
+  escrito (C-46).
+
+**T-A40 — ¿Es este el patrón?** RF-APP-30 · A · R-JVM · **PENDIENTE**
+- Pasos: alimentar la sesión con las series literales en su orden y etiqueta: P24 (2048, 2071, 2076)
+  y después P24 (2439, 2438, 2453); y P20 a las 09:15:47 y otra "P20" a las 09:23:40. Además, P23
+  09:14:57 (mediana 2721,5) y P23 09:24:18 (2756,5).
+- Esperado: aviso "¿es este el patrón?" en la segunda P24 (Δ mediana ≈ 370 > 100); **ningún aviso**
+  en la segunda P23 (Δ = 35) ni en la segunda P20 (Δ = 8,5) por el criterio de 100 cuentas. Si la app
+  añade el criterio de parecido con otro patrón (`Veredicto`, 3.6.5), la serie de las 09:23:40
+  etiquetada P24 debe avisar de que se parece a P20.
+- Pasa: 1 aviso donde se espera y 0 donde no. Las salidas Repetir / Aceptar con nota / Era otro patrón
+  se prueban en T-A43.
+
+**T-A41 — Curva C frente al límite de `#S`.** RF-FW-31, RF-APP-15, P-16 · A · R-JVM y R-MDB · **PENDIENTE**
+- Pre: puntos por patrón = media de los disparos 2-9 (2-3 en la sesión de las 08:59), sin el 3031 de
+  P7, media de las series repetidas; **P24 fuera** (C-40) y la serie de las 09:23:40 contada como P20.
+  Blanco (código `1`): P1 3071,0; P2 2015,0; P3 1659,9; P4 3361,1; P6 3115,5; P7 3234,0. Amarillo
+  (código `2`): P5 2555,0; P8 2517,5; P9 2556,0; P10 2461,5; P20 2801,1; P21 1555,5; P22 1469,6; P23
+  2740,3; P25 2202,0; P26 2148,9; P29 1724,5; P30 1664,0; P31 2096,5.
+- Pasos (JVM): `Asistente.proponer` para `1` y `2`, grados 1 y 2, y `criterioFirmwareS` de cada
+  ecuación. Pasos (MDB): con el `calibracion_v36.c` de `8860445` y sesión abierta, `#S,<k>,<los cuatro
+  coeficientes que dio la app>#` para los cuatro casos.
+- Esperado (cálculo en `double` de este trabajo; los coeficientes de la app deben coincidir a 10⁻³
+  relativo):
+
+  | Código, grado | c2 | c1 | c0 | R(600) | Criterio de `#S` |
+  | :--- | ---: | ---: | ---: | ---: | :--- |
+  | `1`, 1 | 0 | 0,27854 | −110,29 | 57 | cumple |
+  | `1`, 2 | 4,6642E-05 | 0,044678 | 160,26 | 204 | cumple |
+  | `2`, 1 | 0 | 0,31996 | −111,04 | 81 | cumple |
+  | `2`, 2 | −6,6249E-05 | 0,60147 | −396,80 | **−60** | **no cumple** |
+
+- Pasa: los 4 veredictos de la app iguales a la tabla; el firmware responde `#OK#` en los tres que
+  cumplen y `#ERR,FORMATO#` en `2` grado 2 (4/4 iguales), y en `2` grado 2 la app ofrece la recta. **No
+  se ejecuta en SLV-002**: en el simulador, sin escribir en un equipo.
+
+### F0 bis — Modo Campaña (RF-APP-32; receta R-JVM, clases puras con almacenamiento simulado)
+
+**T-A42 — Flujo guiado.** RF-APP-32 · A · R-JVM · **PENDIENTE**
+- Pasos: campaña simulada de 5 patrones del catálogo, OK en cada uno, el 3.º saltado, N = 1.
+- Esperado: 5 peticiones "Coloque …" en el orden del catálogo; 4 × (1 + 9) = 40 `e` enviadas; 4
+  series guardadas y 1 marca "saltado"; ningún `e` sin un OK previo.
+- Pasa: exactamente eso.
+
+**T-A43 — Veredicto de la serie.** RF-APP-32, RF-APP-29, RF-APP-30 · A · R-JVM · **PENDIENTE**
+- Pasos: las 17 series literales (con su asentamiento, disparo 1) y una sintética con s = 20.
+- Esperado: 0 REPETIR por ruido en las 17 (s sin descolgados de 2,7 a 7,7); REPETIR en la sintética
+  (s > 15); las tres salidas escriben en el diario un evento de veredicto con su nota (Aceptar con nota
+  sin nota → no se acepta) y "Era otro patrón" escribe un evento de reasignación sin borrar la serie.
+- Pasa: todo.
+
+**T-A44 — Identificación de la campaña.** RF-APP-32.1 · A · R-JVM · **PENDIENTE**
+- Pasos: (a) abrir con serie SLV-002 y MAC `00:21:13:05:19:3B`, 1 serie, cerrar la app, reabrir con
+  las mismas; (b) serie SLV-002 y MAC `00:21:13:05:19:3C`; (c) MAC `…:3B` y serie SLV-003, sin
+  confirmar y confirmando.
+- Esperado: (a) se retoma la misma campaña; (b) el diario de la campaña de `…:3B` no cambia de tamaño
+  y hay 1 aviso; (c) sin confirmar, 0 eventos; confirmando, 2 diarios distintos.
+- Pasa: los tres casos.
+
+**T-A45 — ZIP y md5.** RF-APP-32.4 · A · R-JVM · **PENDIENTE**
+- Pasos: campaña con 2 conexiones y 3 series; exportar.
+- Esperado: `campana_SLV-002_<AAAAMMDD-HHMMSS>.zip` con 5 entradas (`campana.csv`, diario,
+  `pruebas_<serie>_<mac>.txt`, registro de tramas, `resumen.txt`); los md5 de `resumen.txt` = md5 de las
+  piezas extraídas; el registro contiene todas las TX/RX de las 2 conexiones; el md5 anotado = md5 del
+  fichero.
+- Pasa: todo.
+
+**T-A46 — Compartir una vez.** RF-APP-32.5 · A · R-JVM + revisión de la interfaz · **PENDIENTE**
+- Pasos: exportar dos veces seguidas; construir el `Intent`.
+- Esperado: `ACTION_SEND` con **1** URI `.zip` (no `ACTION_SEND_MULTIPLE`); los dos ZIP con nombres
+  distintos (sufijo `_2`); en la interfaz de campaña, 1 sola acción de compartir.
+- Pasa: todo. Cierra P-03 (SPEC §10) en la práctica.
+
+**T-A47 — Diario de sólo añadir.** RF-APP-32.2 · A · R-JVM · **PENDIENTE**
+- Pasos: 100 disparos simulados, copiando el diario tras cada uno; después, truncar una copia en un
+  byte al azar y leerla (20 veces).
+- Esperado: cada copia es prefijo byte a byte de la siguiente (100/100); al leer una truncada se pierde
+  como mucho el último evento y `lineasMalas()` ≤ 1 (20/20).
+- Pasa: todo. Es la prueba de que no se repite RF-08 (truncar al guardar).
+
+**T-A48 — Retomar y cerrar.** RF-APP-32.3 · A · R-JVM · **PENDIENTE** (falta el evento de cierre)
+- Pasos: 5 patrones; matar tras la serie 3; reabrir; terminar; "Cerrar campaña"; reconectar.
+- Esperado: reanuda en el patrón 4 con las 3 series (diario idéntico byte a byte hasta ese punto); tras
+  cerrar, el diario tiene un evento de cierre y la reconexión abre campaña nueva sin añadir nada a la
+  cerrada.
+- Pasa: todo. Con la 3.6.5 no puede pasar: la lista de eventos de `Campana` no tiene cierre de campaña (SPEC RF-APP-32.3).
+
+**T-A49 — Importar lo previo.** RF-APP-32.6 · A · R-JVM · **PENDIENTE**
+- Pasos: importar los 16 CSV de `07 pruebas/19092026_0900/` (con subcarpeta) en una campaña de MAC
+  `00:21:13:05:19:3B`; repetir con una campaña de otra MAC.
+- Esperado: **180 lecturas** (153 + 27), no la suma de todos los ficheros; ninguna duplicada; con otra
+  MAC, 0.
+- Pasa: las dos cosas.
+
+### F4 bis — Regrabación 3.6.0 → 3.6.1 (en SLV-002)
+
+**T-C37 — Regrabación y vuelta a `DEF`.** RF-FW-16, 18, 24, 26, 28, 31 · C · R-IPE, R-TERM o R-APP · **PARCIAL**
+- Hecho: grabación del 19-sep a las 09:36:15, *Program Succeeded*, memoria hasta `0x1d07f` (tamaño de
+  la 3.6.1), commit `869d3c6`. El estado previo leído a las 08:53 era `DEF,0000` y no consta ninguna
+  escritura entre las 08:53 y las 09:36.
+- Pasos, en este orden: `#V#`; los 12 `#G` y `#GT#`; `#L,2026#`; Pruebas de la app 3.6.4 (prueba 5:
+  60 `#E`); `#S,2,-7.30000025E-08,2.82508001E-04,1.24075353E-01,-1.30000000E+02#` (la curva de fábrica
+  del `2`); `#V#`; `#Q#`.
+- Esperado: `#V,3.6,2026-09-19,DEF,0000#` (la fecha es la que distingue la 3.6.1, C-37); 13 "=
+  fábrica" a `ULP_G = 4`; `#OK#` con el PIN de fábrica (la EEPROM borrada por la grabación, a 0xFF,
+  vuelve a fábrica, PIN incluido: `calibracion_v36.c:184-186`); 60/60 `#E`; **`#ERR,FORMATO#`** al `#S`
+  (límite de RF-FW-31 en hardware, sin escribir); `#V#` sigue en `DEF,0000`.
+- **Peligro:** si `#V#` responde `2026-09-18`, el equipo lleva la 3.6 y el `#S` **se escribiría**: no
+  se envía. Ese caso cierra C-36 en contra y se para.
+- Pasa: los 7 puntos. Cierra C-36.
+
+### F5 bis — Método de medida
+
+**T-C38 — Asentamiento: cuántos disparos se descartan.** RF-APP-28, P-13 · C · R-APP (Medida, N = 0) · **PENDIENTE**
+- Pre: T-C37 pasa. Equipo apoyado, sin tocar el gatillo; temperatura ambiente anotada.
+- Pasos: sobre P22 (~1470), P2 (~2016) y P4 (~3361): 5 series de **12** `e` con N = 0, con una pausa
+  de 60 s entre series; y en P2, 3 series más con pausa de 10 s.
+- Cálculo: por posición *k*, sesgo = media de `x_k − mediana(x_7…x_12)` en las series de la misma
+  pausa.
+- Esperado (referencia del 19-sep, no criterio): sesgo ≈ −17 en *k* = 1, ≈ −5 en *k* = 2, ≈ −3,5 en
+  *k* = 3.
+- Resultado: **N = el menor *k* tal que |sesgo(*k* + 1)| ≤ 2 cuentas** en los tres patrones y con las
+  dos pausas. Se anota y se fija en la app.
+- Pasa: N fijado y, repitiendo 3 series con ese N, el primer disparo que cuenta queda a ≤ 2 cuentas de
+  la mediana. Si ningún N ≤ 5 lo cumple, se anota y la decisión es del propietario (P-13).
+
+### F7 — Calibración, ampliación
+
+**T-C39 — Opacas con los patrones tipo I.** RF-APP-31, RF-APP-14, RF-FW-31 · C · R-APP (campaña y asistente) · **PENDIENTE**
+- Pre: T-C37 y T-C38 pasan; C-41 (P32) decidida; copia de coeficientes (T-C29).
+- Pasos: (a) oscuro (tapa opaca): 9 `e` tras el asentamiento; (b) cada P32a-P50: 9 `e` tras el
+  asentamiento; (c) para `8` y `b`, el asistente con el grado que permita la cobertura; `#S`; `#E` en
+  5 puntos; volver a medir 3 patrones de ese color; (d) para `7`, `a`, `c`, `d`, sólo verificar: la
+  respuesta del código frente al certificado.
+- Criterio de "calibrable" por código, **medible**: (1) cada patrón con `x` media ≥ `x_oscuro` + 3 ·
+  `s_oscuro`; (2) las `x` medias en el mismo orden que los certificados; (3) al menos 3 niveles
+  distintos con rango ≥ 20 unidades de R y ≥ 30 % del mayor (umbrales de la app, sin medida: C-43).
+- Esperado (**estimación con las curvas de fábrica**, que en las intensas ya se ha visto que no valen
+  para SLV-002): verde (6-7) en x ≈ 518-520 y azul (7-10) en x ≈ 560-589, por debajo del 600 de `#S` y
+  cerca del oscuro de la V3.6 (x ≈ 575, acta): **no calibrables**, sólo verificar. Rojo (46-81) en x ≈
+  994-1198 y amarillo (64-122) en x ≈ 923-1467: calibrables si cumplen (1)-(3).
+- Pasa: `8` y `b` escritos con `#OK#`, `#G` a `ULP_S = 8`, `#E` 5/5 a ±1, y residuo al volver a medir
+  ≤ max(1, 2 · s) propagado por la pendiente de la curva nueva; o, si no cumplen (1)-(3), el motivo
+  anotado y nada escrito. Los demás, verificados y anotados.
+
+**T-C40 — Campaña de extremo a extremo.** RF-APP-32 · C · R-APP (campaña) · **PENDIENTE**
+- Pre: app 3.6.5 o posterior (`ff66f93`); T-C37 pasa.
+- Pasos: campaña de 5 patrones en SLV-002: el 2.º saltado; en el 3.º, cerrar la app a la fuerza a
+  mitad de la serie; reabrir y retomar; en el 4.º, "Era otro patrón"; cerrar la campaña; exportar.
+- Esperado: la campaña retoma en el 3.º con los disparos ya hechos en el diario; el ZIP contiene las 5
+  piezas de T-A45, con 3 series aceptadas, 1 saltada, 1 reasignada y el registro de las 2 conexiones;
+  el md5 del ZIP coincide con el anotado en el registro; en el teléfono aparece **un** fichero, sin
+  copias `(1)`.
+- Pasa: todo.
 
 ---
 
@@ -814,6 +1062,24 @@ códigos) y las PAR. Requisitos cuyas pruebas son todas de equipo y, por tanto, 
 grabar: RF-FW-01, 02, 03 (parte), 07-13, 15, 23, 25; se aceptan porque su código **no cambia** frente a
 2020 salvo lo revisado en `CAMBIOS-V3.6.md` §2.
 
+**[r1.2] Filas nuevas y cambiadas:**
+
+| Requisito | Pruebas |
+| :--- | :--- |
+| RF-FW-16 | + T-C37 |
+| RF-FW-19 | T-A30 (**pasa**), T-A31, T-C23, T-C24, T-C32 |
+| RF-FW-31 (nuevo) | T-A30, **T-A41**, **T-C37** |
+| RF-APP-14 | T-A12 (con tipo I), T-C39 |
+| RF-APP-15 | + **T-A41**, T-C39 |
+| RF-APP-28 (nuevo) | **T-A38**, **T-C38** |
+| RF-APP-29 (nuevo) | **T-A39**, T-A43 |
+| RF-APP-30 (nuevo) | **T-A40**, T-A43 |
+| RF-APP-31 (nuevo) | T-A12, **T-C39** |
+| RF-APP-32 (nuevo) | **T-A42** a **T-A49**, **T-C40** |
+| G4 con la 3.6.1 | **T-C37** |
+| G3 | **ya no realizable** (original borrado): T-B03, T-B07, T-B09 |
+
+
 ### 4.2 Prueba → requisito
 
 Cada ficha de §3 abre con sus requisitos. Ninguna prueba queda sin requisito: las de procedimiento
@@ -821,6 +1087,13 @@ Cada ficha de §3 abre con sus requisitos. Ninguna prueba queda sin requisito: l
 cliente tiene que seguir funcionando").
 
 ### 4.3 Las 45 pruebas JVM de la app, repartidas
+
+**[r1.2]** Con la app 3.6.4 son **56** (`AsistenteTest` 12, `CalculoTest` 31, `CoherenciaRealTest` 7,
+`FabricaTest` 1, `ReceptorTest` 5), en verde el 19-sep a las 10:05. Las nuevas de `AsistenteTest`
+cubren T-A12 (cobertura con tipo I, rango estrecho), el criterio de `#S` del firmware
+(`criterioDelFirmware361ParaS`, parte JVM de T-A41 con una curva sintética) y `ULP_S = 8`
+(`ulpDeEscrituraCubreLaIdaYVueltaMedida`); `CoherenciaRealTest` cubre T-A10 con los datos reales.
+Tabla r1.1 (45):
 
 | Clase (n.º) | Pruebas del plan |
 | :--- | :--- |
@@ -831,26 +1104,31 @@ cliente tiene que seguir funcionando").
 
 ---
 
-## 5. Lo que falta antes de grabar
+## 5. Lo que falta (r1.2)
 
-1. **G1 (T-A28):** `.gitattributes` con `*.hex -text` y nuevo commit; md5 del blob = md5 declarado;
-   hash del commit en `CAMBIOS-V3.6.md`. Recomendado: decidir antes P-10 (conversión exacta) para que
-   el `.hex` de G1 sea el definitivo.
-2. **G2 (T-A20):** archivar el informe `pruebas/T-A20.md` con los 12 recuentos y los md5; repetir si el
-   `calibracion_v36.c` del commit de G1 cambia.
-3. **G3:** T-B03, T-B07, T-B09 (10 repeticiones), T-B10 con SLV-002; y, aunque G3 no las exige, T-B01,
-   T-B06 y T-B08, que no cuestan una grabación y fijan tiempos y comportamiento.
-4. **G4 preparado:** que la app compare con 2 ulp mientras T-A23 falle (RF-APP-07 r1.1), o T-C04 y la
-   prueba 5 pueden dar NO APTO con el chip recién grabado (C-12).
-5. **G5:** corregir el `README.md` de la V3.6 (estado de P2 y del firmware) y el de la app (fila 2 de
-   las pruebas), `ROADMAP.md` P1/P2/P7-bis y `ARQUITECTURA.map` CA4/CA7, según C-09, C-15, C-16, C-32 y
-   C-34 de la SPEC. (C-22, "sin remoto", ya está corregida.)
-6. **Deseable antes de grabar** (no son condición de G): T-A21, T-A22, T-A27 completa, T-A29, T-A33 en
-   simulador, y T-A34 en la app. Cualquier fallo que obligue a cambiar el fuente cambia el `.hex` y
-   devuelve a G1-G2.
+**La lista de antes de grabar (r1.1) ya no aplica: se grabó.** Quedan G1 punto 5 (citar `8860445` en
+`CAMBIOS`), G3 imposible y G5 en curso. Los huecos que quedan, separados en los que **bloquean la
+calibración (P8)** y los que **bloquean una app de producción**, están en
+[`MATRIZ-SPEC-codigo-V3.6.md`](MATRIZ-SPEC-codigo-V3.6.md) §5. En pruebas, lo mínimo antes de escribir
+un coeficiente en SLV-002:
+
+1. **T-C37** (qué firmware lleva, y que vuelve a `DEF` con PIN `2026`).
+2. **T-C38** (N de asentamiento) y **T-A39** (regla del descolgado, C-46).
+3. **T-A41** en MDB (grado de la curva del código `2`, P-16).
+4. C-40 decidida (qué serie es P24) y C-41 (P32).
+5. T-A32 (restauración automática) y T-A17 (acta), que hoy no existen como prueba.
+6. C-47 cerrada por la revisión de arquitectura: o el rodeo `ULP_S = 8` + `#E` sustituye a C1, o hace falta la conversión exacta (P-10).
+
+*Texto r1.1 de esta sección, retirado:* «Lo que falta antes de grabar: G1 (T-A28)…; G2 (T-A20)…; G3:
+T-B03, T-B07, T-B09 (10 repeticiones), T-B10…; G4 preparado: que la app compare con 2 ulp…; G5…;
+deseable antes de grabar: T-A21, T-A22, T-A27 completa, T-A29, T-A33 y T-A34.»
 
 ## 6. Contradicciones
 
-Están en `SPEC-V3.6.md` §9 (C-08 a C-35), con su decisión o como abiertas. Las que afectan a este plan:
-C-12 (tolerancia; T-C04), C-18 (etiquetas y repeticiones de la línea base), C-19 (informe de T-A20),
-C-27 (letra de C2), C-32 (md5 y fin de línea; T-A28) y C-34 (C4).
+Están en `SPEC-V3.6.md` §9 (C-08 a C-47), con su decisión o como abiertas. Las que afectan a este plan:
+C-12 (tolerancia; T-C04; **cerrada por medida en r1.2**), C-18 (línea base; moot, original borrado),
+C-19 (**cerrada**), C-27 (letra de C2), C-32 (md5 y fin de línea; T-A28), C-34 (**cerrada en el
+firmware 3.6.1**) y las nuevas: C-36 (qué lleva SLV-002; T-C37), C-37 (versión por fecha; T-C37),
+C-38 (asentamiento; T-C38), C-39 (XI desordenados; T-C28), C-40 (P24; T-A40), C-41 (P32; T-C39), C-42
+(rangos de `x`; T-A41, T-C39), C-43 (umbrales de cobertura; T-C39), C-44 (T-A23 "cerrada"), C-46
+(regla del descolgado; T-A39) y C-47 (C1 frente al rodeo de la app; revisión de arquitectura).

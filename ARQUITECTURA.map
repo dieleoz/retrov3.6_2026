@@ -11,7 +11,7 @@ graph TD
     %% =========================================================================
 
     subgraph RUTAS [REPOSITORIO]
-        R_V36["D:\IT\P_RetroVertical_V3.6<br>Repositorio de la linea V3.6. Rama master SIN NINGUN COMMIT<br>el 18-sep-2026: todo el arbol esta sin versionar."]
+        R_V36["D:\IT\P_RetroVertical_V3.6<br>Repositorio de la linea V3.6, remoto github.com/dieleoz/retrov3.6_2026.<br>19-sep-2026: firmware V3.6.1 en 8860445, app 3.6.4 en 090c84c, 3.6.5 en ff66f93.<br>ANTES DECIA (18-sep): Rama master SIN NINGUN COMMIT."]
         R_HERM["D:\IT\P_RetroReflectometro_Vertical<br>Repositorio hermano de la linea V4.1/V5 (PIC18F47K42, 115200,<br>protocolo @LEERV). Su codigo NO es intercambiable con este."]
         R_ARCH["D:\@Proyect\IT\old\VERTICAL\<br>Archivo del que sale todo lo copiado aqui (README.md, Procedencia).<br>Se conserva intacto. No se edita."]
         R_BASE["01_Firmware/base_2020_d089f962/<br>Fuente 2020 SIN TOCAR + hex/RetroVertical1.X.production.hex<br>md5 d089f9625090a1213291c090eae7ac01 (comprobado).<br>gui.c, measurement.c, ecuacionesCalibracion.c, main.c, uart_module.c,<br>uart_stone.c, adcc.c, uart1.c y eeprom_manager.h son IDENTICOS byte a byte<br>(cmp) a los de old\VERTICAL\2_V3.3_18F47K42_2020\...\1_RetroVertical_2020(modificada)."]
@@ -128,7 +128,7 @@ graph TD
         EQ_SLV -.-> EQ_HOJA
     end
 
-    subgraph V36 [V3.6 - ESPECIFICACION, SIN CODIGO REVISADO EN ESTE MAPA]
+    subgraph V36 [V3.6 - ESPECIFICACION. Estado frente al codigo: 05_Documentacion/MATRIZ-SPEC-codigo-V3.6.md]
         V_OBJ["OBJETIVO - PROTOCOLO-V3.6.md:6-7<br>Calibracion en EEPROM, cambiable desde la app en modo administrador,<br>sin reprogramar el PIC. Todo lo demas igual que 2020.<br>Grabarla en SLV-002 BORRA el original sin vuelta atras (README.md)."]
         V_COMP["COMPATIBILIDAD TOTAL - PROTOCOLO-V3.6.md:9-20<br>1-8, a-d: ::&lt;n&gt; sin terminador y pitido. 9: :&lt;n&gt;:. e: la x.<br>STONE 0x01-0x0E igual: la pantalla no se toca.<br>La app del cliente y la pantalla actual, sin cambios."]
         V_POLI["FORMA GENERAL - PROTOCOLO-V3.6.md:22-27<br>R = c3 x^3 + c2 x^2 + c1 x + c0 para los 12 codigos.<br>Las 12 de ecuacionesCalibracion.c:3-42 caben (grado maximo 3):<br>son los valores de fabrica."]
@@ -160,6 +160,15 @@ graph TD
         CA5["CA5 - FECHAS Y PROPIETARIO DE SLV-002.<br>La hoja de 2020 registra SLV-002 el 5-feb-2018 y el 13-mar-2020<br>(pestana COVIANDES S.A), ANTES de los fuentes del K42 (ficheros de<br>ago-2020). HISTORIA.md lo da como Concesionaria Vial Andina.<br>O el equipo cambio de placa, o el numero se reutilizo, o son dos clientes."]
         CA6["CA6 - TIENE SLV-002 LA PAGINA 'PRUEBA ADC' (0x0E)?<br>HISTORIA.md: 'las pantallas coinciden con los disenos STONE de 2020'.<br>El ARQUITECTURA.map hermano (X15) afirma que no la tiene.<br>No hay aqui evidencia de ninguna de las dos. Se cierra con el equipo."]
         CA7["CA7 - DOS .hex DE 2020 CON EL MISMO NOMBRE.<br>d089f962 (este repositorio) y 43f9f74b (segun el INDICE.md de old,<br>citado en PROCEDIMIENTO:195-197). La diferencia no esta explicada<br>y el segundo no esta en este arbol."]
+        CA8["CA8 - QUE FIRMWARE LLEVA SLV-002 (SPEC C-36).<br>ROADMAP y CAMBIOS dicen V3.6 del 18-sep. grabacion_V3.6.1_2026-09-19.log<br>(commit 869d3c6): 09:36:15, programa hasta 0x1d07f = tamano del .hex 3.6.1<br>(0x1d009), no del 3.6 (0x1bcad). Sin md5 en el log y sin #V# leido. Cierra T-C37."]
+        CA9["CA9 - LA VERSION NO DISTINGUE 3.6 DE 3.6.1 (SPEC C-37).<br>calibracion_v36.h:16 = 3.6 en las dos; solo cambia __DATE__.<br>La app decide 3.6.1 si la fecha es mayor o igual que 2026-09-19 (Sesion.limitesS)."]
+        CA10["CA10 - PRIMER DISPARO BAJO: DERIVA O ASENTAMIENTO (SPEC C-38).<br>17 de 17 series de 9 con e (19-sep): disparo 1 a -17,4 de media, disparo 2 a -5,1.<br>El IIR se reinicia en cada medida (measurement.c:241): no es estado arrastrado.<br>Causa fisica SIN MEDIR. N de descarte: T-C38."]
+        CA11["CA11 - LOS XI NO SE ORDENAN POR SU CERTIFICADO (SPEC C-39).<br>Blanco: P7 768 -> x 3234 mayor que P6 772 -> 3115. Amarillo: P23 714 -> 2740<br>mayor que P5 740 -> 2555 y P8 721 -> 2518. Hipotesis de orientacion SIN MEDIR."]
+        CA12["CA12 - IDENTIDAD DE PATRONES (SPEC C-40, C-41).<br>P24: series 2048-2076 y 2438-2453 en 30 s, y la de 09:23:40 etiquetada P20<br>(carpeta p29_p24_p23_p5). P32 duplicado: P32a azul 9, P32b naranja 68."]
+        CA13["CA13 - TRES RANGOS DE x DE USO (SPEC C-42).<br>App C2 200-4400; #S del firmware 3.6.1 600-4300 (calibracion_v36.c:316-317,<br>el 600 no sale del codigo); inversion 180-4400. Oscuro de la V3.6 en x ~ 575 (acta).<br>Con curvas de fabrica, verde y azul tipo I caerian en x ~ 518-589."]
+        CA14["CA14 - C1 FRENTE AL RODEO DE LA APP (SPEC C-47). LA DECIDE LA REVISION DE ARQUITECTURA.<br>C1 pide ida y vuelta exacta; T-A23: hasta 7 ulp (CAMBIOS 7.2).<br>App: ULP_S = 8 y #E en 5 puntos +-1 tras #S, con restauracion."]
+        CA15["CA15 - REGLA DEL DISPARO DESCOLGADO (SPEC C-46).<br>SPEC RF-APP-29: max(30, 5 x 1,4826 x MAD). App 3.6.5 Veredicto: 5 x max(1,4826 x MAD; 1,5),<br>que marca el 2004 de P2 (asentamiento, no descolgado). Cierra T-A39."]
+        CA16["CA16 - SIN FABRICA PARA LA TEMPERATURA (SPEC C-30).<br>#F solo repone coeficientes (calibracion_v36.c:593-605, 3.6.1). #ST con el texto de fabrica<br>deja CAL,1000 (strtod no recupera los float de ROM, CAMBIOS 7.3). #FT# en obra (3.6.2)."]
     end
 
     subgraph ERRORES [ERRORES CORREGIDOS - la version erronea junto a la buena]
@@ -217,3 +226,12 @@ graph TD
     D_PROC -.->|calibra| ECUS
     D_HIST -.-> EQ_SLV
     ERRORES -.->|corrige| DOCS
+    EQ_SLV -.-> CA8
+    V_ORD -.-> CA9
+    AQ_LUZ -.-> CA10
+    EQ_PAT -.-> CA11
+    EQ_PAT -.-> CA12
+    V_ORD -.-> CA13
+    V_ORD -.-> CA14
+    EQ_PAT -.-> CA15
+    AQ_FT -.-> CA16

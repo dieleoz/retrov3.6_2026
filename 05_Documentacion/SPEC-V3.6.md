@@ -1,10 +1,22 @@
 # SPEC-V3.6 — Especificación del firmware y la app V3.6 del Retrorreflectómetro Vertical
 
-**Estado: revisión 1.1 de la SPEC, 18-sep-2026, 20:10. Nada se ha grabado ni medido en un equipo con
-V3.6.** El firmware está compilado (`.hex` md5 `680b6a7d…`, commit `319345f`) y probado sólo en
-simulador; la app compila y pasa 45 pruebas JVM (ejecutadas en este trabajo a las 19:59). Una prueba
-de simulador **falla** (T-A23: conversión de números, condición C1). El plan de pruebas ejecutable
-está en [`TDD-V3.6.md`](TDD-V3.6.md).
+**Estado: revisión 1.2 de la SPEC, 19-sep-2026, 10:30. Ninguna escritura de calibración se ha hecho
+en un equipo, y C1 sigue sin cumplirse por la letra.** SLV-002 corrió la V3.6 (md5 `680b6a7d…`) desde
+el 18-sep a las 20:24 y G4 pasó con ella el 19-sep a las 08:53; a las 09:36 del 19-sep se regrabó con
+un `.hex` cuyo tamaño es el de la **V3.6.1** (commit `8860445`, md5 `8736c05d…`), **sin `#V#` leído
+todavía** (C-36). La app es la RTV **3.6.4** (commit `090c84c`), con 56 pruebas JVM en verde
+(ejecutadas en este trabajo). El estado de cada requisito frente al código, con `archivo:línea`, está
+en [`MATRIZ-SPEC-codigo-V3.6.md`](MATRIZ-SPEC-codigo-V3.6.md), que sustituye a las tablas de §2.4 y
+§3.8. El plan de pruebas ejecutable está en [`TDD-V3.6.md`](TDD-V3.6.md).
+
+*Texto r1.1 del estado:* «revisión 1.1 de la SPEC, 18-sep-2026, 20:10. Nada se ha grabado ni medido en
+un equipo con V3.6. El firmware está compilado (`.hex` md5 `680b6a7d…`, commit `319345f`) y probado
+sólo en simulador; la app compila y pasa 45 pruebas JVM… Una prueba de simulador falla (T-A23…).»
+
+**Revisión 1.2 (19-sep-2026).** Reconcilia la SPEC con el firmware 3.6.1, la app 3.6.4 y las medidas
+de campo del 19-sep (`07 pruebas/19092026_0900/`). Lo que cambia lleva **[MOD r1.2]**, con el texto
+anterior al lado; lo nuevo, **[NUEVO r1.2]**. Requisitos nuevos: RF-FW-31 y RF-APP-28 a RF-APP-32.
+Requisitos de la campaña: RF-APP-32. Contradicciones nuevas: C-36 a C-47 (§9).
 
 **Cómo leer la revisión 1.1.** No se ha borrado ningún requisito. Lo que cambia lleva la marca
 **[MOD r1.1]** con el texto nuevo, y a continuación *Texto r1.0:* con el anterior. Lo nuevo lleva
@@ -260,10 +272,22 @@ algún `T` de 0 a 831**, que es todo el rango que puede tomar `T` (ADC de 12 bit
 4,928: `measurement.c:64-73`). Con el juego de fábrica, `F` va de 0,901 (T = 0) a 1,261 (T = 831).
 Hoy el firmware sólo limita `X_0` (C4 parcial, ver §2.4). CA: T-A30, T-C24, **T-C32**.
 *Texto r1.0:* «**`#S` está bloqueado por O-01** (la trama no cabe en 48 bytes).»
+**[MOD r1.2]** C4 **cumplida en el firmware V3.6.1**, grabada en SLV-002 el 19-sep a las 09:36 y **sin verificar en equipo** (C-36, T-C32): `#ST` evalúa `F(T)` en `T` = 0, en `T` = 831 y en
+el vértice si cae dentro, y rechaza con `#ERR,FORMATO#` todo valor no finito o fuera de [0,5 ; 1,5]
+(`calibracion_v36.c:301-307,373-389,620-621`, commit `8860445`). T-A30 pasa en simulador (5/5 de la
+TDD y 240 casos aleatorios frente a un barrido, `pruebas/T-A23_T-A30/resultado_T-A30.txt`). La frase
+"Hoy el firmware sólo limita `X_0`" vale sólo para la V3.6 del 18-sep. Además, `#S` tiene límites
+propios desde la 3.6.1: RF-FW-31.
 
 **RF-FW-20 — Restaurar.** `#F,<k>#` y `#F,*#` restauran desde ROM (RF-FW-05). CA: T-C25.
 Nota r1.1: `#F` no toca el factor de temperatura ni el PIN; no hay orden para devolver la temperatura
 a fábrica salvo `#ST` con los valores de fábrica tecleados (O-13).
+**[MOD r1.2]** Medido en simulador con la 3.6.1: `#ST` con el texto de fábrica **no** devuelve la
+temperatura a `DEF`, porque `strtod` de XC8 lee `4,32120039E-04` y `9,01486659E-01`, que no son los
+`float` de ROM, y la máscara queda en `CAL,1000` (`CAMBIOS-V3.6.md` §7.3; la máscara compara bit a bit,
+`calibracion_v36.c:215-220`). Con la 3.6.1 **ninguna orden** devuelve la temperatura a `DEF`. Una orden
+`#FT#` está en obra para una 3.6.2 (árbol de trabajo, sin commit a las 10:30): no cuenta hasta que haya
+commit, `.hex` y prueba. C-30 sigue abierta.
 
 **RF-FW-21 — PIN.** `#P,<actual>,<nuevo>#` con sesión abierta; el nuevo son 4 dígitos ASCII. PIN de
 fábrica `2026`. CA: T-C26.
@@ -280,6 +304,16 @@ biblioteca de XC8 2.10 se equivoca hasta en 2 ulp al imprimir y hasta en 3 al le
 la calibración (P8) queda bloqueada y la app compara con la tolerancia de RF-APP-07. CA: T-A23, T-C04.
 *Texto r1.0:* «Emite notación científica con 7 cifras significativas y punto decimal
 (`-8.654100E-05`)…»
+**[MOD r1.2]** Cifras corregidas con la medida de la 3.6.1 (`CAMBIOS-V3.6.md` §7.2): `%.8E` de XC8 se
+equivoca **hasta en 3 ulp** (no 2) e ida y vuelta completa `#S` → `#G` llega a **5 ulp en simulador**
+(2267 valores) y a **7 ulp con la emulación** de `strtof`/`efgtoa` de XC8, validada bit a bit contra el
+simulador en esos 2267 valores y aplicada a 600 000 (6 ulp con `c2` de 1e-7 a 1e-6; 7 con `c3` de 1e-9
+a 1e-6). `#G` de un valor de ROM, sin `strtod`: hasta 3 ulp en 600 000 casos. **C1 sigue sin
+cumplirse.** La app lo rodea con `ULP_G = 4` y `ULP_S = 8` (`Ecuacion.java:92-93`, app 3.6.4) y con
+`#E` en 5 puntos tras cada `#S` (`AdminActivity.java:498-512`), que compara enteros y no pasa por
+texto. **Si ese rodeo sustituye a C1 no se decide aquí**: es la contradicción abierta C-47, para la
+revisión de arquitectura.
+*Cifras r1.1:* «hasta en 2 ulp al imprimir y hasta en 3 al leer».
 
 **RF-FW-23 — Escritura de EEPROM y comunicaciones.** Como cada byte escrito deja las interrupciones
 apagadas (`memory.c:181-188`), la respuesta `#OK#` sólo sale **después** de terminar todas las
@@ -348,44 +382,43 @@ comprobado en `bufferData`. Ninguno cambia un byte emitido ni la `x`: en la base
 un bloque de 20 bytes sin uso (`CAMBIOS-V3.6.md` §2.2). CA: T-A29 (revisión del `.map` de la V3.6),
 T-C08, T-C12.
 
-### 2.4 Estado del firmware frente a cada RF-FW [NUEVO r1.1]
+**RF-FW-31 — Límites de `#S` [NUEVO r1.2].** Lo que hace la 3.6.1 y no pedía ninguna revisión: `#S`
+rechaza con `#ERR,FORMATO#`, **antes de tocar RAM o EEPROM**, toda curva `R(x)` con algún valor no
+finito, negativo o mayor que 4000 en algún `x` de **600 a 4300**. Se evalúa en los dos bordes y en las
+raíces reales de `R'(x)` que caen dentro (`calibracion_v36.c:309-319,391-422,587-588`, commit
+`8860445`). Origen de cada cifra: 4000, `arreglar_dato()` (`ecuacionesCalibracion.c:49-54`); 0, un
+negativo sale 0 al pasar por `unsigned int`; 4300, ADC a fondo + 200 (`measurement.c:247`); **600 no
+sale del código**: lo fijó el coordinador el 19-sep (`calibracion_v36.c:314-315`). Consecuencias
+conocidas: (1) la curva de **fábrica del código `2` no cumple el límite**: es negativa desde x = 4175
+(barrido en `float32` hecho en este trabajo: mínimo −176,9 en x = 4300; en simulador,
+`#S,2,<fábrica>#` → `#ERR,FORMATO#`, `CAMBIOS` §7.3). No afecta a `#F,2#` ni a la ROM. (2) El rango de
+`#S` no es el de C2 de la app (200-4400) ni el de la inversión (180-4400): C-42. CA: T-A30 (pasa en
+simulador), **T-A41** (curva C de los códigos 1 y 2 frente a este límite), T-C37 (en el equipo, con la
+3.6.1).
 
-Leído el 18-sep-2026 entre 19:50 y 20:05 (commit `319345f`, `.hex` md5 `680b6a7d…` con CRLF). Rutas
-relativas a `01_Firmware/RetroVertical_V3.6.X/`. "Implementado" es **en el código**, no probado en
-equipo.
+### 2.4 Estado del firmware frente a cada RF-FW [MOD r1.2]
 
-| RF | Estado | Evidencia en el código | Pendiente |
-| :--- | :--- | :--- | :--- |
-| RF-FW-01 | Implementado | `mcc_generated_files/` idéntico a la base (`diff -rq`, 18-sep); `uart1.c:115,124,127`, `mcc.c:74` | T-C02, T-C05 |
-| RF-FW-02 | Implementado | `measurement.c` sólo cambia en `:212`; `gui.c:299-301` igual a la base `:298-300`; `adcc.c` sin tocar | T-C08 |
-| RF-FW-03 | Implementado | `ecuacionesCalibracion.c:49-67,137-198` iguales a la base salvo los cuerpos `:3-42` | T-C05, T-C07 |
-| RF-FW-04 | Implementado | `calibracion_v36.c:228-233` (`aplicarEcuacion`, orden de 2020, no Horner) | Informe de T-A20 (G2) |
-| RF-FW-05 | Implementado | `calibracion_v36.c:33-46` (literales), `gui.c:42-44`; `#F` copia de `coefFabrica`: `calibracion_v36.c:514-526` | T-C04, T-C25 |
-| RF-FW-06 | Implementado (r1.1) | Misma asignación que 2020: `calibracion_v36.c:229` | T-A21, T-B07, T-C07 |
-| RF-FW-07 | Implementado | `ecuacionesCalibracion.c:191-193` | T-C06 |
-| RF-FW-08 | Implementado (r1.1) | `gui.c:268` (`nivel[6]`), cálculo `gui.c:329-341` igual | T-B09, T-C12 |
-| RF-FW-09 | Implementado | `gui.c:296`; `#` excluido en `uart_module.c:94-99` | T-C13 |
-| RF-FW-10 | Implementado | `ecuacionesCalibracion.c:70-134` igual; `uart_stone.c:89-101` sólo añade el registro | T-B10, T-C14 |
-| RF-FW-11 | Implementado | Las 12 funciones llaman a `aplicarEcuacion()`: `ecuacionesCalibracion.c:3-42` | T-C19 |
-| RF-FW-12 | Implementado (r1.1) | `gui.c:312-328`, `uart_stone.c:32-35`, `gui.c:343-347` sin cambios | T-C15 |
-| RF-FW-13 | Implementado (r1.1) | `uart_module.c:61-117` (96 bytes, descarte, 2 s en `atenderAdmin`, `:113-116`) | T-C16, T-C17, T-C36 |
-| RF-FW-14 | Parcial | UART1: `uart_module.c:87-91,100`. UART2 sin límite: `uart_stone.c:92-99` (O-11) | T-A22, T-C18, T-C34 |
-| RF-FW-15 | Implementado (r1.1) | `uart_module.c:94-99,108-117`; la trama nunca pasa por `bufferData` | T-C20 |
-| RF-FW-16 | Implementado (r1.1) | `calibracion_v36.c:201-222,380-398,448-456` | T-C03 |
-| RF-FW-17 | Implementado (r1.1) | `calibracion_v36.c:72-74,297-298,318-322,457-474,549-557` | T-C21, T-C22, T-C31 |
-| RF-FW-18 | Implementado | `calibracion_v36.c:475-485,527-535` | T-C04 |
-| RF-FW-19 | **Parcial** | `#S`: `:503-513`; deshacer si la relectura falla: `:406-418`. **C4 sólo en `X_0`**: `:299-300,542` | T-A30, T-C23, T-C24, T-C32 |
-| RF-FW-20 | Implementado | `calibracion_v36.c:514-526` | T-C25 |
-| RF-FW-21 | Implementado | `calibracion_v36.c:549-563`, `pinValido` `:365-372` | T-C26 |
-| RF-FW-22 | **No cumple C1** | `%.8E`: `calibracion_v36.c:374-378`; `strtod`: `:335-345`. Error de XC8: ±2 ulp / ±3 ulp | Conversión exacta; T-A23 |
-| RF-FW-23 | Implementado | `#OK#` tras `guardarEeprom()` y relectura: `calibracion_v36.c:127-153,408-418`; escritura con `GIE = 0`: `mcc_generated_files/memory.c:172-192` | T-C23, T-C35 |
-| RF-FW-24 | Implementado (r1.1) | `calibracion_v36.c:52-198` | T-A24 hecha en simulador; T-C23 |
-| RF-FW-25 | Implementado | Ninguna cadena emitida contiene `@` (búsqueda en `*.c`, 18-sep) | T-C27 |
-| RF-FW-26 | Implementado | `mcc_generated_files/device_config.c` idéntico; `CP = ON` en `:97`; configuración del `.hex` igual (`CAMBIOS` §2) | T-C01 |
-| RF-FW-27 | **Parcial (G1)** | Commit `319345f` (20:01) con fuente, `.hex` y md5; `md5sum -c hex/fuente.md5` sin fallos a las 19:58. Falta `.gitattributes` y citar el commit en `CAMBIOS` | T-A28 |
-| RF-FW-28 | Implementado | `calibracion_v36.c:486-502`, `leerEntero` `:348-359` | T-A27, T-C05 |
-| RF-FW-29 | Implementado | `calibracion_v36.c:236-292,564-571`; `uart_stone.c:89-101` | T-A33, T-C33 |
-| RF-FW-30 | Implementado | `measurement.c:212`, `gui.c:268`, `uart_module.c:100` | T-A29, T-C08 |
+**La tabla de la r1.1 se sustituye por [`MATRIZ-SPEC-codigo-V3.6.md`](MATRIZ-SPEC-codigo-V3.6.md)
+§1**, leída contra el commit `8860445` (V3.6.1). Recuento: 27 cumplen, 2 parciales (RF-FW-14, UART2
+sin límite; RF-FW-27, `CAMBIOS` no cita `8860445`), 1 no (RF-FW-22, C1). RF-FW-31 (nuevo) cumple.
+
+Citas de la tabla r1.1 que ya no apuntan a lo que decían (se dejan escritas para que no vuelvan a
+circular; la de la izquierda es la de r1.1, sobre `319345f`):
+
+| Qué | r1.1 | r1.2 (`8860445`) |
+| :--- | :--- | :--- |
+| `#S` y deshacer | `calibracion_v36.c:503-513`, `:406-418` | `:580-592`, `:485-495` |
+| C4 "sólo en `X_0`" | `:299-300,542` y `:536-548` | C4 completa: `:301-307,373-389,615-627` |
+| `%.8E` / `strtod` | `:374-378` / `:335-345` | `:451-455` / `:354-364` |
+| `#F` | `:514-526` | `:593-605` |
+| `#G`, `#GT` | `:475-485,527-535` | `:552-562,606-614` |
+| `#E`, `leerEntero` | `:486-502`, `:348-359` | `:563-579`, `:425-436` |
+| `#P`, `pinValido` | `:549-563`, `:365-372` | `:628-642`, `:442-449` |
+| `#V#` | `:201-222,380-398,448-456` | máscara `:202-223`, fecha `:458-475`, respuesta `:525-533` |
+| Sesión y bloqueo | `:72-74,297-298,318-322,457-474,549-557` | `:73-75,181-182,298,337-341,534-547,628-636` |
+| `#K#` | `:236-292,564-571` | `:236-292,643-650` |
+| `aplicarEcuacion` | `:228-233` | `:229-234` |
+| Literales de fábrica | `:33-46` | `:34-47` |
 
 ---
 
@@ -437,7 +470,11 @@ En un V3 de 2020, `#V#`, `e` y `6` disparan una medida (`gui.c:295`): la luz se 
 avisa al usuario antes de empezar. `@LEERV,BLA,1@` sólo se envía en el paso 4 y **ninguna otra trama
 con `@`** (en el V4.1, una trama con `@` y sin `LEERV` deja el equipo sin Bluetooth). CA: T-A08, T-B01,
 T-C03.
-**Decisión r1.1 sobre la desviación de la app: se mantiene este orden** (`#V#`, `e`, `6`,
+**[MOD r1.2] El párrafo siguiente queda RETIRADO (C-45).** Contradecía al propio RF-APP-03 [MOD
+18-sep], que por dato de campo prohíbe `e` a un equipo no identificado. El código hace `#V#`, `9`, `6`,
+`@LEERV,BLA,1@` (`Pruebas.java:247,281,289,297`, app 3.6.4), y eso es lo vigente. Se conserva como
+texto retirado:
+*Retirado:* **Decisión r1.1 sobre la desviación de la app: se mantiene este orden** (`#V#`, `e`, `6`,
 `@LEERV,BLA,1@`), y el código actual ya lo sigue (`Pruebas.java:243,275,283,291`); lo que decía `9` era
 el `README.md` de la app (C-09). Motivos para no usar `9` como segunda sonda: (1) `9` responde igual en
 las dos variantes de 2020, así que **no distingue "con `e`" de "sin `e`"**, que es lo que decide cómo
@@ -497,6 +534,17 @@ APTO o NO APTO, con el detalle de cada comprobación y un informe exportable (RF
   inversión: tolerancia ≥ max(suelo de resolución, 2·s) (RF-APP-27).
   *Texto r1.0:* «…con error relativo ≤ 1·10⁻⁶ (el formato de 7 cifras no permite exigir igualdad de
   bits, O-02).»
+- **[MOD r1.2]** Tolerancias vigentes, por medida y no por contrato: **`ULP_G = 4`** para `#G` frente a
+  fábrica o frente a otra lectura `#G`, y **`ULP_S = 8`** para `#G` tras `#S` frente a lo enviado
+  (`Ecuacion.java:92-93`, app 3.6.4). Motivo: `%.8E` de XC8 llega a 3 ulp y la ida y vuelta a 7
+  (RF-FW-22 r1.2); con 2 ulp un chip recién grabado saldría NO APTO (G4 pasó el 19-sep con 4). La
+  comprobación que decide es **por evaluación**: `#E` exacto contra la tabla de fábrica en los códigos
+  a fábrica (`Pruebas.java:375-393`) y `#E` en 5 puntos contra la curva enviada tras `#S`
+  (`AdminActivity.java:498-512`, ±1). La prueba 4 (coherencia) usa ahora una referencia con deriva entre
+  la `e` inicial y la final, resolución local y un estado INVÁLIDA cuando el equipo se movió
+  (`Coherencia.java:136-241`); la `e` inicial va precedida del disparo de asentamiento
+  (`Pruebas.java:434-438`, RF-APP-28). Falta la referencia "último juego escrito" en `CAL`.
+  *Texto r1.1:* «la app tiene que aceptar hasta 2 ulp».
 
 **RF-APP-08 — Tabla de fábrica.** La app lleva los 12 × 4 coeficientes y los 3 de temperatura de
 2020, copiados **del texto** de `ecuacionesCalibracion.c:3-42` y `gui.c:41-43`. Una prueba JVM los
@@ -556,6 +604,16 @@ dos IV; `patrones_certificados_P1-P31.csv`). Con grado 1 exige 3 niveles (RF-APP
 siendo "sólo verificar". La app lo dice bien (`Asistente.java:40`) y la SPEC r1.0 no (C-10). Resultado:
 **sólo `1` (blanco intenso) y `2` (amarillo intenso) son ajustables con P1-P31.**
 *Texto r1.0:* «…verde, azul y rojo tienen un solo nivel (sólo verificar)…»
+**[MOD r1.2]** Desde el 19-sep hay **20 patrones tipo I** (P32a-P50, RF-APP-31), así que "ninguno es
+de tipo I" ya no vale. La cobertura la calcula la app 3.6.4 **del catálogo**, no de una lista fija
+(`Asistente.java:74-118`): cada código usa los patrones de su color y de su clase (tipo I → opacas;
+II-XI → intensas, `:39-45`); grado máximo = niveles certificados distintos − 2, hasta 2; y si el rango
+certificado es estrecho (< 20 unidades de R o < 30 % del mayor, `:33-36,93-95`), sólo se verifica.
+Resultado con el catálogo actual: **ajustables `1` y `2` (grado 2), `8` (grado 2, cuatro niveles
+64-122) y `b` (grado 1, tres niveles 46-81)**; `7` (un nivel), `a` (dos), `c` (7-10, estrecho) y `d`
+(68-73, estrecho), sólo verificar. Esos umbrales de rango (20 y 30 %) **no salen de ninguna medida**.
+El aviso de mezcla de tipos (P-06) sigue (`Asistente.java:306-312`).
+*Texto r1.1:* «Resultado: sólo `1` (blanco intenso) y `2` (amarillo intenso) son ajustables con P1-P31.»
 
 ### 3.5 Asistente de calibración (sólo V3.6, sólo administrador)
 
@@ -573,6 +631,12 @@ propietario (C-27, P-09). Grado + 2 **niveles distintos** (no lecturas). Los pun
 **medias de lecturas válidas de un mismo método** (RF-APP-27). CA: T-A13, T-A14.
 *Texto r1.0:* «Rechaza el juego si la curva no es creciente y no negativa en el rango de `x` medido, o si
 pasa de 4000 en él.»
+**[MOD r1.2]** Además de C2, la app aplica **el mismo criterio que `#S` del firmware 3.6.1**
+(RF-FW-31: `R(x)` finito y en [0 ; 4000] para todo `x` entero de 600 a 4300, en `float32` y en el
+orden de 2020; `Asistente.java:222-241`, aplicado en `:350-353`). Si una parábola no lo cumple, prueba
+una recta con los mismos puntos y lo dice (`:354-366`). Esto evita mandar un `#S` que el firmware
+rechazaría. Dato: con las medidas del 19-sep, el ajuste de grado 2 del código `2` (opción C) **no
+cumple** el criterio (R(600) ≈ −60) y el de grado 1 sí (T-A41).
 
 **RF-APP-16 — Estado "como llegó".** Evalúa las ecuaciones actuales (leídas con `#G`) sobre las `x`
 medidas y anota la desviación de cada patrón. CA: T-A15.
@@ -588,6 +652,10 @@ restaura sola el estado anterior**: `#F,<k>#` si el anterior era el de fábrica 
 fábrica, RF-APP-18), o `#S` con los coeficientes anteriores; relee y lo anota. Lo mismo si `#S` responde
 `#ERR` o no responde y la relectura no es el estado anterior. CA: T-A32, T-C23, T-C28.
 *Texto r1.0:* «**Bloqueado por O-01** hasta que `#S` quepa en el límite de trama.»
+**[MOD r1.2]** Tras `#S`, la app relee con `#G` a **`ULP_S = 8`** (no 1·10⁻⁶ relativo ni 1 ulp) y
+comprueba **`#E` en 5 puntos** contra la curva enviada (±1); si una de las dos no cuadra, restaura
+(`AdminActivity.java:468-556`, app 3.6.4). Antes de enviar, aplica el criterio de RF-FW-31
+(`AdminActivity.java:421`).
 
 **RF-APP-18 — Volver a fábrica.** Por código o todos, con `#F` (nunca reescribiendo los valores de
 fábrica con `#S`, RF-FW-05). CA: T-C25.
@@ -659,41 +727,116 @@ una trama de 50 bytes con la versión sin detectar o V3 2020 se rechaza antes de
   **≥ max(suelo, 2·s)**, con `s` la del patrón y método en cuestión.
 CA: T-A11, **T-A35** (JVM: media sin mezclar métodos; tolerancia ≥ max(suelo, 2·s)), T-B04.
 
-### 3.8 Estado de la app frente a cada RF-APP [NUEVO r1.1]
+### 3.7 ter Requisitos nuevos en la revisión 1.2 (dato de campo del 19-sep-2026)
 
-Leído entre las 19:52 y las 20:05 del 18-sep-2026 (app en cambio; 45 pruebas JVM en verde a las 19:59
-sobre las clases compiladas a las 19:55; APK en el árbol md5 `6cc455d3…`, 19:56, no versionado).
-Rutas relativas a `03_App_Movil/RetroV36/app/src/main/java/com/dpi/retrov36/`.
+Fuente de las cifras de esta sección: `07 pruebas/19092026_0900/p29_p24_p23_p5/medidas_SLV-002_20260919_091213 (3).csv`
+(153 lecturas con `e`, 17 series de 9 disparos, SLV-002 con la V3.6 del 18-sep) y
+`medidas_SLV-002_20260919_085924 (1).csv` (9 series de 3). Análisis hecho en este trabajo; los CSV no
+se han tocado.
 
-| RF | Estado | Evidencia en el código | Falta |
-| :--- | :--- | :--- | :--- |
-| RF-APP-01 | Implementado (r1.1) | `EnlaceSerie.java:33,157` (UUID, socket inseguro); `Cliente.java:65-74,202-218` | T-A07 (sin prueba JVM), T-B06 |
-| RF-APP-02 | Implementado (r1.1) | `Receptor.java:14-15,59`; `Cliente.java:68-69,147-200` | T-B06 |
-| RF-APP-03 | Implementado | `Pruebas.java:240-301` (`detectar`) | README de la app (C-09); T-A08 completa |
-| RF-APP-04 | Parcial | `Fabrica.java:32-60` (color, intensa/opaca); sin mapa tipo I-XI → código | Aplazado con PAR |
-| RF-APP-05 | No (aplazado r1.1) | Sólo prueba 3: `Pruebas.java:401-433` | Fase de campo |
-| RF-APP-06 | Parcial (r1.1) | `LecturaX.java:39-60`; `Medida` guarda la `x` y el método. Texto de `::0`: "saturado o negativo" (`LecturaX.java:52-55`) | Texto "saturación" con `e`; aviso de gatillo |
-| RF-APP-07 | **Parcial** | Pruebas 4 y 5: `Coherencia.java`, `Pruebas.java:307-398`. Tolerancia 1 ulp: `Ecuacion.java:290-300`, `Pruebas.java:333`; `#E` esperado con lo leído: `Pruebas.java:379` | 2 ulp mientras no pase T-A23; `#E` contra fábrica |
-| RF-APP-08 | Parcial | 48 coeficientes: `Fabrica.java:62-95` + `FabricaTest`. Los 3 de temperatura no están en `Fabrica` | Añadir los 3 y compararlos (T-A01) |
-| RF-APP-09 | **Parcial** | `Repetibilidad.java:13-14`: 5 lecturas, SD ≤ 10 | Pasar a 10 lecturas |
-| RF-APP-10 | **Parcial** | `Ecuacion.java:275-287` (float32, orden 2020); la inversión usa `double`/Horner: `Inversion.java:52`, `Ecuacion.java:245-267` | Invertir con float32 (C-21) |
-| RF-APP-11 | Parcial | Bloqueante en `Asistente.validarForma` (`Asistente.java:118-147`); sin informe de las 12 curvas de fábrica | Informe informativo |
-| RF-APP-12 | Parcial | `#V#` y `#GT#`: pruebas 2 y 5. Sin lectura de oscuro guiada; no se comprueba `@` en lo recibido (sólo en lo enviado, `Tramas.java:43-45`) | Oscuro; `@` en recepción (C-31) |
-| RF-APP-13 | Parcial | `MedidaActivity.java:41-50` (N lecturas por patrón, 3 por defecto) | 10 + 3×5 recolocaciones, oscuro, hora y temperatura |
-| RF-APP-14 | Implementado | `Asistente.java:26-56` (cobertura), `:190-196` (mezcla de tipos, P-06) | — |
-| RF-APP-15 | Parcial | `Ajuste.java:41-60` (grado 1-2, grado + 2 distintas); `Asistente.java:99-147,186-189` (C2) | Con y sin oscuro; comparación con repetibilidad; no mezclar métodos |
-| RF-APP-16 | Implementado | `Asistente.java:216-228` (R actual y desvío por patrón) | — |
-| RF-APP-17 | Implementado (r1.1) | `AdminActivity.java:395-503` (confirmación, copia, `#S`, relectura, C3) | Tolerancia de C-12; T-A32 |
-| RF-APP-18 | Implementado | `AdminActivity.java:505-520` | — |
-| RF-APP-19 | Implementado (r1.1) | `AdminActivity.java:242-330` | T-A19 (sin prueba JVM) |
-| RF-APP-20 | Implementado | `Registro.java`; PIN oculto: `Hex.ocultarPin` (prueba `elPinNoLlegaAlRegistro`) | — |
-| RF-APP-21 | **No** | Sin acta | Antes de P8 |
-| RF-APP-22 | Implementado | `Sesion.java:209-230`; copia antes de escribir: `AdminActivity.java:470-471,515` | — |
-| RF-APP-23 | Implementado | `Tramas.java:228-244` sin uso en la interfaz | — |
-| RF-APP-24 | Implementado | `BotonesActivity.java:81-164`; `Tramas.java:246-297` | T-C33 |
-| RF-APP-25 | Parcial | `LineaBase.java` (12 códigos, oscuro, `9`) | `9` sólo 3 veces (`LineaBase.java:27`); etiqueta "T-B03" donde es T-B02 (C-18) |
-| RF-APP-26 | Parcial | Por construcción: las tramas largas sólo se envían en V3.6; `Cliente.pedir` no comprueba longitud (`Cliente.java:147-160`) | Comprobación explícita; T-A34 |
-| RF-APP-27 | Parcial | `Asistente.puntos` (`Asistente.java:74-97`) no filtra por método; tolerancias fijas: `Coherencia.java:22`, `Repetibilidad.java:14` | Filtro por método; tolerancias ≥ max(suelo, 2·s) |
+**RF-APP-28 — Descarte de disparos de asentamiento [NUEVO r1.2].** Antes de cada serie de lecturas
+(medida de patrones, `e` inicial de la prueba 3, repetibilidad) la app hace **N disparos que no
+cuentan**: van al registro de tramas marcados como descartados y no entran en la media, en el CSV ni en
+el ajuste. Motivo, medido: en **17 de 17 series** el primer disparo sale bajo, de 6 a 40 cuentas por
+debajo de la mediana de los disparos 2-9 (17,3 de media). **No es sólo el primero**: media de
+`x − mediana(2-9)` por posición, −17,4 · −5,1 · −3,5 · −0,8 · +1,9 · +3,4 · +1,5 · +2,4 · +3,2; el
+segundo disparo sigue por debajo en 16 de 17 series. El efecto reaparece tras pausas de 8 s o más entre
+series (P7, segunda serie). La causa **no está medida**: el filtro de la medida se reinicia en cada
+disparo (`measurement.c:241`) y la luz se enciende 400 ms antes de muestrear (`:225-226`), así que no es
+estado arrastrado por el IIR; la hipótesis es térmica (LED o sensor). **N se fija con T-C38**; hasta
+entonces vale el de la app 3.6.4, **N = 1** por defecto, configurable de 0 a 5 (`Sesion.java:59`,
+`MedidaActivity.java:134-144`, `LecturaX.java:43-48`, `Pruebas.java:434-438`), sabiendo que con N = 1
+queda un sesgo del orden de 5 cuentas en el primer disparo que cuenta. CA: T-A38 (JVM), T-C38 (equipo).
+
+**RF-APP-29 — Disparo descolgado [NUEVO r1.2].** Dentro de una serie, una lectura que se separa de la
+mediana de la serie más de **max(30 cuentas, 5 · 1,4826 · MAD)** se marca "descolgada", **no entra en
+la media** y se informa con su valor. Si hay más de una en la serie, la serie entera se marca para
+repetir. Motivo, medido: en P7 (serie de las 09:19:26) el noveno disparo dio 3031 con una mediana de
+3230 (−199); en las otras 16 series la mayor separación de la mediana fue de 13 cuentas y la MAD, de
+1,5 a 7,5. El umbral de 30 no sale de ninguna norma: es ~2 veces la mayor separación normal observada.
+La app 3.6.4 **no lo hace** (`Asistente.java:136-158` promedia todas las lecturas válidas); la 3.6.5 sí, en la campaña
+(`Veredicto.descolgados`), con otra regla (C-46). CA: T-A39.
+El suelo de 30 cuentas **importa**: la regla sin él, 5 · max(1,4826 · MAD ; 1,5), que es la de
+`Veredicto` en la app 3.6.5 (commit `ff66f93`, `K_MAD = 5`, `SIGMA_MIN = 1.5`), marca como descolgado el 2004 de P2 (09:17:21: mediana 2016, MAD 1,5, umbral 11,1),
+que es el primer disparo tras el de asentamiento y no un fallo del operador (RF-APP-28). C-46.
+
+**RF-APP-30 — "¿Es este el patrón?" [NUEVO r1.2].** Si un patrón ya tiene lecturas en la sesión y la
+mediana de la serie nueva se separa de la anterior más de **100 cuentas de `x`**, la app no la acepta
+sin confirmar: "¿es P24?". La 3.6.5 (`Veredicto`) avisa por otros dos criterios: orden de los
+certificados dentro del mismo color y tipo (3 %) y parecido (±1 %) con otro patrón ya medido; con los
+XI desordenados (C-39), el primero avisará también en series buenas. Motivo, medido: P24 (593, IV) dio 2048-2076 y, 30 s después, 2438-2453
+(Δ ≈ 370); recolocar el mismo patrón movió 6-58 cuentas en P20, P21, P23, P5 y P7. El umbral de 100 es
+provisional. Qué serie es P24 queda abierto (C-40). La app 3.6.4 **no lo hace**. CA: T-A40.
+
+**RF-APP-31 — Patrones tipo I [NUEVO r1.2].** El catálogo de la app incluye los 20 patrones tipo I
+entregados por Diego el 19-sep (P32a-P50: 1 blanco, 4 amarillos, 2 verdes, 3 rojos, 6 azules, 4
+naranjas), que calibran las ecuaciones **opacas** (`7`, `8`, `a`-`d`), y la cobertura por código sale
+de él (RF-APP-14 r1.2). **P32 está duplicado** en la lista original (P32a azul 9 y P32b naranja 68):
+pendiente de Diego (C-41). Ninguno se ha medido todavía. Con las curvas de fábrica, verde (6-7) y azul
+(7-10) caerían hacia x ≈ 518-589, por debajo del 600 de `#S` (RF-FW-31) y en el oscuro de la V3.6
+(x ≈ 575, acta de SLV-002, G4); es estimación, no medida. Evidencia en la app: 20 filas en
+`assets/patrones_certificados_P1-P31.csv` (commit `090c84c`); `Asistente.java:39-45`. CA: T-A12,
+T-C39.
+
+**RF-APP-32 — Modo Campaña [NUEVO r1.2].** Pedido por Diego el 19-sep-2026. **Ningún documento lo
+especificaba hasta esta revisión.** Implementado mientras se escribía, en la app **3.6.5** (commit
+`ff66f93`, clases `Campana`, `Campanas`, `CampanaActivity`, `Cola`, `Veredicto`, `Importador`, `Csv`;
+prueba `CampanaTest`; el commit declara 68 pruebas JVM, **no ejecutadas en este trabajo**). El código
+sigue cambiando: se cita **por clase y método, no por línea**. Estado frente a los seis puntos, leído en
+`ff66f93`: 32.1 hecho (`Campanas.abrir`, `Campana.esDeEsteEquipo`, `CampanaTest.dosEquiposNoCompartenSeries`);
+32.2 hecho (diario de eventos de sólo añadir, cabecera de la clase `Campana`); 32.3 retoma, pero **no
+hay cierre explícito de campaña** (el único `cerrar` es el de una serie); 32.4 ZIP hecho
+(`Campanas.exportar`) **sin md5** (Grep de `md5` y `MessageDigest` en la app: sin resultados, dos
+herramientas); 32.5 hecho (`ACTION_SEND` con un `EXTRA_STREAM` en `CampanaActivity`); 32.6 hecho
+(`Importador`, `CampanaTest.elImportFiltraPorMac`, `importarCsvDeHoySinDuplicados`). La calibración que se hace con lo medido (asistente, modo
+superadministrador, informe PDF) está en [`SPEC-Calibracion-V3.6.md`](SPEC-Calibracion-V3.6.md), en
+redacción por otro agente: aquí no se duplica.
+
+Antecedentes que motivan el requisito, medidos: (1) la carpeta de la campaña del 19-sep tiene 32
+ficheros para 4 sesiones, porque cada vez que se compartía el móvil guardaba otra copia con `(1)`,
+`(2)`…, prefijos crecientes del mismo fichero y con sufijos que no siguen el orden del tiempo (L-21 de
+`D:\IT\P_RetroVertical_V4.6\APRENDIDO-DE-V3.6.md`; aquí se comprobó que
+`medidas_SLV-002_20260919_091213 (5).csv` y `…091213.csv` son prefijos de
+`p29_p24_p23_p5/…091213 (3).csv`). (2) La app de campo reescribe y trunca el fichero entero en cada
+guardado (RF-08 de `ROADMAP-MEJORAS-App.md`, `archivos.java:16-28` de la app de campo). (3) Hoy la app
+V3.6 comparte registro y CSV con `ACTION_SEND_MULTIPLE` (`Base`, método de compartir).
+
+Flujo, común a los seis puntos: la app pide un patrón cada vez ("Coloque P27"), espera OK, hace el
+asentamiento (RF-APP-28) y **9 disparos**, da el veredicto y pasa sola al siguiente. Un patrón se puede
+saltar y queda como saltado, no como medido. Veredicto antes de guardar: descolgados (RF-APP-29), **s >
+15 cuentas** sin descolgados → REPETIR, y "¿es este el patrón?" (RF-APP-30), con tres salidas:
+**Repetir**, **Aceptar con nota** (nota obligatoria) y **Era otro patrón** (reasigna la serie y lo
+anota).
+
+| # | Requisito | Criterio de aceptación (medible) | Prueba |
+| :---: | :--- | :--- | :--- |
+| 32.1 | **Identificación.** Una campaña es de **un equipo**: clave = **MAC** del enlace + **serie tecleada**. La MAC manda (es lo único que no teclea nadie). Casos: (a) MAC y serie coinciden con una campaña abierta → se retoma; (b) **misma serie y otra MAC** → no se añade nada a la campaña de esa serie; la app avisa "serie X ya tiene campaña con la MAC Y" y sólo ofrece campaña nueva; (c) **misma MAC y otra serie** → aviso y confirmación explícita; si se confirma, campaña nueva con la serie nueva y una nota que enlaza con la anterior; nunca se fusionan. En código: `Campanas.abrir(ctx, serie, mac)`, `Campana.esDeEsteEquipo(mac)` | (a) retoma 1 de 1; (b) 0 eventos añadidos al diario de la campaña existente (tamaño en bytes igual antes y después) y 1 aviso; (c) 0 eventos añadidos sin confirmación; tras confirmar, 2 diarios distintos | T-A44 (JVM) |
+| 32.2 | **Diario de sólo añadir.** Una línea CSV por evento (`SERIE`, `DISPARO`, `DESCARTE`, `VEREDICTO`, `REASIGNA`, `ELIGE`; lista de la clase `Campana`), **escrita y volcada a disco en cada disparo**, nunca reescrita ni truncada (lo contrario de RF-08). Nada se borra: reasignar o descartar son eventos nuevos. Al leer, una línea incompleta (corte a mitad) se cuenta y se salta, y no invalida las demás (`Campanas.lineasMalas()`) | Tras cada disparo, el diario crece y el anterior es **prefijo byte a byte** del nuevo (100 disparos simulados, 100 de 100). Cortando la escritura en un byte al azar: se pierde como mucho el último evento y `lineasMalas()` = 1. Ninguna operación de la campaña abre el diario en modo escritura sin añadir | T-A47 (JVM) |
+| 32.3 | **Retomar y cerrar.** Al conectar, la app abre la campaña **abierta** de esa MAC y serie (32.1); si hay más de una abierta de la misma clave, la más reciente, y lo dice. Se reanuda en el primer patrón sin serie aceptada ni saltada. Se **cierra** sólo con una acción explícita "Cerrar campaña", que escribe un evento de cierre en el diario; una campaña cerrada no admite más disparos (se abre otra). **Hueco:** la lista de eventos de `Campana` no tiene evento de cierre a las 10:30 | Matar la app tras la serie 3 de 5 y reabrir: reanuda en el patrón 4 con las 3 series (diario idéntico byte a byte). Cerrar y reconectar: campaña nueva, 0 eventos añadidos a la cerrada | T-A48 (JVM); T-C40 (equipo) |
+| 32.4 | **ZIP.** Un solo fichero `campana_<serie>_<AAAAMMDD-HHMMSS>.zip` (si existe, sufijo `_2`, `_3`…, como `Campanas.exportar`), con exactamente: `campana.csv` (series con veredicto y nota), el **diario**, `pruebas_<serie>_<mac>.txt` (resultados de las Pruebas), el **registro de tramas de todas las conexiones** de la campaña y `resumen.txt`. `resumen.txt` lleva el md5 de cada una de las otras piezas; el **md5 del ZIP** se anota en el registro técnico y se muestra al operador | Un ZIP de una campaña simulada con 2 conexiones: 5 entradas con esos nombres; los md5 de `resumen.txt` coinciden con los de las piezas extraídas; el registro incluye cada TX/RX de las 2 conexiones; el md5 mostrado = md5 del fichero | T-A45 (JVM) |
+| 32.5 | **Compartir una vez.** Un único botón "Exportar campaña" genera el ZIP y lo entrega por el **menú Compartir de Android** con `ACTION_SEND` y **un solo** adjunto; no hay compartir por patrón ni por sesión en el flujo de campaña. **Esto cierra P-03** (el medio de entrega es el menú del sistema, sin credenciales en la app) y evita L-21 | En la interfaz de campaña hay 1 acción de compartir; el `Intent` lleva 1 URI con extensión `.zip`; exportar dos veces seguidas da dos ZIP con nombres distintos (sufijo), nunca copias `(1)` | T-A46 (JVM del `Intent` y del nombre); revisión de la interfaz |
+| 32.6 | **Importar lo previo.** Importa CSV de medidas anteriores (14 columnas de `Medida`) **filtrados por MAC**, y **sin duplicar** las copias-prefijo de L-21 (se queda con la más larga y comprueba que las demás son prefijos) | Importar los 16 CSV de `07 pruebas/19092026_0900/` en una campaña de MAC `00:21:13:05:19:3B`: entran **180 lecturas** (153 de la sesión de las 09:12 y 27 de la de las 08:59), no la suma de los ficheros; con otra MAC, 0 | T-A49 (JVM) |
+
+Casos de aceptación de extremo a extremo (T-C40, equipo): una campaña de 5 patrones en SLV-002 con un
+cierre forzado de la app a mitad, un patrón saltado y una serie reasignada; exportar; el ZIP contiene
+lo descrito y su md5 coincide con el anotado.
+
+### 3.8 Estado de la app frente a cada RF-APP [MOD r1.2]
+
+**La tabla de la r1.1 se sustituye por [`MATRIZ-SPEC-codigo-V3.6.md`](MATRIZ-SPEC-codigo-V3.6.md)
+§2**, leída contra el commit `090c84c` (RTV 3.6.4), con 56 pruebas JVM en verde ejecutadas en este
+trabajo. Recuento de RF-APP-01…27: 11 cumplen, 12 parciales, 3 no (RF-APP-05 aplazado, RF-APP-09 con 5
+lecturas, RF-APP-21 sin acta) y 1 contradice (RF-APP-06: `::0` con `e` rotulado "saturado o negativo",
+`LecturaX.java:64`). De los nuevos (28-32), los cinco parciales: 28-31 frente a `090c84c` y a `ff66f93` (3.6.5), y 32 frente a `ff66f93`.
+
+Citas de la tabla r1.1 que se han movido (izquierda, app de las 20:05 del 18-sep; derecha, `090c84c`):
+`Ecuacion.java:275-287` → `:56-68` (emulación `float32`); `Ecuacion.java:290-300` → `:92-107`
+(tolerancias e igualdad); `Ecuacion.java:245-267` → `:26-28,41-48` (`double`, Horner);
+`Inversion.java:52` → `:58`; `Pruebas.java:243,275,283,291` → `:247,281,289,297`;
+`Pruebas.java:307-398` → `:309-419`; `Pruebas.java:401-433` → `:421-475`;
+`AdminActivity.java:395-503` → `:391-556`; `AdminActivity.java:442-495` → `:468-556`;
+`Asistente.java:26-56` → `:74-118`; `Asistente.java:99-147` → `:160-241`; `Tramas.java:228-244` →
+`:238-254`.
 
 ---
 
@@ -763,6 +906,10 @@ de pasa o falla, quién lo ejecuta y cómo, orden real de la campaña y estado d
 [`TDD-V3.6.md`](TDD-V3.6.md), que **manda sobre las tablas de esta sección**. Estas tablas se conservan
 como texto r1.0. Cambios de la r1.1 respecto a ellas:
 
+- **[r1.2]** Pruebas nuevas de la revisión 1.2: T-A38 (asentamiento), T-A39 (descolgado), T-A40 (¿es
+  este el patrón?), T-A41 (curva C frente al límite de `#S`), T-A42 a T-A49 (modo Campaña), T-C37
+  (regrabación 3.6.0 → 3.6.1), T-C38 (N de asentamiento), T-C39 (opacas con tipo I) y T-C40 (campaña de
+  extremo a extremo). Detalle en `TDD-V3.6.md` §3 bis.
 - **Pruebas nuevas:** T-A27 (`#E` en simulador), T-A28 (G1: commit y md5), T-A29 (memoria en el
   `.map`), T-A30 (límites de `#ST`, C4), T-A31 (órdenes de administración en simulador), T-A32
   (restauración automática, C3), T-A33 (`#K#` en simulador), T-A34 (longitud de petición, RF-APP-26),
@@ -896,6 +1043,22 @@ T-C26, T-C31, T-C32, T-C35) sólo con C1-C5 cumplidas. Orden detallado en `TDD-V
 Veredicto de P2, 18-sep-2026 19:48: **APROBADO CON CONDICIONES.** Estado de cada condición a las
 20:05 del mismo día. En `ROADMAP.md`, G1-G5 están en la puerta P7 y C1-C5 en la puerta **P7-bis**
 ("Condiciones para calibrar"); esta sección les da criterio de aceptación y prueba.
+
+**[MOD r1.2] Estado a las 10:30 del 19-sep-2026.** Las tablas de abajo son las de la r1.1 (20:05 del
+18-sep) y se conservan como texto anterior.
+
+| Cond. | Estado r1.2 | Evidencia |
+| :--- | :--- | :--- |
+| G1 | **Cumplida** para la 3.6 (`f75ff88`) y la 3.6.1 (`8860445`), salvo que `CAMBIOS` no cita `8860445` | `.gitattributes` con `*.hex -text` (`1a57249`); md5 del blob de `8860445` = `8736c05d…` = declarado |
+| G2 | **Cumplida** | `pruebas/T-A20.md` (C-19 cerrada): 786 432 comparaciones, 0 diferencias; repetida con la 3.6.1 (`CAMBIOS` §7.4); y `#E` 60/60 exacto en SLV-002 |
+| G3 | **Ya no realizable** tal como estaba escrita | El firmware original se borró el 18-sep a las 20:24. Quedó: T-B11 (barrido), T-B12 (ICSP) y 8 blancos por pantalla (acta) |
+| G4 | **Cumplida con la V3.6 del 18-sep** (19-sep, 08:53, app 3.6.2) | Acta: `#V,3.6,2026-09-18,DEF,0000#`; 12 `#G` y `#GT#` iguales a fábrica a 4 ulp; `#E` 60/60. **Con la 3.6.1 grabada a las 09:36, pendiente** (T-C37) |
+| G5 | Parcial | Esta revisión; quedan C-36 a C-47 |
+| C1 | **No cumplida por la letra; contradicción abierta C-47** | T-A23 medida (ida y vuelta hasta 7 ulp); la app tolera 8 y verifica con `#E` tras `#S` (RF-APP-07 r1.2). Si eso sustituye a C1 lo decide la revisión de arquitectura |
+| C2 | Cumplida en la app, más el criterio de `#S` | `Asistente.java:179-241,347-353` (3.6.4); C-27 y C-42 abiertas |
+| C3 | Implementada | `AdminActivity.java:468-556` (3.6.4); T-A32 sin prueba automática |
+| C4 | **Cumplida en el firmware 3.6.1** (`calibracion_v36.c:621`), grabada en SLV-002 el 19-sep a las 09:36; **sin verificar en equipo** (ni `#V#` leído tras la grabación, C-36, ni T-C32) | T-A30 pasa en simulador. La app no ofrece `#ST` y su `tramaST` sólo limita `X_0` (`Tramas.java:240-254`) |
+| C5 | Parcial | `#E` exacto en SLV-002 (prueba 5, 60/60). T-C05 completa y T-C23 pendientes |
 
 ### Para grabar (G1-G5)
 
@@ -1098,6 +1261,79 @@ Las que tienen decisión la llevan; las demás quedan abiertas.
 - **C-35 — Destino de la V4.6.** §8 r1.0 mandaba la V4.6 al repositorio `P_RetroReflectometro_Vertical`;
   es un proyecto propio (`D:\IT\P_RetroVertical_V4.6\`). **Decidido:** §8 r1.1.
 
+**[NUEVO r1.2] Estado de las anteriores y contradicciones nuevas (19-sep-2026, 09:30-10:30).**
+
+Cambian de estado:
+- **C-01 — con evidencia, sigue abierta.** El acta de SLV-002 muestra, por pantalla y con las mismas
+  fórmulas, 80-90 cuentas de `x` **menos** con la V3.6 en x = 1700-2300 (P3, P2, P28, varias tandas);
+  en la zona alta no es concluyente. Apunta a que la adquisición del original no era la del fuente
+  2020, pero ya no se puede comprobar con `e` (original borrado). T-C08 no se puede hacer como estaba
+  escrita.
+- **C-12 — cerrada por medida.** Tolerancias vigentes `ULP_G = 4`, `ULP_S = 8` (RF-APP-07 r1.2). El
+  contrato (O-02, 1 ulp) no es alcanzable con XC8 2.10: se anota en `PROTOCOLO-V3.6.md` §4 ter.
+- **C-19 — cerrada.** `pruebas/T-A20.md` existe.
+- **C-21 — sigue abierta.** `Inversion.java:58` usa `respuestaFirmware` (`double`, Horner) en la 3.6.4.
+- **C-30 — con evidencia, sigue abierta.** Ver RF-FW-20 r1.2.
+- **C-34 — cerrada en el firmware.** La 3.6.1 aplica C4 completa (`calibracion_v36.c:620-621`). Sin verificar en equipo.
+
+Nuevas:
+- **C-36 — Qué firmware lleva SLV-002.** El encargo de esta revisión, `ROADMAP.md` y `CAMBIOS-V3.6.md`
+  (cabecera) dicen la V3.6 del 18-sep. El commit `869d3c6` y
+  `01_Firmware/lecturas_equipos/SLV-002/grabacion_V3.6.1_2026-09-19.log` registran otra grabación a
+  las 09:36:15 con memoria de programa hasta `0x1d07f`, que es el tamaño del `.hex` de la 3.6.1 (último
+  byte de datos `0x1d009`) y no el de la 3.6 (`0x1bcad`). El registro no guarda el md5 del fichero
+  cargado. **Abierta hasta que `#V#` responda** `…,2026-09-19,…` (T-C37).
+- **C-37 — La versión no distingue 3.6 de 3.6.1.** `#V#` responde `3.6` en las dos
+  (`calibracion_v36.h:16`); la 3.6.1 sólo se distingue por la fecha de compilación (`CAMBIOS` §6) y la
+  app decide "3.6.1" si la fecha es ≥ 2026-09-19 (`Sesion.java`, `limitesS()`). Una recompilación de la
+  3.6 posterior a esa fecha pasaría por 3.6.1. Cambiar la cadena exige tocar el firmware: decide el
+  propietario. Abierta.
+- **C-38 — Primer disparo: ¿deriva o asentamiento?** La prueba 4 de la 3.6.3 interpretaba la
+  diferencia entre la `e` inicial y la final como deriva (`Coherencia.java:16-18,140,217`; acta:
+  3004 → 3021 → 3023). Con los datos de RF-APP-28, la `e` inicial es un primer disparo y sale baja por
+  sí sola. La 3.6.4 antepone un disparo de asentamiento (`Pruebas.java:434-438`), pero la causa física
+  no está medida y un disparo no basta del todo. Abierta hasta T-C38.
+- **C-39 — Los XI no se ordenan por su certificado.** Blanco XI: P4 (828) → x 3361, P7 (768) →
+  3231-3237, P6 (772) → 3115, P1 (762) → 3071. Amarillo XI: P20 (782) → 2798-2804, P23 (714) →
+  2723-2757, P5 (740) → 2526-2584, P9 (705) → 2556, P8 (721) → 2518, P10 (680) → 2462. Medias de los
+  disparos 2-9 (o 2-3), sin el descolgado de P7. Hipótesis de orientación del patrón, **sin medir**.
+  Con la opción C, el residuo XI calculado en este trabajo es de −7 a +5 % en amarillo y de −3 a +3 %
+  en blanco. Abierta.
+- **C-40 — P24 tiene tres candidatas** (RF-APP-30). (a) Sesión de las 08:59: dos series etiquetadas
+  P24, 2048-2076 y 2438-2453 (Δ ≈ 370) en 30 s. (b) La carpeta `07 pruebas/19092026_0900/p29_p24_p23_p5/`
+  se llama "P29, P24, P23, P5", pero su CSV etiqueta la serie de las 09:23:40 como **P20** (mediana 2805,
+  igual que el P20 de las 09:15, 2798). Otros amarillos IV dan 1470-1724 y los IX (573-583) 2096-2202.
+  Abierta: no se elige cuál es P24 ni si la serie de las 09:23:40 es P20 o P24.
+- **C-41 — P32 duplicado** (RF-APP-31). Abierta: la decide Diego.
+- **C-42 — Tres rangos de `x` "de uso".** C2 de la app: 200-4400 (`Asistente.java:161-162`); `#S` del
+  firmware: 600-4300 (`calibracion_v36.c:316-317`; el 600 "no sale del código", `:314-315`); inversión
+  de la app: 180-4400 (`Inversion.java:20,26`). Y el oscuro de la V3.6 en SLV-002 está en x ≈ 575
+  (acta, G4). La app aplica hoy las dos primeras a la vez, así que no escribe nada que el firmware
+  rechace; pero qué rango es el de uso, y si el 600 deja fuera a los tipo I oscuros (RF-APP-31), no
+  está decidido. Abierta (P-12).
+- **C-43 — Umbrales de cobertura sin medida.** RF-APP-14 r1.2: "rango estrecho" = < 20 unidades de R
+  o < 30 % (`Asistente.java:33-36`). Deciden que `c` y `d` no se ajusten. No salen de ningún dato.
+  Abierta.
+- **C-44 — T-A23 "cerrada".** El encargo de esta revisión la da por cerrada con la 3.6.1. Como
+  **medida** lo está (`CAMBIOS` §7.2); como **criterio** (0 ulp, C1) falla. Se escribe así en la TDD.
+- **C-46 — Regla del disparo descolgado.** RF-APP-29 pide max(30 cuentas, 5 · 1,4826 · MAD); la de
+  `Veredicto` de la 3.6.5 (`ff66f93`) es 5 · max(1,4826 · MAD ; 1,5) sin suelo de 30, y con
+  los datos del 19-sep marca el 2004 de P2 (umbral 11,1), que es asentamiento, no un descolgado. No se
+  elige por escrito: se cierra con T-A39 sobre las 17 series literales.
+- **C-47 — C1 frente al rodeo de la app. Para la revisión de arquitectura; no se decide aquí.**
+  *Lado C1* (condición de P2, 18-sep 19:48): ida y vuelta **exacta** texto → `float` → texto (0 ulp),
+  T-A23. Medido con la 3.6.1: hasta 5 ulp en simulador y 7 con la emulación validada (`CAMBIOS` §7.2);
+  `%.8E` solo, hasta 3. Motivo de C1: que `#G` tras `#S` pruebe que la EEPROM tiene lo enviado.
+  *Lado de la app* (3.6.4 y 3.6.5): `ULP_S = 8` (`Ecuacion.java:93`, máximo medido + 1) y, tras cada
+  `#S`, `#E` en 5 puntos contra la curva enviada con ±1 cuenta, que compara enteros sin pasar por texto,
+  y restauración si algo falla (`AdminActivity.java:498-556`). Lo que el rodeo **no** cubre: un error de
+  hasta 7 ulp en un coeficiente entre los 5 puntos de `#E` (se estima despreciable frente a 1 cuenta,
+  **sin medir**) y la dependencia de que la emulación de XC8 siga siendo la cota. Alternativa: la
+  conversión exacta propia en el firmware (P-10), que obliga a regrabar.
+- **C-45 — RF-APP-03 contra sí mismo.** El texto [MOD 18-sep] prohíbe `e` y pone `9` como segunda
+  sonda; el párrafo "Decisión r1.1" mantenía `e`. **Decidido:** manda el [MOD 18-sep] y el código
+  (`Pruebas.java:247-297`); el párrafo queda retirado.
+
 ---
 
 ## 10. Preguntas abiertas para el propietario
@@ -1108,6 +1344,9 @@ Las que tienen decisión la llevan; las demás quedan abiertas.
   se corrige alguno aceptando que cambia el comportamiento?
 - **P-03 — Correo:** ¿se replica el envío SMTP con credenciales en el código, o se entrega el CSV por
   el menú de compartir de Android?
+  **[MOD r1.2] Cerrada por RF-APP-32.5:** en la V3.6 se entrega **un ZIP por campaña por el menú
+  Compartir de Android**, sin credenciales en la app. El envío SMTP de la app de campo (PAR-16) no se
+  replica en la V3.6.
 - **P-04 — Umbrales de APTO:** repetibilidad admisible; se proponen tras T-B04.
 - **P-05 — Tipo I:** sin patrones de tipo I, ¿se dejan las 6 curvas opacas en fábrica?
 - **P-06 — Una curva intensa para IV, IX y XI:** en SLV-002 el blanco XI sale +2-3 % y el IV y IX
@@ -1122,6 +1361,18 @@ contra qué tipo se ajusta. P-08: `ROADMAP.md` P7 dice que no hay placa de repue
 SLV-002.
 
 - **P-09 — Letra de C2 (C-27):** ¿un negativo por debajo de la `x` mínima medida bloquea o sólo avisa?
-- **P-10 — Conversión exacta (C1):** ¿se añade al firmware antes del commit de G1 (una sola grabación)
+- **P-10 — Conversión exacta (C1):** **[r1.2]** ahora ligada a C-47, que decide la revisión de arquitectura. ¿Se añade al firmware antes del commit de G1 (una sola grabación)
   o después (dos grabaciones y T-A20 dos veces)?
 - **P-11 — Semántica de `CAL` (O-12):** ¿se cambia el contrato a la del código?
+
+**[NUEVO r1.2]** **P-06 contestada** (Diego, 19-sep-2026, `ROADMAP.md`): **opción C**, compromiso XI e
+IV/IX en los códigos `1` y `2`, por mínimos cuadrados con todos los patrones y sin ponderar por tipo;
+el acta declara el error residual de cada tipo. Preguntas nuevas:
+
+- **P-12 — Rango de uso de `x` (C-42):** ¿200-4400, 600-4300 u otro? ¿Se acepta que los tipo I oscuros
+  (verde, azul) queden por debajo del límite de `#S`?
+- **P-13 — Asentamiento (C-38):** ¿cuántos disparos se descartan? Propuesta: el N que dé T-C38.
+- **P-14 — P24 y P32 (C-40, C-41):** ¿cuál de las dos series es P24 y qué patrones son P32a y P32b?
+- **P-15 — Cadena de versión (C-37):** ¿`#V#` debe distinguir 3.6 de 3.6.1 (y de la 3.6.2 en obra)?
+- **P-16 — Grado de la curva C del código `2`:** con los datos del 19-sep, grado 2 no cumple el
+  límite de `#S` y grado 1 sí (T-A41). ¿Se acepta grado 1?

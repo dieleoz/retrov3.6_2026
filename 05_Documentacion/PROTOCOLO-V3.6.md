@@ -1,7 +1,12 @@
 # Protocolo Bluetooth del firmware V3.6 — contrato entre firmware y app
 
-**Estado:** especificación, 18-sep-2026. **Nada implementado ni probado todavía.** Este documento
-manda sobre el firmware y sobre la app: si uno de los dos lo contradice, se corrige ese, no este.
+**Estado (19-sep-2026, revisión 1.2 de las notas):** contrato 1.1 (§4 bis) implementado en el
+firmware V3.6.1 (commit `8860445`) y en la app RTV 3.6.4 (commit `090c84c`); **probado en simulador y,
+en parte, en SLV-002** (`#V#`, `#G`, `#GT#`, `#E` 60/60, con la V3.6 del 18-sep). Ninguna escritura
+(`#S`, `#ST`, `#F`, `#P`) se ha probado todavía en un equipo. Lo que el código hace y el texto no dice
+está en §4 ter. Este documento manda sobre el firmware y sobre la app: si uno de los dos lo contradice,
+se corrige ese, no este.
+*Estado anterior:* «especificación, 18-sep-2026. Nada implementado ni probado todavía.»
 
 **Objetivo de la V3.6:** que la calibración viva en **EEPROM** y se cambie **desde la app, en modo
 administrador, sin reprogramar el PIC**. Todo lo demás se comporta igual que el firmware de 2020.
@@ -106,3 +111,19 @@ con su formato y el código 0x09 sin rama. Así la app del cliente ve lo mismo q
 - **No se envía nunca nada con `@`**, por coherencia con el resto del producto.
 - Bits de configuración **idénticos** a 2020 (`device_config.c`), leídos en SLV-002 como
   `EC FF F7 FF 9F FF FF DF FE FF`, incluida la protección de código. Cambiarlos es una decisión aparte.
+
+## 4 ter. Revisión 1.2 (19-sep-2026): lo que hace el firmware 3.6.1. Nota, no cambio de contrato
+
+Esta sección **no cambia el contrato**: deja escrito lo que el código hace hoy donde el texto anterior
+se quedó corto, para que la app y quien lea el contrato no trabajen con cifras viejas. Las decisiones
+que sí cambiarían el contrato (P-10, P-11, P-12, P-15 de `SPEC-V3.6.md` §10) siguen siendo del
+propietario. Citas del commit `8860445` (firmware V3.6.1, `.hex` md5 `8736c05d…`).
+
+| Punto | Texto vigente del contrato | Lo que hace la 3.6.1 | Evidencia |
+| :--- | :--- | :--- | :--- |
+| Límite de trama | §3 dice 48; §4 bis, 96 | 96 bytes con los dos `#`, en un buffer propio de 100 | `uart_module.c:61-62,87-88` |
+| Números | §3 dice 7 cifras; §4 bis, 9 y "1 ulp" | 9 cifras (`%.8E`), pero la conversión de XC8 2.10 no es exacta: `%.8E` hasta 3 ulp; ida y vuelta `#S` → `#G` hasta 5 ulp en simulador y 7 con la emulación validada. **1 ulp no es alcanzable con esta biblioteca.** La app compara `#G` a 4 ulp y `#G` tras `#S` a 8, y decide por `#E` | `calibracion_v36.c:354-364,451-455`; `CAMBIOS-V3.6.md` §7.2; `Ecuacion.java:92-93` (app 3.6.4) |
+| `#ST` | "`#OK#` / `#ERR,...#`" | `#ERR,FORMATO#` si `F(T) = X_2·T² + X_1·T + X_0` no es finito o sale de [0,5 ; 1,5] en algún `T` de 0 a 831 (extremos y vértice) | `calibracion_v36.c:301-307,373-389,620-621` |
+| `#S` | "`#OK#` o `#ERR,<motivo>#`" | `#ERR,FORMATO#`, sin tocar RAM ni EEPROM, si `R(x)` no es finito o sale de [0 ; 4000] en algún `x` de 600 a 4300 (bordes y puntos críticos). **La curva de fábrica del código `2` no pasa** (negativa desde x = 4175); `#F,2#` sí la repone | `calibracion_v36.c:309-319,404-422,587-588`; `CAMBIOS` §7.1 |
+| `#ST` con valores de fábrica | — | No devuelve `DEF`: `strtod` no recupera los `float` de ROM y la máscara queda en `CAL,1000`. En la 3.6.1 no hay orden que devuelva la temperatura a fábrica | `CAMBIOS` §7.3; `calibracion_v36.c:215-220` |
+| `#V#` | `#V,3.6,<fecha>,<CAL\|DEF>,<máscara>#` | La 3.6 y la 3.6.1 responden `3.6`; sólo las distingue la fecha de compilación (`2026-09-18` / `2026-09-19`). Abierta en `SPEC-V3.6.md` C-37 | `calibracion_v36.h:16`; `calibracion_v36.c:458-475` |
