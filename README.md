@@ -23,7 +23,7 @@ pantalla y la app del cliente sigan funcionando. Contrato: [`05_Documentacion/PR
 | Revisión de arquitectura (puerta P2) | En curso |
 | Firmware V3.6 | En construcción. **XC8 2.10 instalado** (`C:\Program Files (x86)\Microchip\xc8\v2.10`). Pendiente: reproducibilidad de la base y verificación de las fórmulas de fábrica |
 | App V3.6 (`RetroV36`) | En construcción: modo de pruebas, medida P1-P31, visor de botones STONE y modo administrador |
-| Grabación en SLV-002 | **Autorizada por Diego** (P6). Se hará con el `.hex` verificado, con PICkit 3 e IPE 5.50. No hay placa de repuesto |
+| Grabación en SLV-002 | **GRABADO el 18-sep-2026 20:24** con el `.hex` `680b6a7d` (PICkit 3, IPE 5.50). Pendiente de probar con la app 3.6.2 (G4). Original perdido: estaba protegido |
 | Software y bases de pantalla STONE | En curso: `04_Pantalla_STONE/SOFTWARE-STONE.md` |
 
 ## Estructura

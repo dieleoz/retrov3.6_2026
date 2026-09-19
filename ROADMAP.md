@@ -23,6 +23,22 @@ STONE y la app del cliente siguen funcionando igual. Después, los dos V4, en su
 | **P7-bis — Condiciones para calibrar** (de P2) | Antes de escribir coeficientes con la app: **C1** T-A23 (9 cifras en `printf`/`strtod` de XC8) y T-A24 (EEPROM); **C2** validar la curva en todo el rango de x y exigir grado+2 puntos; **C3** restaurar automáticamente si `#G` no coincide; **C4** límites de `#ST`; **C5** T-C05 con `#E` y T-C23. La app ya cumple C2-C4 (entrega `6cc455d3…`) | C1 y C5 pendientes |
 | **P8 — Calibración** | Medir P1-P31 con `e`, ajustar por color en la app, escribir los coeficientes y volver a medir. Acta de antes y después | Tras P7 |
 
+## DÓNDE QUEDAMOS — 18-sep-2026, 20:25
+
+- **SLV-002 GRABADO con la V3.6** a las 20:24:38 (PICkit 3 BUR195068601, IPE 5.50): `.hex` md5
+  `680b6a7d3a387ccddf066a2ebc0899d1`, commit `f75ff88` (blob idéntico desde `1a57249`). IPE: *Device
+  Erased → Programming/Verify complete → Program Succeeded*. La verificación posterior dio "Verify
+  failed" leyendo ceros: **es lo esperado**, porque el `.hex` activa la protección de código (CP), como
+  el original. Registro: `01_Firmware/lecturas_equipos/SLV-002/grabacion_V3.6_2026-09-18.log`.
+- **El firmware original de SLV-002 se ha perdido** (estaba protegido, sin copia). Línea base guardada:
+  barrido de 255 bytes en oscuro (x≈620) y 8 blancos por pantalla. **P4 por Bluetooth no llegó a
+  medirse:** las dos últimas sesiones no obtuvieron respuesta (causa sin cerrar: bloqueo tras `e` sin
+  apagar el equipo, o el PICkit sujetando el reset).
+- **Siguiente (G4/T-C):** desconectar el PICkit, apagar y encender, y pasar las Pruebas con la app
+  3.6.2 (md5 `e5c6ffad…`): `#V#` debe responder `#V,3.6,2026-09-18,DEF,…#`; los 12 códigos deben medir;
+  `#E` debe coincidir exactamente con fábrica; la pantalla STONE debe funcionar igual.
+- Después: `#K#` para mapear los botones de su pantalla, T-A23/C1 antes de calibrar, y P8.
+
 ## AHORA
 
 1. SPEC y revisión de arquitectura (P1, P2).

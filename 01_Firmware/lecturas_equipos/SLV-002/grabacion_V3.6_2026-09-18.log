@@ -1,0 +1,34 @@
+DFP Version Used : PIC18F-K_DFP,1.4.87,Microchip
+*****************************************************
+Connecting to MPLAB PICkit 3...
+Currently loaded firmware on PICkit 3
+Firmware Suite Version.....01.56.09
+Firmware type..............Enhanced Midrange
+Target voltage detected
+Target device PIC18F47K42 found.
+Device Revision ID = a001
+Device Erased...
+Programming...
+The following memory area(s) will be programmed:
+program memory: start address = 0x0, end address = 0x1bcff
+configuration memory
+User Id Memory
+Programming/Verify complete
+PICKIT3 Program Report
+18-sep-2026, 20:24:38
+Device Type:PIC18F47K42
+Program Succeeded.
+PK3 Verify Report
+18-sep-2026, 20:24:38
+Device Type:PIC18F47K42
+The following memory areas(s) will be verified:
+program memory: start address = 0x0, end address = 0x1ffff
+configuration memory
+EEData memory
+User Id Memory
+Test memory
+program memory
+Address: 0 Expected Value: ef0d Received Value: 0
+EEData memory
+Address: 310000 Expected Value: ff Received Value: 0
+Verify failed
