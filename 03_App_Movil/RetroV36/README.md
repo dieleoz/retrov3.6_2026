@@ -21,6 +21,11 @@ export JAVA_HOME="D:/@Proyect/Baliza/7 sw apk/jdk-11/jdk-11.0.24+8"
 
 `local.properties` lleva `sdk.dir=C:/android-sdk` (barras normales) y no se versiona.
 
+**Entrega del APK.** Cada entrega se copia a **dos** rutas: `03_App_Movil/RTV-V3.6.apk` (la de siempre) y
+`03_App_Movil/RTV-V<versionName>.apk` (p. ej. `RTV-V3.6.8.apk`), para que no se confunda una versión con otra en el teléfono. Se comprueba con
+`aapt dump badging` que `versionCode`/`versionName` son los de la entrega y se declara el md5. Los `*.apk`
+no se versionan.
+
 ### Tests JVM
 
 `app/src/test/`: `CalculoTest`, `ReceptorTest`, `AsistenteTest`, `FabricaTest` (84 tests).
