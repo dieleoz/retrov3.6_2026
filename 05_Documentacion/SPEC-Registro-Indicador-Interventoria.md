@@ -36,8 +36,8 @@ citar de él. `gh` no está instalado en esta máquina y no se usó ningún toke
 
 36 ficheros `.md` fechados el 20-dic-2025 (proyecto «ControlTraffic 360 — SICC, Sistema Informático
 de Contabilización y Control», cliente ANI; `RESUMEN_REQUERIMIENTOS_INDICADORES.md:2,17`).
-**No está verificado que sea el contenido que iría en el repositorio SFT**; se asume por el nombre.
-En este documento, «SFT» significa esa carpeta. Si Diego confirma otra fuente, la sección 1 se rehace.
+**Decidido por Diego (19-sep-2026, PA-08): la fuente de SFT es esta carpeta.** El repositorio de
+GitHub está vacío. En este documento, «SFT» significa esa carpeta.
 
 Ficheros usados (rutas relativas a `D:\onedrive\gdrive\sft\`):
 
@@ -351,17 +351,21 @@ Esto funciona hoy con el protocolo 1.1 y da algo que una fecha en EEPROM no da: 
 coeficientes con que se midió son los certificados**. Su límite: si se reinstala la app o se cambia de
 teléfono, el certificado hay que importarlo (va en el paquete de exportación, RF-REG-14).
 
-**Opción B — fecha en la EEPROM (mejora; exige cambiar el firmware).** Un registro nuevo en **0x1EE**
+**Opción B — fecha y serie en la EEPROM. Decidida por Diego el 19-sep-2026 (PA-07): entra en el
+firmware 3.6.2, en preparación.** Comandos previstos: `#SC`/`#GC` para la fecha de calibración y
+`#SN`/`#GN` para la serie; los nombres y formatos definitivos los fija `PROTOCOLO-V3.6.md` al
+entregarse el firmware, y mandan sobre lo que sigue. La app calcula el vencimiento (+1 año) a partir
+de la fecha leída del equipo y lo contrasta con el certificado; la huella de `#G`×12 + `#GT#` de la
+opción A **sigue valiendo como control cruzado**. Propuesta de formato original, a título indicativo: Un registro nuevo en **0x1EE**
 con el mismo formato que los demás (16 bytes + CRC-16/CCITT-FALSE): fecha de calibración `AAAAMMDD`
 (4 bytes BCD), primeros 8 bytes del SHA-256 del certificado, 4 reservados. Dos comandos nuevos:
 `#SC,<AAAAMMDD>,<id16hex>#` (modo administrador, como `#S`) y `#GC#` (libre). **No se cambia el
 formato de `#V#`**: los clientes ya lo parsean. Ventaja: la fecha viaja con el equipo a cualquier
-teléfono. **Exige una versión 3.6.x del firmware, grabación por ICSP en cada equipo y el visto bueno
-del propietario.** De paso conviene que la pantalla de serie muestre lo leído y que un comando
-`#GS#` devuelva la serie; eso también es firmware.
+teléfono. Exige grabar el 3.6.2 por ICSP en cada equipo. Conviene además que la pantalla de serie
+muestre lo leído de EEPROM y no la constante `SLH-046` (`gui.c:198`).
 
-Recomendación: **A ahora; B sólo si Diego lo autoriza**, y en ese caso A se mantiene como
-comprobación cruzada.
+Resultado: **B es el mecanismo principal y A el control cruzado.** Mientras un equipo no lleve el
+3.6.2, sólo hay A y la serie se toma del acta.
 
 ### 3.4 Regla de calibración vencida
 
@@ -371,8 +375,9 @@ comprobación cruzada.
   «COEFICIENTES DISTINTOS DEL CERTIFICADO»).
 - **¿Bloquea o avisa?** Ni SFT ni el Manual 2024 lo fijan: SFT sólo pide «evidencia de equipos de
   medición y calibración» (`RESUMEN:152,157`); el año de validez viene de PT-853, fuente mexicana y
-  referencial (`Instrumentos-y-Metodo-Campo.md:283-286`). **Punto abierto para Diego (PA-01).**
-  Propuesta por defecto mientras decide: **avisa, no bloquea**. Se puede medir, el aviso exige una
+  referencial (`Instrumentos-y-Metodo-Campo.md:283-286`). **Decidido por Diego el 19-sep-2026
+  (PA-01): avisa y marca el registro; no bloquea.** El texto visible en cada registro exportado es
+  exactamente «EQUIPO CON CALIBRACIÓN VENCIDA». Se puede medir, el aviso exige una
   confirmación explícita, la visita queda marcada y el resumen de cumplimiento **cuenta aparte** las
   señales medidas con equipo no vigente.
 
@@ -560,7 +565,7 @@ cabe en la primera app de producción).
 | :--- | :---: | :--- | :--- | :--- |
 | **RF-REG-01** | N | Cada visita guarda MAC, nombre Bluetooth, serie y respuesta completa de `#V#` del equipo con que se midió | Ninguna visita exportada tiene estos campos vacíos; la serie vacía impide medir hasta darla de alta | Unitaria sobre el exportador con un equipo sin serie: la medida se rechaza. Con simulador: `#V#` aparece literal en `equipo.csv` |
 | **RF-REG-02** | N | Todo registro exportado lleva fecha de calibración, **vencimiento = calibración + 1 año**, id y SHA-256 del certificado | Vencimiento correcto en años bisiestos (29-feb → 28-feb del año siguiente, **PA-02**) | Unitaria: tabla de fechas, incluido el 29-feb |
-| **RF-REG-03** | N | Si el día de la medida es posterior al vencimiento, no hay certificado o la huella no coincide, la visita, su fila CSV y la cabecera del PDF llevan la leyenda visible | La leyenda aparece en las tres salidas; el resumen cuenta esas señales aparte | Instrumentada: reloj del teléfono adelantado un año y un día; exportar y buscar la leyenda |
+| **RF-REG-03** | N | Si el día de la medida es posterior al vencimiento, no hay certificado o la huella no coincide, la visita, su fila CSV y la cabecera del PDF llevan la leyenda visible «EQUIPO CON CALIBRACIÓN VENCIDA». **Avisa, no bloquea** (PA-01, decidido 19-sep-2026) | La leyenda aparece en las tres salidas; el resumen cuenta esas señales aparte | Instrumentada: reloj del teléfono adelantado un año y un día; exportar y buscar la leyenda |
 | **RF-REG-04** | N | Al conectar, la app calcula la huella de `#G`×12 + `#GT#` y la compara con la del certificado | Coincide → vigente; no coincide → «coeficientes distintos del certificado»; `DEF` → «sin calibración» | Simulador: cambiar un coeficiente con `#S` y reconectar |
 | **RF-REG-05** | N | Inventario de señales por vía con `senal_id` propio y los campos obligatorios de 2.4 | Una señal no se puede medir sin estar en el inventario (se da de alta en el momento si hace falta) | Unitaria sobre el modelo: campos obligatorios; UUID único |
 | **RF-REG-06** | N | Ubicación con coordenadas, precisión declarada, PR (texto y km, sin tope de 99,999), sentido, lado y calzada | `K122+380` se guarda y se exporta como `122.380` | Unitaria del conversor de PR |
@@ -583,7 +588,7 @@ cabe en la primera app de producción).
 | **RF-REG-23** | N | Todo funciona sin red: medir, guardar, calcular, exportar | Ciclo completo en modo avión | Instrumentada |
 | **RF-REG-24** | N | Importar un inventario inicial desde fichero | Un `inventario.csv` exportado por otra instalación se importa sin pérdidas | Ida y vuelta entre dos instalaciones |
 | **RF-REG-25** | M | Fusión de inventarios entre teléfonos con detección de duplicados | Dos altas de la misma señal a menos de 5 m con igual código se marcan como posible duplicado | Unitaria |
-| **RF-REG-26** | M | Fecha de calibración e id de certificado en EEPROM (opción B de 3.3). **Exige firmware 3.6.x y autorización** | `#GC#` devuelve lo escrito con `#SC`; `#V#` no cambia | TDD de firmware en simulador y en equipo |
+| **RF-REG-26** | N | Fecha de calibración y serie en EEPROM, firmware 3.6.2 (opción B de 3.3, decidida el 19-sep-2026). La app lee fecha y serie del equipo, calcula el vencimiento (+1 año) y lo contrasta con el certificado y con la huella | `#GC` devuelve lo escrito con `#SC`, `#GN` lo escrito con `#SN` (nombres definitivos en PROTOCOLO-V3.6); `#V#` no cambia; fecha del equipo distinta de la del certificado → registro marcado | TDD de firmware en simulador y en equipo; prueba de app con fecha discrepante |
 | **RF-REG-27** | N | La exportación no contiene credenciales y no las necesita: se entrega por el mecanismo de compartir del teléfono | Ninguna cadena de credencial en el APK ni en el paquete | Búsqueda automática en el APK y en el ZIP |
 | **RF-REG-28** | N | Fechas en ISO 8601 con zona; el estado de limpieza (sin limpiar, limpia, ambas) se registra en cada visita | Fechas legibles igual en cualquier configuración regional | Unitaria con dos configuraciones regionales |
 
@@ -591,20 +596,21 @@ cabe en la primera app de producción).
 y ubicación (05-06, 19-20, 24), campaña y lecturas por color con trama cruda (07-08), umbral
 parametrizado con «no dictaminable» (09-11, 22), diario inmutable y paquete verificable (13-14, 16),
 sin red y sin credenciales (23, 27-28). **Mejora:** propuesta por GPS, evolución, XLSX, formato SFT,
-condición visual de SFT, fusión entre teléfonos y fecha en EEPROM.
+condición visual de SFT y fusión entre teléfonos. La fecha y la serie en EEPROM (26) pasan a núcleo
+por decisión de Diego del 19-sep-2026.
 
 ---
 
-## 8. Puntos abiertos para Diego
+## 8. Puntos abiertos y decisiones de Diego
 
 | ID | Pregunta | Por qué no se decide aquí |
 | :--- | :--- | :--- |
-| **PA-01** | ¿La calibración vencida **bloquea** la medida o sólo **avisa**? | Ni SFT ni el Manual lo fijan (3.4). Propuesta: avisa |
+| **PA-01** | ¿La calibración vencida **bloquea** la medida o sólo **avisa**? | **Decidido (19-sep-2026):** avisa y marca; texto «EQUIPO CON CALIBRACIÓN VENCIDA» |
 | **PA-02** | Vencimiento de una calibración del 29-feb | Convención: 28-feb del año siguiente |
 | **PA-03** | Radio por defecto de la propuesta de señales cercanas | Depende de la precisión real del GPS en campo: se mide |
 | **PA-04** | ¿Qué criterio de umbral usa el contrato concreto (C-01)? ¿Hay una interventoría con quien validar el PDF? | Es una decisión contractual, no técnica |
 | **PA-05** | Servidor para sincronizar o firmar manifiestos | Fuera de alcance salvo decisión expresa |
 | **PA-06** | ¿Las señales no dictaminables entran en el denominador del %? | SFT no lo dice. Propuesta: no entran y se informan aparte |
-| **PA-07** | ¿Se autoriza la opción B (fecha en EEPROM, firmware 3.6.x)? | Toca firmware |
-| **PA-08** | ¿`D:\onedrive\gdrive\sft` es el contenido de SFT? | El repositorio de GitHub está vacío (0.1) |
+| **PA-07** | ¿Se autoriza la opción B (fecha en EEPROM, firmware 3.6.x)? | **Decidido (19-sep-2026):** opción B en el firmware 3.6.2, fecha (`#SC`/`#GC`) y serie (`#SN`/`#GN`); nombres definitivos en PROTOCOLO-V3.6; la huella sigue como control cruzado. En la V4.6: por verificar en V4 |
+| **PA-08** | ¿`D:\onedrive\gdrive\sft` es el contenido de SFT? | **Decidido (19-sep-2026):** sí, es la fuente; el repositorio de GitHub está vacío (0.1) |
 | **PA-09** | Geometría del equipo (C-06) | Se cierra midiendo, no leyendo |
