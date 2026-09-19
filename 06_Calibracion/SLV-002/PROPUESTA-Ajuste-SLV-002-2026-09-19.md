@@ -12,16 +12,14 @@ Generado por `06_Calibracion/SLV-002/tools/propuesta_ajuste_slv002.py`. No edita
 | Dentro del ZIP | `campana.csv` md5 `f9cb68323d5372a3c8835c046de9f96d`; diario md5 `82a24950192a399c0d4dcd31242b3586` (idénticos a los extraídos en `07 pruebas/campana_103300/`) |
 | Equipo y firmware | SLV-002, MAC 00:21:13:05:19:3B; firmware 3.6.1 (`#V,3.6,2026-09-19,DEF,0000#`), app 3.6.5 |
 | Sesión de la mañana | `03_App_Movil/RetroV36/app/src/test/resources/medidas_SLV-002_20260919_consolidado.csv`, 08:59-09:25, firmware 3.6.0 (`V3.6 2026-09-18`), app 3.6.2. **Primer disparo de cada serie descartado** |
-| Código que calcula | Clases de la app en `f7b75c4` (con cambios sin confirmar en el árbol), compiladas con JDK 11 y llamadas desde `tools/CotejoAjusteSLV002.java`: `Campana.leerDiario` + `medidasElegidas` (`Campana.java:497`), `Asistente.puntos` (`Asistente.java:136`), `Ajuste.ajustar` (`Ajuste.java:41`), `Asistente.proponer` (`:280`), `criterioFirmwareS` (`:222`), `validarForma` (`:179`), `Ecuacion.respuestaFloat32` (`Ecuacion.java:56`), `Fabrica.ecuacion` (`Fabrica.java:62`). **El ajuste es el de la app, no una reimplementación** |
-| Puntos del ajuste | Media de la serie elegida de cada patrón, como la app: sin evento `ELIGE` en el diario, la **última aceptada** (`Campana.elegida`, `Campana.java:304`). **Para P5 es S024, a 90°** (2459,3); a 0° (S023) da 2456,8. Se da el ajuste con las dos (§2.2) |
+| Código que calcula | Clases de la app en `c082813`, compiladas con JDK 11 y llamadas desde `tools/CotejoAjusteSLV002.java`: `Campana.leerDiario` + `medidasElegidas` (`Campana.java:550`), `Asistente.puntos` (`Asistente.java:136`), `Ajuste.ajustar` (`Ajuste.java:41`), `Asistente.proponer` (`:349`), `criterioFirmwareS` (`:252`), `validarForma` (`:179`), `comprobarOscuro` (`:228`), `Ecuacion.respuestaFloat32` (`Ecuacion.java:56`), `Fabrica.ecuacion` (`Fabrica.java:62`). **El ajuste es el de la app, no una reimplementación** |
+| Puntos del ajuste | Media de la serie elegida de cada patrón, como la app: sin evento `ELIGE` en el diario, la **última aceptada** (`Campana.elegida`, `Campana.java:357`). **Para P5 es S024, a 90°** (2459,3); a 0° (S023) da 2456,8. Se da el ajuste con las dos (§2.2) |
 | Curva de fábrica | Tabla ROM `01_Firmware/RetroVertical_V3.6.X/calibracion_v36.c:34-46`, igual a `Fabrica.java:62-88` |
 | Criterio de `#S` | `calibracion_v36.c:316-319` (límites), `:407` (`curvaValida`), `:698` (llamada) en el fuente 3.6.2; en la 3.6.1 era `:587-588`. En la app, evaluación float32 en cada `x` entera de 600 a 4300 |
 | Oscuro | x ≈ 575 (`ACTA-antes-y-despues-grabacion.md:40`). **Una sola observación, no una serie**: la cota "575-620" del encargo no tiene fuente en la V3.6 (599-634 es del firmware original, `TDD-V3.6.md:525`) |
 | Criterios | `05_Documentacion/SPEC-Calibracion-V3.6.md` §5 (RF-CAL-13 `:345`, -14 `:356`, -15 `:362`, -16 `:370`, -17 `:373`), §4.4 `:294` (grado). **Todos propuestos** (P-CAL-01) |
 
 Resultado del diario leído por la app: 56 series, 51 entradas del catálogo con serie elegida (P32 cuenta dos: P32a y P32b).
-
-**Aviso de versión.** En el árbol de trabajo hay cambios **sin confirmar** en `Asistente.java` (otro agente): `comprobarOscuro` (P9-B13), que bloquea toda curva con R(575) > máx(fábrica + 10 ; 25). Este documento usa el código confirmado en `f7b75c4`; en §2 se dice qué curvas bloquearía esa regla si se confirma.
 
 ## 1. Reproducibilidad: mañana frente a campaña
 
@@ -86,7 +84,7 @@ Tercer dato de P1: a las 08:53 dio 3021,6 (5 disparos, `ACTA-antes-y-despues-gra
 
 ### 1.2 Deriva dentro de la serie
 
-Con `Campana.desvioPorPosicion()` (`Campana.java:601`), desvío medio frente a la mediana de su serie, por posición (el asentamiento ya descartado): `1:-4.0(55) 2:-1.6(55) 3:-0.6(55) 4:-0.9(55) 5:+0.5(55) 6:+1.3(55) 7:+1.2(55) 8:+1.0(55) 9:+3.3(55)`.
+Con `Campana.desvioPorPosicion()` (`Campana.java:655`), desvío medio frente a la mediana de su serie, por posición (el asentamiento ya descartado): `1:-4.0(55) 2:-1.6(55) 3:-0.6(55) 4:-0.9(55) 5:+0.5(55) 6:+1.3(55) 7:+1.2(55) 8:+1.0(55) 9:+3.3(55)`.
 
 **Confirmado** −4,0 en la posición 1 y +3,3 en la 9. **No es monótona**: la 4 (−0,9) queda por debajo de la 3 (−0,6), y la 7 y la 8 por debajo de la 6. Es una rampa de ~7 cuentas (~0,3 % en x ≈ 2500), **diez veces menor** que la variación entre sesiones. Con el mismo número de disparos en campaña, verificación y campo, se la come `c0`.
 
@@ -111,7 +109,7 @@ P24 (IV, 593) da ahora **1982,7** (S047). Frente a cada candidata:
 
 ## 2. Ajustes propuestos (códigos 1, 2, 8 y b)
 
-Sesgo = media de (R curva − cert)/cert; RMS igual, en %. Residuo = cert − R (convención de `Ajuste.java:17`). "Firmware float32" es `Ecuacion.respuestaFloat32(round(x))`, lo que respondería el equipo. Ninguna curva nueva tiene c3 (`Ajuste.java:86`).
+Sesgo = media de (R curva − cert)/cert; RMS igual, en %. Residuo = cert − R (convención de `Ajuste.java:17`). "Firmware float32" es `Ecuacion.respuestaFloat32(round(x))`, lo que respondería el equipo. Ninguna curva nueva tiene c3 (`Ajuste.java:86`). El sesgo y el RMS por tipo coinciden con los de `Asistente.residuoPorTipo` (`Asistente.java:278`) de la app 3.6.8 (anexo): dos cálculos independientes, mismas cifras.
 
 ### 2.1 Código 1, blanco intenso (P1-P4, P6, P7, P27, P28)
 
@@ -140,7 +138,7 @@ Sesgo = media de (R curva − cert)/cert; RMS igual, en %. Residuo = cert − R 
 - RF-CAL-14 (|residuo| ≤ máx(10 % ; 2)): **no cumplen P3**.
 - Criterio de `#S`: **pasa**. R(600) = 16,8.
 - C2: **pasa**. Aviso: la curva es negativa hasta x = 543 (por debajo de los patrones): ahí el equipo responderá 0.
-- **Oscuro** (x = 575): nueva 9,4 → responde 9; fábrica 24,7. Con la regla P9-B13 en curso (R ≤ máx(fábrica + 10 ; 25) = 35): pasa.
+- **Oscuro** (x = 575): nueva 9,4 → responde 9; fábrica 24,7. Regla P9-B13 (`Asistente.comprobarOscuro`, app 3.6.8; R ≤ máx(fábrica + 10 ; 25) = 35): pasa.
 - `Asistente.proponer().escribible()`: **sí**.
 - Colocación simulada (σ = 1,58 % en cada x, 2000 repeticiones, `Ajuste.ajustar`): dispersión de R en x = 1000 / 2000 / 3000: ±11 / ±5 / ±6. La curva re-ajustada falla `#S` en **170 de 2000**.
 
@@ -174,8 +172,8 @@ Sesgo = media de (R curva − cert)/cert; RMS igual, en %. Residuo = cert − R 
 - RF-CAL-14 (|residuo| ≤ máx(10 % ; 2)): cumplen todos.
 - Criterio de `#S`: **pasa**. R(600) = 220,3.
 - C2: **pasa**.
-- **Oscuro** (x = 575): nueva 218,6 → responde 218; fábrica 24,7. Con la regla P9-B13 en curso (R ≤ máx(fábrica + 10 ; 25) = 35): **la bloquearía**.
-- `Asistente.proponer().escribible()`: **sí**.
+- **Oscuro** (x = 575): nueva 218,6 → responde 218; fábrica 24,7. Regla P9-B13 (`Asistente.comprobarOscuro`, app 3.6.8; R ≤ máx(fábrica + 10 ; 25) = 35): **la bloquea**.
+- `Asistente.proponer().escribible()`: **no** (en oscuro (x = 575) la curva nueva da R = 219 frente a 25 de fábrica; límite máx(fábrica + 10 ; 25) = 35. Una lámina degradada, o nada, leería 219 (P9-B13)).
 - Colocación simulada (σ = 1,58 % en cada x, 2000 repeticiones, `Ajuste.ajustar`): dispersión de R en x = 1000 / 2000 / 3000: ±45 / ±5 / ±8. La curva re-ajustada falla `#S` en **12 de 2000**.
 
 | x | 575 | 600 | 1000 | 1500 | 2000 | 2500 | 3000 | 3500 | 4000 | 4300 |
@@ -218,8 +216,8 @@ Sesgo = media de (R curva − cert)/cert; RMS igual, en %. Residuo = cert − R 
 - RF-CAL-14 (|residuo| ≤ máx(10 % ; 2)): **no cumplen P22, P24**.
 - Criterio de `#S`: **pasa**. R(600) = 92,2.
 - C2: **pasa**. Aviso: la curva es negativa hasta x = 310 (por debajo de los patrones): ahí el equipo responderá 0.
-- **Oscuro** (x = 575): nueva 84,3 → responde 84; fábrica 20,9. Con la regla P9-B13 en curso (R ≤ máx(fábrica + 10 ; 25) = 31): **la bloquearía**.
-- `Asistente.proponer().escribible()`: **sí**.
+- **Oscuro** (x = 575): nueva 84,3 → responde 84; fábrica 20,9. Regla P9-B13 (`Asistente.comprobarOscuro`, app 3.6.8; R ≤ máx(fábrica + 10 ; 25) = 31): **la bloquea**.
+- `Asistente.proponer().escribible()`: **no** (en oscuro (x = 575) la curva nueva da R = 84 frente a 21 de fábrica; límite máx(fábrica + 10 ; 25) = 31. Una lámina degradada, o nada, leería 84 (P9-B13)).
 - Colocación simulada (σ = 1,58 % en cada x, 2000 repeticiones, `Ajuste.ajustar`): dispersión de R en x = 1000 / 2000 / 3000: ±8 / ±3 / ±8. La curva re-ajustada falla `#S` en **0 de 2000**.
 
 | x | 575 | 600 | 1000 | 1500 | 2000 | 2500 | 3000 | 3500 | 4000 | 4300 |
@@ -258,7 +256,7 @@ Sesgo = media de (R curva − cert)/cert; RMS igual, en %. Residuo = cert − R 
 - RF-CAL-14 (|residuo| ≤ máx(10 % ; 2)): cumplen todos.
 - Criterio de `#S`: **NO pasa — la curva se hace negativa en x = 600 (el firmware 3.6.1 rechaza #S con #ERR,FORMATO#)**. R(600) = -149,7.
 - C2: **NO pasa — la curva no es creciente en x = 3535 (techo dentro de 200-4400)**. Aviso: la curva es negativa hasta x = 835 (por debajo de los patrones): ahí el equipo responderá 0.
-- **Oscuro** (x = 575): nueva -166,3 → responde 0; fábrica 20,9. Con la regla P9-B13 en curso (R ≤ máx(fábrica + 10 ; 25) = 31): pasa.
+- **Oscuro** (x = 575): nueva -166,3 → responde 0; fábrica 20,9. Regla P9-B13 (`Asistente.comprobarOscuro`, app 3.6.8; R ≤ máx(fábrica + 10 ; 25) = 31): pasa.
 - `Asistente.proponer().escribible()`: **no** (la curva no es creciente en x = 3535 (techo dentro de 200-4400) / la curva se hace negativa en x = 600 (el firmware 3.6.1 rechaza #S con #ERR,FORMATO#)).
 - Colocación simulada (σ = 1,58 % en cada x, 2000 repeticiones, `Ajuste.ajustar`): dispersión de R en x = 1000 / 2000 / 3000: ±22 / ±4 / ±12. La curva re-ajustada falla `#S` en **2000 de 2000**.
 
@@ -267,7 +265,7 @@ Sesgo = media de (R curva − cert)/cert; RMS igual, en %. Residuo = cert − R 
 | R nueva | -166 | -150 | 97 | 355 | 556 | 701 | 789 | 822 | 797 | 755 |
 | R fábrica | 21 | 30 | 204 | 445 | 664 | 805 | 814 | 635 | 214 | -177 |
 
-**Recomendación: grado 1.** El grado 2 no se puede escribir: R(600) = -150 (`#S` lo rechaza) y no es creciente desde x ≈ 3535 (C2). Es la forma de la curva de fábrica, que tampoco pasa `#S` (la curva se hace negativa en x = 4175 (el firmware 3.6.1 rechaza #S con #ERR,FORMATO#)). **Pega del grado 1 en el oscuro:** 84 frente a 21 de fábrica (confirma B13): una lámina amarilla degradada o el oscuro leerían ~84. Es consecuencia de que el patrón amarillo más bajo esté en x = 1497: por debajo, la recta es extrapolación. **Si se confirma la regla P9-B13 en curso, esta recta tampoco se podrá escribir** (84 > 31).
+**Recomendación: grado 1.** El grado 2 no se puede escribir: R(600) = -150 (`#S` lo rechaza) y no es creciente desde x ≈ 3535 (C2). Es la forma de la curva de fábrica, que tampoco pasa `#S` (la curva se hace negativa en x = 4175 (el firmware 3.6.1 rechaza #S con #ERR,FORMATO#)). **Pega del grado 1 en el oscuro:** 84 frente a 21 de fábrica (confirma B13): una lámina amarilla degradada o el oscuro leerían ~84. Es consecuencia de que el patrón amarillo más bajo esté en x = 1497: por debajo, la recta es extrapolación. **Con la regla P9-B13 de la app 3.6.8 esta recta no se puede escribir** (84 > 31).
 
 *Opción fuera del método de la app, sólo para que Diego la valore:* recta anclada en el oscuro, R = k·(x − 575), k = 0,3675 (`c1 = 3.67534027E-01`, `c0 = -2.11332065E+02`). Error por tipo (sesgo / RMS): IV -6,9 / 8,7 %; IX +0,3 / 2,5 %; XI +2,1 / 5,8 %. Peor patrón: P24 -12,8 %, P30 -11,5 %, P23 +11,2 %. R(600) = 9,2: pasaría `#S`, C2 y la regla del oscuro. Empeora el IV y el XI frente a la recta libre; se apoya en un oscuro medido una vez. Es la pregunta que tiene que contestar Diego: **¿qué pesa más, el residuo en los patrones o no leer ~84 en una lámina amarilla muerta?**
 
@@ -296,7 +294,7 @@ Sesgo = media de (R curva − cert)/cert; RMS igual, en %. Residuo = cert − R 
 - RF-CAL-14 (|residuo| ≤ máx(10 % ; 2)): cumplen todos.
 - Criterio de `#S`: **pasa**. R(600) = 0,3.
 - C2: **pasa**. Aviso: la curva es negativa hasta x = 598 (por debajo de los patrones): ahí el equipo responderá 0.
-- **Oscuro** (x = 575): nueva -5,2 → responde 0; fábrica 13,3. Con la regla P9-B13 en curso (R ≤ máx(fábrica + 10 ; 25) = 25): pasa.
+- **Oscuro** (x = 575): nueva -5,2 → responde 0; fábrica 13,3. Regla P9-B13 (`Asistente.comprobarOscuro`, app 3.6.8; R ≤ máx(fábrica + 10 ; 25) = 25): pasa.
 - `Asistente.proponer().escribible()`: **sí**.
 - Colocación simulada (σ = 1,58 % en cada x, 2000 repeticiones, `Ajuste.ajustar`): dispersión de R en x = 1000 / 2000 / 3000: ±2 / ±21 / ±41. La curva re-ajustada falla `#S` en **840 de 2000**.
 
@@ -327,7 +325,7 @@ El grado 2 se calculó sólo como control: no pasa `#S` (R(600) = -5,8) ni C2, y
 - RF-CAL-14 (|residuo| ≤ máx(10 % ; 2)): cumplen todos.
 - Criterio de `#S`: **NO pasa — la curva se hace negativa en x = 600 (el firmware 3.6.1 rechaza #S con #ERR,FORMATO#)**. R(600) = -27,8.
 - C2: **pasa**. Aviso: la curva es negativa hasta x = 650 (por debajo de los patrones): ahí el equipo responderá 0.
-- **Oscuro** (x = 575): nueva -41,7 → responde 0; fábrica 3,6. Con la regla P9-B13 en curso (R ≤ máx(fábrica + 10 ; 25) = 25): pasa.
+- **Oscuro** (x = 575): nueva -41,7 → responde 0; fábrica 3,6. Regla P9-B13 (`Asistente.comprobarOscuro`, app 3.6.8; R ≤ máx(fábrica + 10 ; 25) = 25): pasa.
 - `Asistente.proponer().escribible()`: **no** (la curva se hace negativa en x = 600 (el firmware 3.6.1 rechaza #S con #ERR,FORMATO#)).
 - Colocación simulada (σ = 1,58 % en cada x, 2000 repeticiones, `Ajuste.ajustar`): dispersión de R en x = 1000 / 2000 / 3000: ±46 / ±232 / ±419. La curva re-ajustada falla `#S` en **1869 de 2000**.
 
@@ -402,7 +400,7 @@ Con los criterios **propuestos** de la SPEC §5, que Diego no ha aprobado (P-CAL
 | Código | Veredicto | Por qué | Patrones anómalos (ninguno quitado) |
 | :---: | :--- | :--- | :--- |
 | 1 | **Ajustar, grado 1, tras P9-A5 y con dispensa expresa de Diego** | Pasa `#S` (R(600) = 17), C2 y el oscuro (9 frente a 25 de fábrica). Baja el RMS de IV de 39 a 10 % y el de IX de 34 a 5 %. **Incumple tres criterios propuestos:** RF-CAL-14 (P3, +10,7 %), RF-CAL-15 (RMS de IV 10,0 %) y RF-CAL-16 en XI (2,8 % frente a 2,6 % de fábrica, diferencia muy por debajo de la reproducibilidad). Con la letra de RF-CAL-16, "no se escribe" | **P2 y P3** (IV) se contradicen entre sí: 36 unidades de certificado y 385 cuentas de x, cuando la recta da 0,3 R/cuenta; P2 (414) lee casi lo que P27 (471). **P28**, −6,9 % |
-| 2 | **Ajustar, grado 1, tras P9-A5; antes, decisión de Diego sobre el oscuro** | Pasa `#S` y C2; mejora a la fábrica en los tres tipos (sesgo IV +21 → +0,6 %, IX +24 → +1,4 %, XI +13 → 0 %). **Incumple RF-CAL-14 en P22 (−13 %) y P24 (+10,3 %), RF-CAL-15 en IV (RMS 8,2 %) y RF-CAL-17 en P22.** Lee **84 en el oscuro** frente a 21 (B13): la regla en curso la bloquearía. Alternativa: la recta anclada (§2.2) | **P22**, **P24** (identidad sin confirmar), **P23** (−8 %) y **P5** (+7,6 %): los XI amarillos no se ordenan por certificado |
+| 2 | **No escribible hoy. Ajustar tras P9-A5 y tras decidir Diego el oscuro** | Pasa `#S` y C2; mejora a la fábrica en los tres tipos (sesgo IV +21 → +0,6 %, IX +24 → +1,4 %, XI +13 → 0 %). **Incumple RF-CAL-14 en P22 (−13 %) y P24 (+10,3 %), RF-CAL-15 en IV (RMS 8,2 %) y RF-CAL-17 en P22.** Lee **84 en el oscuro** frente a 21 (B13): la app 3.6.8 la bloquea. Alternativa: la recta anclada (§2.2), o que Diego cambie el umbral del oscuro | **P22**, **P24** (identidad sin confirmar), **P23** (−8 %) y **P5** (+7,6 %): los XI amarillos no se ordenan por certificado |
 | 8 | **Ajustar, grado 1, tras P9-A5** | Cumple RF-CAL-14/15/16 (tipo I, RMS 5,2 % frente a 18,6 % de fábrica). Pasa `#S` por 0,3 unidades: una re-medida puede dar una recta que el firmware rechace | P37 (lee más que P34 con menos certificado; dentro de la reproducibilidad) |
 | b | **Dejar fábrica y marcar "fuera"** | La recta no pasa `#S` y su pendiente está mal determinada (63 cuentas de rango). La fábrica lee −67/−74 %. Hace falta un rojo tipo I de R más alto, o decidir la recta anclada en el oscuro tras medir el oscuro | — |
 | 3, 4, 5 | Sólo verificar | Rango o niveles insuficientes (`Asistente.cobertura`). Fábrica: verde −14/−18 %, rojo +7/+23 %, **azul −55/−57 %: fuera** | P14/P15 invertidos; P18 |
@@ -418,8 +416,8 @@ Con los criterios **propuestos** de la SPEC §5, que Diego no ha aprobado (P-CAL
 
 - **Por qué K y no M:** la s de disparo es ~0,24 % y la variación entre medidas ~1,6 %. Con M = 4 en vez de 9, el error de disparo de la media de una colocación pasa de 0,08 a 0,12 %, invisible al lado de la colocación; cada colocación nueva, en cambio, divide la parte grande. σ de la media: K = 3 → 0,91 %; **K = 5 → 0,71 %**; K = 9 → 0,53 %. K = 5 deja la incertidumbre de cada punto por debajo del 1 %, por debajo del RMS de XI que el ajuste quiere juzgar (2,8-4,8 %); K = 9 casi dobla el trabajo para ganar 0,2 puntos. Con K = 5 la misma cuenta de la app (s entre colocaciones, `Veredicto.sEntre`) tiene 4 grados de libertad, el mínimo razonable para que su umbral signifique algo.
 - **Por qué en dos sesiones:** lo medido es variación entre sesiones; si todas las colocaciones son de la misma, la media hereda el error de esa sesión entero y la s entre colocaciones lo esconde (§1.1: 0,1-0,9 % dentro, 2-5 % entre). Si P9-A5 demuestra que la colocación sola ya da el 2-4 %, basta una sesión con K = 5.
-- **M = 4 y no 3:** el rechazo de descolgados sólo actúa desde 4 disparos (RF-CAL-04, `SPEC-Calibracion-V3.6.md`, §3). Con el 3 × 3 por defecto de la 3.6.7 un disparo como el 3031 de P7 entraría en la media. Y el mismo M en campaña, verificación y campo, por la rampa de §1.2.
-- Encaja con la app 3.6.7 (K × M configurables, 3 × 3 por defecto, `CampanaActivity.java:66-76`) cambiando a 5 × 4. **La 3.6.7 no está revisada** (nota de f7b75c4 en `REVISION-Arquitectura-P9-V3.6.md`): hasta que lo esté, esto es procedimiento, no una propiedad de la app.
+- **M = 4 y no 3:** el rechazo de descolgados sólo actúa desde 4 disparos (`Veredicto.N_MIN_DESCOLGADOS = 4`, `Veredicto.java:40`, `:178`). Con el 3 × 3 por defecto de la app, y con el 5 × 3 de P9-A5 en la 3.6.8 (`A5.java:22-23`), un disparo como el 3031 de P7 entraría en la media sin que nada lo marque. Y el mismo M en campaña, verificación y campo, por la rampa de §1.2.
+- Encaja con la app 3.6.7 (K × M configurables, 3 × 3 por defecto, `CampanaActivity.java:69-80`) cambiando a 5 × 4. **La 3.6.7 no está revisada** (nota de f7b75c4 en `REVISION-Arquitectura-P9-V3.6.md`): hasta que lo esté, esto es procedimiento, no una propiedad de la app.
 - **Medir el oscuro en serie** (K = 5, tapa opaca) en cada sesión: lo necesita la decisión de B13 y la del código b.
 - **Leer en voz alta la etiqueta** de P24, P32a/P32b y de los XI amarillos (L-18).
 - El criterio de aceptación de cada patrón, en lugar de RF-CAL-13 actual: s entre colocaciones ≤ 3 % (el `REPRO_MAX` de la app) **y** diferencia entre las medias de las dos sesiones ≤ 2·√2·σ_col con la σ que dé P9-A5.
@@ -454,6 +452,11 @@ P7     XI     768  3122.4   9   769.7   -1.7    -0.2%    788.1    +20.1
 P27    IX     471  2111.1   9   467.8   +3.2    +0.7%    619.5   +148.5
 P28    IX     484  2277.9   9   517.6  -33.6    -6.9%    659.5   +175.5
 Error máximo 40.6, RMS 27.44 (unidades de R)
+Oscuro (x = 575): R nueva 9.4, fábrica 24.7. Patrón más bajo (x = 1674): R nueva 337.4, fábrica 491.8. Por debajo del patrón más bajo la lectura NO está calibrada.
+Residuo por tipo (nueva / fábrica), relativo al certificado:
+  XI   n=4  sesgo -0.9 % / +0.8 %  RMS 2.8 % / 2.6 %
+  IV   n=2  sesgo -0.8 % / +38.2 %  RMS 10.0 % / 39.1 %
+  IX   n=2  sesgo +3.1 % / +33.9 %  RMS 4.9 % / 34.0 %
 Rango medido: x 1674-3316. Fuera de él la curva es EXTRAPOLACIÓN:
      x  R actual  R nueva
    500     -14.8    -13.0 extrapolado
@@ -485,6 +488,11 @@ P29    IV     442  1677.0   9   434.8   +7.2    +1.6%    528.3    +86.3
 P30    IV     448  1654.2   9   427.5  +20.5    +4.6%    517.9    +69.9
 P31    IX     573  2085.8   9   564.8   +8.2    +1.4%    695.4   +122.4
 Error máximo 61.0, RMS 32.17 (unidades de R)
+Oscuro (x = 575): R nueva 84.3, fábrica 20.9. Patrón más bajo (x = 1497): R nueva 377.5, fábrica 443.9. Por debajo del patrón más bajo la lectura NO está calibrada.
+Residuo por tipo (nueva / fábrica), relativo al certificado:
+  XI   n=6  sesgo -0.0 % / +12.5 %  RMS 4.8 % / 13.2 %
+  IV   n=5  sesgo +0.6 % / +21.1 %  RMS 8.2 % / 22.5 %
+  IX   n=3  sesgo +1.4 % / +24.2 %  RMS 2.5 % / 24.2 %
 Rango medido: x 1497-2788. Fuera de él la curva es EXTRAPOLACIÓN:
      x  R actual  R nueva
    500      -6.5     60.4 extrapolado
@@ -494,6 +502,7 @@ Rango medido: x 1497-2788. Fuera de él la curva es EXTRAPOLACIÓN:
   4000     214.4   1173.7 extrapolado
 Aviso: mezcla tipos de lámina [XI, IV, IX] en una sola curva (P-06)
 Aviso: la curva es negativa hasta x = 310 (por debajo de los patrones): ahí el equipo responderá 0
+NO SE PUEDE ESCRIBIR: en oscuro (x = 575) la curva nueva da R = 84 frente a 21 de fábrica; límite máx(fábrica + 10 ; 25) = 31. Una lámina degradada, o nada, leería 84 (P9-B13)
 ```
 
 ```
@@ -506,6 +515,9 @@ P37    I       82   992.4   9    86.8   -4.8    -5.9%     71.7    -10.3
 P43    I      122  1151.3   9   121.8   +0.2    +0.2%     88.0    -34.0
 P44    I       64   898.6   9    66.1   -2.1    -3.3%     61.2     -2.8
 Error máximo 6.7, RMS 4.26 (unidades de R)
+Oscuro (x = 575): R nueva -5.2, fábrica 13.3. Patrón más bajo (x = 899): R nueva 66.1, fábrica 61.2. Por debajo del patrón más bajo la lectura NO está calibrada.
+Residuo por tipo (nueva / fábrica), relativo al certificado:
+  I    n=4  sesgo +0.3 % / -16.4 %  RMS 5.2 % / 18.6 %
 Rango medido: x 899-1151. Fuera de él la curva es EXTRAPOLACIÓN:
      x  R actual  R nueva
    500      -1.7    -21.7 extrapolado

@@ -228,7 +228,7 @@ def main():
     sigma_col = sd_d / math.sqrt(2)  # una medida (sesión + colocación), si las dos sesiones pesan igual
     sigma_rel = round(sigma_col / 100, 4)
 
-    commit = os.environ.get("RETRO_COMMIT") or git("rev-parse", "--short", "HEAD")
+    commit = os.environ.get("RETRO_COMMIT") or git("log", "-1", "--format=%h", "--", "03_App_Movil/RetroV36/app/src/main/java")
     sucio = git("status", "--porcelain", "--", "03_App_Movil/RetroV36/app/src/main/java")
     lineas = correr_java(tmp, sigma_rel, commit)
     d = parsear(lineas)
@@ -259,12 +259,12 @@ def main():
       "08:59-09:25, firmware 3.6.0 (`V3.6 2026-09-18`), app 3.6.2. **Primer disparo de cada serie descartado** |")
     w(f"| Código que calcula | Clases de la app en `{commit}`" + (" (con cambios sin confirmar en el árbol)" if sucio else "") +
       ", compiladas con JDK 11 y llamadas desde `tools/CotejoAjusteSLV002.java`: `Campana.leerDiario` + "
-      "`medidasElegidas` (`Campana.java:497`), `Asistente.puntos` (`Asistente.java:136`), `Ajuste.ajustar` "
-      "(`Ajuste.java:41`), `Asistente.proponer` (`:280`), `criterioFirmwareS` (`:222`), `validarForma` (`:179`), "
+      "`medidasElegidas` (`Campana.java:550`), `Asistente.puntos` (`Asistente.java:136`), `Ajuste.ajustar` "
+      "(`Ajuste.java:41`), `Asistente.proponer` (`:349`), `criterioFirmwareS` (`:252`), `validarForma` (`:179`), `comprobarOscuro` (`:228`), "
       "`Ecuacion.respuestaFloat32` (`Ecuacion.java:56`), `Fabrica.ecuacion` (`Fabrica.java:62`). **El ajuste es el "
       "de la app, no una reimplementación** |")
     w("| Puntos del ajuste | Media de la serie elegida de cada patrón, como la app: sin evento `ELIGE` en el diario, "
-      "la **última aceptada** (`Campana.elegida`, `Campana.java:304`). **Para P5 es S024, a 90°** (2459,3); a 0° "
+      "la **última aceptada** (`Campana.elegida`, `Campana.java:357`). **Para P5 es S024, a 90°** (2459,3); a 0° "
       "(S023) da 2456,8. Se da el ajuste con las dos (§2.2) |")
     w("| Curva de fábrica | Tabla ROM `01_Firmware/RetroVertical_V3.6.X/calibracion_v36.c:34-46`, igual a `Fabrica.java:62-88` |")
     w("| Criterio de `#S` | `calibracion_v36.c:316-319` (límites), `:407` (`curvaValida`), `:698` (llamada) en el fuente 3.6.2; "
@@ -352,7 +352,7 @@ def main():
     w("")
     for l in d["POSICION"]:
         if "Media" in l:
-            w(f"Con `Campana.desvioPorPosicion()` (`Campana.java:601`), desvío medio frente a la mediana de su serie, por "
+            w(f"Con `Campana.desvioPorPosicion()` (`Campana.java:655`), desvío medio frente a la mediana de su serie, por "
               f"posición (el asentamiento ya descartado): `{l.split(':',1)[1].strip()}`.")
     w("")
     w("**Confirmado** −4,0 en la posición 1 y +3,3 en la 9. **No es monótona**: la 4 (−0,9) queda por debajo de la 3 "
@@ -433,8 +433,8 @@ def main():
         w(f"- C2: **{'pasa' if c2 == 'OK' else 'NO pasa — ' + c2}**." + (f" Aviso: {avisos}." if avisos else ""))
         lim = max(ev[575][2] + 10, 25)
         w(f"- **Oscuro** (x = {X_OSCURO}): nueva {c(ev[575][0],1)} → responde {ev[575][1]}; fábrica {c(ev[575][2],1)}. "
-          f"Con la regla P9-B13 en curso (R ≤ máx(fábrica + 10 ; 25) = {c(lim,0)}): "
-          + ("**la bloquearía**." if ev[575][0] > lim else "pasa."))
+          f"Regla P9-B13 (`Asistente.comprobarOscuro`, app 3.6.8; R ≤ máx(fábrica + 10 ; 25) = {c(lim,0)}): "
+          + ("**la bloquea**." if ev[575][0] > lim else "pasa."))
         if ident in d["ESCRIBIBLE"]:
             e_ = d["ESCRIBIBLE"][ident]
             w(f"- `Asistente.proponer().escribible()`: **{'sí' if e_[0] == '1' else 'no'}**" + (f" ({e_[1]})" if len(e_) > 1 and e_[1] else "") + ".")
@@ -455,7 +455,8 @@ def main():
     w("")
     w("Sesgo = media de (R curva − cert)/cert; RMS igual, en %. Residuo = cert − R (convención de `Ajuste.java:17`). "
       "\"Firmware float32\" es `Ecuacion.respuestaFloat32(round(x))`, lo que respondería el equipo. Ninguna curva "
-      "nueva tiene c3 (`Ajuste.java:86`).")
+      "nueva tiene c3 (`Ajuste.java:86`). El sesgo y el RMS por tipo coinciden con los de `Asistente.residuoPorTipo` (`Asistente.java:278`) "
+      "de la app 3.6.8 (anexo): dos cálculos independientes, mismas cifras.")
     w("")
     w("### 2.1 Código 1, blanco intenso (P1-P4, P6, P7, P27, P28)")
     w("")
@@ -481,7 +482,7 @@ def main():
       f"({d['FABRICA_S']['2'][0]}). **Pega del grado 1 en el oscuro:** {c(d['EVAL']['2|1|'][575][0],0)} frente a "
       f"{c(d['EVAL']['2|1|'][575][2],0)} de fábrica (confirma B13): una lámina amarilla degradada o el oscuro leerían ~84. "
       "Es consecuencia de que el patrón amarillo más bajo esté en x = 1497: por debajo, la recta es extrapolación. "
-      "**Si se confirma la regla P9-B13 en curso, esta recta tampoco se podrá escribir** (84 > 31).")
+      "**Con la regla P9-B13 de la app 3.6.8 esta recta no se puede escribir** (84 > 31).")
     w("")
     k2, f2, t2 = anclada(d["PUNTO"]["2"])
     w(f"*Opción fuera del método de la app, sólo para que Diego la valore:* recta anclada en el oscuro, "
@@ -609,10 +610,10 @@ def main():
       "fábrica, diferencia muy por debajo de la reproducibilidad). Con la letra de RF-CAL-16, \"no se escribe\" | "
       "**P2 y P3** (IV) se contradicen entre sí: 36 unidades de certificado y 385 cuentas de x, cuando la recta da "
       "0,3 R/cuenta; P2 (414) lee casi lo que P27 (471). **P28**, −6,9 % |")
-    w("| 2 | **Ajustar, grado 1, tras P9-A5; antes, decisión de Diego sobre el oscuro** | Pasa `#S` y C2; mejora a la "
+    w("| 2 | **No escribible hoy. Ajustar tras P9-A5 y tras decidir Diego el oscuro** | Pasa `#S` y C2; mejora a la "
       "fábrica en los tres tipos (sesgo IV +21 → +0,6 %, IX +24 → +1,4 %, XI +13 → 0 %). **Incumple RF-CAL-14 en P22 "
       "(−13 %) y P24 (+10,3 %), RF-CAL-15 en IV (RMS 8,2 %) y RF-CAL-17 en P22.** Lee **84 en el oscuro** frente a 21 "
-      "(B13): la regla en curso la bloquearía. Alternativa: la recta anclada (§2.2) | **P22**, **P24** (identidad sin "
+      "(B13): la app 3.6.8 la bloquea. Alternativa: la recta anclada (§2.2), o que Diego cambie el umbral del oscuro | **P22**, **P24** (identidad sin "
       "confirmar), **P23** (−8 %) y **P5** (+7,6 %): los XI amarillos no se ordenan por certificado |")
     w("| 8 | **Ajustar, grado 1, tras P9-A5** | Cumple RF-CAL-14/15/16 (tipo I, RMS 5,2 % frente a 18,6 % de fábrica). "
       "Pasa `#S` por 0,3 unidades: una re-medida puede dar una recta que el firmware rechace | P37 (lee más que P34 "
@@ -649,10 +650,11 @@ def main():
     w("- **Por qué en dos sesiones:** lo medido es variación entre sesiones; si todas las colocaciones son de la misma, la "
       "media hereda el error de esa sesión entero y la s entre colocaciones lo esconde (§1.1: 0,1-0,9 % dentro, 2-5 % "
       "entre). Si P9-A5 demuestra que la colocación sola ya da el 2-4 %, basta una sesión con K = 5.")
-    w("- **M = 4 y no 3:** el rechazo de descolgados sólo actúa desde 4 disparos (RF-CAL-04, "
-      "`SPEC-Calibracion-V3.6.md`, §3). Con el 3 × 3 por defecto de la 3.6.7 un disparo como el 3031 de P7 entraría en "
-      "la media. Y el mismo M en campaña, verificación y campo, por la rampa de §1.2.")
-    w("- Encaja con la app 3.6.7 (K × M configurables, 3 × 3 por defecto, `CampanaActivity.java:66-76`) cambiando a 5 × 4. "
+    w("- **M = 4 y no 3:** el rechazo de descolgados sólo actúa desde 4 disparos (`Veredicto.N_MIN_DESCOLGADOS = 4`, "
+      "`Veredicto.java:40`, `:178`). Con el 3 × 3 por defecto de la app, y con el 5 × 3 de P9-A5 en la 3.6.8 "
+      "(`A5.java:22-23`), un disparo como el 3031 de P7 entraría en la media sin que nada lo marque. Y el mismo M en "
+      "campaña, verificación y campo, por la rampa de §1.2.")
+    w("- Encaja con la app 3.6.7 (K × M configurables, 3 × 3 por defecto, `CampanaActivity.java:69-80`) cambiando a 5 × 4. "
       "**La 3.6.7 no está revisada** (nota de f7b75c4 en `REVISION-Arquitectura-P9-V3.6.md`): hasta que lo esté, esto es "
       "procedimiento, no una propiedad de la app.")
     w("- **Medir el oscuro en serie** (K = 5, tapa opaca) en cada sesión: lo necesita la decisión de B13 y la del código b.")
