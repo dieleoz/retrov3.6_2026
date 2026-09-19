@@ -2,3 +2,4 @@
 *.hex -text
 *.md5 -text
 *.zip binary
+06_Calibracion/cola_banco_*.csv -text
