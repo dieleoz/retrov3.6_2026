@@ -1,0 +1,40 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Misma cadena de compilacion que RetroDiagBT: Gradle 6.5 + AGP 4.1.1 + JDK 11.
+android {
+    compileSdkVersion 30
+    buildToolsVersion '30.0.3'
+
+    defaultConfig {
+        applicationId "com.dpi.retrov36"
+        minSdkVersion 24
+        targetSdkVersion 30
+        versionCode 360
+        versionName "3.6.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+}
+
+dependencies {
+    // appcompat trae androidx.core, que aporta FileProvider.
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    // Tests JVM de la parte de calculo (Inversion, Ajuste, Coherencia, Tramas).
+    testImplementation 'junit:junit:4.13.2'
+}

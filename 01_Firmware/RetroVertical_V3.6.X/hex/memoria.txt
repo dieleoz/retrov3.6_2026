@@ -1,0 +1,9 @@
+Memory Summary:
+    Program space        used  BFA4h ( 49060) of 20000h bytes   ( 37.4%)
+    Data space           used   945h (  2373) of  2000h bytes   ( 29.0%)
+    Configuration bits   used     5h (     5) of     5h words   (100.0%)
+    EEPROM space         used     0h (     0) of   400h bytes   (  0.0%)
+    ID Location space    used    10h (    16) of    10h bytes   (100.0%)
+    Data stack space     used     0h (     0) of  1640h bytes   (  0.0%)
+ Estimated maximum stack depth 11
+ Estimated maximum stack depth 16

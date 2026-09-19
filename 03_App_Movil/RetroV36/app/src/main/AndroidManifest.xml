@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.dpi.retrov36">
+
+    <!-- Mismo modelo de permisos que RetroDiagBT. Con targetSdkVersion 30
+         BLUETOOTH y BLUETOOTH_ADMIN se conceden en la instalacion; solo la
+         ubicacion se pide en ejecucion. Sin INTERNET: los ficheros salen por
+         Intent.ACTION_SEND y los manda otra aplicacion. -->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
+
+        <activity
+            android:name=".ConexionActivity"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".PruebasActivity" android:label="Pruebas del equipo" />
+        <activity android:name=".MedidaActivity" android:label="Medida de patrones" />
+        <activity android:name=".AdminActivity" android:label="Modo administrador" />
+        <activity android:name=".BotonesActivity" android:label="Botones de pantalla" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.ficheros"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/ficheros" />
+        </provider>
+    </application>
+</manifest>

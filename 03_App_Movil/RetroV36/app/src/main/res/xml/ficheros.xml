@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rutas que FileProvider puede compartir: solo la carpeta de registros del
+     almacenamiento propio de la aplicacion. -->
+<paths>
+    <files-path
+        name="registros"
+        path="registros/" />
+</paths>

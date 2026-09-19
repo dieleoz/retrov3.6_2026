@@ -1,0 +1,3 @@
+// App de medida y calibracion del retrorreflectometro vertical V3 / V3.6.
+include ':app'
+rootProject.name = "RetroV36"
