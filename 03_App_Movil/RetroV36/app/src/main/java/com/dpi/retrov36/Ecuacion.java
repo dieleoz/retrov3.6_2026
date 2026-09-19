@@ -79,13 +79,18 @@ public final class Ecuacion {
      * - ULP_G = 4: #G frente a la tabla de fabrica, o frente a otra lectura #G.
      *   Error medido: 2 ulp al imprimir; 4 por decision del coordinador
      *   (18-sep-2026), con margen.
-     * - ULP_S = 5: #G tras #S frente a lo enviado. La app manda texto exacto de
-     *   9 cifras; strtod del equipo (3 ulp) + sprintf al releer (2 ulp) = 5.
-     *   Con 4 un #S correcto podria darse por fallido y restaurarse.
+     * - ULP_S = 8: #G tras #S frente a lo enviado. La 3.6.2 usaba 5 (strtod 3 +
+     *   sprintf 2), pero NO es una cota: el firmware V3.6.1 midio en simulador la
+     *   ida y vuelta completa (01_Firmware/RetroVertical_V3.6.X/CAMBIOS-V3.6.md
+     *   §7 y pruebas/T-A23_T-A30/): 5 ulp en general, 6 con c2 entre 1e-7 y
+     *   1e-6, 7 con c3 entre 1e-9 y 1e-6. 8 = maximo medido + 1. Imprimir solo
+     *   (ULP_G) no paso de 3 ulp en 600 000 casos.
+     *   La comprobacion que importa de verdad tras #S es por evaluacion: #E en
+     *   5 puntos contra la curva enviada (AdminActivity).
      * Cuando el firmware pase T-A23 (conversion exacta) se vuelve a 1 ulp.
      */
     public static final int ULP_G = 4;
-    public static final int ULP_S = 5;
+    public static final int ULP_S = 8;
 
     /** Igualdad coeficiente a coeficiente como float32, con ULP_G ulp de margen. */
     public boolean igualFloat32(Ecuacion o) {

@@ -35,3 +35,26 @@ P28,484,IX,blanco
 P29,442,IV,amarillo
 P30,448,IV,amarillo
 P31,573,IX,amarillo
+# --- Patrones TIPO I, entregados por Diego el 19-sep-2026 (columnas originales: patron, valor, color, tipo I).
+# Calibran las ecuaciones OPACAS ("PAPEL TIPO I"): blanco 7, amarillo 8, verde a, rojo b, azul c, naranja d.
+# P32a / P32b: ID duplicado en la lista de Diego, 19-sep-2026, pendiente de confirmar (P32 azul 9 y P32 naranja 68).
+P32a,9,I,azul
+P32b,68,I,naranja
+P33,72,I,naranja
+P34,86,I,amarillo
+P35,96,I,blanco
+P36,10,I,azul
+P37,82,I,amarillo
+P38,52,I,rojo
+P39,46,I,rojo
+P40,6,I,verde
+P41,73,I,naranja
+P42,7,I,azul
+P43,122,I,amarillo
+P44,64,I,amarillo
+P45,7,I,verde
+P46,9,I,azul
+P47,9,I,azul
+P48,9,I,azul
+P49,81,I,rojo
+P50,71,I,naranja

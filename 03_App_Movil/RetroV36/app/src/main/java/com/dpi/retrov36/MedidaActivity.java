@@ -27,6 +27,7 @@ public class MedidaActivity extends Base {
 
     private Spinner spPatron;
     private EditText edN;
+    private EditText edAsentamiento;
     private Button btnMedir;
     private Button btnParar;
     private TextView txtEstado;
@@ -45,6 +46,9 @@ public class MedidaActivity extends Base {
         raiz.addView(spPatron);
         edN = campo("Lecturas por patrón (N)", InputType.TYPE_CLASS_NUMBER);
         edN.setText("3");
+        edAsentamiento = campo("Disparos de asentamiento descartados antes de la serie (0 = ninguno)",
+                InputType.TYPE_CLASS_NUMBER);
+        edAsentamiento.setText(String.valueOf(Sesion.get().disparosAsentamiento));
         btnMedir = boton("Medir ×N", v -> medir());
         btnParar = boton("Parar", v -> parar = true);
         fila(btnMedir, btnParar);
@@ -130,6 +134,16 @@ public class MedidaActivity extends Base {
             alerta("N", "Escriba un número de lecturas entre 1 y 50.");
             return;
         }
+        try {
+            int a = Integer.parseInt(edAsentamiento.getText().toString().trim());
+            if (a < 0 || a > 5) {
+                throw new NumberFormatException();
+            }
+            s.disparosAsentamiento = a;
+        } catch (NumberFormatException e) {
+            alerta("Asentamiento", "Escriba un número de disparos descartados entre 0 y 5.");
+            return;
+        }
         final Patron p = patrones.get(pos);
         final int total = n;
         midiendo = true;
@@ -139,6 +153,15 @@ public class MedidaActivity extends Base {
         Registro.nota("medida de " + p.nombre + " x" + total + " (" + s.identidad() + ")");
         Cliente.instancia().ejecutar(() -> {
             String fin = "Terminado.";
+            try {
+                if (s.disparosAsentamiento > 0) {
+                    enUi(() -> txtEstado.setText("Disparo de asentamiento (se descarta)..."));
+                    LecturaX.asentar(s);
+                }
+            } catch (IOException | InterruptedException e) {
+                parar = true;
+                fin = "Detenido en el asentamiento: " + EnlaceSerie.descripcion(e);
+            }
             for (int i = 0; i < total && !parar; i++) {
                 final int k = i + 1;
                 enUi(() -> txtEstado.setText("Midiendo " + p.nombre + ": lectura " + k + " de " + total + "..."));
@@ -166,7 +189,7 @@ public class MedidaActivity extends Base {
                 }
                 enUi(this::pintarTabla);
             }
-            if (parar) {
+            if (parar && fin.equals("Terminado.")) {
                 fin = "Parado por el operador.";
             }
             final String f = fin + Cliente.instancia().consejoSiMudo();

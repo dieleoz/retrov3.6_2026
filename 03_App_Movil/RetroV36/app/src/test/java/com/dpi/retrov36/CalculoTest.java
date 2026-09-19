@@ -395,7 +395,7 @@ public class CalculoTest {
                 StandardCharsets.UTF_8)) {
             p = Patron.leer(r);
         }
-        assertEquals(31, p.size());
+        assertEquals(51, p.size()); // P1-P31 y los 20 tipo I (P32a-P50)
         assertEquals("P1", p.get(0).nombre);
         assertEquals(85, p.get(18).valor, 0);
         assertEquals("azul", p.get(18).color);

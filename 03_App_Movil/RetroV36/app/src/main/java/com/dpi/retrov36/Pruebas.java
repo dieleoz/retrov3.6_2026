@@ -431,6 +431,11 @@ public final class Pruebas {
         boolean v36 = s.version == Sesion.Version.V36;
         Integer eIni = null;
         if (v36) {
+            // La 'e' inicial de la deriva no puede ser un primer disparo (sale bajo).
+            if (s.disparosAsentamiento > 0) {
+                LecturaX.asentar(s);
+                d.append("asentamiento: ").append(s.disparosAsentamiento).append(" disparo(s) descartado(s)\n");
+            }
             Cliente.Respuesta re = c.pedir("e", Tramas.Tipo.MEDIDA, Cliente.TIMEOUT_MEDIDA_MS);
             eIni = re.valida() ? Tramas.valorMedida(re.trama) : null;
             d.append("e (antes): ").append(re.describir());

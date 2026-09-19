@@ -73,13 +73,15 @@ public class AdminActivity extends Base {
         txtCoef.setTypeface(Typeface.MONOSPACE);
 
         titulo("Asistente de calibración");
-        texto(Asistente.cobertura());
+        List<Patron> catalogo = catalogo();
+        texto(catalogo == null ? "No se pudo leer el catálogo de patrones." : Asistente.cobertura(catalogo));
         texto("Usa las medias por patrón de la sesión de medida (pantalla Medida de patrones), de los patrones "
-                + "del color del código. Hacen falta al menos grado + 2 patrones distintos.");
+                + "del color y la clase del código (tipo I = opacas 7, 8, a-d). Hacen falta al menos grado + 2 "
+                + "niveles certificados distintos y un rango certificado amplio: con rango estrecho no se ajusta.");
         spAjuste = new Spinner(this);
         List<String> aj = new ArrayList<>();
-        for (char k : Asistente.AJUSTABLES) {
-            aj.add(k + "  " + Fabrica.nombre(k));
+        for (char k : Fabrica.CODIGOS) {
+            aj.add(catalogo == null ? k + "  " + Fabrica.nombre(k) : Asistente.cobertura(k, catalogo).texto());
         }
         spAjuste.setAdapter(adaptador(aj));
         panel.addView(spAjuste);
@@ -375,7 +377,15 @@ public class AdminActivity extends Base {
 
     private char codigoAjuste() {
         int i = spAjuste.getSelectedItemPosition();
-        return Asistente.AJUSTABLES[Math.max(0, i)];
+        return Fabrica.CODIGOS[Math.max(0, i)];
+    }
+
+    private List<Patron> catalogo() {
+        try {
+            return Sesion.get().patrones(this);
+        } catch (java.io.IOException | RuntimeException e) {
+            return null;
+        }
     }
 
     private void ajustar() {
@@ -386,7 +396,12 @@ public class AdminActivity extends Base {
             alerta("Coeficientes", "Lea antes los coeficientes del equipo: el estado \"como llegó\" se calcula con ellos.");
             return;
         }
-        propuesta = Asistente.proponer(k, grado, s.medidas(), s.ecuacionVigente(k));
+        List<Patron> cat = catalogo();
+        if (cat == null) {
+            alerta("Patrones", "No se pudo leer el catálogo de patrones: sin él no se ajusta.");
+            return;
+        }
+        propuesta = Asistente.proponer(k, grado, s.medidas(), s.ecuacionVigente(k), cat);
         txtAjuste.setText(propuesta.informe);
         Registro.nota("asistente: " + propuesta.informe);
         refrescar();
@@ -401,6 +416,12 @@ public class AdminActivity extends Base {
         final Tramas.TramaS ts = Tramas.tramaS(k, p.ajuste.ecuacion);
         if (ts == null) {
             alerta("Trama", "La trama #S no cabe en " + Tramas.MAX_TRAMA + " bytes.");
+            return;
+        }
+        String fw = Asistente.criterioFirmwareS(ts.enviada);
+        if (fw != null) {
+            // Mismo criterio que #S del firmware 3.6.1: no se envia nada que vaya a dar #ERR sin explicacion.
+            alerta("No se escribe", fw);
             return;
         }
         Ecuacion ant = Sesion.get().ecuacionVigente(k);
@@ -468,6 +489,28 @@ public class AdminActivity extends Base {
                 + (e == null ? "sin relectura" : e.toString()));
     }
 
+    /**
+     * Comprobacion por evaluacion tras #S (la que importa de verdad): #E,k,x en
+     * x = 500, 1000, 2000, 3000, 4000 tiene que dar lo mismo que la curva que la
+     * app queria escribir, emulada en float32, con +/-1 cuenta.
+     * @return null si cuadra; si no, el detalle.
+     */
+    private String comprobarPorE(char k, Ecuacion enviada) throws IOException, InterruptedException {
+        StringBuilder mal = new StringBuilder();
+        for (int x : Pruebas.X_COMPROBACION) {
+            Cliente.Respuesta r = Cliente.instancia().pedir("#E," + k + "," + x + "#", Tramas.Tipo.ADMIN,
+                    Cliente.TIMEOUT_ADMIN_MS);
+            Integer v = r.valida() ? Tramas.parsearE(r.trama, k) : null;
+            int esperado = enviada.respuestaFloat32(x);
+            if (v == null) {
+                mal.append(" x=").append(x).append(": ").append(r.describir()).append(';');
+            } else if (Math.abs(v - esperado) > 1) {
+                mal.append(" x=").append(x).append(": #E=").append(v).append(", esperado ").append(esperado).append(';');
+            }
+        }
+        return mal.length() == 0 ? null : "#E no reproduce la curva enviada:" + mal;
+    }
+
     private void escribir(char k, Tramas.TramaS ts) {
         op("Escribir código " + k, true, () -> {
             String copia = leerTodo("copia antes de escribir el codigo " + k);
@@ -491,8 +534,13 @@ public class AdminActivity extends Base {
                     salida += " Se restaura el estado anterior: " + restaurar(k, anterior);
                 }
             } else if (e != null && e.igualFloat32(ts.enviada, Ecuacion.ULP_S)) {
-                salida = "#S OK y " + estado + " (" + Ecuacion.ULP_S + " ulp). Mida ahora al menos un patrón con el código " + k
-                        + " para verificar.";
+                String porE = comprobarPorE(k, ts.enviada);
+                if (porE == null) {
+                    salida = "#S OK y " + estado + " (" + Ecuacion.ULP_S + " ulp); #E en 5 puntos coincide con la curva "
+                            + "enviada (±1). Mida ahora al menos un patrón con el código " + k + " para verificar.";
+                } else {
+                    salida = "#S OK pero " + porE + ". Se restaura el estado anterior: " + restaurar(k, anterior);
+                }
             } else {
                 salida = "#S OK pero " + estado + ". Se restaura el estado anterior: " + restaurar(k, anterior);
             }

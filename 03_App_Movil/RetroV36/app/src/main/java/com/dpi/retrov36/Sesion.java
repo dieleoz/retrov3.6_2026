@@ -49,6 +49,14 @@ public final class Sesion {
     public volatile long ultimaAlmohadillaMs;
     /** Fallos de PIN seguidos en esta conexion (el firmware bloquea #L a los 5). */
     public volatile int fallosPin;
+    /**
+     * Disparos de asentamiento que se hacen y se DESCARTAN antes de cada serie
+     * (Medir xN y la 'e' inicial de la prueba 3). Medido en SLV-002 el
+     * 19-sep-2026: en 17 de 17 series de 9 disparos con 'e' el primero sale
+     * bajo, 6-39 cuentas (17 de media); sin el, s ~ 5. 1 por defecto, 0 lo
+     * desactiva. No se reinicia al reconectar.
+     */
+    public volatile int disparosAsentamiento = 1;
     /** true si el equipo responde a 'e' (siempre en V3.6 segun contrato). */
     public volatile boolean eDisponible;
     public volatile String nombre = "";
@@ -112,7 +120,7 @@ public final class Sesion {
     public String firmware() {
         switch (version) {
             case V36:
-                return "V3.6 " + fechaFirmware + " " + marca
+                return "V3.6 " + fechaFirmware + (limitesS() ? " (3.6.1)" : " (3.6.0, sin límites de #S)") + " " + marca
                         + (mascara >= 0 ? String.format(Locale.US, " mascara %04X", mascara) : "");
             case V3_2020:
                 return "V3 2020 (sin e)";
@@ -124,6 +132,15 @@ public final class Sesion {
     /** Identidad para cabeceras y exportaciones. */
     public String identidad() {
         return "equipo " + nombre + " (serie " + serie() + ", MAC " + mac + "), firmware " + firmware();
+    }
+
+    /**
+     * true si el firmware es la V3.6.1 o posterior (fecha de compilacion
+     * 2026-09-19 o mayor), que rechaza en #S curvas fuera de [0; 4000] en
+     * x = 600-4300. La del 2026-09-18 es la V3.6 sin esos limites.
+     */
+    public boolean limitesS() {
+        return fechaFirmware != null && fechaFirmware.compareTo("2026-09-19") >= 0;
     }
 
     public boolean versionMedible() {

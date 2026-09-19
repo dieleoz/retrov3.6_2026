@@ -4,7 +4,7 @@
 V3.6 no se puede probar: el firmware V3.6 no existe todavía en ningún equipo. Lo que sí debe funcionar
 es la medida contra un V3 2020 (SLV-002), y eso tampoco se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 363`, `versionName 3.6.3` (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 364`, `versionName 3.6.4` (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -23,7 +23,7 @@ export JAVA_HOME="D:/@Proyect/Baliza/7 sw apk/jdk-11/jdk-11.0.24+8"
 
 ### Tests JVM
 
-`app/src/test/`: `CalculoTest`, `ReceptorTest`, `AsistenteTest`, `FabricaTest` (45 tests).
+`app/src/test/`: `CalculoTest`, `ReceptorTest`, `AsistenteTest`, `FabricaTest` (56 tests).
 `./gradlew testDebugUnitTest` **no arranca en esta máquina**: el ejecutor de Gradle 6.5 no encuentra su
 clase `GradleWorkerMain` porque la carpeta de usuario lleva `ñ` (`C:\Users\Diego.Zuñiga`). Se compilan
 con Gradle y se ejecutan con JUnit a mano:
@@ -33,7 +33,7 @@ con Gradle y se ejecutan con JUnit a mano:
 mkdir -p libtest   # copiar aquí (fuera de build/: clean lo borra) junit-4.13.2.jar y hamcrest-core-1.3.jar de ~/.gradle/caches
 cd app && "$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;build/intermediates/javac/debugUnitTest/classes;../libtest/junit-4.13.2.jar;../libtest/hamcrest-core-1.3.jar" \
   org.junit.runner.JUnitCore com.dpi.retrov36.CalculoTest com.dpi.retrov36.ReceptorTest \
-  com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest
+  com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest com.dpi.retrov36.CoherenciaRealTest
 ```
 
 `FabricaTest` compara las 12 ecuaciones de la app con el **texto** de
@@ -71,9 +71,10 @@ que queda anotado en el registro. Medir con NO APTO pide una confirmación.
 La app no puede comprobar el CRC de la EEPROM por sí misma: se fía de la marca y de la máscara que
 calcula el firmware, y lo cruza con los coeficientes leídos.
 
-Casos reales de SLV-002 (19-sep-2026, app 3.6.2) en `CoherenciaRealTest`: la segunda pasada sobre P1
-(código 1 = 776, deriva 3004 → 3023) sale APTA con el código 1 excluido; la primera (ocho códigos en
-oscuro hacia x ≈ 575 y cuatro sobre P1 hacia 3000) sale INVÁLIDA. La prueba opcional "gatillo contra
+Casos reales de SLV-002 (19-sep-2026, app 3.6.2) en `CoherenciaRealTest`, con las respuestas
+**literales** del registro `07 pruebas/19092026_0900/rtv36_20260919_085316 (1).txt`: la segunda
+pasada sobre P1 (líneas 996-1044, `e` final 3016) sale APTA con los códigos 1 y 2 excluidos; la
+primera (líneas 457-505: 1-8 en oscuro, `a` a medio apoyar, b-d sobre P1) sale INVÁLIDA. La prueba opcional "gatillo contra
 Bluetooth" no está hecha: la sospecha que la motivaba quedó retirada (acta G4).
 
 ## Línea base previa a grabar (G3)
@@ -105,6 +106,27 @@ Reglas que salen de ahí, en el código:
   envía sólo `1`-`8`, `a`-`d` y `9`.
 - Tras 3 peticiones seguidas sin un solo byte, la app aconseja apagar y encender el equipo y lo anota
   en el registro.
+
+## Novedades de la 3.6.4
+
+- **Patrones tipo I** (P32a-P50, Diego, 19-sep-2026) en el asset de patrones. Cada color va a su
+  código opaco: blanco 7, amarillo 8, verde a, rojo b, azul c, naranja d. `P32` venía duplicado:
+  se carga como `P32a` (azul 9) y `P32b` (naranja 68), pendiente de confirmar; es una línea del CSV.
+- **Qué se puede ajustar** lo calcula la app del catálogo (`Asistente.cobertura`): grado máximo =
+  niveles certificados distintos − 2 (hasta 2), y **no se ajusta** si el rango certificado es
+  estrecho (< 20 unidades de R o < 30 % del mayor): sería extrapolar a ciegas. Resultado: 1 y 2
+  hasta grado 2; 8 (amarillo tipo I) hasta grado 2; b (rojo tipo I) grado 1; el resto, sólo
+  verificar. C2 sólo valida la forma en todo el rango; por eso el informe del ajuste marca qué
+  valores de R son extrapolación.
+- **Criterio de `#S` del firmware 3.6.1** (R en [0; 4000] en x = 600-4300) aplicado antes de enviar,
+  con el motivo ("la curva se hace negativa en x = …"). La fábrica del código 2 lo incumple desde
+  x = 4175. Si una parábola no cumple, la app dice si una recta sí.
+- Tras `#S`: relectura `#G` a 8 ulp (medido hasta 7 en el simulador del firmware) **y** `#E` en
+  5 puntos contra la curva enviada (±1). Si falla, se restaura.
+- **Disparo de asentamiento:** antes de cada serie y de la `e` inicial de la prueba 3 se hace y se
+  descarta 1 disparo (configurable, 0 lo desactiva). Va al registro como "disparo de asentamiento,
+  descartado"; no entra en la media ni en el CSV.
+- `#V#` con fecha 2026-09-18 = V3.6 sin límites de `#S`; 2026-09-19 o posterior = 3.6.1.
 
 ## Lectura de la `x`
 

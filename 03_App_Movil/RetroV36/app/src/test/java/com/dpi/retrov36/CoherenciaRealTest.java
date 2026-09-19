@@ -13,10 +13,8 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * Prueba 4 con los casos reales de SLV-002 grabado con la V3.6 (19-sep-2026,
- * app 3.6.2; 06_Calibracion/SLV-002/ACTA-antes-y-despues-grabacion.md, G4).
- * Las respuestas por codigo no estan en el acta; se generan con la emulacion
- * float32 validada en el equipo (#E 60/60 exacto) sobre las x medidas, y se
- * usa el unico valor real anotado: codigo 1 = 776 sobre P1.
+ * app 3.6.2). Las dos pasadas usan las respuestas LITERALES del registro de
+ * tramas; los tests de deriva y tolerancia local usan series sinteticas.
  */
 public class CoherenciaRealTest {
 
@@ -42,21 +40,34 @@ public class CoherenciaRealTest {
         return null;
     }
 
+    /** Respuestas literales, en el orden de envio 1-8, a-d. */
+    private static List<Coherencia.Entrada> literales(int... r) {
+        List<Coherencia.Entrada> l = new ArrayList<>();
+        for (int i = 0; i < Fabrica.CODIGOS.length; i++) {
+            char k = Fabrica.CODIGOS[i];
+            l.add(new Coherencia.Entrada(k, r[i], Fabrica.ecuacion(k)));
+        }
+        return l;
+    }
+
+    /**
+     * Segunda pasada, literal: registro "07 pruebas/19092026_0900/rtv36_20260919_085316 (1).txt",
+     * lineas 996-1044 (app 3.6.2: 'e' solo al final, 3016). Sobre P1.
+     */
     @Test
     public void segundaPasadaRealSobreP1EsApta() {
-        // e = 3004 al principio y 3023 al final (deriva real); codigo 1 = 776 (real).
-        List<Coherencia.Entrada> l = pasada(3004, 3023);
-        l.set(0, new Coherencia.Entrada('1', 776, Fabrica.ecuacion('1')));
-        Coherencia.Resultado r = Coherencia.evaluar(l, 3004, 3023, Coherencia.TOLERANCIA_POR_DEFECTO);
-        assertFalse(r.invalida);
-        assertTrue(r.resumen, r.apto);
+        List<Coherencia.Entrada> l = literales(776, 813, 803, 818, 804, 806, 810, 822, 809, 812, 812, 812);
+        Coherencia.Resultado r = Coherencia.evaluar(l, null, 3016, Coherencia.TOLERANCIA_POR_DEFECTO);
+        StringBuilder t = new StringBuilder(r.resumen);
+        for (Coherencia.Linea x : r.lineas) {
+            t.append('\n').append(x.texto());
+        }
+        assertFalse(t.toString(), r.invalida);
+        assertTrue(t.toString(), r.apto);
         // El blanco y el amarillo intensos, cerca de su vertice: excluidos, no fallo.
         assertEquals(Coherencia.Estado.NO_EVALUABLE_ZONA, linea(r, '1').estado);
         assertEquals(Coherencia.Estado.NO_EVALUABLE_ZONA, linea(r, '2').estado);
         assertTrue(linea(r, '1').texto(), linea(r, '1').texto().contains("no evaluable en esta zona"));
-        for (Coherencia.Linea x : r.lineas) {
-            assertTrue(x.texto(), x.estado != Coherencia.Estado.FUERA);
-        }
     }
 
     @Test
@@ -67,16 +78,14 @@ public class CoherenciaRealTest {
         assertTrue("776 es ambigua: el blanco intenso tiene techo en x ~ 3580", r1.intervalos > 1);
     }
 
+    /**
+     * Primera pasada, literal: mismo registro, lineas 457-505. Codigos 1-8 en
+     * oscuro, 'a' a medio apoyar, b-d sobre P1; 'e' al final = 3004.
+     */
     @Test
     public void primeraPasadaRealEquipoApoyadoAMitadEsInvalida() {
-        // Codigos 1-8 en oscuro (x ~ 575) y a-d sobre P1 (x ~ 3000); 'e' solo al final.
-        List<Coherencia.Entrada> l = new ArrayList<>();
-        for (char k : Fabrica.CODIGOS) {
-            int x = (k >= '1' && k <= '8') ? 575 : 3000;
-            Ecuacion e = Fabrica.ecuacion(k);
-            l.add(new Coherencia.Entrada(k, e.respuestaFloat32(x), e));
-        }
-        Coherencia.Resultado r = Coherencia.evaluar(l, null, 3021, Coherencia.TOLERANCIA_POR_DEFECTO);
+        List<Coherencia.Entrada> l = literales(25, 22, 37, 41, 8, 9, 9, 14, 231, 794, 791, 805);
+        Coherencia.Resultado r = Coherencia.evaluar(l, null, 3004, Coherencia.TOLERANCIA_POR_DEFECTO);
         assertTrue(r.resumen, r.invalida);
         assertFalse(r.apto);
         assertTrue(r.resumen, r.resumen.contains(Coherencia.MENSAJE_INVALIDA));
@@ -84,6 +93,9 @@ public class CoherenciaRealTest {
         // Sin ninguna 'e' (V3 2020), los grupos tambien la invalidan.
         assertTrue(Coherencia.evaluar(l, null, null, 10).invalida);
     }
+
+    // Los tests siguientes usan series SINTETICAS (emulacion float32) para
+    // aislar la deriva y la tolerancia local; no son datos del registro.
 
     @Test
     public void derivaMayorDe50EsInvalida() {

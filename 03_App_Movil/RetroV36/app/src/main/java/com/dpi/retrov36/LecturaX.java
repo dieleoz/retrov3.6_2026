@@ -36,6 +36,18 @@ public final class LecturaX {
         }
     }
 
+    /**
+     * Hace s.disparosAsentamiento lecturas y las descarta: van al registro de
+     * tramas como "disparo de asentamiento, descartado", no a la media ni al CSV.
+     */
+    public static void asentar(Sesion s) throws IOException, InterruptedException {
+        for (int i = 0; i < s.disparosAsentamiento; i++) {
+            Lectura l = leer(s);
+            Registro.nota("disparo de asentamiento, descartado: " + l.codigo + " -> "
+                    + (l.respuesta.valida() ? l.respuesta.trama : l.respuesta.describir()));
+        }
+    }
+
     public static Lectura leer(Sesion s) throws IOException, InterruptedException {
         // 'e' SOLO en V3.6. En SLV-002 (V3 2020) 'e' deja el equipo sin
         // responder por Bluetooth (hipotesis del 18-sep-2026, sin confirmar).
