@@ -2,6 +2,8 @@ package com.dpi.retrov36;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -77,6 +79,8 @@ public final class BancoPrevio {
     public static final class Resultado {
         public int hechos;
         public int repetir;
+        /** Series ANULADAS porque Diego manda repetir su patron (B-03), esten o no en un paso HECHO. */
+        public int anuladas;
         public final List<String> texto = new ArrayList<>();
     }
 
@@ -90,6 +94,8 @@ public final class BancoPrevio {
         Decisiones.Decision rep = d.decision("TIPO-I-REPETIR", equipo);
         List<String> repetir = rep == null ? new ArrayList<String>() : rep.repetidos;
         int[] req = Protocolo.requerido(d.valor("PROTOCOLO-AJUSTE", equipo));
+        String motivoRep = "repetir en preciso " + Protocolo.K_PRECISO + "×" + Protocolo.M_PRECISO
+                + " (TIPO-I-REPETIR de Diego, 6048453)";
         int[] preciso = {Protocolo.K_PRECISO, Protocolo.M_PRECISO};
         // 2. Repetir en preciso lo que Diego mando repetir y esta HECHO fuera de protocolo.
         Map<Integer, String> est = c.pasos();
@@ -107,8 +113,28 @@ public final class BancoPrevio {
                 r.texto.add(p.patron + ": a repetir en preciso");
             }
         }
+        // 2 bis (3.6.17, B-03): la serie fuera de protocolo de un patron que Diego manda repetir queda ANULADA con el
+        // motivo aunque su paso no estuviera HECHO (un diario de la 3.6.11 no trae PASO): la decision queda en el diario.
+        for (String pat : repetir) {
+            Campana.Serie s = c.elegida(pat);
+            String mal = s == null || s.anulada != null ? null : Protocolo.incumple(pat, s, preciso);
+            if (mal != null) {
+                c.anular(s, motivoRep + ": la serie estaba a " + mal.substring(pat.length() + 1), fecha);
+                r.anuladas++;
+                r.texto.add(pat + ": serie " + s.id + " ANULADA, a repetir en preciso");
+            }
+        }
         // 1. Lo ya medido y valido cuenta como hecho.
         est = c.pasos();
+        // B-01 (3.6.17): un equivalente solo cuenta si su patron NO es otro paso de esta cola (si lo es, se mide en su
+        // paso) y nunca si alguna decision lo saca del ajuste (EXCLUYE: P81 del 5).
+        Set<String> enCola = new HashSet<>();
+        for (BancoCola.Paso p : cola.pasos) {
+            if ("PATRON".equals(p.tipo)) {
+                enCola.add(p.patron);
+            }
+        }
+        List<String> excluidos = d.excluidosDe(equipo);
         for (BancoCola.Paso p : cola.pasos) {
             if (!"PATRON".equals(p.tipo) || est.containsKey(p.orden) || repetir.contains(p.patron)) {
                 continue;
@@ -116,7 +142,7 @@ public final class BancoPrevio {
             List<String> candidatos = new ArrayList<>();
             candidatos.add(p.patron);
             for (String e : g.equivalentes(p.patron)) {
-                if (!candidatos.contains(e)) {
+                if (!candidatos.contains(e) && !enCola.contains(e) && !excluidos.contains(e)) {
                     candidatos.add(e);
                 }
             }
@@ -137,6 +163,38 @@ public final class BancoPrevio {
             }
         }
         return r;
+    }
+
+    /**
+     * 3.6.17 (peticion de Diego): tipo de banco al abrir. REPRESENTATIVO siempre que el equipo ya tenga series
+     * medidas (en esta campana o en otra de su MAC); COMPLETO solo si el operador lo eligio a mano, o en un equipo
+     * sin nada medido.
+     */
+    public static BancoCola.Tipo tipoPorDefecto(Campana c, boolean otraCampanaDeEsteEquipo) {
+        if (c.colaElegida() && c.colaManual()) {
+            return BancoCola.Tipo.de(c.colaTipo());
+        }
+        if (!c.series().isEmpty() || otraCampanaDeEsteEquipo) {
+            return BancoCola.Tipo.REPRESENTATIVO;
+        }
+        return c.colaElegida() ? BancoCola.Tipo.de(c.colaTipo()) : BancoCola.Tipo.COMPLETO;
+    }
+
+    /** "(equivalente a P7)" si en la cola hay otro patron del mismo grupo; "" si no. */
+    public static String marcaEquivalente(BancoCola cola, Grupos g, String patron) {
+        StringBuilder sb = new StringBuilder();
+        for (String e : g.equivalentes(patron)) {
+            if (e.equals(patron)) {
+                continue;
+            }
+            for (BancoCola.Paso p : cola.pasos) {
+                if ("PATRON".equals(p.tipo) && e.equals(p.patron)) {
+                    sb.append(sb.length() == 0 ? "" : ", ").append(e);
+                    break;
+                }
+            }
+        }
+        return sb.length() == 0 ? "" : " (equivalente a " + sb + ")";
     }
 
     /** Patrones pendientes (sin estado o a rehacer) de la cola. */

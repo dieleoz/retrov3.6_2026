@@ -309,11 +309,50 @@ public abstract class Base extends AppCompatActivity implements EnlaceSerie.Oyen
     }
 
     /** Los dos ZIP (ligero y de soporte) en un solo selector (ACTION_SEND_MULTIPLE). */
-    protected void compartirZips(Campanas.Exportacion ex, Campanas.Exportacion sop, String texto) {
+    /** 3.6.17: los ZIP y el informe de calibracion en un solo selector. */
+    protected void compartirFicheros(List<File> fs, String texto) {
+        if (fs.isEmpty()) {
+            return;
+        }
         ArrayList<Uri> us = new ArrayList<>();
         try {
-            us.add(FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".ficheros", ex.zip));
-            us.add(FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".ficheros", sop.zip));
+            for (File f : fs) {
+                us.add(FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".ficheros", f));
+            }
+        } catch (IllegalArgumentException e) {
+            aviso("No se pudo compartir: " + e.getMessage());
+            return;
+        }
+        Intent i = new Intent(Intent.ACTION_SEND_MULTIPLE);
+        i.setType("*/*");
+        i.putParcelableArrayListExtra(Intent.EXTRA_STREAM, us);
+        i.putExtra(Intent.EXTRA_SUBJECT, fs.get(0).getName());
+        i.putExtra(Intent.EXTRA_TEXT, texto);
+        ClipData cd = ClipData.newRawUri(fs.get(0).getName(), us.get(0));
+        for (int k = 1; k < us.size(); k++) {
+            cd.addItem(new ClipData.Item(us.get(k)));
+        }
+        i.setClipData(cd);
+        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try {
+            startActivity(Intent.createChooser(i, "Guardar / compartir"));
+        } catch (ActivityNotFoundException e) {
+            aviso("No hay ninguna aplicación para compartir.");
+        }
+    }
+
+    protected void compartirZips(List<Campanas.Exportacion> todos, String texto) {
+        if (todos.isEmpty()) {
+            return;
+        }
+        ArrayList<Uri> us = new ArrayList<>();
+        StringBuilder t = new StringBuilder(texto);
+        try {
+            for (Campanas.Exportacion ex : todos) {
+                us.add(FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".ficheros", ex.zip));
+                t.append("\n").append(ex.zip.getName()).append("\nmd5 ").append(ex.md5).append("\nsha256 ")
+                        .append(ex.sha256).append("\nCopia: ").append(ex.copia);
+            }
         } catch (IllegalArgumentException e) {
             aviso("No se pudo compartir el ZIP: " + e.getMessage());
             return;
@@ -321,12 +360,12 @@ public abstract class Base extends AppCompatActivity implements EnlaceSerie.Oyen
         Intent i = new Intent(Intent.ACTION_SEND_MULTIPLE);
         i.setType("application/zip");
         i.putParcelableArrayListExtra(Intent.EXTRA_STREAM, us);
-        i.putExtra(Intent.EXTRA_SUBJECT, ex.zip.getName());
-        i.putExtra(Intent.EXTRA_TEXT, texto + "\n" + ex.zip.getName() + "\nmd5 " + ex.md5 + "\nsha256 " + ex.sha256
-                + "\n" + sop.zip.getName() + "\nmd5 " + sop.md5 + "\nsha256 " + sop.sha256
-                + "\nCopias: " + ex.copia + "; " + sop.copia);
-        ClipData cd = ClipData.newRawUri(ex.zip.getName(), us.get(0));
-        cd.addItem(new ClipData.Item(us.get(1)));
+        i.putExtra(Intent.EXTRA_SUBJECT, todos.get(0).zip.getName());
+        i.putExtra(Intent.EXTRA_TEXT, t.toString());
+        ClipData cd = ClipData.newRawUri(todos.get(0).zip.getName(), us.get(0));
+        for (int k = 1; k < us.size(); k++) {
+            cd.addItem(new ClipData.Item(us.get(k)));
+        }
         i.setClipData(cd);
         i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         try {

@@ -41,6 +41,8 @@ public final class Acta {
     private final List<String> notas = new ArrayList<>();
     /** null: pendiente; si no, ACEPTADA o RECHAZADA con fecha. */
     private String cierre;
+    /** 3.6.17 (F-03): liberacion de Diego tras un cierre SIN RESTAURAR (evento LIBERADA); null si no la hay. */
+    private String liberada;
     private String fechaGrabada;
     private String invalidada;
     private String persistencia;
@@ -305,6 +307,9 @@ public final class Acta {
             case "RECHAZADA":
                 cierre = "RECHAZADA " + c.get(1) + (c.get(2).isEmpty() ? "" : ": " + c.get(2));
                 break;
+            case "LIBERADA":
+                liberada = c.get(1) + ": " + c.get(2);
+                break;
             default:
                 break;
         }
@@ -326,6 +331,21 @@ public final class Acta {
 
     public boolean aceptada() {
         return cierre != null && cierre.startsWith("ACEPTADA");
+    }
+
+    /**
+     * 3.6.17 (F-03): true si el acta se cerro SIN RESTAURAR y Diego aun no lo ha liberado: el equipo tiene codigos
+     * en estado desconocido y no se calibra hasta que lo libere.
+     */
+    public boolean sinRestaurarPendiente() {
+        return cierre != null && cierre.contains(SIN_RESTAURAR) && liberada == null;
+    }
+
+    public static final String SIN_RESTAURAR = "RECHAZADA SIN RESTAURAR";
+
+    /** Linea LIBERADA que se anade al diario archivado de un acta cerrada SIN RESTAURAR (F-03). */
+    public static String lineaLiberada(String fecha, String texto) {
+        return Csv.unir("LIBERADA", fecha, texto);
     }
 
     public boolean invalidada() {

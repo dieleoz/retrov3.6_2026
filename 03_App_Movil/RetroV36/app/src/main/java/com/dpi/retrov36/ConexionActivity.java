@@ -35,14 +35,34 @@ public class ConexionActivity extends Base {
     private Button btnCampana;
     private Button btnAdmin;
     private Button btnCalibrar;
+    private Button btnMuestras;
+    private Button btnGrabar;
+    private Button btnGuardar;
+    private LinearLayout avanzado;
     /** true entre el toque del operador y el final de connect(). */
     private boolean esperandoConexion;
 
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
-        texto("RTV V3.6 " + BuildConfig.VERSION_NAME + " - retrorreflectómetro vertical V3 / V3.6 (PIC18F47K42). "
-                + "Mide patrones y, sólo con firmware V3.6, calibra.");
+        texto("RTV " + BuildConfig.VERSION_NAME + " - retrorreflectómetro vertical V3.6. Conecte el equipo en la lista "
+                + "de abajo; las pruebas se hacen solas. Después: tomar muestras y grabar.");
+        // 3.6.17 (principio de Diego: "tomar muestras y luego darle a grabar; poco más"): dos botones grandes.
+        btnMuestras = boton("Tomar muestras", v -> startActivity(new Intent(this, BancoActivity.class)));
+        btnMuestras.setTextSize(26);
+        btnGuardar = boton("Guardar / Compartir", v -> guardarCompartir());
+        btnGuardar.setTextSize(26);
+        btnGrabar = boton("Calibrar", v -> startActivity(new Intent(this, CalibrarActivity.class)));
+        Button av = boton("Avanzado ▸", null);
+        avanzado = new LinearLayout(this);
+        avanzado.setOrientation(LinearLayout.VERTICAL);
+        avanzado.setVisibility(android.view.View.GONE);
+        av.setOnClickListener(v -> {
+            boolean ver = avanzado.getVisibility() != android.view.View.VISIBLE;
+            avanzado.setVisibility(ver ? android.view.View.VISIBLE : android.view.View.GONE);
+            ((Button) v).setText(ver ? "Avanzado ▾" : "Avanzado ▸");
+        });
+        int desde = raiz.getChildCount();
         btnPruebas = boton("1. Pruebas del equipo", v -> startActivity(new Intent(this, PruebasActivity.class)));
         btnMedir = boton("2. Medida de patrones", v -> startActivity(new Intent(this, MedidaActivity.class)));
         btnCampana = boton("3. Campaña de calibración (guiada, un solo envío)",
@@ -51,6 +71,13 @@ public class ConexionActivity extends Base {
         btnBotones = boton("Botones de pantalla (sólo V3.6)", v -> startActivity(new Intent(this, BotonesActivity.class)));
         btnAdmin = boton("Modo administrador (sólo V3.6)", v -> startActivity(new Intent(this, AdminActivity.class)));
         boton("Compartir registro y datos", v -> compartirTodo());
+        // Lo de siempre, fuera del camino normal: en "Avanzado".
+        while (raiz.getChildCount() > desde) {
+            android.view.View h = raiz.getChildAt(desde);
+            raiz.removeViewAt(desde);
+            avanzado.addView(h);
+        }
+        raiz.addView(avanzado);
         Button act = boton("Actualizar lista", v -> cargarEmparejados());
         Button des = boton("Desconectar", v -> {
             if (Pruebas.get().enCurso()) {
@@ -110,11 +137,36 @@ public class ConexionActivity extends Base {
         boolean con = EnlaceSerie.instancia().estaConectado();
         Sesion s = Sesion.get();
         btnPruebas.setEnabled(con);
+        btnMuestras.setEnabled(con);
+        btnGuardar.setEnabled(Campanas.abierta() != null || (s.mac != null && !s.mac.isEmpty() && s.serieConocida()));
+        btnGrabar.setEnabled(con);
         btnMedir.setEnabled(con);
         btnBotones.setEnabled(con && s.version == Sesion.Version.V36);
         btnAdmin.setEnabled(con);
         btnCalibrar.setEnabled(con);
         listaDispositivos.setEnabled(!EnlaceSerie.instancia().estaConectando());
+    }
+
+    /**
+     * 3.6.17 (Diego): "Guardar / Compartir": el ZIP del banco (ligero) y el de soporte, con su copia en Download/RTV/,
+     * en un solo selector. Sin conexion vale la campana abierta.
+     */
+    private void guardarCompartir() {
+        Campana c = Campanas.abierta();
+        Sesion s = Sesion.get();
+        String serie = c != null ? c.serieActual() : s.serie();
+        String mac = c != null ? c.mac : s.mac;
+        try {
+            if (c == null) {
+                Campanas.abrir(this, serie, mac);
+            }
+            java.util.List<Campanas.Exportacion> l = new java.util.ArrayList<>();
+            l.add(Campanas.exportarConHuellas(this, serie, mac));
+            l.add(Campanas.exportarSoporte(this, serie, mac));
+            compartirZips(l, "Banco de " + serie + " (" + mac + "): ZIP ligero y de soporte (copia en Download/RTV/)");
+        } catch (java.io.IOException | RuntimeException e) {
+            alerta("Guardar / Compartir", "No se pudo preparar el ZIP: " + e.getMessage());
+        }
     }
 
     /** RF-APP-40: al arrancar, si hay series sin exportar, aviso de no desinstalar. */

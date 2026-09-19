@@ -233,10 +233,15 @@ public final class Campanas {
      * @return la ruta legible de la copia.
      */
     public static String copiarADescargas(Context ctx, File zip) throws IOException {
+        return copiarADescargas(ctx, zip, "application/zip");
+    }
+
+    /** 3.6.17: copia cualquier fichero (el informe en texto) a Download/RTV/. */
+    public static String copiarADescargas(Context ctx, File zip, String mime) throws IOException {
         if (Build.VERSION.SDK_INT >= 29) {
             ContentValues v = new ContentValues();
             v.put(MediaStore.Downloads.DISPLAY_NAME, zip.getName());
-            v.put(MediaStore.Downloads.MIME_TYPE, "application/zip");
+            v.put(MediaStore.Downloads.MIME_TYPE, mime);
             v.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/RTV");
             Uri u = ctx.getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
             if (u == null) {
@@ -382,6 +387,46 @@ public final class Campanas {
             }
         }
         return false;
+    }
+
+    /** 3.6.17 (F-03): el diario archivado mas reciente de este equipo (por el sello del nombre); null si no hay. */
+    private static File ultimoArchivado(Context ctx) {
+        File curso = ficheroActaEnCurso(ctx);
+        File dir = curso.getParentFile();
+        String prefijo = curso.getName().replace("_curso.csv", "_");
+        File[] fs = dir == null ? null : dir.listFiles();
+        File u = null;
+        if (fs != null) {
+            for (File f : fs) {
+                if (f.getName().startsWith(prefijo) && f.getName().endsWith("_diario.csv")
+                        && (u == null || f.getName().compareTo(u.getName()) > 0)) {
+                    u = f;
+                }
+            }
+        }
+        return u;
+    }
+
+    public static synchronized Acta ultimaCerrada(Context ctx) throws IOException {
+        File f = ultimoArchivado(ctx);
+        if (f == null) {
+            return null;
+        }
+        try (InputStreamReader r = new InputStreamReader(new FileInputStream(f), StandardCharsets.UTF_8)) {
+            return Acta.leer(r);
+        }
+    }
+
+    /** Anade una linea al diario archivado mas reciente (append-only: LIBERADA, F-03). */
+    public static synchronized void anadirAUltimaCerrada(Context ctx, String linea) throws IOException {
+        File f = ultimoArchivado(ctx);
+        if (f == null) {
+            throw new IOException("no hay ningún acta archivada");
+        }
+        try (Writer w = new OutputStreamWriter(new FileOutputStream(f, true), StandardCharsets.UTF_8)) {
+            w.write(linea);
+            w.write("\n");
+        }
     }
 
     /** P14-02 (3.6.16): las actas ACEPTADAS archivadas de este equipo, por orden de nombre (sello de fecha). */

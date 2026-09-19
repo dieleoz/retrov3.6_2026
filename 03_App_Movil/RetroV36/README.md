@@ -4,7 +4,7 @@
 V3.6 no se puede probar: el firmware V3.6 no existe todavía en ningún equipo. Lo que sí debe funcionar
 es la medida contra un V3 2020 (SLV-002), y eso tampoco se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 3616`, `versionName 3.6.16` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.16 → 3616) (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 3617`, `versionName 3.6.17` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.17 → 3617) (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -29,7 +29,7 @@ no se versionan.
 
 ### Tests JVM
 
-`app/src/test/`: 17 clases, 225 tests en la 3.6.16, entre ellas `FlujoCalibracionTest` (el flujo "Calibrar este equipo" de
+`app/src/test/`: 23 clases, 267 tests en la 3.6.17, entre ellas `FlujoCalibracionTest` (el flujo "Calibrar este equipo" de
 extremo a extremo contra `EquipoSimulado`).
 `./gradlew testDebugUnitTest` **no arranca en esta máquina**: el ejecutor de Gradle 6.5 no encuentra su
 clase `GradleWorkerMain` porque la carpeta de usuario lleva `ñ` (`C:\Users\Diego.Zuñiga`). Se compilan
@@ -42,7 +42,9 @@ cd app && "$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;bui
   org.junit.runner.JUnitCore com.dpi.retrov36.CalculoTest com.dpi.retrov36.ReceptorTest \
   com.dpi.retrov36.AsistenteTest com.dpi.retrov36.FabricaTest com.dpi.retrov36.CoherenciaRealTest com.dpi.retrov36.CampanaTest com.dpi.retrov36.Version367Test com.dpi.retrov36.Version368Test com.dpi.retrov36.Version369Test com.dpi.retrov36.Version3610Test \
   com.dpi.retrov36.Version3611Test com.dpi.retrov36.Version3612Test com.dpi.retrov36.FlujoCalibracionTest \
-  com.dpi.retrov36.TS00Test com.dpi.retrov36.BancoRehacerTest com.dpi.retrov36.Version3615Test com.dpi.retrov36.Version3616Test
+  com.dpi.retrov36.TS00Test com.dpi.retrov36.BancoRehacerTest com.dpi.retrov36.Version3615Test com.dpi.retrov36.Version3616Test com.dpi.retrov36.Version3617Test \
+  com.dpi.retrov36.RupturaSerieTest com.dpi.retrov36.RupturaFlujoTest com.dpi.retrov36.RupturaE2ETest \
+  com.dpi.retrov36.RupturaEquivTest com.dpi.retrov36.RupturaBancoTest
 ```
 
 `FabricaTest` compara las 12 ecuaciones de la app con el **texto** de
@@ -115,6 +117,59 @@ Reglas que salen de ahí, en el código:
   envía sólo `1`-`8`, `a`-`d` y `9`.
 - Tras 3 peticiones seguidas sin un solo byte, la app aconseja apagar y encender el equipo y lo anota
   en el registro.
+
+## Cambios de la 3.6.17 (REVISION-P15-QA-3.6.16.md, ef7ea10; peticiones de Diego del 19-sep, noche)
+
+**Nada de esto se ha probado contra un equipo.** Lo primero es capturar el banco y sacar el ZIP. La guía del
+operador está en `03_App_Movil/GUIA-OPERADOR.md`.
+
+- **Pantalla principal.** Arriba hay tres botones grandes: "Tomar muestras", "Guardar / Compartir" y "Calibrar".
+  Todo lo demás está en "Avanzado", plegado.
+- **Tomar muestras** (el banco):
+  - Abre en **REPRESENTATIVO** por defecto si el equipo ya tiene series medidas. El completo sólo se usa si se elige
+    a mano, con el aviso "El completo mide los 133 patrones, incluidos los repetidos; recomendado: Representativo".
+  - **La cola se cambia en cualquier momento.** Lo ya medido se conserva y `BancoPrevio` lo vuelve a contar; el paso
+    siguiente se recalcula en la cola nueva.
+  - Si hay un banco COMPLETO empezado en la 3.6.16, un solo diálogo ofrece pasarlo a REPRESENTATIVO.
+  - Arriba, en grande, se ve "Banco REPRESENTATIVO: quedan N patrones, unos M min". El botón dice "Banco:
+    REPRESENTATIVO (cambiar)".
+  - En el completo, los patrones con un equivalente en la cola llevan "(equivalente a Pxx)".
+  - El ZIP de cada sesión se guarda solo en `Download/RTV/`, sin selector. Al terminar el banco se exporta y se
+    comparte.
+- **Guardar / Compartir:** el ZIP ligero y el de soporte, con su copia en `Download/RTV/`, en un solo selector.
+- **Seguridad (P15):**
+  - **B-01.** Un equivalente sólo cuenta si su patrón no es otro paso de la cola y ninguna decisión lo excluye.
+    P127 ya no se da por medido con P81, ni P19 con P18.
+  - **B-03.** Las series de los 7 tipo I que están fuera de protocolo quedan ANULADAS, con el motivo de
+    TIPO-I-REPETIR, aunque su paso no estuviera HECHO.
+  - **F-01.** Un acta sin ningún código escrito se descarta sola y se dice.
+  - **F-02.** "Cerrar sin restaurar" exige el PIN del equipo, comprobado con `#L`, o la frase de Diego (fila
+    FRASE-DIEGO de `decisiones.csv`, con el SHA-256 de la frase).
+  - **F-03.** Tras un cierre sin restaurar no se calibra hasta que Diego lo libere ("Liberar", con la misma firma).
+    La liberación queda en el diario del acta.
+  - **F-04.** El `#SC` anula el atajo del T-C41.
+  - **F-05.** Se comparten todos los ZIP ligeros de la pulsación.
+  - **S-01.** `RENOMBRA_REVIERTE` viaja al copiar y al importar.
+  - **S-02.** Un revierte falso se corrige al repetir el cambio.
+  - **S-04.** Si la serie `#GN#` no es la actual de la campaña, no se calibra y se pide repetir "Cambiar serie".
+  - **P14-B02.** El acta cita el SHA-256 del ZIP de soporte, que se exporta justo antes de cerrarla.
+- **Informe de calibración:** al acabar "Calibrar", el informe en texto va a `Download/RTV/`
+  (`ExportadorFinal.java`). El PDF, la hoja con la tabla DENTRO/FUERA y "Probar calibración" quedan para la
+  siguiente entrega, como pidió Diego.
+- **Decisiones:** fila PRECISO-5x9 firmada (c38ad02): las series K ≥ 5 y M ≥ 4 cuentan como preciso.
+- **Pruebas:** 267, todas en verde.
+  - `Version3617Test` incluye el caso de un diario de la 3.6.16 en COMPLETO, en el paso 12, que pasa a
+    REPRESENTATIVO: quedan 49 y no se pierde ninguna serie.
+  - Las rupturas del revisor van al árbol: `RupturaSerieTest`, `RupturaFlujoTest`, `RupturaE2ETest`,
+    `RupturaEquivTest` y `RupturaBancoTest`.
+  - En `RupturaE2ETest`, al salir y entrar del Banco el acta del 5 lleva P18, P67, P112 y P127.
+- **Sin hacer en esta:**
+  - la capa V4.6 (rama `rtv-1.0`, rc1), que va en otra APK;
+  - Asignar serie en la pantalla principal;
+  - el PDF y "Probar calibración";
+  - S-03 y S-08;
+  - QA-3615-09 y -10.
+- **Entrega:** `RTV-V3.6.17.apk` y `RTV-V3.6.17-3617.apk`.
 
 ## Cambios de la 3.6.16 (REVISION-Arquitectura-P14-V3.6.md, QA-App-3.6.15.md, decisiones de 6048453)
 

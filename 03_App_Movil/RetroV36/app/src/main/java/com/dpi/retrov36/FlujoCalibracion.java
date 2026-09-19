@@ -68,6 +68,23 @@ public final class FlujoCalibracion {
         default List<Acta> aceptadas() throws IOException {
             return new ArrayList<>();
         }
+
+        /** 3.6.17 (F-03): la ultima acta cerrada (archivada) de este equipo; null si no hay. */
+        default Acta ultimaCerrada() throws IOException {
+            return null;
+        }
+
+        /** 3.6.17 (F-03): anade una linea al diario archivado de la ultima acta cerrada (append-only). */
+        default void anadirAUltimaCerrada(String linea) throws IOException {
+        }
+
+        /**
+         * 3.6.17 (P14-B02): exporta el ZIP de soporte justo antes de cerrar el acta aceptada y devuelve su SHA-256,
+         * que el acta cita; null si no se pudo (o en las pruebas).
+         */
+        default String soporteSha256(Acta a) {
+            return null;
+        }
     }
 
     public interface Reloj {
@@ -176,6 +193,8 @@ public final class FlujoCalibracion {
     private boolean encendidoReciente;
     /** P14-01: el atajo de T-C41 solo vale dentro de una pulsacion de "Calibrar todo". */
     private boolean sesionTodo;
+    /** 3.6.17: el ultimo aceptar() escribio #SC (una escritura: el siguiente T-C41 no usa el atajo). */
+    private boolean scEnUltimoAceptar;
     /** Codigo cuya persistencia dejo el equipo recien encendido (para anotarlo en el acta siguiente). */
     private char encendidoPor;
     /** Codigos que se escriben en la pulsacion en curso (T-C41 no los coteja: van a cambiar). */
@@ -358,11 +377,21 @@ public final class FlujoCalibracion {
         // 3.6.15: la serie del equipo casa con la campana si esta en su historial (RENOMBRA), con la misma MAC.
         boolean idOk = campana != null && gn != null && !Calibracion.NONE.equals(gn) && campana.esSerie(gn)
                 && (ctx.mac == null || ctx.mac.isEmpty() || campana.mac.equalsIgnoreCase(ctx.mac));
-        l.add(new Previa(idOk, gn == null ? "Serie del equipo (#GN#) sin leer: pase las pruebas"
+        // 3.6.17 (S-01, S-02, S-04): la del equipo tiene que ser la serie ACTUAL de la campana, que es la que va al
+        // acta. Si es otra del historial (un #SN que no entro, la app matada al renombrar), no se calibra.
+        boolean actual = idOk && gn.equalsIgnoreCase(campana.serieActual());
+        l.add(new Previa(actual, gn == null ? "Serie del equipo (#GN#) sin leer: pase las pruebas"
                 : Calibracion.NONE.equals(gn) ? "El equipo no tiene serie (#GN# = NONE): dé de alta la serie en Avanzado"
-                : idOk ? "Serie #GN# " + gn + " = campaña"
+                : actual ? "Serie #GN# " + gn + " = campaña"
+                : idOk ? "El equipo dice " + gn + " (#GN#) y la campaña " + campana.serieActual() + ": repita \"Cambiar "
+                + "serie\" en Avanzado hasta que coincidan (el acta lleva la serie de la campaña). No se calibra"
                 : "La serie #GN# (" + gn + ") no coincide con la campaña (" + (campana == null ? "-" : campana.equipo)
                 + "): no se calibra"));
+        // 3.6.17 (F-03): tras un cierre SIN RESTAURAR no se calibra hasta que Diego lo libere.
+        String sinR = bloqueoSinRestaurar();
+        if (sinR != null) {
+            l.add(new Previa(false, sinR));
+        }
         Anclas.Valor sr = sRep();
         boolean srOk = sr != null && !Double.isNaN(sr.valor);
         l.add(new Previa(srOk, sr == null ? "s_rep: sin campaña" : sr.texto + (srOk ? "" : " — mida la A5 del inicio del banco")));
@@ -878,7 +907,28 @@ public final class FlujoCalibracion {
      * Boton "Calibrar" (o "Continuar"): escribe los codigos marcados y resuelve lo que el acta tenga a
      * medias. Devuelve el texto para el operador.
      */
+    /**
+     * 3.6.17 (F-01): un acta abierta en la que no se escribio ningun codigo (bateria a 0, T-C41 que falla, apagado
+     * cancelado) no bloquea: se cierra sola como RECHAZADA "acta vacia" y se dice. "" si no habia.
+     */
+    private String descartarActaVacia(String por) throws IOException {
+        if (acta == null || acta.cerrada() || !acta.codigos().isEmpty() || acta.escribiendo() != 0
+                || acta.rechazoPendiente() != null) {
+            return "";
+        }
+        acta.rechazar(reloj.ahoraIso(), "acta vacía: no se escribió ningún código (" + por + "); se descarta sola");
+        almacen.cerrar(acta);
+        acta = null;
+        return " El acta quedó vacía y se descartó sola: vuelva a pulsar cuando esté resuelto.";
+    }
+
     public String calibrar(Set<Character> seleccion, String nombre, String nota) throws IOException, InterruptedException {
+        descartarActaVacia("al empezar");
+        String r = calibrarInterno(seleccion, nombre, nota);
+        return r + descartarActaVacia(r.length() > 120 ? r.substring(0, 120) + "..." : r);
+    }
+
+    private String calibrarInterno(Set<Character> seleccion, String nombre, String nota) throws IOException, InterruptedException {
         Set<Character> sel = seleccion == null ? new HashSet<>() : new HashSet<>(seleccion);
         String pv = motivoPrevias();
         if (pv != null) {
@@ -1414,6 +1464,7 @@ public final class FlujoCalibracion {
             return "Verificación final FALLA: " + mal + ". El acta no se acepta y no se graba la fecha.";
         }
         String hoy = reloj.hoy();
+        scEnUltimoAceptar = false;
         // P14-04: #SC una vez. Si el equipo ya tiene la fecha de hoy (otra acta de esta sesion), no se reescribe.
         Cliente.Respuesta g0 = ops.pedir("#GC#");
         String antes = g0.valida() ? Calibracion.fechaDe(g0.trama) : null;
@@ -1421,12 +1472,19 @@ public final class FlujoCalibracion {
             acta.dato("#SC", "no se reescribe: el equipo ya tiene la fecha de hoy (" + g0.describir() + ")");
         } else {
             Cliente.Respuesta r = ops.escribir("#SC," + hoy + "#");
+            scEnUltimoAceptar = true;         // una escritura: el siguiente T-C41 apaga el suyo (F-04)
+            encendidoReciente = false;
             Cliente.Respuesta g = ops.pedir("#GC#");
             String leida = g.valida() ? Calibracion.fechaDe(g.trama) : null;
             if (!Tramas.esOk(r.trama) || !hoy.equals(leida)) {
                 return "#SC no quedó grabada (#SC -> " + r.describir() + ", #GC# -> " + g.describir()
                         + "): el acta NO se cierra. Reintente.";
             }
+        }
+        // P14-B02: el ZIP de soporte se exporta antes de cerrar y el acta cita su SHA-256.
+        String sha = almacen.soporteSha256(acta);
+        if (sha != null) {
+            acta.dato("ZIP de soporte (SHA-256)", sha);
         }
         acta.aceptar(reloj.ahoraIso(), hoy, true, true);
         almacen.cerrar(acta);
@@ -1499,12 +1557,14 @@ public final class FlujoCalibracion {
      * P14-10: salida terminal de un rechazo pendiente. Cierra el acta como RECHAZADA SIN RESTAURAR, firmada por
      * Diego, con los codigos en estado desconocido. Solo con un rechazo pendiente.
      */
-    public String cerrarSinRestaurar(String firmante, String motivo) throws IOException {
+    public String cerrarSinRestaurar(String clave, String motivo) throws IOException, InterruptedException {
         if (acta == null || acta.rechazoPendiente() == null) {
             return "Solo se cierra sin restaurar un acta con un rechazo pendiente.";
         }
-        if (firmante == null || !firmante.toLowerCase(Locale.ROOT).contains("diego")) {
-            return "Cerrar sin restaurar lo firma Diego: escriba su nombre.";
+        String firmante = firmaDeDiego(clave);
+        if (firmante == null) {
+            return "Cerrar sin restaurar lo firma Diego con el PIN del equipo o con su frase registrada en "
+                    + "decisiones.csv (FRASE-DIEGO). Lo tecleado no vale: no se cierra.";
         }
         StringBuilder desconocidos = new StringBuilder();
         if (acta.escribiendo() != 0) {
@@ -1522,6 +1582,52 @@ public final class FlujoCalibracion {
         acta = null;
         return "Acta cerrada SIN RESTAURAR (firmado por " + firmante.trim() + "). Códigos en estado desconocido: "
                 + desconocidos.toString().trim() + ": avise a Diego antes de calibrar otra vez.";
+    }
+
+    /**
+     * 3.6.17 (F-02): la firma de Diego para "Cerrar sin restaurar" y "Liberar". Vale su frase registrada (fila
+     * FRASE-DIEGO de decisiones.csv: valor = SHA-256 en hex de la frase) o el PIN del equipo, comprobado con #L.
+     * null si no vale.
+     */
+    private String firmaDeDiego(String clave) throws IOException, InterruptedException {
+        if (clave == null || clave.trim().isEmpty()) {
+            return null;
+        }
+        String h = decisiones.valor("FRASE-DIEGO", equipo());
+        if (h != null && h.equalsIgnoreCase(PaquetesZip.sha256(clave.trim().getBytes(java.nio.charset.StandardCharsets.UTF_8)))) {
+            return "Diego (frase registrada en decisiones.csv)";
+        }
+        String e = ops.entrar(clave.trim());
+        return e == null ? "Diego (PIN del equipo, verificado con #L)" : null;
+    }
+
+    /** F-03: motivo del bloqueo tras un cierre SIN RESTAURAR; null si no lo hay. */
+    public String bloqueoSinRestaurar() {
+        try {
+            Acta u = almacen.ultimaCerrada();
+            if (u != null && u.sinRestaurarPendiente()) {
+                return "La última acta se cerró SIN RESTAURAR: el equipo tiene códigos en estado desconocido. No se "
+                        + "calibra hasta que Diego lo libere (\"Liberar tras el cierre\", con su PIN o su frase).";
+            }
+        } catch (IOException e) {
+            return "No se pudo leer la última acta cerrada: " + e.getMessage();
+        }
+        return null;
+    }
+
+    /** F-03: Diego libera el equipo tras un cierre SIN RESTAURAR (queda en el diario de esa acta). */
+    public String liberarTrasCierre(String clave, String motivo) throws IOException, InterruptedException {
+        Acta u = almacen.ultimaCerrada();
+        if (u == null || !u.sinRestaurarPendiente()) {
+            return "No hay ningún cierre SIN RESTAURAR pendiente.";
+        }
+        String firmante = firmaDeDiego(clave);
+        if (firmante == null) {
+            return "Liberar lo firma Diego con el PIN del equipo o con su frase registrada. No se libera.";
+        }
+        almacen.anadirAUltimaCerrada(Acta.lineaLiberada(reloj.ahoraIso(), "liberado por " + firmante + ": "
+                + (motivo == null ? "" : motivo)));
+        return "Liberado por " + firmante + ". La nueva acta tomará como curva anterior la que lea con #G.";
     }
 
     // ------------------------------------------------------ una sola sesion (3.6.15)
@@ -1557,6 +1663,10 @@ public final class FlujoCalibracion {
         }
         StringBuilder hecho = new StringBuilder();
         StringBuilder saltados = new StringBuilder();
+        String vacia = descartarActaVacia("al retomar");
+        if (!vacia.isEmpty()) {
+            operador.progreso(vacia.trim());
+        }
         if (acta != null) {
             if (acta.rechazoPendiente() != null) {
                 return "Hay un rechazo pendiente (" + acta.rechazoPendiente() + "): vuelva a pulsar Rechazar. No se calibra.";
@@ -1641,7 +1751,8 @@ public final class FlujoCalibracion {
         }
         String a = aceptar();
         if (a.startsWith("Acta ACEPTADA")) {
-            encendidoReciente = sesionTodo;      // el siguiente T-C41 puede usar este apagado
+            // el siguiente T-C41 puede usar este apagado, salvo que despues se escribiera #SC (F-04)
+            encendidoReciente = sesionTodo && !scEnUltimoAceptar;
             encendidoPor = k;
             return null;
         }
@@ -1724,8 +1835,9 @@ public final class FlujoCalibracion {
             return "No se pudo leer la serie actual (#GN#): no se cambia.";
         }
         if (anterior.equals(n)) {
-            // Cambio a medias (el #SN entro y el RENOMBRA no): el equipo ya tiene la serie nueva; se adopta.
-            if (!c.esSerie(n)) {
+            // Cambio a medias (el #SN entro y el RENOMBRA no), o un REVIERTE que resulto falso (S-02): el equipo ya
+            // tiene la serie nueva; se adopta y queda anotado.
+            if (!n.equalsIgnoreCase(c.serieActual())) {
                 c.renombrar(c.serieActual(), n, fecha, operador.trim() + " (recuperado: el equipo ya decía " + n + ")");
             }
             return "El equipo ya tiene la serie " + n + ": queda anotada en la campaña (" + c.serieConHistoria() + ").";

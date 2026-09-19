@@ -41,6 +41,10 @@ public class BancoActivity extends Base {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        // 3.6.17 (peticion de Diego): el modo del banco, siempre visible y en grande.
+        txtModo = texto("");
+        txtModo.setTextSize(22);
+        txtModo.setTypeface(Typeface.DEFAULT_BOLD);
         txtAvance = texto("");
         txtAvance.setTypeface(Typeface.DEFAULT_BOLD);
         txtPaso = texto("");
@@ -87,6 +91,9 @@ public class BancoActivity extends Base {
     }
     private Button btnRehacerAnterior;
     private Button btnBanco;
+    /** "Banco REPRESENTATIVO: quedan N patrones, unos M min" (3.6.17). */
+    private TextView txtModo;
+    private BancoPrevio.Grupos grupos;
     /** "Quedan N patrones, unos M min" y lo que se dio por hecho al abrir (3.6.16). */
     private String resumenPrevio = "";
     private Button btnRehacerPatron;
@@ -290,12 +297,18 @@ public class BancoActivity extends Base {
                 alerta("Tipo de banco", ts[w].nombre + " no viaja en este APK todavía.");
                 return;
             }
-            try {
-                campana.elegirCola(ts[w].name(), colaDe(ts[w]).md5);
-            } catch (IOException | RuntimeException e) {
-                alerta("Tipo de banco", e.getMessage());
+            Runnable elegir = () -> {
+                cambiarCola(ts[w], true);
+                cargar();
+            };
+            if (ts[w] == BancoCola.Tipo.COMPLETO) {
+                new AlertDialog.Builder(this).setTitle("Banco completo")
+                        .setMessage("El completo mide los 133 patrones, incluidos los repetidos; recomendado: Representativo.")
+                        .setPositiveButton("Usar el completo", (d2, w2) -> elegir.run())
+                        .setNegativeButton("Cancelar", null).show();
+            } else {
+                elegir.run();
             }
-            cargar();
         }).setNegativeButton("Cancelar", null).show();
     }
 
@@ -314,6 +327,59 @@ public class BancoActivity extends Base {
         }
     }
 
+    /** Orden del ultimo paso EXPORTAR hecho solo (para no repetirlo en cada pintar). */
+    private int autoExportado = -1;
+
+    /** El ZIP del final del banco ya salio en esta pantalla. */
+    private boolean exportadoAlFinal;
+
+    /** El dialogo de pasar de cola ya se ofrecio en esta pantalla. */
+    private boolean ofrecido;
+
+    /**
+     * 3.6.17: cambia el tipo de banco (en cualquier momento). Lo medido se conserva: las series no se tocan y
+     * BancoPrevio las vuelve a contar en la cola nueva; el paso actual se recalcula en ella.
+     */
+    private void cambiarCola(BancoCola.Tipo t, boolean manual) {
+        BancoCola cd = colaDe(t);
+        if (cd == null || campana == null) {
+            return;
+        }
+        try {
+            campana.elegirCola(t.name(), cd.md5, manual);
+            ultimoOfrecido = 0;
+            Registro.nota("banco: " + t.name() + (manual ? " elegido a mano" : " por defecto (3.6.17)"));
+        } catch (IOException | RuntimeException e) {
+            Registro.nota("banco: no se pudo anotar la cola: " + e.getMessage());
+        }
+    }
+
+    /** "Quedan N" que tendria la cola t con lo ya medido (sin anotar nada). */
+    private String quedanCon(BancoCola.Tipo t) {
+        BancoCola q = colaDe(t);
+        if (q == null) {
+            return "no disponible";
+        }
+        return BancoPrevio.textoPendiente(q, campana.pasos(), prefRapido(), protocoloAjuste(), repetir())
+                + (t.name().equals(campana.colaTipo()) ? "" : " antes de contar lo ya medido");
+    }
+
+    private void ofrecerCambio(BancoCola.Tipo def) {
+        BancoCola.Tipo actual = BancoCola.Tipo.de(campana.colaTipo());
+        new AlertDialog.Builder(this).setTitle("Pasar al banco " + def.name())
+                .setMessage("Este banco va en " + actual.name() + " (" + quedanCon(actual) + ").\n\nRecomendado: "
+                        + def.name() + ". Lo ya medido se conserva y cuenta; el paso siguiente se recalcula en la cola "
+                        + "nueva.")
+                .setPositiveButton("Pasar a " + def.name(), (d, w) -> {
+                    cambiarCola(def, false);
+                    cargar();
+                })
+                .setNegativeButton("Seguir en " + actual.name(), (d, w) -> {
+                    cambiarCola(actual, true);
+                    cargar();
+                }).setCancelable(false).show();
+    }
+
     private void cargar() {
         Sesion s = Sesion.get();
         if (s.mac == null || s.mac.isEmpty() || !s.serieConocida()) {
@@ -328,17 +394,18 @@ public class BancoActivity extends Base {
             alerta("Campaña", "No se pudo abrir la campaña: " + e.getMessage());
             return;
         }
-        if (!campana.colaElegida() && campana.pasos().isEmpty()) {
-            // RF-APP-49: completo la primera vez en un equipo; representativo despues (otra campana de esta MAC).
-            BancoCola.Tipo def = Campanas.hayOtraCampanaDeEsteEquipo(this) ? BancoCola.Tipo.REPRESENTATIVO
-                    : BancoCola.Tipo.COMPLETO;
-            BancoCola cd = colaDe(def);
-            if (cd != null) {
-                try {
-                    campana.elegirCola(def.name(), cd.md5);
-                } catch (IOException | RuntimeException e) {
-                    Registro.nota("banco: no se pudo anotar la cola: " + e.getMessage());
-                }
+        // 3.6.17 (peticion de Diego): REPRESENTATIVO por defecto si el equipo ya tiene series medidas; el completo
+        // solo si se elige a mano en el selector.
+        BancoCola.Tipo def = BancoPrevio.tipoPorDefecto(campana, Campanas.hayOtraCampanaDeEsteEquipo(this));
+        boolean empezado = !campana.pasos().isEmpty();
+        grupos = gruposApk();
+        if (!campana.cerrada() && (!campana.colaElegida() || !def.name().equals(campana.colaTipo()))) {
+            if (empezado && campana.colaElegida() && !ofrecido) {
+                // Un banco ya empezado en otra cola (la 3.6.16 abria el completo): se ofrece, con un solo dialogo.
+                ofrecido = true;
+                ofrecerCambio(def);
+            } else if (!empezado || !campana.colaElegida()) {
+                cambiarCola(def, false);
             }
         }
         BancoCola.Tipo tipo = BancoCola.Tipo.de(campana.colaTipo());
@@ -350,7 +417,7 @@ public class BancoActivity extends Base {
             btnSaltar.setEnabled(false);
             return;
         }
-        btnBanco.setText("Banco: " + tipo.nombre);
+        btnBanco.setText("Banco: " + tipo.name() + " (cambiar)");
         if (!campana.colaMd5().isEmpty() && !campana.colaMd5().equals(cola.md5)) {
             // P14-B03: la cola de la campana y la del APK no son la misma version (los pasos conservan su orden).
             Registro.nota("banco: la campaña empezó con la cola md5 " + campana.colaMd5() + " y el APK trae " + cola.md5);
@@ -379,6 +446,8 @@ public class BancoActivity extends Base {
         }
         paso = cola.siguiente(est, ultimoOfrecido);
         List<BancoCola.Paso> salt = cola.saltados(est);
+        txtModo.setText("Banco " + BancoCola.Tipo.de(campana.colaTipo()).name() + ": "
+                + BancoPrevio.textoPendiente(cola, est, prefRapido(), protocoloAjuste(), repetir()).replace("Quedan", "quedan"));
         txtAvance.setText(String.format(Locale.US, "Equipo %s (%s). Cola md5 %s…\nPasos hechos %d de %d, saltados %d%s.%s",
                 campana.equipo, campana.mac, cola.md5.substring(0, 8), hechos, cola.pasos.size(), saltados,
                 rehacer == 0 ? "" : ", por rehacer " + rehacer,
@@ -388,8 +457,21 @@ public class BancoActivity extends Base {
                 + (enCurso != null ? "\n" + enCurso.texto() : "")
                 + "\n" + BancoPrevio.textoPendiente(cola, campana.pasos(), prefRapido(), protocoloAjuste(), repetir())
                 + (resumenPrevio.isEmpty() ? "" : "\nAl abrir: " + resumenPrevio));
+        // 3.6.17 (Diego): el ZIP de cada sesion sale solo, a Download/RTV/, sin pulsar nada.
+        if (paso != null && "EXPORTAR".equals(paso.tipo) && !ocupado && enCurso == null && !campana.cerrada()
+                && autoExportado != paso.orden) {
+            autoExportado = paso.orden;
+            exportar(paso, false);
+            return;
+        }
         if (paso == null) {
             txtPaso.setText("Banco completo.");
+            // 3.6.17 (principio de Diego): al terminar, el ZIP sale solo, una vez.
+            if (!exportadoAlFinal && !campana.pasos().isEmpty() && ocupado == false && enCurso == null) {
+                exportadoAlFinal = true;
+                exportar(null);
+                return;
+            }
         } else {
             String reintento = "SALTADO".equals(est.get(paso.orden)) ? " (saltado antes)"
                     : "REHACER".equals(est.get(paso.orden)) ? " (A REHACER: " + motivoRehacer(paso.orden) + ")" : "";
@@ -403,6 +485,8 @@ public class BancoActivity extends Base {
                             ? " (preciso: patrón de lo que se escribe, PROTOCOLO-AJUSTE)"
                             : prefRapido() ? " (rápido; con 1 colocación la reproducibilidad no se evalúa)" : " (preciso)") : "")
                     + (paso.esMedida() && !paso.codigo.isEmpty() ? "\nCódigo " + paso.codigo + ", uso " + paso.uso : "")
+                    + (paso.esMedida() && grupos != null && BancoCola.Tipo.COMPLETO.name().equals(campana.colaTipo())
+                    ? BancoPrevio.marcaEquivalente(cola, grupos, paso.patron) : "")
                     + (paso.nota.isEmpty() ? "" : "\nNota: " + paso.nota)
                     + (paso.ajusteApp.isEmpty() ? "" : "\n" + paso.ajusteApp));
         }
@@ -427,10 +511,17 @@ public class BancoActivity extends Base {
         }
     }
 
-    private static String nombres(List<BancoCola.Paso> l) {
+    /** En el completo, "(equivalente a Pxx)" si otro patron del mismo grupo esta en la cola (3.6.17). */
+    private String equivalentes(BancoCola.Paso p) {
+        return grupos == null || campana == null || !BancoCola.Tipo.COMPLETO.name().equals(campana.colaTipo()) ? ""
+                : BancoPrevio.marcaEquivalente(cola, grupos, p.patron);
+    }
+
+    private String nombres(List<BancoCola.Paso> l) {
         StringBuilder sb = new StringBuilder();
         for (BancoCola.Paso p : l) {
-            sb.append(sb.length() == 0 ? "" : ", ").append(p.patron).append(" (").append(p.orden).append(')');
+            sb.append(sb.length() == 0 ? "" : ", ").append(p.patron).append(" (").append(p.orden).append(')')
+                    .append(equivalentes(p));
         }
         return sb.toString();
     }
@@ -1006,6 +1097,14 @@ public class BancoActivity extends Base {
     // ---------------------------------------------------------------- exportar
 
     private void exportar(BancoCola.Paso p) {
+        exportar(p, true);
+    }
+
+    /**
+     * @param compartir false en el ZIP automatico de fin de sesion (3.6.17): queda en Download/RTV/ y se dice, sin
+     *                  abrir el selector; se comparte al final del banco o con "Guardar / Compartir".
+     */
+    private void exportar(BancoCola.Paso p, boolean compartir) {
         if (campana == null) {
             return;
         }
@@ -1024,8 +1123,11 @@ public class BancoActivity extends Base {
             alerta("Copia en Download", "No se pudo dejar la copia en Download/RTV/: " + ex.copia
                     + ". Comparta el ZIP ahora para no depender del teléfono.");
         }
-        txtResultado.setText("ZIP: " + ex.zip.getName() + "\nmd5 " + ex.md5 + "\nsha256 " + ex.sha256 + "\nCopia: " + ex.copia);
-        compartirZip(ex, "Banco de " + campana.equipo + " (" + campana.mac + "), " + Sesion.get().firmware());
+        txtResultado.setText((compartir ? "" : "ZIP de la sesión guardado solo. ") + "ZIP: " + ex.zip.getName() + "\nmd5 "
+                + ex.md5 + "\nsha256 " + ex.sha256 + "\nCopia: " + ex.copia);
+        if (compartir) {
+            compartirZip(ex, "Banco de " + campana.equipo + " (" + campana.mac + "), " + Sesion.get().firmware());
+        }
         pintar();
     }
 }
