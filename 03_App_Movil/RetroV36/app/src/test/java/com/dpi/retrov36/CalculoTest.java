@@ -192,7 +192,8 @@ public class CalculoTest {
             }
         }
         assertNotNull(b);
-        assertTrue("resolucion de b: " + b.u, b.u > 5);
+        // Tolerancia = base 15 + resolucion local (1/f'(615) ~ 16 cuentas).
+        assertTrue("tolerancia de b: " + b.tolerancia, b.tolerancia > 25);
         assertEquals(Coherencia.Estado.OK, b.estado);
     }
 

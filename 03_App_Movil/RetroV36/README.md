@@ -4,7 +4,7 @@
 V3.6 no se puede probar: el firmware V3.6 no existe todavía en ningún equipo. Lo que sí debe funcionar
 es la medida contra un V3 2020 (SLV-002), y eso tampoco se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 362`, `versionName 3.6.2` (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 363`, `versionName 3.6.3` (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -64,12 +64,17 @@ que queda anotado en el registro. Medir con NO APTO pide una confirmación.
 | 1 | Enlace | Comprueba que el socket SPP está abierto; muestra nombre, MAC y serie (lo que sigue al último `_` del nombre) | Socket abierto |
 | 2 | Versión | Con ≥ 1500 ms entre envíos: `#V#` → si `#V,3.6,...#`, V3.6. Si no, `9` → si `:n:`, V3 2020. Si no, `6` → si `::n`, V3 2020. **Nunca `e`** (ver Lección). Si no, `@LEERV,BLA,1@` → si `@LEERV,...@`, V4 (la app no aplica). **Ninguna otra trama con `@`** | V3.6 o V3 2020 |
 | 3 | Códigos | Envía `1`-`8`, `a`-`d` y, si el equipo la tiene, `e` | Los 12 responden `::n` en < 2,5 s. En V3.6 `e` es obligatoria |
-| 4 | Coherencia | Invierte las 12 respuestas a `x` con las ecuaciones vigentes (fábrica en V3 2020; las leídas con `#G` en V3.6) | Cada código a ±tolerancia (15 por defecto, editable) **más su resolución** de la referencia: la `x` de `e` si la hay, si no la mediana. Así `b` (rojo opaco, ~15 cuentas por unidad de R hacia x ≈ 600) no se castiga. Un 0 es "no evaluable". Hacen falta 6 evaluables |
+| 4 | Coherencia | En V3.6 lee `e` antes y después de los 12 códigos; la `x` de referencia de cada código es la recta entre las dos según su orden (corrige la deriva: medido 3004 → 3023). Sin `e` (V3 2020), la mediana. Invierte cada respuesta con su ecuación vigente | Cada código a ±(base 10 + resolución local 1/|f'(x_ref)| + deriva observada). **Excluidos, no fallo** ("no evaluable en esta zona"): códigos con pendiente ≤ 0 en x_ref o con otra `x` a menos de 1500 cuentas que da la misma respuesta (blanco intenso desde x ≈ 2830, amarillo intenso desde ≈ 1970; ventana heurística). **INVÁLIDA, no fallo** ("el equipo se movió o no estaba apoyado; repetir"): `e` inicial y final difieren más de 50, o las `x` forman dos grupos separados más de 300 con ≥ 2 códigos cada uno. Hacen falta 6 evaluables |
 | 5 | Sólo V3.6 | `#GT#`; `#G,k#` de los 12; marca `CAL`/`DEF` y máscara de `#V#`; `#E,k,x#` en x = 500, 1000, 2000, 3000, 4000 | Todo se analiza. Un código que la máscara da por "fábrica" debe coincidir con la tabla de fábrica a **4 ulp** de float32 (XC8 2.10 imprime `%.8E` con hasta 2 ulp de error y `strtod` lee con hasta 3: CAMBIOS-V3.6.md §3.4, SPEC C-12). La no regresión **exacta** va por `#E`: en un código a fábrica debe coincidir exactamente con la emulación de 2020 hecha con la tabla de fábrica de la app, no con `#G`. En un código ajustado se emula con `#G` y 1 unidad de diferencia es aviso, no fallo |
 | 6 | Repetibilidad | 5 lecturas seguidas con `e` (o `6` invertido) | Ninguna fallida y desviación ≤ 10 cuentas. **Umbral provisional**, sin medir |
 
 La app no puede comprobar el CRC de la EEPROM por sí misma: se fía de la marca y de la máscara que
 calcula el firmware, y lo cruza con los coeficientes leídos.
+
+Casos reales de SLV-002 (19-sep-2026, app 3.6.2) en `CoherenciaRealTest`: la segunda pasada sobre P1
+(código 1 = 776, deriva 3004 → 3023) sale APTA con el código 1 excluido; la primera (ocho códigos en
+oscuro hacia x ≈ 575 y cuatro sobre P1 hacia 3000) sale INVÁLIDA. La prueba opcional "gatillo contra
+Bluetooth" no está hecha: la sospecha que la motivaba quedó retirada (acta G4).
 
 ## Línea base previa a grabar (G3)
 

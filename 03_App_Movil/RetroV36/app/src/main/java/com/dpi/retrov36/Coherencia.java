@@ -18,9 +18,9 @@ import java.util.Locale;
  *    segun su orden de envio (medido: e = 3004 -> 3021 -> 3023).
  * 2. Tolerancia por codigo: base + resolucion LOCAL en x_ref (1/|f'(x_ref)|
  *    cuentas por unidad de R) + deriva observada |e_fin - e_ini|.
- * 3. Codigos no invertibles en la zona (respuesta ambigua entre X_MIN y X_MAX,
- *    o pendiente <= 0 en x_ref: el blanco y el amarillo intensos cerca o por
- *    encima de su vertice) se EXCLUYEN y se informan como "no evaluable en esta
+ * 3. Codigos no invertibles en la zona (otra x a menos de VENTANA_AMBIGUEDAD
+ *    da la misma respuesta, o pendiente <= 0 en x_ref: el blanco y el amarillo
+ *    intensos cerca o por encima de su vertice) se EXCLUYEN y se informan como "no evaluable en esta
  *    zona", sin contar como fallo.
  * 4. Colocacion: si |e_fin - e_ini| > DERIVA_MAXIMA o las x invertidas forman
  *    dos grupos (primera pasada real: ocho codigos en x ~ 575 y cuatro en
@@ -40,6 +40,16 @@ public final class Coherencia {
     public static final double DERIVA_MAXIMA = 50;
     /** Separacion entre grupos de x invertidas que indica dos superficies. */
     public static final double SEPARACION_GRUPOS = 300;
+
+    /**
+     * Una respuesta es ambigua "en esta zona" si otra x que da la misma respuesta
+     * esta a menos de esta distancia de x_ref. HEURISTICO, sin medir: con 1500 el
+     * blanco intenso (vertice en x ~ 3580) queda excluido desde x ~ 2830 y el
+     * amarillo intenso (vertice ~ 2784) desde x ~ 1970 (calculado con la tabla de fabrica).
+     * Una segunda solucion a mas distancia (p. ej. el amarillo en x = 615 da la
+     * misma R hacia x = 4300) no es plausible y no excluye el codigo.
+     */
+    public static final double VENTANA_AMBIGUEDAD = 1500;
 
     public static final String MENSAJE_INVALIDA = "el equipo se movió o no estaba apoyado; repetir";
 
@@ -188,10 +198,17 @@ public final class Coherencia {
                 continue;
             }
             double pendiente = e.ecuacion.derivada(xr);
-            if (r.intervalos > 1 || pendiente <= 0) {
+            int cercanas = 0;
+            for (int[] iv : Inversion.intervalos(e.ecuacion, e.respuesta)) {
+                double c = (iv[0] + iv[1]) / 2.0;
+                if (Math.abs(c - xr) < VENTANA_AMBIGUEDAD) {
+                    cercanas++;
+                }
+            }
+            if (cercanas > 1 || pendiente <= 0) {
                 excluidos++;
                 lineas.add(new Linea(e.codigo, e.respuesta, r.x, xr, Double.NaN, r.x - xr, Estado.NO_EVALUABLE_ZONA,
-                        r.intervalos > 1 ? "la misma respuesta sale en " + r.intervalos + " zonas de x"
+                        cercanas > 1 ? "la misma respuesta sale en " + cercanas + " zonas de x cercanas"
                                 : "la curva no sube en esta x"));
                 continue;
             }

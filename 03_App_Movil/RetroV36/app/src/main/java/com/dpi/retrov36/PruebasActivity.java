@@ -295,6 +295,7 @@ public class PruebasActivity extends Base implements Pruebas.Oyente {
                 case FALLO: estado = "FALLO"; color = ROJO; break;
                 case EN_CURSO: estado = "en curso"; color = AMARILLO; break;
                 case NO_APLICA: estado = "no aplica"; color = GRIS; break;
+                case INVALIDA: estado = "INVÁLIDA: repetir (no es fallo del equipo)"; color = AMARILLO; break;
                 case INFO: estado = "informativa"; color = AZUL; break;
                 default: estado = "pendiente"; color = GRIS; break;
             }

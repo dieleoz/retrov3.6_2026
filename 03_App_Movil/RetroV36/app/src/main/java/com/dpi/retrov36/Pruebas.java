@@ -16,7 +16,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public final class Pruebas {
 
-    public enum Estado { PENDIENTE, EN_CURSO, OK, FALLO, NO_APLICA, INFO }
+    /** INVALIDA: la prueba no vale (colocacion); no es un fallo del equipo. */
+    public enum Estado { PENDIENTE, EN_CURSO, OK, FALLO, NO_APLICA, INFO, INVALIDA }
 
     public static final class Prueba {
         public final int numero;
@@ -163,20 +164,20 @@ public final class Pruebas {
             actual = 3;
             poner(3, Estado.EN_CURSO, "");
             List<Coherencia.Entrada> entradas = new ArrayList<>();
-            Integer xE = prueba3(s, entradas);
+            Integer[] eIniFin = prueba3(s, entradas);
             comprobarCancelacion();
 
             // 4. Coherencia
             actual = 4;
             poner(4, Estado.EN_CURSO, "");
-            Coherencia.Resultado c = Coherencia.evaluar(entradas, xE, tolerancia);
+            Coherencia.Resultado c = Coherencia.evaluar(entradas, eIniFin[0], eIniFin[1], tolerancia);
             StringBuilder sb = new StringBuilder(c.resumen);
             for (Coherencia.Linea l : c.lineas) {
                 sb.append('\n').append(l.texto());
             }
             sb.append("\nCoeficientes: ").append(s.version == Sesion.Version.V36
                     ? "los leídos con #G" : "los de fábrica (ecuacionesCalibracion.c:3-42)");
-            poner(4, c.apto ? Estado.OK : Estado.FALLO, sb.toString());
+            poner(4, c.apto ? Estado.OK : (c.invalida ? Estado.INVALIDA : Estado.FALLO), sb.toString());
             comprobarCancelacion();
 
             // 6. Repetibilidad
@@ -203,7 +204,10 @@ public final class Pruebas {
             boolean apto = p(1).estado == Estado.OK && p(2).estado == Estado.OK
                     && p(3).estado == Estado.OK && p(4).estado == Estado.OK
                     && ok5 && p(6).estado == Estado.OK;
-            terminar(apto, apto ? "APTO para calibrar." : "NO APTO para calibrar: revise las pruebas en rojo.");
+            String motivo = p(4).estado == Estado.INVALIDA
+                    ? "NO APTO: la prueba 4 no es válida (" + Coherencia.MENSAJE_INVALIDA + "). No es un fallo del equipo."
+                    : "NO APTO para calibrar: revise las pruebas en rojo.";
+            terminar(apto, apto ? "APTO para calibrar." : motivo);
         } catch (InterruptedException e) {
             poner(actual, Estado.FALLO, "Interrumpida: " + e.getMessage());
             pendientesAFallo("No ejecutada: pruebas canceladas.");
@@ -414,12 +418,28 @@ public final class Pruebas {
         return ok;
     }
 
-    /** Prueba 3. Rellena las entradas de coherencia y devuelve la x de 'e' (o null). */
-    private Integer prueba3(Sesion s, List<Coherencia.Entrada> entradas)
+    /**
+     * Prueba 3. Rellena las entradas de coherencia y devuelve {e antes, e despues}
+     * (null donde no hay). En V3.6 se lee 'e' antes y despues de los 12 codigos
+     * para que la prueba 4 corrija la deriva; en V3 2020 nunca se envia 'e'.
+     */
+    private Integer[] prueba3(Sesion s, List<Coherencia.Entrada> entradas)
             throws IOException, InterruptedException {
         Cliente c = Cliente.instancia();
         StringBuilder d = new StringBuilder();
         boolean ok = true;
+        boolean v36 = s.version == Sesion.Version.V36;
+        Integer eIni = null;
+        if (v36) {
+            Cliente.Respuesta re = c.pedir("e", Tramas.Tipo.MEDIDA, Cliente.TIMEOUT_MEDIDA_MS);
+            eIni = re.valida() ? Tramas.valorMedida(re.trama) : null;
+            d.append("e (antes): ").append(re.describir());
+            if (eIni == null) {
+                ok = false;
+                d.append("  <- obligatorio en V3.6");
+            }
+            d.append('\n');
+        }
         for (char k : Fabrica.CODIGOS) {
             comprobarCancelacion();
             Cliente.Respuesta r = c.pedir(String.valueOf(k), Tramas.Tipo.MEDIDA, Cliente.TIMEOUT_MEDIDA_MS);
@@ -432,20 +452,19 @@ public final class Pruebas {
             poner(3, Estado.EN_CURSO, d.toString());
         }
         comprobarCancelacion();
-        Integer xE = null;
-        if (s.version == Sesion.Version.V36) {
+        Integer eFin = null;
+        if (v36) {
             Cliente.Respuesta re = c.pedir("e", Tramas.Tipo.MEDIDA, Cliente.TIMEOUT_MEDIDA_MS);
-            xE = re.valida() ? Tramas.valorMedida(re.trama) : null;
-            d.append("e (lectura interna): ").append(re.describir());
-            if (xE == null) {
+            eFin = re.valida() ? Tramas.valorMedida(re.trama) : null;
+            d.append("e (después): ").append(re.describir());
+            if (eFin == null) {
                 ok = false;
-                d.append(s.version == Sesion.Version.V36 ? "  <- obligatorio en V3.6"
-                        : "  <- respondió en la detección y ahora no");
+                d.append("  <- obligatorio en V3.6");
             }
         } else {
             d.append("e: no se envía nunca a un V3 2020 (en SLV-002 deja el equipo sin responder)");
         }
         poner(3, ok ? Estado.OK : Estado.FALLO, d.toString());
-        return xE;
+        return new Integer[]{eIni, eFin};
     }
 }
