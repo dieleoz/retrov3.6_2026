@@ -164,6 +164,11 @@ public abstract class Base extends AppCompatActivity implements EnlaceSerie.Oyen
     }
 
     protected void alerta(String titulo, String mensaje) {
+        if (isFinishing() || isDestroyed()) {
+            // QA-3610-04: nunca un dialogo sobre una actividad destruida.
+            Registro.nota("aviso sin pantalla (" + titulo + "): " + mensaje);
+            return;
+        }
         new AlertDialog.Builder(this).setTitle(titulo).setMessage(mensaje)
                 .setPositiveButton("Entendido", null).show();
     }

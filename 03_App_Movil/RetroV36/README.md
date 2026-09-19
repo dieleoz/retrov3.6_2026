@@ -4,7 +4,7 @@
 V3.6 no se puede probar: el firmware V3.6 no existe todavía en ningún equipo. Lo que sí debe funcionar
 es la medida contra un V3 2020 (SLV-002), y eso tampoco se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 3610`, `versionName 3.6.10` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610) (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 3611`, `versionName 3.6.11` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.11 → 3611) (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -21,8 +21,9 @@ export JAVA_HOME="D:/@Proyect/Baliza/7 sw apk/jdk-11/jdk-11.0.24+8"
 
 `local.properties` lleva `sdk.dir=C:/android-sdk` (barras normales) y no se versiona.
 
-**Entrega del APK.** Cada entrega se copia a **dos** rutas: `03_App_Movil/RTV-V3.6.apk` (la de siempre) y
-`03_App_Movil/RTV-V<versionName>.apk` (p. ej. `RTV-V3.6.8.apk`) y, desde la 3.6.10, también `RTV-V<versionName>-<versionCode>.apk` (RF-APP-41), para que no se confunda una versión con otra en el teléfono. Se comprueba con
+**Entrega del APK.** Cada entrega se copia a `03_App_Movil/RTV-V<versionName>.apk` (p. ej. `RTV-V3.6.8.apk`) y,
+desde la 3.6.10, también a `RTV-V<versionName>-<versionCode>.apk` (RF-APP-41). Desde la 3.6.11 ya no se
+actualiza `RTV-V3.6.apk` (RF-APP-41 lo prohíbe, QA-3610-14), para que no se confunda una versión con otra en el teléfono. Se comprueba con
 `aapt dump badging` que `versionCode`/`versionName` son los de la entrega y se declara el md5. Los `*.apk`
 no se versionan.
 
@@ -111,6 +112,35 @@ Reglas que salen de ahí, en el código:
   envía sólo `1`-`8`, `a`-`d` y `9`.
 - Tras 3 peticiones seguidas sin un solo byte, la app aconseja apagar y encender el equipo y lo anota
   en el registro.
+
+## Cambios de la 3.6.11 (arreglo de la QA de la 3.6.10, `05_Documentacion/QA-App-3.6.10.md`)
+
+Versión de arreglo antes de la sesión 2 del banco. **El corte B (calibrar con un botón) pasa a ser la 3.6.12.**
+
+- **Filtro de patrón presente según `origen_x`** (QA-3610-01, `PLAN-Captura-Banco-P1-P132.md:542-544`):
+  x medida ±20 %; x estimada con la recta por el oscuro ±30 %; fábrica invertida (naranja intenso) y **todos
+  los café y lila**: sin comprobación de rango, sólo "no está en el oscuro" (x del oscuro de la campaña + 40).
+  En la cola: 51 pasos a ±20 %, 57 a ±30 % y 25 sin rango. Un asentamiento sin lectura ya no se presenta como
+  patrón ausente (QA-3610-13).
+- **Salida ante un rechazo** (QA-3610-02): "Repetir colocación", "Medir igualmente" (nota obligatoria, queda
+  en la nota de la serie) o "Dejar el paso" (un patrón queda SALTADO y se ofrece al final).
+- **Al final se ofrecen todos los saltados**, uno tras otro y en vuelta (QA-3610-03); la lista de saltados
+  se ve en la cabecera.
+- **Rotación y Atrás a mitad de una serie** (QA-3610-04): la pantalla no se recrea al girar y queda en
+  vertical mientras se mide; Atrás pide confirmación y, si se sale, la serie se cierra como no aceptada. La
+  serie en curso vive fuera de la pantalla: si Android la destruye, la siguiente retoma **la misma serie**
+  (nunca dos del mismo paso). Ningún diálogo se abre sobre una pantalla destruida.
+- **Importación** (QA-3610-08/09/10): atómica también por diario (patrones de series y reasignaciones y
+  series de los PASO se comprueban antes de escribir); trae los PASO del banco con la serie renumerada, sin
+  pisar un paso que ya tenga estado salvo SALTADO frente a HECHO (BATERIA no se trae); la serie aceptada en el
+  banco pasa a ser la elegida de su patrón, aunque un ELIGE del 19-sep fijara otra.
+- EXPORTAR se anota HECHO **después** de exportar, con el nombre del ZIP, y una copia fallida en Download sale
+  como alerta (QA-3610-11). Con la campaña cerrada, la cabecera dice por qué no se puede medir (QA-3610-12).
+- Tests: `Version3611Test` (8). **T-S01 sólo en su parte JVM** (recorrido de la cola: 180 pasos, 133 patrones,
+  2575 `e`); el recorrido con la interfaz y el simulador sigue PENDIENTE. El ciclo de vida de `BancoActivity`
+  (giro, Atrás) no tiene prueba automática.
+- Entrega: `RTV-V3.6.11.apk` y `RTV-V3.6.11-3611.apk`. **No se actualiza `RTV-V3.6.apk`** (RF-APP-41,
+  QA-3610-14): el que haya en `03_App_Movil/` es de la 3.6.10.
 
 ## Cambios de la 3.6.10 (corte A: medir el banco; REVISION-Arquitectura-P10-V3.6.md)
 

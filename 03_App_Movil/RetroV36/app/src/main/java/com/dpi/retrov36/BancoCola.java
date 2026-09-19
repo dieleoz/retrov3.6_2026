@@ -50,13 +50,15 @@ public final class BancoCola {
         public final String remedidaDe;
         /** NaN si la cola no la trae. */
         public final double xEsperada;
+        /** Columna origen_x: "medida", "estimada: recta por el oscuro", "... del rojo intenso", "estimada: fabrica invertida". */
+        public final String origenX;
         public final String nota;
         /** Aviso de la app sobre la fila (p. ej., K forzado por P10-C3). */
         public final String ajusteApp;
 
         Paso(int orden, int sesion, String bloque, String tipo, String patron, String color, String tipoLamina,
              double certificado, String codigo, String uso, int k, int m, int asentamiento, String remedidaDe,
-             double xEsperada, String nota, String ajusteApp) {
+             double xEsperada, String origenX, String nota, String ajusteApp) {
             this.orden = orden;
             this.sesion = sesion;
             this.bloque = bloque;
@@ -72,8 +74,32 @@ public final class BancoCola {
             this.asentamiento = asentamiento;
             this.remedidaDe = remedidaDe;
             this.xEsperada = xEsperada;
+            this.origenX = origenX == null ? "" : origenX;
             this.nota = nota;
             this.ajusteApp = ajusteApp;
+        }
+
+        /**
+         * Tolerancia del filtro de patron presente segun origen_x (PLAN-Captura-Banco-P1-P132.md:542-544,
+         * QA-3610-01): x medida +/-20 %; recta por el oscuro +/-30 %; fabrica invertida, cafe y lila (y
+         * cualquier origen que no se reconozca): NaN = sin comprobacion de rango, solo "no esta en oscuro".
+         */
+        public double toleranciaX() {
+            if (Double.isNaN(xEsperada) || xEsperada <= 0) {
+                return Double.NaN;
+            }
+            String c = color.toLowerCase(java.util.Locale.ROOT);
+            if (c.startsWith("caf") || c.startsWith("lila")) {
+                return Double.NaN;
+            }
+            String o = origenX.toLowerCase(java.util.Locale.ROOT);
+            if (o.equals("medida")) {
+                return 0.20;
+            }
+            if (o.equals("estimada: recta por el oscuro")) {
+                return 0.30;
+            }
+            return Double.NaN;
         }
 
         public boolean esMedida() {
@@ -151,7 +177,7 @@ public final class BancoCola {
                     tipo, patron, c(f, col, "color"), c(f, col, "tipo"),
                     cert.isEmpty() ? Double.NaN : Double.parseDouble(cert), c(f, col, "codigo_equipo"), c(f, col, "uso"),
                     k, entero(c(f, col, "M"), 0), entero(c(f, col, "asentamiento"), 0), c(f, col, "remedida_de_codigo"),
-                    xs.isEmpty() ? Double.NaN : Double.parseDouble(xs), c(f, col, "nota"), ajuste));
+                    xs.isEmpty() ? Double.NaN : Double.parseDouble(xs), c(f, col, "origen_x"), c(f, col, "nota"), ajuste));
         }
         return new BancoCola(l, md5);
     }
@@ -183,17 +209,38 @@ public final class BancoCola {
      * el primer patron SALTADO (para medirlo al final). null si no queda nada.
      */
     public Paso siguiente(Map<Integer, String> estados) {
+        return siguiente(estados, 0);
+    }
+
+    /**
+     * QA-3610-03: con todo lo demas hecho se recorren TODOS los saltados, no solo el primero: el
+     * primer SALTADO con orden mayor que 'despuesDe' (el ultimo que se ofrecio y se volvio a dejar),
+     * y al acabar la vuelta, otra vez desde el principio.
+     */
+    public Paso siguiente(Map<Integer, String> estados, int despuesDe) {
         for (Paso p : pasos) {
             if (!estados.containsKey(p.orden)) {
                 return p;
             }
         }
-        for (Paso p : pasos) {
-            if ("SALTADO".equals(estados.get(p.orden))) {
+        List<Paso> s = saltados(estados);
+        for (Paso p : s) {
+            if (p.orden > despuesDe) {
                 return p;
             }
         }
-        return null;
+        return s.isEmpty() ? null : s.get(0);
+    }
+
+    /** Pasos SALTADO, en el orden de la cola. */
+    public List<Paso> saltados(Map<Integer, String> estados) {
+        List<Paso> l = new ArrayList<>();
+        for (Paso p : pasos) {
+            if ("SALTADO".equals(estados.get(p.orden))) {
+                l.add(p);
+            }
+        }
+        return l;
     }
 
     /**

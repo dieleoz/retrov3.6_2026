@@ -38,9 +38,11 @@ public final class ImportadorCampana {
         public int series;
         public int yaEstaban;
         public int disparos;
+        public int pasos;
         public final List<String> avisos = new ArrayList<>();
         public String texto() {
-            return series + " series importadas (" + disparos + " disparos), " + yaEstaban + " ya estaban."
+            return series + " series importadas (" + disparos + " disparos), " + yaEstaban + " ya estaban"
+                    + (pasos > 0 ? ", " + pasos + " pasos del banco" : "") + "."
                     + (avisos.isEmpty() ? "" : " Avisos: " + String.join("; ", avisos));
         }
     }
@@ -78,7 +80,29 @@ public final class ImportadorCampana {
                         + "); la abierta es de " + c.equipo + " (" + c.mac + "): no se importa nada");
             }
         }
+        // QA-3610-08: atomico tambien por diario. Todo patron (original y reasignado) tiene que estar en
+        // el catalogo ANTES de escribir nada; si no, reasignar lanzaria a mitad de la importacion.
+        for (Campana.Serie s : todo.series()) {
+            for (String n : new String[]{s.patronOriginal, s.patron}) {
+                if (c.patron(n) == null) {
+                    throw new IllegalArgumentException("la serie " + s.id + " es de un patrón que no está en el catálogo ("
+                            + n + "): no se importa nada");
+                }
+            }
+        }
+        for (Map.Entry<Integer, String> e : todo.pasos().entrySet()) {
+            String sid = todo.seriePaso(e.getKey());
+            if (sid != null && !sid.isEmpty() && todo.serie(sid) == null) {
+                throw new IllegalArgumentException("el paso " + e.getKey() + " del banco apunta a una serie que no está ("
+                        + sid + "): no se importa nada");
+            }
+        }
         Set<String> vistas = claves(c);
+        Map<String, String> idPorClave = new java.util.HashMap<>();
+        for (Campana.Serie s : c.series()) {
+            idPorClave.put(clave(s), s.id);
+        }
+        Map<String, String> nuevoId = new java.util.HashMap<>();
         Resultado r = new Resultado();
         compararFirmware(c, firmwares(todo.series()), r);
         Set<String> yaElegidos = elegidosDe(c);
@@ -86,9 +110,11 @@ public final class ImportadorCampana {
         for (Campana.Serie s : todo.series()) {
             if (vistas.contains(clave(s))) {
                 r.yaEstaban++;
+                nuevoId.put(s.id, idPorClave.get(clave(s)));
                 continue;
             }
             Campana.Serie n = c.nuevaSerie(s.fecha, s.equipo, s.mac, s.firmware, s.patronOriginal, s.orientacion, s.codigo);
+            nuevoId.put(s.id, n.id);
             for (Campana.Disparo d : s.disparos) {
                 c.agregarDisparo(n, d.colocacion, d.fecha, d.bruta, d.x);
                 r.disparos++;
@@ -114,6 +140,19 @@ public final class ImportadorCampana {
         }
         for (Campana.Serie s : elegidas) {
             c.elegir(s);
+        }
+        // QA-3610-09: se traen los PASO del banco (con la serie renumerada). No pisan un paso que ya
+        // tenga estado aqui, salvo SALTADO frente a HECHO. BATERIA no se trae: una lectura de otro dia
+        // no debe bloquear ni desbloquear las escrituras de hoy.
+        Map<Integer, String> aqui = c.pasos();
+        for (Map.Entry<Integer, String> e : todo.pasos().entrySet()) {
+            String est = aqui.get(e.getKey());
+            if (est == null || ("SALTADO".equals(est) && "HECHO".equals(e.getValue()))) {
+                String sid = todo.seriePaso(e.getKey());
+                String nid = sid == null || sid.isEmpty() ? "" : nuevoId.get(sid);
+                c.anotarPaso(e.getKey(), e.getValue(), nid == null ? "" : nid, "", "importado de " + origen);
+                r.pasos++;
+            }
         }
         return r;
     }

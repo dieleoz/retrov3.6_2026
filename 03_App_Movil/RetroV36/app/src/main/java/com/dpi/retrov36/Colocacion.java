@@ -19,7 +19,42 @@ public final class Colocacion {
 
     private Colocacion() { }
 
-    /** null si el patron esta presente (o no hay x esperada); si no, el motivo. */
+    /** Margen sobre el oscuro: un asentamiento por debajo de x_oscuro + 40 es "sin patron" (592 a 27 del oscuro, 19-sep). */
+    public static final double MARGEN_OSCURO = 40;
+
+    /**
+     * 3.6.11 (QA-3610-01): filtro segun el origen de la x esperada.
+     * @param tolerancia 0,20 o 0,30 (BancoCola.Paso.toleranciaX); NaN = sin rango, solo "no esta en oscuro".
+     * @param xOscuro x del oscuro de la campana (o 575 si no hay).
+     * @return null si el patron esta presente; si no, el motivo.
+     */
+    public static String patronAusente(String patron, double xAsentamiento, double xEsperada, double tolerancia,
+                                       double xOscuro) {
+        if (Double.isNaN(xAsentamiento)) {
+            // QA-3610-13: sin lectura no es "patron ausente", es un equipo que no responde.
+            return "El asentamiento no dio lectura (el equipo no respondió o la trama no era válida): "
+                    + "no es un patrón ausente. Compruebe la conexión y repita la colocación.";
+        }
+        if (Double.isNaN(tolerancia) || Double.isNaN(xEsperada) || xEsperada <= 0) {
+            double lim = xOscuro + MARGEN_OSCURO;
+            if (xAsentamiento <= lim) {
+                return String.format(Locale.US, "Coloque %s: el asentamiento dio x = %.0f, en el oscuro (x oscuro %.0f; "
+                        + "hace falta más de %.0f). No se ha gastado ningún disparo de la serie.", patron, xAsentamiento,
+                        xOscuro, lim);
+            }
+            return null;
+        }
+        double min = (1 - tolerancia) * xEsperada;
+        double max = (1 + tolerancia) * xEsperada;
+        if (xAsentamiento < min || xAsentamiento > max) {
+            return String.format(Locale.US, "Coloque %s: el asentamiento dio x = %.0f y se esperaba %.0f "
+                    + "(entre %.0f y %.0f, ±%.0f %%). No se ha gastado ningún disparo de la serie.",
+                    patron, xAsentamiento, xEsperada, min, max, 100 * tolerancia);
+        }
+        return null;
+    }
+
+    /** null si el patron esta presente (o no hay x esperada); si no, el motivo. Criterio de P10-C1 (x_banco, +/-20 %). */
     public static String patronAusente(String patron, double xAsentamiento, double xEsperada) {
         if (Double.isNaN(xEsperada) || xEsperada <= 0) {
             return null;

@@ -32,6 +32,8 @@ public class BancoActivity extends Base {
     private Button btnSaltar;
     private BancoCola.Paso paso;
     private volatile boolean ocupado;
+    /** Ultimo paso saltado que se ofrecio al final (QA-3610-03). */
+    private int ultimoOfrecido;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -91,10 +93,14 @@ public class BancoActivity extends Base {
                 saltados++;
             }
         }
-        paso = cola.siguiente(est);
+        paso = cola.siguiente(est, ultimoOfrecido);
+        List<BancoCola.Paso> salt = cola.saltados(est);
         txtAvance.setText(String.format(Locale.US, "Equipo %s (%s). Cola md5 %s…\nPasos hechos %d de %d, saltados %d.%s",
                 campana.equipo, campana.mac, cola.md5.substring(0, 8), hechos, cola.pasos.size(), saltados,
-                campana.bateriaBloqueaEscrituras() ? "\nBATERÍA: escrituras bloqueadas (n = 0 o sin respuesta)." : ""));
+                campana.bateriaBloqueaEscrituras() ? "\nBATERÍA: escrituras bloqueadas (n = 0 o sin respuesta)." : "")
+                + (salt.isEmpty() ? "" : "\nSaltados: " + nombres(salt))
+                + (campana.cerrada() ? "\nCampaña CERRADA: no se mide nada más en ella (abra una nueva en Campaña, Avanzado)." : "")
+                + (enCurso != null ? "\n" + enCurso.texto() : ""));
         if (paso == null) {
             txtPaso.setText("Banco completo.");
         } else {
@@ -108,9 +114,10 @@ public class BancoActivity extends Base {
         }
         boolean con = EnlaceSerie.instancia().estaConectado();
         boolean abierta = !campana.cerrada();
-        btnOk.setEnabled(abierta && paso != null && !ocupado
+        boolean libre = !ocupado && enCurso == null;
+        btnOk.setEnabled(abierta && paso != null && libre
                 && (con || "CALENTAMIENTO".equals(paso.tipo) || "EXPORTAR".equals(paso.tipo)));
-        btnSaltar.setEnabled(abierta && paso != null && !ocupado && paso.saltable());
+        btnSaltar.setEnabled(abierta && paso != null && libre && paso.saltable());
     }
 
     @Override
@@ -119,6 +126,14 @@ public class BancoActivity extends Base {
         if (btnOk != null) {
             pintar();
         }
+    }
+
+    private static String nombres(List<BancoCola.Paso> l) {
+        StringBuilder sb = new StringBuilder();
+        for (BancoCola.Paso p : l) {
+            sb.append(sb.length() == 0 ? "" : ", ").append(p.patron).append(" (").append(p.orden).append(')');
+        }
+        return sb.toString();
     }
 
     private void anotar(BancoCola.Paso p, String estado, String serieId, String nota) {
@@ -134,6 +149,7 @@ public class BancoActivity extends Base {
             return;
         }
         anotar(paso, "SALTADO", "", "saltado por el operador");
+        ultimoOfrecido = paso.orden;
         Registro.nota("banco: paso " + paso.orden + " (" + paso.patron + ") saltado");
         pintar();
     }
@@ -204,102 +220,294 @@ public class BancoActivity extends Base {
 
     // ------------------------------------------------------------------ medida
 
+    /**
+     * QA-3610-04: la serie en curso vive fuera de la actividad. Si la actividad se destruye (Atras
+     * confirmado, sistema), el hilo no toca una pantalla muerta: deja el estado aqui y la actividad
+     * siguiente lo retoma y SIGUE LA MISMA SERIE. Nunca dos series del mismo paso en cola.
+     */
+    static final class Medicion {
+        final BancoCola.Paso p;
+        final Campana campana;
+        final String nombre;
+        Campana.Serie serie;
+        final List<double[]> hechas = new ArrayList<>();
+        final List<String> notas = new ArrayList<>();
+        /** Colocacion en curso (1..K). */
+        int k = 1;
+        volatile boolean trabajando;
+        volatile boolean cancelada;
+        /** Lo que espera al operador: AUSENTE, LEVANTAR, FIN o ERROR; null si nada. */
+        volatile String pendiente;
+        volatile String detalle;
+        Veredicto.Resultado veredicto;
+
+        Medicion(BancoCola.Paso p, Campana c) {
+            this.p = p;
+            this.campana = c;
+            this.nombre = "OSCURO".equals(p.tipo) ? Campana.OSCURO.nombre : p.patron;
+        }
+
+        String texto() {
+            return "Serie en curso: " + nombre + (serie == null ? "" : " (" + serie.id + ")") + ", paso " + p.orden
+                    + ", colocación " + Math.min(k, p.k) + " de " + p.k;
+        }
+    }
+
+    private static Medicion enCurso;
+    private static BancoActivity visible;
+    private static final android.os.Handler PRINCIPAL = new android.os.Handler(android.os.Looper.getMainLooper());
+    private boolean dialogoAbierto;
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        visible = this;
+        Medicion m = enCurso;
+        if (m != null) {
+            fijarOrientacion(true);
+            if (!m.trabajando && m.pendiente != null) {
+                atender(m);
+            }
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (visible == this) {
+            visible = null;
+        }
+        super.onDestroy();
+    }
+
+    /** Orientacion fija en vertical mientras hay una serie en curso (QA-3610-04). */
+    private void fijarOrientacion(boolean fija) {
+        setRequestedOrientation(fija ? android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                : android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+    }
+
+    @Override
+    public void onBackPressed() {
+        final Medicion m = enCurso;
+        if (m == null) {
+            super.onBackPressed();
+            return;
+        }
+        new AlertDialog.Builder(this).setTitle("Serie a medias")
+                .setMessage(m.texto() + ".\n\nSi sale, la serie se cierra como NO aceptada (queda en el diario) y el "
+                        + "paso se repite entero al volver.")
+                .setPositiveButton("Seguir midiendo", null)
+                .setNegativeButton("Salir y dejar la serie", (d, w) -> {
+                    m.cancelada = true;
+                    if (!m.trabajando) {
+                        terminar(m, "dejada por el operador (Atrás)");
+                    }
+                    finish();
+                }).show();
+    }
+
     private void medir(BancoCola.Paso p) {
         Sesion s = Sesion.get();
         if (!s.versionMedible()) {
             alerta("No se puede medir", "Pase antes las pruebas del equipo (firmware: " + s.firmware() + ").");
             return;
         }
-        ocupado = true;
+        if (enCurso != null) {
+            aviso(enCurso.texto());
+            return;
+        }
+        Medicion m = new Medicion(p, campana);
+        enCurso = m;
+        fijarOrientacion(true);
         pantallaEncendida(true);
         pintar();
-        final List<double[]> hechas = new ArrayList<>();
-        final Campana.Serie[] serie = {null};
-        Cliente.instancia().ejecutar(() -> colocacion(p, 1, serie, hechas));
+        lanzar(m, null);
+    }
+
+    /** Lanza la colocacion m.k en el hilo de trabajo. notaForzada != null: "medir igualmente". */
+    private static void lanzar(Medicion m, String notaForzada) {
+        m.pendiente = null;
+        m.trabajando = true;
+        Cliente.instancia().ejecutar(() -> colocacion(m, notaForzada));
     }
 
     /** Una colocacion en el hilo de trabajo: asentamiento (con el filtro de patron presente) + M disparos. */
-    private void colocacion(BancoCola.Paso p, int k, Campana.Serie[] serie, List<double[]> hechas) {
+    private static void colocacion(Medicion m, String notaForzada) {
         Sesion s = Sesion.get();
-        String nombre = "OSCURO".equals(p.tipo) ? Campana.OSCURO.nombre : p.patron;
+        BancoCola.Paso p = m.p;
         String error = null;
         String ausente = null;
         try {
-            double xa = Double.NaN;
-            for (int i = 0; i < Math.max(1, p.asentamiento); i++) {
-                final int kk = k;
-                enUi(() -> txtResultado.setText("Colocación " + kk + " de " + p.k + ": asentamiento (se descarta)..."));
-                LecturaX.Lectura l = LecturaX.leer(s);
-                Registro.nota("banco: disparo de asentamiento, descartado: " + l.codigo + " -> "
-                        + (l.respuesta.valida() ? l.respuesta.trama : l.respuesta.describir()));
-                xa = l.x;
+            if (notaForzada == null) {
+                double xa = Double.NaN;
+                for (int i = 0; i < Math.max(1, p.asentamiento) && !m.cancelada; i++) {
+                    progreso("Colocación " + m.k + " de " + p.k + ": asentamiento (se descarta)...");
+                    LecturaX.Lectura l = LecturaX.leer(s);
+                    Registro.nota("banco: disparo de asentamiento, descartado: " + l.codigo + " -> "
+                            + (l.respuesta.valida() ? l.respuesta.trama : l.respuesta.describir()));
+                    xa = l.x;
+                }
+                if (!"OSCURO".equals(p.tipo)) {
+                    double xo = m.campana.xOscuro();
+                    ausente = Colocacion.patronAusente(m.nombre, xa, p.xEsperada, p.toleranciaX(),
+                            Double.isNaN(xo) ? Asistente.X_OSCURO : xo);
+                }
+            } else {
+                m.notas.add("colocación " + m.k + " medida igualmente: " + notaForzada);
+                Registro.nota("banco: colocación " + m.k + " medida igualmente tras el rechazo del filtro: " + notaForzada);
             }
-            ausente = Colocacion.patronAusente(nombre, xa, p.xEsperada);
-            if (ausente == null) {
+            if (ausente == null && !m.cancelada) {
                 List<Double> xs = new ArrayList<>();
-                for (int i = 0; i < p.m; i++) {
-                    final int kk = k;
-                    final int j = i + 1;
-                    enUi(() -> txtResultado.setText("Midiendo " + nombre + ": colocación " + kk + " de " + p.k
-                            + ", disparo " + j + " de " + p.m + "..."));
+                for (int i = 0; i < p.m && !m.cancelada; i++) {
+                    progreso("Midiendo " + m.nombre + ": colocación " + m.k + " de " + p.k + ", disparo " + (i + 1)
+                            + " de " + p.m + "...");
                     LecturaX.Lectura l = LecturaX.leer(s);
                     if (!l.valida()) {
                         Registro.nota("banco: disparo no válido: " + l.error);
                         continue;
                     }
-                    if (serie[0] == null) {
-                        serie[0] = campana.nuevaSerie(Sesion.ahoraIso(), s.serie(), s.mac, s.firmware(), nombre, 0,
+                    if (m.serie == null) {
+                        m.serie = m.campana.nuevaSerie(Sesion.ahoraIso(), s.serie(), s.mac, s.firmware(), m.nombre, 0,
                                 l.codigo);
-                        Registro.nota("banco: paso " + p.orden + " -> serie " + serie[0].id);
+                        Registro.nota("banco: paso " + p.orden + " -> serie " + m.serie.id);
                     }
-                    campana.agregarDisparo(serie[0], k, Sesion.ahoraIso(), l.respuesta.trama, l.x);
+                    m.campana.agregarDisparo(m.serie, m.k, Sesion.ahoraIso(), l.respuesta.trama, l.x);
                     xs.add(l.x);
                 }
-                hechas.add(Estadistica.aVector(xs));
-            } else {
+                if (!m.cancelada) {
+                    m.hechas.add(Estadistica.aVector(xs));
+                }
+            } else if (ausente != null) {
                 Registro.nota("banco: " + ausente);
             }
         } catch (IOException | InterruptedException | RuntimeException e) {
             error = EnlaceSerie.descripcion(e);
         }
-        final String ferr = error;
-        final String faus = ausente;
-        enUi(() -> {
-            if (ferr != null) {
-                ocupado = false;
-                pantallaEncendida(false);
-                alerta("Medida interrumpida", ferr + Cliente.instancia().consejoSiMudo()
-                        + "\nAl volver se repite el paso entero.");
-                cerrarIncompleta(serie[0], "interrumpida: " + ferr);
-                pintar();
+        if (m.cancelada) {
+            m.pendiente = "CANCELADA";
+        } else if (error != null) {
+            m.pendiente = "ERROR";
+            m.detalle = error + Cliente.instancia().consejoSiMudo();
+        } else if (ausente != null) {
+            m.pendiente = "AUSENTE";
+            m.detalle = ausente;
+        } else if (m.k < p.k) {
+            m.k++;
+            m.pendiente = "LEVANTAR";
+        } else {
+            m.pendiente = "FIN";
+        }
+        m.trabajando = false;
+        PRINCIPAL.post(() -> {
+            if (m.cancelada) {
+                terminarEstatico(m, "dejada por el operador (Atrás)");
                 return;
             }
-            if (faus != null) {
-                new AlertDialog.Builder(this).setTitle("¿Está el patrón?")
-                        .setMessage(faus).setCancelable(false)
-                        .setPositiveButton("Ya está colocado", (d, w) -> Cliente.instancia().ejecutar(
-                                () -> colocacion(p, k, serie, hechas)))
-                        .setNegativeButton("Dejar el paso", (d, w) -> {
-                            ocupado = false;
-                            pantallaEncendida(false);
-                            cerrarIncompleta(serie[0], "dejada: patrón no presente");
-                            pintar();
-                        }).show();
-                return;
+            BancoActivity a = visible;
+            if (a != null && !a.isFinishing() && !a.isDestroyed()) {
+                a.atender(m);
             }
-            if (k < p.k) {
-                new AlertDialog.Builder(this).setTitle("Levante y apoye (" + (k + 1) + " de " + p.k + ")")
-                        .setMessage("Levante el equipo y vuelva a apoyarlo sobre " + nombre + ". Pulse OK cuando esté apoyado.")
-                        .setCancelable(false)
-                        .setPositiveButton("OK", (d, w) -> Cliente.instancia().ejecutar(
-                                () -> colocacion(p, k + 1, serie, hechas)))
-                        .show();
-                return;
-            }
-            ocupado = false;
-            pantallaEncendida(false);
-            veredicto(p, serie[0], hechas);
+            // si no hay pantalla, el estado queda en enCurso y la siguiente lo retoma (onResume)
         });
+    }
+
+    private static void progreso(String t) {
+        PRINCIPAL.post(() -> {
+            BancoActivity a = visible;
+            if (a != null && a.txtResultado != null) {
+                a.txtResultado.setText(t);
+            }
+        });
+    }
+
+    /** Cierra la serie a medias como no aceptada y libera el paso. */
+    private static void terminarEstatico(Medicion m, String nota) {
+        if (m.serie != null && "PENDIENTE".equals(m.serie.veredicto)) {
+            try {
+                m.campana.cerrar(m.serie, "REPETIR", false, "banco: " + nota);
+            } catch (IOException | RuntimeException e) {
+                Registro.nota("no se pudo cerrar la serie: " + e.getMessage());
+            }
+        }
+        if (enCurso == m) {
+            enCurso = null;
+        }
+        BancoActivity a = visible;
+        if (a != null && !a.isFinishing() && !a.isDestroyed()) {
+            a.fijarOrientacion(false);
+            a.pantallaEncendida(false);
+            a.pintar();
+        }
+    }
+
+    private void terminar(Medicion m, String nota) {
+        terminarEstatico(m, nota);
+    }
+
+    /** Lo que espera al operador, en la pantalla visible. Se puede llamar otra vez al volver (onResume). */
+    private void atender(Medicion m) {
+        if (m != enCurso || dialogoAbierto || m.pendiente == null) {
+            return;
+        }
+        switch (m.pendiente) {
+            case "ERROR":
+                alerta("Medida interrumpida", m.detalle + "\nAl volver se repite el paso entero.");
+                terminar(m, "interrumpida: " + m.detalle);
+                return;
+            case "AUSENTE":
+                rechazo(m);
+                return;
+            case "LEVANTAR":
+                dialogo(new AlertDialog.Builder(this).setTitle("Levante y apoye (" + m.k + " de " + m.p.k + ")")
+                        .setMessage("Levante el equipo y vuelva a apoyarlo sobre " + m.nombre + ". Pulse OK cuando esté apoyado.")
+                        .setPositiveButton("OK", (d, w) -> {
+                            dialogoAbierto = false;
+                            lanzar(m, null);
+                        }));
+                return;
+            case "FIN":
+                veredicto(m);
+                return;
+            default:
+        }
+    }
+
+    private void dialogo(AlertDialog.Builder b) {
+        dialogoAbierto = true;
+        b.setCancelable(false).show();
+    }
+
+    /**
+     * QA-3610-02: el rechazo del filtro siempre tiene salida. "Repetir colocación" (otro asentamiento),
+     * "Medir igualmente" (nota obligatoria, queda en la serie) o "Dejar el paso" (un patron queda
+     * SALTADO y se ofrece al final; un control se repite).
+     */
+    private void rechazo(Medicion m) {
+        final EditText nota = new EditText(this);
+        nota.setHint("Nota (obligatoria para medir igualmente)");
+        dialogo(new AlertDialog.Builder(this).setTitle("¿Está el patrón?").setMessage(m.detalle).setView(nota)
+                .setPositiveButton("Repetir colocación", (d, w) -> {
+                    dialogoAbierto = false;
+                    lanzar(m, null);
+                })
+                .setNeutralButton("Medir igualmente", (d, w) -> {
+                    dialogoAbierto = false;
+                    String n = nota.getText().toString().trim();
+                    if (n.isEmpty()) {
+                        aviso("La nota es obligatoria para medir igualmente.");
+                        rechazo(m);
+                        return;
+                    }
+                    lanzar(m, n);
+                })
+                .setNegativeButton("Dejar el paso", (d, w) -> {
+                    dialogoAbierto = false;
+                    terminar(m, "dejada: patrón no presente");
+                    if (m.p.saltable()) {
+                        anotar(m.p, "SALTADO", m.serie == null ? "" : m.serie.id, "dejado tras el rechazo del filtro");
+                        ultimoOfrecido = m.p.orden;
+                    }
+                    pintar();
+                }));
     }
 
     private void cerrarIncompleta(Campana.Serie s, String nota) {
@@ -312,84 +520,124 @@ public class BancoActivity extends Base {
         }
     }
 
-    private void veredicto(BancoCola.Paso p, Campana.Serie s, List<double[]> grupos) {
+    /** Fin de la serie: veredicto. La serie sigue "en curso" hasta que el operador decide (no se duplica). */
+    private void veredicto(Medicion m) {
+        BancoCola.Paso p = m.p;
+        Campana.Serie s = m.serie;
         if (s == null) {
             alerta("Sin lecturas", "Ningún disparo dio lectura. Se repite el paso.");
-            pintar();
+            terminar(m, "sin lecturas");
             return;
         }
         String cab = "Paso " + p.orden + ", " + s.id + " " + s.patron + ", código " + p.codigo + ", uso " + p.uso;
+        String notas = m.notas.isEmpty() ? "" : "; " + String.join("; ", m.notas);
         if ("A5".equals(p.tipo)) {
-            try {
-                campana.cerrar(s, A5.VEREDICTO, false, "banco paso " + p.orden + " (" + p.bloque + ")");
-            } catch (IOException e) {
-                alerta("Campaña", e.getMessage());
-            }
+            cerrarSerie(s, A5.VEREDICTO, false, "banco paso " + p.orden + " (" + p.bloque + ")" + notas);
             anotar(p, "HECHO", s.id, "A5");
             txtResultado.setText(cab + "\n" + A5.evaluar(campana).texto);
-            pintar();
+            liberar(m);
             return;
         }
         Patron pat = campana.patron(s.patron);
-        Veredicto.Resultado v = Veredicto.evaluarColocaciones(grupos, pat, campana.medias(pat.nombre),
-                Veredicto.TOL_ORDEN, Veredicto.REPRO_MAX);
-        try {
-            int base = 0;
-            int idx = 0;
-            for (double[] g : grupos) {
-                for (int i = 0; i < g.length; i++) {
-                    if (v.descartar[base + i]) {
-                        // indices de disparo de la serie: en orden de colocacion
-                        campana.descartar(s, idx + 1, v.motivos[base + i]);
+        if (m.veredicto == null) {
+            List<double[]> grupos = m.hechas;
+            Veredicto.Resultado v = Veredicto.evaluarColocaciones(grupos, pat, campana.medias(pat.nombre),
+                    Veredicto.TOL_ORDEN, Veredicto.REPRO_MAX);
+            try {
+                int base = 0;
+                int idx = 0;
+                for (double[] g : grupos) {
+                    for (int i = 0; i < g.length; i++) {
+                        if (v.descartar[base + i]) {
+                            campana.descartar(s, idx + 1, v.motivos[base + i]);
+                        }
+                        idx++;
                     }
-                    idx++;
+                    base += g.length;
                 }
-                base += g.length;
+            } catch (IOException | RuntimeException e) {
+                Registro.nota("banco: no se pudo anotar un descarte: " + e.getMessage());
             }
-        } catch (IOException | RuntimeException e) {
-            Registro.nota("banco: no se pudo anotar un descarte: " + e.getMessage());
+            m.veredicto = v;
         }
-        String nota = "banco paso " + p.orden + ", código " + p.codigo + ", uso " + p.uso;
+        final Veredicto.Resultado v = m.veredicto;
+        final String nota = "banco paso " + p.orden + ", código " + p.codigo + ", uso " + p.uso + notas;
         if ("OK".equals(v.veredicto)) {
             cerrarSerie(s, "OK", true, nota);
+            elegirDelBanco(s);
             anotar(p, "HECHO", s.id, "OK");
             txtResultado.setText(cab + "\n" + v.texto + "Aceptada. Siguiente paso.");
-            pintar();
+            liberar(m);
             return;
         }
         txtResultado.setText(cab + "\n" + v.texto);
         AlertDialog.Builder d = new AlertDialog.Builder(this).setTitle(s.patron + ": " + v.veredicto)
-                .setMessage(cab + "\n" + v.texto).setCancelable(false)
+                .setMessage(cab + "\n" + v.texto)
                 .setPositiveButton("Repetir", (x, w) -> {
+                    dialogoAbierto = false;
                     cerrarSerie(s, v.veredicto, false, nota + "; repetida");
+                    liberar(m);
                     medir(p);
                 })
-                .setNeutralButton("Aceptar con nota", (x, w) -> aceptarConNota(p, s, v.veredicto, nota));
+                .setNeutralButton("Aceptar con nota", (x, w) -> {
+                    dialogoAbierto = false;
+                    aceptarConNota(m, v.veredicto, nota);
+                });
         if (p.saltable()) {
             d.setNegativeButton("Saltar", (x, w) -> {
+                dialogoAbierto = false;
                 cerrarSerie(s, v.veredicto, false, nota + "; saltada");
                 anotar(p, "SALTADO", s.id, v.veredicto);
-                pintar();
+                ultimoOfrecido = p.orden;
+                liberar(m);
             });
         }
-        d.show();
+        dialogo(d);
     }
 
-    private void aceptarConNota(BancoCola.Paso p, Campana.Serie s, String ver, String nota) {
+    private void liberar(Medicion m) {
+        if (enCurso == m) {
+            enCurso = null;
+        }
+        fijarOrientacion(false);
+        pantallaEncendida(false);
+        pintar();
+    }
+
+    /**
+     * QA-3610-10: la serie aceptada en el banco pasa a ser la elegida de su patron, aunque un ELIGE
+     * anterior (p. ej. del 19-sep, 1 x 9) fijara otra. La mas reciente del banco manda.
+     */
+    private void elegirDelBanco(Campana.Serie s) {
+        try {
+            campana.elegir(s);
+        } catch (IOException | RuntimeException e) {
+            Registro.nota("banco: no se pudo elegir " + s.id + ": " + e.getMessage());
+        }
+    }
+
+    private void aceptarConNota(Medicion m, String ver, String nota) {
+        final Campana.Serie s = m.serie;
         final EditText e = new EditText(this);
         e.setHint("Nota obligatoria");
-        new AlertDialog.Builder(this).setTitle("Aceptar " + s.id).setView(e).setCancelable(false)
+        dialogo(new AlertDialog.Builder(this).setTitle("Aceptar " + s.id).setView(e)
                 .setPositiveButton("Aceptar", (d, w) -> {
+                    dialogoAbierto = false;
                     String n = e.getText().toString().trim();
                     if (n.isEmpty()) {
                         aviso("La nota es obligatoria.");
-                        aceptarConNota(p, s, ver, nota);
+                        aceptarConNota(m, ver, nota);
                         return;
                     }
                     cerrarSerie(s, ver, true, nota + "; " + n);
-                    anotar(p, "HECHO", s.id, ver + " aceptada con nota");
-                    pintar();
-                }).show();
+                    elegirDelBanco(s);
+                    anotar(m.p, "HECHO", s.id, ver + " aceptada con nota");
+                    liberar(m);
+                })
+                .setNegativeButton("Volver", (d, w) -> {
+                    dialogoAbierto = false;
+                    veredicto(m);
+                }));
     }
 
     private void cerrarSerie(Campana.Serie s, String ver, boolean aceptada, String nota) {
@@ -406,9 +654,6 @@ public class BancoActivity extends Base {
         if (campana == null) {
             return;
         }
-        if (p != null) {
-            anotar(p, "HECHO", "", "exportación de la sesión " + p.sesion);
-        }
         Campanas.Exportacion ex;
         try {
             ex = Campanas.exportarConHuellas(this, campana.equipo, campana.mac);
@@ -416,6 +661,13 @@ public class BancoActivity extends Base {
             alerta("Exportar", "No se pudo preparar el ZIP: " + e.getMessage());
             pintar();
             return;
+        }
+        if (p != null) {
+            anotar(p, "HECHO", "", "exportación de la sesión " + p.sesion + ": " + ex.zip.getName());
+        }
+        if (ex.copia == null || ex.copia.contains("SIN COPIA")) {
+            alerta("Copia en Download", "No se pudo dejar la copia en Download/RTV/: " + ex.copia
+                    + ". Comparta el ZIP ahora para no depender del teléfono.");
         }
         txtResultado.setText("ZIP: " + ex.zip.getName() + "\nmd5 " + ex.md5 + "\nsha256 " + ex.sha256 + "\nCopia: " + ex.copia);
         compartirZip(ex, "Banco de " + campana.equipo + " (" + campana.mac + "), " + Sesion.get().firmware());
