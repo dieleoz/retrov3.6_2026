@@ -19,7 +19,13 @@ calibración con lo medido (asistente, superadministrador, PDF) tiene su propia 
 [`SPEC-Calibracion-V3.6.md`](SPEC-Calibracion-V3.6.md), en redacción por otro agente. Este documento
 manda sobre las tablas de §5 de la SPEC.
 
-**Recuento: 101 pruebas.** 49 de nivel A (sin equipo), 12 de nivel B (equipo sin grabar) y 40 de
+**Recuento r1.3 (19-sep-2026, tarde): 156 pruebas.** 71 de nivel A, 12 de nivel B, 49 de nivel C y
+24 de nivel S (app contra el simulador del equipo, receta nueva R-SIM). Las nuevas son T-A50 a T-A71,
+T-S00 a T-S23 y T-C41 a T-C49 (§3 ter): el banco guiado y "Calibrar este equipo", con AT-01 a AT-22 del
+QA incorporados. **Ninguna existe todavía.** Pruebas JVM de la app 3.6.9: 89, en verde según la matriz
+al día (`MATRIZ-SPEC-codigo-V3.6.md`), ejecutadas desde `app/`.
+
+*Recuento r1.2:* **101 pruebas.** 49 de nivel A (sin equipo), 12 de nivel B (equipo sin grabar) y 40 de
 nivel C (tras grabar). Nuevas en r1.2 (§3 bis): T-A38 a T-A49 y T-C37 a T-C40. *Recuento r1.1: 85
 (37 A, 12 B, 36 C).*
 
@@ -986,6 +992,476 @@ trabajo con Python; son cálculo sobre medidas, no medidas nuevas.
   el md5 del ZIP coincide con el anotado en el registro; en el teléfono aparece **un** fichero, sin
   copias `(1)`.
 - Pasa: todo.
+
+---
+
+## 3 ter. Fichas nuevas de la revisión 1.3: banco y "Calibrar este equipo"
+
+**Ninguna de estas pruebas existe todavía, y todas están PENDIENTES.** Cubren RF-APP-33 a RF-APP-48
+(`SPEC-V3.6.md` §3.7 quater) y RF-CAL-35 a RF-CAL-43 (`SPEC-Calibracion-V3.6.md` §12). Incorporan los
+casos de aceptación AT-01 a AT-22 de `QA-Flujo-Calibracion-V3.6.md` §4 (correspondencia en §3 ter.4) y
+los negativos que pidió el encargo: corte de Bluetooth durante `#S`, re-medida no conforme, otra serie,
+sin OSCURO y batería baja. Formato ISTQB: ID, requisitos, nivel, receta, estado, precondición, pasos,
+resultado esperado y criterio de pasa o falla. **Evidencia obligatoria en todas:** el registro de tramas
+de la ejecución y, si hay ZIP o acta, su md5.
+
+Niveles: **A** sin equipo (JVM o teléfono solo), **S** app contra el simulador del equipo, **C** con
+SLV-002 u otro V3 con la 3.6.2.
+
+### 3 ter.1 Recetas nuevas
+
+**R-SIM — app contra el simulador del equipo** (quien: agente o técnico de app). Hace falta una clase
+`EnlaceSimulado`, que es parte de la implementación (fase 3) y no existe hoy. Implementa en memoria el
+protocolo de la 3.6.2 (`PROTOCOLO-V3.6.md` §3):
+
+- `#V#`, `#G`, `#GT#`, `#S` con el criterio de `curvaValida`, `#E`, `#F`, `#FT#`, `#L` (5 intentos),
+  `#Q#`, caducidad de 10 min, `#SN`/`#GN#`, `#SC`/`#GC#`, `e`, los 12 códigos en float32 y `9`;
+- un "patrón colocado" que fija la `x` verdadera; cada colocación suma un desvío N(0 ; 2,24 %) y cada
+  disparo, N(0 ; 0,25 %);
+- **inyección de fallos**: cortar el enlace tras la trama N o entre `#S` y `#OK#`, alterar la respuesta
+  de `#E`, no responder, fijar la tensión que devuelve `9`, y desplazar la `x` a mitad de sesión.
+
+Se inyecta en una variante de depuración del APK (nunca en la de campo) y se usa en emulador o en
+teléfono. **Antes de usarlo, T-S00 lo valida contra un registro real.**
+
+**R-APK — teléfono sin equipo** (quien: técnico). Instalar, actualizar y desinstalar el APK, y mirar
+nombres de fichero y pantallas. Evidencia: capturas y listado de `Download/RTV/`.
+
+### 3 ter.2 Nivel A
+
+**T-A50 — Cola del banco.** RF-APP-33, RF-CAL-35 · A · R-JVM · **PENDIENTE**
+- Pre: `06_Calibracion/cola_banco_P1-P132.csv` (md5 `5ba94658…`) en los recursos de prueba.
+- Pasos: (a) cargar la cola; (b) cargarla con un byte cambiado; (c) recorrerla simulando OK en cada
+  paso, saltando P56 (AJUSTE) y P35 (VERIFICACIÓN); (d) intentar saltar un paso OSCURO y uno A5.
+- Esperado: (a) 180 pasos, 133 `PATRON` con los 133 IDs del catálogo, 9 con K = 5 y 124 con K = 3,
+  todos con M = 4 y asentamiento 1; (b) "Cola no admitida", 0 pasos; (c) Σ K·(M + 1) `e` de los pasos
+  medidos, y P56 y P35 marcados como saltados; (d) no hay salto posible.
+- Pasa: todo. Además, `calibrable(1)` = falso mientras P56 esté saltado.
+
+**T-A51 — Deriva de la sesión.** RF-CAL-36 · A · R-JVM · **PENDIENTE**
+- Pasos: A5 del inicio a 5 × 4 y del final a 3 × 4 con x sintéticas: (a) desplazamiento del +1,0 % en
+  los tres patrones; (b) del +2,5 %; (c) +3 %, −3 % y 0 % (sin desplazamiento común); (d) OSCURO de
+  565 a 574.
+- Esperado: umbral de D = ±1,9 % con s_rep = 2,24 %; (a) sin deriva; (b) **sesión con deriva**, y sus
+  series fuera del ajuste mientras no haya nota; (c) D = 0, sin deriva, y cada patrón con su d en el
+  resumen; (d) OSCURO con deriva (9 > 5 cuentas).
+- Pasa: los cuatro.
+
+**T-A52 — Método por código fijado.** RF-CAL-37 · A · R-JVM · **PENDIENTE**
+- Pasos: leer la tabla del APK; pedir la propuesta de cada código con la campaña del 19-sep.
+- Esperado: 1 → grado 1 con dispensa; 2 → recta anclada con re-medida P25; 3, 4 y 6 → grado 1;
+  5 → sólo verificar (o recta anclada si la tabla lo dice); 8 → grado 1; 7, a, b, c y d → sólo
+  verificar. La interfaz de Operación no expone ningún método (0 controles, revisión de código).
+- Pasa: la tabla manda en los 12 códigos.
+
+**T-A53 — s_rep medida, nunca supuesta.** RF-CAL-38, RF-APP-38 · A · R-JVM · **PENDIENTE**
+- Pasos: evaluar una re-medida (a) con K = 1 y sin A5 en la campaña; (b) con K = 1 y la A5 del 19-sep;
+  (c) con K = 5.
+- Esperado: (a) **bloqueada**: "falta s_rep medida"; (b) s_rep = 2,24 % (A5); (c) s_rep de las 5
+  colocaciones. En ningún caso aparece "supuesta" en el texto.
+- Pasa: los tres. Con la 3.6.9 falla (a): `Acta.java:153` usa `sRepRelPorDefecto`.
+
+**T-A54 — Re-medida: tres comprobaciones con los datos del 19-sep.** RF-CAL-39, RF-APP-38 · A · R-JVM · **PENDIENTE**
+- Pre: curvas `#G` del acta del 19-sep (código 1: `2.98471571E-01`, `-1.62263885E+02`; código 2:
+  `3.65483810E-01`, `-2.06628295E+02`) y los pares `e`/código de T4 (líneas 2156, 2234 y 2762 y sus
+  disparos).
+- Pasos: evaluar (a) el intento de las 12:17:02 sobre "P28"; (b) el de las 12:17:36; (c) P5; (d) P28
+  con R desplazada al +12 % del certificado; (e) P28 con la `x` al −8 % de la del banco.
+- Esperado: (a) comprobación 1 falla (d̄ = +50,7): **colocación no válida**, no NO CONFORME; (b)
+  conforme: frente al certificado +2,9 % y `x` −2,9 % dentro de 2·s_rep·√(1/K_rem + 1/K_banco);
+  (c) conforme: −6,3 % y +0,1 %; (d) NO CONFORME por la comprobación 3; (e) NO CONFORME por la 2.
+- Pasa: los cinco.
+
+**T-A55 — El acta guarda todos los intentos.** RF-APP-38 (D-20) · A · R-JVM · **PENDIENTE**
+- Pasos: registrar en el acta del código 1 una colocación inválida, una re-medida NO CONFORME y una
+  conforme; intentar una tercera re-medida válida.
+- Esperado: el texto del acta lista los tres intentos con su hora y resultado; la tercera re-medida
+  válida se rechaza ("máximo una repetición").
+- Pasa: todo. Con la 3.6.9 falla: `Acta.java:133` sobrescribe.
+
+**T-A56 — Cobertura con P1-P132 y recta anclada.** RF-APP-42 · A · R-JVM · **PENDIENTE**
+- Pasos: `Asistente.cobertura` con el catálogo P1-P132; después, la cobertura de la recta anclada del 5
+  y del b con el ancla en x = 565,4.
+- Esperado: 1, 2, 3, 4, 6 y 8 hasta grado 2; b hasta grado 1; 5, 7, a, c y d "sólo verificar"
+  (`SPEC-Calibracion-V3.6.md` §12.1). Con el ancla: 5 ajustable (rango 0-102) y b ajustable (0-81).
+  Café y lila no aparecen en la cobertura del 4 (16 patrones, no 26).
+- Pasa: todo.
+
+**T-A57 — Batería: de n a V, y umbrales.** RF-APP-43, RF-CAL-41 · A · R-JVM · **PENDIENTE**
+- Pasos: convertir `:40:`, `:19:`, `:15:`, `:5:`, `:0:`, `:177:` y un tiempo de espera sin respuesta.
+- Esperado: 40 → 10,77 V, sin aviso; 19 → 10,54 V, sin aviso; 15 → 10,50 V, aviso; 5 → "10,39-10,44 V",
+  aviso; 0 → "< 10,34 V", aviso y **bloqueo de escrituras**; 177 → "≥ 12,28 V (posible recorte)"; sin
+  respuesta → bloqueo de escrituras. En ningún caso se bloquea la medida.
+- Pasa: los siete.
+
+**T-A58 — Vencimiento.** RF-CAL-42 · A · R-JVM · **PENDIENTE**
+- Pasos: `Calibracion.estado` con (`2025-09-18`, `CAL`, hoy `2026-09-19`), (`2026-09-19`, `CAL`, hoy
+  `2026-09-19`) y (`2024-02-29`, `CAL`, hoy `2025-03-01`); y el estado de los botones con cada una.
+- Esperado: "Calibración vencida (calibrado 2025-09-18, venció 2026-09-18)"; "Calibrado 2026-09-19,
+  vence 2027-09-19"; vencida el 2025-02-28. **Todas las acciones de medida y de calibración siguen
+  habilitadas.**
+- Pasa: todo.
+
+**T-A59 — Serie: cotejo y doble entrada.** RF-APP-35 (AT-06) · A · R-JVM · **PENDIENTE**
+- Pasos: (a) `#GN#` = `SLV-002`, BT `COVIANDINA_SLV-002`, campaña SLV-002; (b) `#GN#` = `SLV-003`;
+  (c) alta con `SLV-02` y `SLV-002`; (d) alta con `SLV-02` dos veces, sin casilla; (e) con casilla y sin
+  nota; (f) con casilla y nota.
+- Esperado: (a) identidad válida; (b) no válida, con el motivo; (c) 0 `#SN`; (d) y (e) 0 `#SN`; (f) 1
+  `#SN,SLV-02#` y relectura `#GN#`, con la serie anterior y la nota en el diario.
+- Pasa: los seis.
+
+**T-A60 — Calibración en curso, persistente.** RF-APP-36 (D-02; AT-11) · A · R-JVM · **PENDIENTE**
+- Pasos: estado "código 1 escrito, sin re-medida" con acta y conformidades; guardar; simular
+  `reiniciar()`; volver a cargar; pedir `motivoNoEscribir('8')`.
+- Esperado: el estado cargado es idéntico al guardado (igualdad de todos los campos); `reiniciar()` no lo
+  borra; `motivoNoEscribir('8')` = "falta la re-medida del código 1". El fichero es de sólo añadir: cada
+  versión es prefijo de la siguiente.
+- Pasa: todo. Con la 3.6.9 falla: `Sesion.java:130`.
+
+**T-A61 — P9-B12, la lógica.** RF-APP-37 (AT-09) · A · R-JVM · **PENDIENTE**
+- Pasos: con enviado = E, anterior = A y leído = L por `#G`: (a) L = E en 8 ulp; (b) L = A; (c) L
+  distinto de los dos; (d) sin respuesta a `#G`.
+- Esperado: (a) `#E` en 5 puntos y re-medida pendiente; (b) "el `#S` no entró": ofrecer repetirlo; (c)
+  restaurar A y releer; (d) no hacer nada más que reconectar, y bloquear cualquier `#S`.
+- Pasa: las cuatro decisiones.
+
+**T-A62 — Nombre del APK.** RF-APP-41 (AT-20) · A · compilación con la skill `compilar-apk` · **PENDIENTE**
+- Pasos: compilar la 3.6.10 y listar la carpeta de entrega.
+- Esperado: `RTV-V3.6.10-3610.apk`, con su md5 anotado; **no** existe `RTV-V3.6.apk`.
+- Pasa: las dos cosas.
+
+**T-A63 — Acta: campos obligatorios.** RF-CAL-43 · A · R-JVM · **PENDIENTE**
+- Pasos: generar el acta con todos los campos; después, quitar uno a uno el SHA-256 del ZIP, el md5 de la
+  cola, la A5, la s_rep, la `x` del OSCURO, la batería, el `#V#` posterior, la persistencia y el PIN.
+- Esperado: completa → aceptable; a cada falta, "no aceptable: falta <campo>". Un dato desconocido sale
+  como "no conocido", nunca como hueco.
+- Pasa: 10 de 10.
+
+**T-A64 — Código por fila; café y lila.** RF-APP-47, RF-CAL-40 · A · R-JVM · **PENDIENTE**
+- Pasos: cargar la cola y construir los puntos del ajuste del 4 con una campaña sintética que mida todo.
+- Esperado: P68, P69, P83, P84, P98, P99, P113, P114, P128 y P129 se evalúan con la curva del 4 y
+  aparecen en la verificación del 4; en el ajuste del 4 hay 16 puntos, todos rojos.
+- Pasa: todo.
+
+**T-A65 — Oscuro y s_rep de la campaña.** RF-APP-48 (D-11) · A · R-JVM · **PENDIENTE**
+- Pasos: construir la propuesta del código 2 con la campaña del 19-sep (S060 y A5 S057-S059).
+- Esperado: el ancla es x = 565,4, no 575; la s_rep es 2,24 % "(A5)"; el texto del oscuro de las
+  tarjetas usa 565,4.
+- Pasa: todo.
+
+**T-A66 — Estado con `#V#` fresco.** RF-APP-44 (D-18) · A · R-JVM · **PENDIENTE**
+- Pasos: sesión con `#V,3.6,2026-09-19,DEF,0000#`; simular `#S,1` y `#S,2` y la respuesta posterior
+  `#V,3.6,2026-09-19,CAL,0003#`; generar la cabecera y el acta.
+- Esperado: la cabecera y el acta dicen `CAL mascara 0003` y "Calibrado 2026-09-19, vence 2027-09-19".
+  Sin el `#V#` posterior, el acta no se puede aceptar.
+- Pasa: todo.
+
+**T-A67 — Protocolo homogéneo.** RF-CAL-35, P9-B3 (AT-18) · A · R-JVM · **PENDIENTE**
+- Pasos: campaña con series 1 × 9 importadas y series 3 × 4 nuevas del mismo código.
+- Esperado: "Protocolos distintos en la campaña: M = 9 y M = 4". El código no se puede calibrar. **K
+  distinto con M igual (3 × 4 y 5 × 4) sí se admite**: es el diseño del banco.
+- Pasa: las dos cosas.
+
+**T-A68 — Importador.** RF-APP-39 (AT-02, AT-03) · A · R-JVM · **PENDIENTE**
+- Pasos: (a) importar el ZIP de las 12:27 en una campaña vacía de SLV-002; (b) reimportarlo; (c)
+  importarlo en una campaña de otra MAC.
+- Esperado: (a) N series importadas; (b) "0 importadas, N ya estaban"; (c) "La campaña es de otro
+  equipo… no se importa nada" y la campaña sin cambios (`ImportadorCampana.java:68-81`).
+- Pasa: los tres.
+
+**T-A69 — Actualizar la app instalando encima.** RF-APP-40 (AT-19) · A · R-APK · **PENDIENTE**
+- Pre: la 3.6.9 con una campaña de 3 series; APK 3.6.10 firmado con la misma clave (PA-22).
+- Pasos: instalar la 3.6.10 encima; abrir.
+- Esperado: la campaña sigue, con las 3 series.
+- Pasa: 3 de 3 series. Si la firma cambia, la prueba falla y se anota (D-09).
+
+**T-A70 — Versión visible.** RF-APP-41 (AT-20) · A · R-APK · **PENDIENTE**
+- Pasos: capturar las pantallas de Conexión, Pruebas, Campaña, Calibrar y Avanzado; exportar un ZIP y un
+  acta.
+- Esperado: `3.6.10` visible en las 5 capturas; `resumen.txt` y el acta la llevan.
+- Pasa: 5 de 5, y los 2 ficheros.
+
+**T-A71 — No desinstalar y copia fuera de la app.** RF-APP-40 · A · R-APK · **PENDIENTE**
+- Pasos: (a) medir 3 series sin exportar y reabrir la app; (b) exportar; (c) desinstalar y reinstalar.
+- Esperado: (a) el aviso "Hay 3 series sin exportar. No desinstale la app…"; (b)
+  `Download/RTV/campana_SLV-002_<fecha>.zip` con el mismo SHA-256 que el compartido; (c) ese fichero
+  sigue en `Download/RTV/`.
+- Pasa: los tres.
+
+### 3 ter.3 Nivel S (simulador)
+
+**T-S00 — El simulador reproduce un registro real.** Requisito de R-SIM · S · R-SIM · **PENDIENTE**
+- Pasos: reenviar al simulador las tramas TX de T4 (`tramas/rtv36_20260919_114644.txt` del ZIP de las
+  12:27), con su estado inicial (`#V,…,DEF,0000#`, fábrica, `#GN,NONE#`).
+- Esperado: las respuestas a `#V#`, `#GC#`, `#GN#`, `#L`, `#S`, `#G`, `#E`, `#SN`, `#SC` y `#Q#`
+  coinciden byte a byte con las RX de T4. Las de `e` y códigos no se comparan: dependen del patrón.
+- Pasa: 100 % de las respuestas deterministas. Si falla, no se usa el simulador para nada más.
+
+**T-S01 — Fase A completa.** RF-APP-33, RF-CAL-35 (AT-01) · S · R-SIM · **PENDIENTE**
+- Pre: `#GN#` = serie del nombre BT; sin campaña.
+- Pasos: "Medir el banco" y seguir la cola hasta el final, pulsando OK en cada paso.
+- Esperado: calentamiento, OSCURO y A5 al principio de cada sesión, y A5 y OSCURO al final; los 133
+  patrones en el orden del CSV; `e` = Σ K·(M + 1); `9` sólo en los pasos BATERIA; al final de cada
+  sesión, un ZIP con SHA-256 y copia en `Download/RTV/`. Toques = pasos de la cola + colocaciones.
+- Pasa: todo, con el recuento de toques anotado.
+
+**T-S02 — Importar, visible.** RF-APP-39 (AT-02, AT-03) · S · R-SIM · **PENDIENTE**
+- Pasos: abrir Campaña con la campaña vacía; tocar "Importar ZIP" sin desplazarse; elegir el ZIP de las
+  12:27; repetir con un ZIP de otra serie.
+- Esperado: el botón es el primero y está visible; "N series importadas"; con el de otra serie, nada
+  importado y el aviso.
+- Pasa: todo.
+
+**T-S03 — Equipo de otra serie (negativo).** RF-APP-35 (AT-04) · S · R-SIM · **PENDIENTE**
+- Pre: campaña de SLV-002. Simulador con `#GN,SLV-003#` y, en otra pasada, con otra MAC.
+- Pasos: conectar; pulsar "Calibrar este equipo".
+- Esperado: botón deshabilitado con "Este equipo es SLV-003; la campaña es de SLV-002". **0 tramas
+  `#L`, `#S`, `#SN`** en el registro.
+- Pasa: 0 tramas en las dos pasadas.
+
+**T-S04 — Serie sin grabar.** RF-APP-35 (AT-05) · S · R-SIM · **PENDIENTE**
+- Pasos: conectar con `#GN,NONE#`.
+- Esperado: "Dar de alta la serie"; "Calibrar" deshabilitado hasta darla.
+- Pasa: las dos cosas.
+
+**T-S05 — Error de tecleo en la serie.** RF-APP-35 (AT-06) · S · R-SIM · **PENDIENTE**
+- Pasos: Avanzado → Serie: (a) `SLV-02` / `SLV-002`; (b) `SLV-02` dos veces.
+- Esperado: (a) "Las dos entradas no coinciden", 0 `#SN`; (b) pide casilla (difiere del BT) y nota, y
+  muestra "SLV-002 → SLV-02" en grande.
+- Pasa: las dos.
+
+**T-S06 — Campaña sin OSCURO (negativo).** RF-APP-48, RF-CAL-37 (AT-07) · S · R-SIM · **PENDIENTE**
+- Pre: la campaña completa, sin ninguna serie OSCURO.
+- Pasos: "Calibrar este equipo".
+- Esperado: la tarjeta del 2 dice "no calculable: falta OSCURO", sin casilla; 1 y 8 se pueden calibrar;
+  **0 tramas `#S,2`**.
+- Pasa: todo.
+
+**T-S07 — Fase B completa.** RF-APP-34, 36, 44, 45, 46, RF-CAL-39, RF-CAL-43 (AT-08) · S · R-SIM · **PENDIENTE**
+- Pre: campaña completa con OSCURO y A5; APTO; batería con n = 60.
+- Pasos: "Calibrar" → casillas y nota → secuencia → "Apague y encienda" (el simulador reinicia sin
+  perder la EEPROM) → "Aceptar y grabar fecha".
+- Esperado, en este orden en el registro: `9`; `#L`; por código, `9`, `#S`, `#G`, 5 `#E`, `#V#` y la
+  re-medida conforme, **antes del siguiente `#S`**; reconexión con `#V#`, un `#G` por código escrito y 5
+  `#E` por código; `#SC` y `#GC#` **después** de Aceptar y una sola vez. Acta con `CAL` y la máscara,
+  oscuro en la `x` medida, s_rep "(A5)", conformidad por código, SHA-256 del ZIP, A5, batería y todos
+  los intentos. ZIP con el acta. Pantalla de Operación con ≤ 8 controles y 0 acciones destructivas.
+- Pasa: todo.
+
+**T-S08 — Corte de Bluetooth durante `#S` (negativo).** RF-APP-37 (AT-09) · S · R-SIM · **PENDIENTE**
+- Pre: Fase B en el código 8, con el código 1 ya verificado.
+- Pasos: cortar el enlace tras enviar `#S,8` y antes de `#OK#`, en tres variantes: (a) el simulador
+  aplica el `#S`; (b) no lo aplica; (c) deja una curva que no es ni la enviada ni la anterior.
+  Reconectar.
+- Esperado: al reconectar, "Calibración a medias: código 8" y `#G,8#` antes que nada. (a) 5 `#E` y
+  re-medida; (b) ofrece repetir `#S,8`; (c) restaura lo anterior y relee. **0 `#S` de otro código**
+  entre el corte y la resolución. El acta conserva el código 1 y su re-medida.
+- Pasa: las tres variantes.
+
+**T-S09 — Corte durante la re-medida.** RF-APP-36, 38 (AT-10) · S · R-SIM · **PENDIENTE**
+- Pasos: con el código 1 escrito y verificado por `#E`, cortar en la colocación 3 de 5 y reconectar.
+- Esperado: la re-medida interrumpida no cuenta y queda anotada; se ofrece repetirla completa; `#S` de
+  otro código bloqueado hasta entonces.
+- Pasa: todo.
+
+**T-S10 — Cierre forzado de la app.** RF-APP-36 (AT-11) · S · R-SIM · **PENDIENTE**
+- Pasos: con el código 1 escrito y sin re-medida, forzar el cierre; abrir; conectar.
+- Esperado: reanuda en la re-medida del código 1, con el acta y la conformidad intactas.
+- Pasa: todo.
+
+**T-S11 — `#E` no reproduce.** RF-CAL-22 (AT-12) · S · R-SIM · **PENDIENTE**
+- Pasos: el simulador altera una de las 5 respuestas de `#E,1,…#` en +3 unidades.
+- Esperado: "`#E` no reproduce la curva"; restauración del estado anterior con relectura; secuencia
+  detenida; el código 1 no entra en el acta como escrito.
+- Pasa: todo.
+
+**T-S12 — Re-medida no conforme (negativo).** RF-APP-38, RF-CAL-39 (AT-13) · S · R-SIM · **PENDIENTE**
+- Pasos: tras escribir el código 1, el simulador "coloca" un patrón con R verdadera al +15 % del
+  certificado de P28, en la re-medida y en su repetición.
+- Esperado: NO CONFORME (comprobación 3); se ofrece **una** repetición; al fallar la segunda, se
+  restaura el estado anterior del código 1 (`#F,1#` si era fábrica) y se detiene. Las dos re-medidas
+  están en el acta. "Aceptar" no admite el código 1. No se ofrece una tercera.
+- Pasa: todo.
+
+**T-S13 — Oscuro fuera de límite.** P9-B13 (AT-14) · S · R-SIM · **PENDIENTE**
+- Pasos: campaña en la que la curva del 1 da R = 45 en el oscuro (límite 34,7).
+- Esperado: la tarjeta del 1 dice "no escribible: oscuro 45 > 34,7 (P9-B13)", sin casilla; 0 `#S,1`.
+- Pasa: todo.
+
+**T-S14 — Batería baja (negativo).** RF-APP-43, RF-CAL-41 (AT-15, reescrita) · S · R-SIM · **PENDIENTE**
+- Pasos: (a) `9` responde `:15:` al empezar la sesión; (b) `:0:` antes de la Fase B; (c) sin respuesta
+  a `9` antes de un `#S`; (d) `:40:` de nuevo.
+- Esperado: (a) aviso "Batería baja: 10,50 V", y la medida sigue; (b) y (c) "Calibrar" bloqueado y
+  **0 tramas `#S`, `#F`, `#SC`, `#SN`, `#FT`**; (d) se desbloquea. Cada serie del diario lleva la V.
+  Ningún `9` dentro de una serie.
+- Pasa: los cuatro. **AT-15 del QA suponía que la app no podía leer la batería**; con la 3.6.2 sí puede
+  (C-CAL-17).
+
+**T-S15 — Caducidad del modo administrador.** RF-FW-17 (AT-16) · S · R-SIM · **PENDIENTE**
+- Pasos: dejar la app 10 min en "Coloque P28" sin tramas `#` y pulsar OK.
+- Esperado: la app renueva `#L` antes de medir, o pide el PIN. No se repite ningún `#S` ya verificado.
+- Pasa: las dos cosas.
+
+**T-S16 — Rechazo del acta.** RF-APP-34 (AT-17) · S · R-SIM · **PENDIENTE**
+- Pasos: tras la Fase B, "Rechazar" con motivo.
+- Esperado: 0 `#SC`; se ofrece restaurar lo escrito al estado anterior; acta RECHAZADA, guardada y en el
+  ZIP.
+- Pasa: todo.
+
+**T-S17 — Protocolo mezclado.** RF-CAL-35 (AT-18) · S · R-SIM · **PENDIENTE**
+- Pasos: importar la campaña 1 × 9 del 19-sep y medir el blanco a 3 × 4; "Calibrar".
+- Esperado: "Protocolos distintos: M = 9 y M = 4"; no se sigue.
+- Pasa: todo.
+
+**T-S18 — Firmware 3.6.1.** RF-APP-34 (AT-21) · S · R-SIM · **PENDIENTE**
+- Pasos: el simulador no responde a `#GC#`.
+- Esperado: "Calibrar" deshabilitado: "Hace falta la 3.6.2 (serie y fecha de calibración)".
+- Pasa: todo.
+
+**T-S19 — Falta la A5.** RF-CAL-35 (AT-22) · S · R-SIM · **PENDIENTE**
+- Pasos: campaña sin series A5.
+- Esperado: "Calibrar" deshabilitado: "Falta la medida puente A5 (P9-A5)".
+- Pasa: todo.
+
+**T-S20 — `#V#` fresco.** RF-APP-44 (D-18) · S · R-SIM · **PENDIENTE**
+- Pasos: Fase B de los códigos 1 y 2; exportar el ZIP.
+- Esperado: `#V#` después de cada `#S` y antes del acta; acta y `resumen.txt` con `CAL mascara 0003` y
+  "Calibrado 2026-09-19, vence 2027-09-19". Ninguna línea "No calibrado".
+- Pasa: todo.
+
+**T-S21 — Deriva detectada.** RF-CAL-36 · S · R-SIM · **PENDIENTE**
+- Pasos: el simulador desplaza la `x` un +3 % entre la A5 del inicio y la del final de la sesión 2.
+- Esperado: la sesión 2 queda "con deriva" (D ≈ +3 % > 2,1 %); sus series no entran en el ajuste sin la
+  nota; el resumen lo dice.
+- Pasa: todo.
+
+**T-S22 — Calibración vencida.** RF-CAL-42 · S · R-SIM · **PENDIENTE**
+- Pasos: el simulador responde `#GC,2025-09-18#`; hoy es 2026-09-19.
+- Esperado: aviso de vencida en la cabecera; medir, banco y "Calibrar" siguen habilitados.
+- Pasa: todo.
+
+**T-S23 — Colocación inválida en la re-medida.** RF-CAL-39 · S · R-SIM · **PENDIENTE**
+- Pasos: en la colocación 2 de la re-medida, el simulador da a `e` y al código `x` distintas en un 10 %
+  (el equipo "se movió"), como a las 12:17:02 del 19-sep.
+- Esperado: "colocación no válida: repítala"; se repite sólo esa colocación y queda registrada; la
+  re-medida no cuenta como NO CONFORME.
+- Pasa: todo.
+
+### 3 ter.4 Nivel C (equipo)
+
+**T-C41 — Persistencia y `#V#` en SLV-002.** RF-APP-46, RF-APP-44, P9-B8 (PA-23) · C · R-APP o R-TERM · **PENDIENTE**
+- Pre: SLV-002 con el acta del 19-sep (códigos 1 y 2). **No se escribe nada.**
+- Pasos: apagar, esperar 5 s y encender; `#V#`; `#G,1#`; `#G,2#`; `#E,1,x#` y `#E,2,x#` en x = 500,
+  1000, 2000, 3000 y 4000; `#GN#`; `#GC#`.
+- Esperado: `#V,3.6,2026-09-19,CAL,0003#`; `#G,1` y `#G,2` iguales al texto de las líneas 10 y 17 del
+  acta; los 10 `#E` iguales a la curva emulada en float32 (±1); `#GN,SLV-002#`; `#GC,2026-09-19#`.
+- Pasa: todo. Cierra la persistencia de P9-B8 y C-CAL-20 (al lado del acta, sin reescribirla).
+
+**T-C42 — Sesión 1 del banco en SLV-002.** RF-APP-33, RF-CAL-35, 36 (AT-01) · C · R-APP (3.6.10) · **PENDIENTE**
+- Pre: app 3.6.10; T-S01 pasa; batería cargada; superficie negra mate para el OSCURO.
+- Pasos: sesión 1 de la cola (blanco y amarillo).
+- Esperado: todas las series aceptadas o repetidas según `Veredicto`; A5 del inicio con s_rep; D de la
+  sesión; ZIP. **Tiempo real anotado frente a los 74 min estimados** (`PLAN-Captura…` §2).
+- Pasa: la sesión completa y exportada; el tiempo se anota, no es criterio.
+
+**T-C43 — Fase B en el equipo.** RF-APP-34, RF-CAL-39 (AT-08) · C · R-APP (3.6.10) · **PENDIENTE**
+- Pre: T-S07 pasa; banco completo con A5 conforme; Diego autoriza qué código se escribe (p. ej. el 8, que
+  sigue de fábrica).
+- Pasos: como T-S07, con el equipo real.
+- Esperado: como T-S07. Re-medida con las tres comprobaciones y s_rep medida.
+- Pasa: todo, con el registro y el acta archivados en `06_Calibracion/SLV-002/`.
+
+**T-C44 — La orden `9` frente a un polímetro.** RF-APP-43, RF-CAL-41 (C-CAL-17) · C · R-TERM · **PENDIENTE**
+- Pre: polímetro en bornes de la batería.
+- Pasos: 5 veces `9`, con 3 s entre cada una, en tres estados de carga (recién cargada, a media sesión y
+  al final).
+- Esperado: `:<n>:` sin terminador; V_app = 10 + (n + 30,09)/90,91 y |V_app − V_polímetro| ≤ 0,1 V.
+  Cada `9` dispara la lámpara.
+- Pasa: 15 de 15 dentro de 0,1 V. Si no, se anota la diferencia y el umbral de PA-17 se corrige.
+
+**T-C45 — La `x` frente a la tensión.** RF-CAL-41 (PA-17) · C · R-APP · **PENDIENTE**
+- Pre: fuente de laboratorio en lugar de la batería, con autorización de Diego.
+- Pasos: P28 a 3 × 4 con 12,5; 11,5; 11,0; 10,6 y 10,4 V; `9` en cada paso.
+- Esperado: pendiente de la `x` en % por voltio, con su incertidumbre.
+- Pasa: se fija el umbral de aviso de PA-17 como la V a la que la `x` se aparta más de s_rep/2 (1,1 %)
+  del valor a 12,5 V.
+
+**T-C46 — Corte real durante `#S` (negativo).** RF-APP-37 (AT-09) · C · R-APP (3.6.10) · **PENDIENTE**
+- Pre: T-S08 pasa; Diego autoriza. Se usa el **código 8 con sus coeficientes de fábrica**: el peor caso
+  lo deja en fábrica con el bit de la máscara a 1, y `#F,8#` lo devuelve a 0.
+- Pasos: enviar `#S,8,<fábrica>#` y apagar el equipo antes de `#OK#`; encender y reconectar.
+- Esperado: la app ejecuta P9-B12 (`#G,8#`, `#E`) antes que nada, y termina en fábrica con
+  `#V#` coherente.
+- Pasa: el código 8 queda en fábrica y la máscara vuelve a la de antes.
+
+**T-C47 — Re-medida no conforme, en modo verificación (negativo).** RF-CAL-39 (AT-13) · C · R-APP (3.6.10) · **PENDIENTE**
+- Pre: SLV-002 con el código 1 escrito. **No se escribe nada.**
+- Pasos: verificación del código 1 con "Coloque P28", colocando P27 (IX, 471).
+- Esperado: NO CONFORME por la comprobación 2 (`x` −7 %, fuera de 2·s_rep·√(1/5 + 1/5) ≈ 2,8 %). Al
+  ser verificación, no se restaura nada: sólo se registra.
+- Pasa: NO CONFORME detectado y registrado.
+
+**T-C48 — Otra serie, con el equipo (negativo).** RF-APP-35 (AT-04) · C · R-APP (3.6.10) · **PENDIENTE**
+- Pasos: importar un ZIP de campaña de otra serie (SLV-003, de prueba) y pulsar "Calibrar".
+- Esperado: deshabilitado, con el motivo; 0 tramas `#L`, `#S`, `#SN` en el registro.
+- Pasa: 0 tramas.
+
+**T-C49 — Batería baja con fuente de laboratorio (negativo).** RF-APP-43 (AT-15) · C · R-APP (3.6.10) · **PENDIENTE, opcional**
+- Pre: fuente de laboratorio; autorización de Diego (riesgo de corte durante una escritura).
+- Pasos: bajar a una V con n < 19 y después a n = 0; intentar "Calibrar".
+- Esperado: aviso con n < 19; con n = 0, 0 tramas de escritura.
+- Pasa: las dos cosas. Si no hay fuente, basta T-S14.
+
+### 3 ter.5 AT-01 a AT-22 del QA → pruebas
+
+| AT | Pruebas | | AT | Pruebas |
+| :--- | :--- | :--- | :--- | :--- |
+| AT-01 | T-S01, T-C42 | | AT-12 | T-S11 |
+| AT-02 | T-A68, T-S02 | | AT-13 | T-A54, T-S12, T-C47 |
+| AT-03 | T-A68, T-S02 | | AT-14 | T-S13 |
+| AT-04 | T-S03, T-C48 | | AT-15 | T-A57, T-S14, T-C44, T-C49 (reescrita: la app sí lee la batería) |
+| AT-05 | T-S04 | | AT-16 | T-S15 |
+| AT-06 | T-A59, T-S05 | | AT-17 | T-S16 |
+| AT-07 | T-S06 | | AT-18 | T-A67, T-S17 |
+| AT-08 | T-S07, T-C43 | | AT-19 | T-A69 |
+| AT-09 | T-A61, T-S08, T-C46 | | AT-20 | T-A62, T-A70 |
+| AT-10 | T-S09 | | AT-21 | T-S18 |
+| AT-11 | T-A60, T-S10 | | AT-22 | T-S19 |
+
+### 3 ter.6 Requisito → pruebas (r1.3)
+
+| Requisito | Pruebas |
+| :--- | :--- |
+| RF-APP-33 | T-A50, T-S01, T-C42 |
+| RF-APP-34 | T-S07, T-S16, T-S18, T-C43 |
+| RF-APP-35 | T-A59, T-S03, T-S04, T-S05, T-C48 |
+| RF-APP-36 | T-A60, T-S09, T-S10 |
+| RF-APP-37 | T-A61, T-S08, T-C46 |
+| RF-APP-38 | T-A53, T-A54, T-A55, T-S12, T-S23 |
+| RF-APP-39 | T-A68, T-S02 |
+| RF-APP-40 | T-A69, T-A71 |
+| RF-APP-41 | T-A62, T-A70 |
+| RF-APP-42 | T-A56 |
+| RF-APP-43 | T-A57, T-S14, T-C44, T-C49 |
+| RF-APP-44 | T-A66, T-S20, T-C41 |
+| RF-APP-45 | T-S07 (revisión de interfaz) |
+| RF-APP-46 | T-S07, T-C41 |
+| RF-APP-47 | T-A64 |
+| RF-APP-48 | T-A65, T-S06 |
+| RF-CAL-35 | T-A50, T-A67, T-S01, T-S17, T-S19, T-C42 |
+| RF-CAL-36 | T-A51, T-S21, T-C42 |
+| RF-CAL-37 | T-A52, T-S06 |
+| RF-CAL-38 | T-A53 |
+| RF-CAL-39 | T-A54, T-S12, T-S23, T-C43, T-C47 |
+| RF-CAL-40 | T-A64 |
+| RF-CAL-41 | T-A57, T-S14, T-C44, T-C45, T-C49 |
+| RF-CAL-42 | T-A58, T-S22 |
+| RF-CAL-43 | T-A63, T-S07 |
+
+**Cobertura:** los 16 RF-APP y los 9 RF-CAL nuevos tienen al menos una prueba de nivel A o S, que se
+puede hacer sin equipo. Los que además necesitan equipo son la persistencia (T-C41), la batería real
+(T-C44, T-C45) y el banco y la Fase B reales (T-C42, T-C43). **Orden para la fase 4 (QA de la APK):**
+nivel A completo → T-S00 → nivel S → T-C41 → T-C44 → T-C42 → resto de C.
 
 ---
 

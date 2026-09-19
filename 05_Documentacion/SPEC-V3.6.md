@@ -13,6 +13,15 @@ en [`MATRIZ-SPEC-codigo-V3.6.md`](MATRIZ-SPEC-codigo-V3.6.md), que sustituye a l
 un equipo con V3.6. El firmware está compilado (`.hex` md5 `680b6a7d…`, commit `319345f`) y probado
 sólo en simulador; la app compila y pasa 45 pruebas JVM… Una prueba de simulador falla (T-A23…).»
 
+**Revisión 1.3 (19-sep-2026, tarde) [NUEVO r1.3].** Añade RF-APP-33 a RF-APP-48 (§3.7 quater): el banco
+guiado de los 133 patrones P1-P132, "Calibrar este equipo" con un solo botón, la serie leída de `#GN#`,
+el acta persistente, la recuperación de P9-B12, la re-medida guiada, Importar visible, el aviso de no
+desinstalar, el APK con la versión en el nombre, los códigos 3-6 ajustables, el aviso de batería con
+la orden `9` y el `#V#` fresco tras escribir. **Nada de eso está implementado ni medido.** Estado real
+de SLV-002 desde las 12:23 del 19-sep: firmware 3.6.2; códigos 1 y 2 escritos y re-medidos; acta
+aceptada; `#SC` 2026-09-19; persistencia sin comprobar (`SPEC-Calibracion-V3.6.md` §12.0). La
+especificación de calibración que acompaña a esta revisión es `SPEC-Calibracion-V3.6.md` §12.
+
 **Revisión 1.2 (19-sep-2026).** Reconcilia la SPEC con el firmware 3.6.1, la app 3.6.4 y las medidas
 de campo del 19-sep (`07 pruebas/19092026_0900/`). Lo que cambia lleva **[MOD r1.2]**, con el texto
 anterior al lado; lo nuevo, **[NUEVO r1.2]**. Requisitos nuevos: RF-FW-31 y RF-APP-28 a RF-APP-32.
@@ -820,6 +829,58 @@ anota).
 Casos de aceptación de extremo a extremo (T-C40, equipo): una campaña de 5 patrones en SLV-002 con un
 cierre forzado de la app a mitad, un patrón saltado y una serie reasignada; exportar; el ZIP contiene
 lo descrito y su md5 coincide con el anotado.
+
+### 3.7 quater Requisitos nuevos en la revisión 1.3 (banco y "Calibrar este equipo") [NUEVO r1.3]
+
+**Nada de esta sección está implementado** en la app 3.6.9 (commit `f52eeb1`). El estado de cada
+requisito frente al código está en `MATRIZ-SPEC-codigo-V3.6.md`. Salen del QA del flujo
+(`QA-Flujo-Calibracion-V3.6.md`, D-01 a D-17), de los defectos D-18 a D-20 que deja ver el ZIP de las
+12:27 (`SPEC-Calibracion-V3.6.md` §12.0) y de lo que pidió Diego el 19-sep:
+
+- un banco de medida guiado de los 133 patrones;
+- con el ZIP, "Calibrar" y poco más;
+- la serie se lee de `#GN#`;
+- la calibración vencida avisa y no bloquea.
+
+La parte metrológica (protocolo, criterios y métodos) está en `SPEC-Calibracion-V3.6.md` §12
+(RF-CAL-35 a RF-CAL-43), y la cola del banco en `06_Calibracion/PLAN-Captura-Banco-P1-P132.md`. Las
+pruebas están en `TDD-V3.6.md` §3 ter. **Ninguno de estos requisitos exige cambiar el firmware 3.6.2**
+(`SPEC-Calibracion-V3.6.md` §12.9).
+
+**Dos modos.** *Operación* es lo que ve el operador: medir el banco y calibrar. *Avanzado* es lo de hoy
+(ajuste manual, fábrica, PIN, serie, `#FT#`, botones), detrás de un aviso de riesgo, hasta que exista el
+superadministrador (RF-CAL-27).
+
+| RF | Requisito | Criterio de aceptación (medible) | Prueba |
+| :--- | :--- | :--- | :--- |
+| **RF-APP-33** | **Modo banco.** La app carga la cola `cola_banco_P1-P132.csv` desde los assets, **sólo si su md5 está en la lista del APK**. La sigue paso a paso: "Coloque P28 (blanco IX, cert. 484) y pulse OK", y después "Levante y apoye (2 de 3)". Cada colocación son 1 + M disparos con `e`. OSCURO, A5 y batería son pasos de la cola y **no se pueden saltar**; los patrones sí, y quedan marcados. Al terminar cada sesión, exporta el ZIP sin preguntar (RF-APP-40). Retoma en el primer paso pendiente | Con la cola de 180 filas: 133 pasos de patrón y 47 de control, en el orden del CSV. Nº de `e` = Σ K·(M + 1) de los pasos medidos. Un md5 desconocido → "Cola no admitida", sin ningún `e`. OSCURO y A5 sin botón "Saltar". Matar la app en el paso 40 y reabrir → sigue en el 40 con el diario idéntico byte a byte | T-A50, T-S01, T-C42 |
+| **RF-APP-34** | **"Calibrar este equipo".** Un botón en la pantalla Campaña que hace la Fase B de `SPEC-Calibracion-V3.6.md` §12.3: (1) comprobaciones previas automáticas; (2) una pantalla de resumen con una tarjeta por código de la tabla RF-CAL-37; (3) una casilla de conformidad por código, el nombre y una nota; (4) un botón "Calibrar"; (5) la secuencia código a código; (6) la persistencia; (7) el acta con "Aceptar y grabar fecha" o "Rechazar". El operador no elige código, grado, método ni patrón de re-medida | Toques del operador en la Fase B de 3 códigos: ≤ 24, más uno por colocación. Entradas de texto: 1 (la nota). La pantalla de calibración tiene **0** controles de grado, método o patrón. Con una comprobación previa que falla, el botón sigue deshabilitado y dice cuál falla y cómo se resuelve (AT-04, AT-05, AT-07, AT-18, AT-21, AT-22) | T-S07, T-C43 |
+| **RF-APP-35** | **Identidad por `#GN#`.** La serie de la campaña, del acta y de los registros es la de `#GN#` más la MAC. El nombre Bluetooth sólo se coteja. Si `#GN#`, MAC y campaña no coinciden, no se mide ni se calibra, y se dice por qué. **Alta de serie** sólo si `#GN#` = `NONE` o desde Avanzado: se muestra "Serie actual: X → Nueva: ___" en grande; la nueva se teclea dos veces; si difiere del nombre Bluetooth, hay que marcar una casilla; si la actual no es `NONE`, se pide una nota. Después, `#SN` y relectura con `#GN#`. Sustituye a `Sesion.serie()` (`Sesion.java:157-164`) | `#GN,SLV-003#` con una campaña de SLV-002 → 0 tramas `#L`, `#S`, `#SN`. Teclear `SLV-02` y `SLV-002` → 0 `#SN` ("no coinciden"). El caso real del 19-sep (`#SN,SLV-02#` a las 12:09:02, T4:2048) no se puede repetir sin doble entrada, casilla y nota | T-A59, T-S03, T-S04, T-S05, T-C48 |
+| **RF-APP-36** | **Acta y calibración en curso, en disco y reanudables.** El estado de la Fase B vive en un fichero de sólo añadir de la campaña: acta, conformidades, código en curso, fase (escribiendo, escrito, re-medida, verificado) y copia previa. **Reconectar no borra nada.** Hoy `Sesion.reiniciar()` pone `acta = null` (`Sesion.java:130`) y se llama al conectar. Al volver, la app ofrece "Hay una calibración a medias de SLV-002: código 8, escrito, falta la re-medida. Continuar". El bloqueo de P9-B8 se evalúa sobre ese estado, no sobre la memoria | Matar la app con el código 1 escrito y sin re-medida, y reabrir → ofrece la re-medida del 1, y `#S` de otro código queda bloqueado. Desconectar y reconectar 5 veces → el acta y las conformidades siguen idénticas (diff vacío). El ZIP lleva el acta PENDIENTE si se exporta a medias | T-A60, T-S09, T-S10 |
+| **RF-APP-37** | **Corte durante `#S` (P9-B12), automático.** Si el enlace cae entre el envío de `#S,k` y la relectura, al reconectar la app hace, antes que nada, `#G,k#`: (a) si coincide con lo enviado (8 ulp), `#E` en 5 puntos y sigue con la re-medida; (b) si coincide con lo anterior, el `#S` no entró, y ofrece repetirlo; (c) si no coincide con ninguno, restaura lo anterior y relee. Nunca hay un `#S` de otro código antes de resolver k | Simulador con corte tras `#S,8`, en las tres variantes: (a) sin restauración y con la re-medida pendiente; (b) sin restauración y con `#S,8` ofrecido; (c) `#F,8#` o `#S` con la copia, y relectura igual a la copia. En las tres, 0 `#S` de otro código entre el corte y la resolución | T-A61, T-S08, T-C46 |
+| **RF-APP-38** | **Re-medida guiada** según RF-CAL-39: el patrón lo fija la tabla del APK (RF-CAL-37); K = 5 y M = 4, con `e` y código alternados; tres comprobaciones; las colocaciones inválidas se repiten; una sola repetición si no es conforme; y si vuelve a fallar, restauración. El acta guarda **todos** los intentos. Sustituye a `Acta.evaluarRemedida` con s_rep supuesta (`Acta.java:141-163`) y a la sobrescritura de `Acta.remedida()` (`Acta.java:133`) | Con los datos del 19-sep: el intento de 12:17:02 (d̄ = +50,7, T4:2156) sale como "colocación no válida" y no como NO CONFORME. P28 (497,8 frente a cert. 484) y P5 (693,2 frente a 740) salen conformes. Un patrón a +12 % del certificado → NO CONFORME, una repetición y, si falla, restauración. El acta no contiene "supuesta" | T-A53, T-A54, T-A55, T-S12, T-S23 |
+| **RF-APP-39** | **Importar, visible.** "Importar ZIP de campaña" es el primer botón de la pantalla Campaña, al nivel de "Medir el banco". "Nueva campaña" y "Cerrar campaña" pasan a Avanzado. Hoy "Importar" es el tercer control de la sección "Enviar" (`CampanaActivity.java:99-107`) | Con la pantalla recién abierta en un teléfono de 6", "Importar" se ve sin desplazarse. Ningún control que archive o cierre la campaña está a menos de 1 fila de "Importar". Reimportar el mismo ZIP → "0 importadas, N ya estaban" | T-S02, T-A68 |
+| **RF-APP-40** | **Aviso de no desinstalar y copia fuera de la app.** Al arrancar, si hay series sin exportar: "Hay N series sin exportar. No desinstale la app: se borrarían. Para actualizar, instale la versión nueva encima". Cada exportación deja una copia en `Download/RTV/`. `allowBackup` sigue en `false` (`AndroidManifest.xml:14`) | Con 3 series sin exportar, el aviso aparece al arrancar (1 de 1). Tras exportar, `Download/RTV/campana_<serie>_<fecha>.zip` existe y su SHA-256 es el del ZIP compartido. Desinstalar y reinstalar → la copia de `Download/RTV/` sigue | T-A69, T-A71 |
+| **RF-APP-41** | **Versión en el nombre del APK y en pantalla.** Sólo se entrega `RTV-V<versionName>-<versionCode>.apk`, y nunca `RTV-V3.6.apk` (`03_App_Movil/RetroV36/README.md:24-25`). La versión va en grande en la cabecera de todas las pantallas, y en el nombre de cada ZIP y de cada acta | La carpeta de entrega no contiene `RTV-V3.6.apk`. El APK 3.6.10 se llama `RTV-V3.6.10-3610.apk`. Captura de las 5 pantallas con la versión visible. `resumen.txt` y el acta llevan `3.6.10` | T-A62, T-A70 |
+| **RF-APP-42** | **Códigos 3, 4 y 6 ajustables, y el 5 si PA-14.** El asset de la app pasa a ser el catálogo P1-P132 (md5 `a74222c0…`, PA-21). La regla de cobertura (`Asistente.java:75-98`) se mantiene para mínimos cuadrados. Para la **recta anclada** cuenta el ancla como un nivel más (certificado 0 en la `x` del OSCURO): así el 5 (83-102) pasa a tener un rango de 0-102. Hoy `proponer` bloquea la anclada con la cobertura de grado 1 (`Asistente.java:406-422`) | Con P1-P132: 1, 2, 3, 4, 6 y 8 hasta grado 2; b hasta grado 1; 5, 7, a, c y d "sólo verificar" con mínimos cuadrados. 5 **ajustable con la recta anclada** sólo si la tabla RF-CAL-37 lo permite. Café y lila no cuentan en la cobertura del 4 | T-A56 |
+| **RF-APP-43** | **Aviso de batería** según RF-CAL-41: `9` al empezar cada sesión, al cambiar de color, antes de la Fase B y antes de cada `#S`, nunca en mitad de una serie. Muestra V y el aviso. **Bloquea las escrituras** con n = 0 o sin respuesta. La V queda en cada serie del diario y en el acta | n = 40 → "Batería 10,77 V", sin aviso. n = 15 → aviso y medida permitida. n = 0 o sin respuesta → `#S`, `#F`, `#SC`, `#SN`, `#FT` no se envían (0 tramas) y la medida sigue. Ningún `9` entre dos disparos de una misma serie | T-A57, T-S14, T-C44, T-C49 |
+| **RF-APP-44** | **`#V#` fresco.** La app vuelve a leer `#V#` después de cada `#S`, `#F`, `#FT` y `#SC`, y antes de generar el resumen, la cabecera del ZIP y el acta. La marca y la máscara del acta son las de esa lectura. "No calibrado" sólo sale con un `#V#` leído después de la última escritura | Tras `#S,1` y `#S,2` en el simulador: `#V#` enviado ≥ 2 veces después del primer `#S`. El acta dice `CAL mascara 0003`. El caso del 19-sep (acta con "DEF mascara 0000" tras escribir, línea 3) no se reproduce | T-A66, T-S20, T-C41 |
+| **RF-APP-45** | **Avanzado, aparte.** La pantalla de operación no tiene `#F,*#`, `#FT#`, `#P`, ajuste manual, parámetros del oscuro ni grado. Todo eso va a Avanzado, que se abre con un aviso de riesgo (y con la frase del superadministrador cuando exista, RF-CAL-27). Cada acción destructiva de Avanzado pide confirmación tecleada | Nº de controles activos en la pantalla de calibración de Operación ≤ 8 (hoy, 25 en `AdminActivity.java:84-170`). 0 acciones destructivas en Operación | Revisión de interfaz en T-S07 |
+| **RF-APP-46** | **Persistencia dentro del flujo** (final de P9-B8): "Apague el equipo, espere 5 s y enciéndalo". La app reconecta y repite `#V#`, `#G` de lo escrito y `#E` en 5 puntos. Si algo no coincide, el acta no se puede aceptar | Sin el ciclo de apagado, "Aceptar" está deshabilitado. Con él, el registro de tramas contiene, después de la reconexión, `#V#`, un `#G,k#` por código escrito y 5 `#E,k,…#` por código | T-S07, T-C41 |
+| **RF-APP-47** | **Código por fila de la cola.** El código de cada patrón sale de la columna `codigo_equipo` de la cola, no sólo de `Fabrica.color()` (`Fabrica.java:32-42`). Café y lila van con el 4 y con uso VERIFICACIÓN (RF-CAL-40) | Los 10 café y lila se evalúan con la curva del 4 en el resumen, y ninguno aparece en los puntos del ajuste del 4 | T-A64 |
+| **RF-APP-48** | **Oscuro y s_rep sacados de la campaña.** La `x` del OSCURO es la media de la serie OSCURO de la sesión. La s_rep es la de la A5 del inicio (RF-CAL-38). En Operación no hay campos para teclearlas. Hoy se teclean (`AdminActivity.java:127-136`, `:468-471`) y el acta usa 575 (`Asistente.java:218`) | Con la campaña del 19-sep, el acta dice "Oscuro (x = 565,4)" y "s_rep 2,24 % (A5)". Sin serie OSCURO, la recta anclada queda "no calculable: falta OSCURO" (AT-07) | T-A65, T-S06 |
+
+**Defectos del QA que cubre cada requisito:** D-01 → 34, 38. D-02 → 36. D-03 → 37. D-04 y D-05 → 35.
+D-06 → 34, 45. D-07 → 39. D-08 → 34 (sin la caída a las medidas de sesión, `Sesion.java:241-250`).
+D-09 → 40. D-10 → 41. D-11 → 48. D-12 → 34 y RF-CAL-37. D-13 → 38. D-14 → RF-CAL-43. D-15 → 33.
+D-16 → 46. D-17 → 43. D-18 → 44. D-19 y D-20 → 38.
+
+**Lo que esta revisión corrige de la r1.2**, según la matriz al día (`MATRIZ-SPEC-codigo-V3.6.md`):
+
+- RF-APP-32.3 y 32.4 ya tienen cierre de campaña y huellas md5 y SHA-256 en la 3.6.9. El "hueco" de
+  §3.7 ter queda superado.
+- `#FT#` ya no está "en obra" (§2.2, línea 298): está en la 3.6.2 (`calibracion_v36.c:716-727`), grabada en SLV-002.
+- El descolgado de RF-APP-29 pide un suelo de 30 cuentas, y el código usa 50 (C-46, sigue abierta).
 
 ### 3.8 Estado de la app frente a cada RF-APP [MOD r1.2]
 

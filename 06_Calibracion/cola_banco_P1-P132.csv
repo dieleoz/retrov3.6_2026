@@ -1,0 +1,181 @@
+orden,sesion,bloque,paso,patron,color,tipo,valor_certificado,codigo_equipo,uso,K,M,asentamiento,remedida_de_codigo,x_esperada,origen_x,nota
+1,1,INICIO,CALENTAMIENTO,,,,,,,,,,,,,10 min encendido antes de la primera serie (RF-CAL-01)
+2,1,INICIO,BATERIA,,,,,9,CONTROL,,,,,,,orden 9: tension y nivel; aviso si baja (RF-CAL-41)
+3,1,INICIO,OSCURO,OSCURO,,,0,e,CONTROL,5,4,1,,565,medida,superficie negra mate; ancla de la recta del codigo 2 (y del 5 si PA-14)
+4,1,A5-INICIO,A5,P22,amarillo,IV,334,e,CONTROL,5,4,1,,1497.0,medida,puente y s_rep (P9-A5); no entra en el ajuste
+5,1,A5-INICIO,A5,P28,blanco,IX,484,e,CONTROL,5,4,1,,2277.9,medida,puente y s_rep (P9-A5); no entra en el ajuste
+6,1,A5-INICIO,A5,P4,blanco,XI,828,e,CONTROL,5,4,1,,3315.8,medida,puente y s_rep (P9-A5); no entra en el ajuste
+7,1,COLOR:blanco,PATRON,P56,blanco,IV,347,1,AJUSTE,3,4,1,,1717,estimada: recta por el oscuro,
+8,1,COLOR:blanco,PATRON,P3,blanco,IV,378,1,AJUSTE,3,4,1,,1674.0,medida,P2 y P3 se contradicen entre si: leer etiqueta
+9,1,COLOR:blanco,PATRON,P2,blanco,IV,414,1,AJUSTE,3,4,1,,2058.6,medida,P2 y P3 se contradicen entre si: leer etiqueta
+10,1,COLOR:blanco,PATRON,P52,blanco,IV,421,1,AJUSTE,3,4,1,,1962,estimada: recta por el oscuro,
+11,1,COLOR:blanco,PATRON,P58,blanco,IV,432,1,AJUSTE,3,4,1,,1999,estimada: recta por el oscuro,
+12,1,COLOR:blanco,PATRON,P51,blanco,IV,439,1,AJUSTE,3,4,1,,2022,estimada: recta por el oscuro,
+13,1,COLOR:blanco,PATRON,P27,blanco,IX,471,1,AJUSTE,3,4,1,,2111.1,medida,
+14,1,COLOR:blanco,PATRON,P28,blanco,IX,484,1,RE-MEDIDA,5,4,1,1,2277.9,medida,
+15,1,COLOR:blanco,PATRON,P118,blanco,IX,508,1,AJUSTE,3,4,1,,2251,estimada: recta por el oscuro,
+16,1,COLOR:blanco,PATRON,P73,blanco,IX,614,1,AJUSTE,3,4,1,,2603,estimada: recta por el oscuro,
+17,1,COLOR:blanco,PATRON,P1,blanco,XI,762,1,AJUSTE,3,4,1,,2960.9,medida,
+18,1,COLOR:blanco,PATRON,P103,blanco,XI,763,1,AJUSTE,3,4,1,,3097,estimada: recta por el oscuro,
+19,1,COLOR:blanco,PATRON,P7,blanco,XI,768,1,AJUSTE,3,4,1,,3122.4,medida,
+20,1,COLOR:blanco,PATRON,P6,blanco,XI,772,1,AJUSTE,3,4,1,,3168.4,medida,
+21,1,COLOR:blanco,PATRON,P88,blanco,XI,773,1,AJUSTE,3,4,1,,3130,estimada: recta por el oscuro,
+22,1,COLOR:blanco,PATRON,P4,blanco,XI,828,1,AJUSTE,3,4,1,,3315.8,medida,
+23,1,COLOR:blanco,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+24,1,COLOR:blanco-I,PATRON,P35,blanco,I,96,7,VERIFICACION,3,4,1,,1114.7,medida,
+25,1,COLOR:blanco,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+26,1,COLOR:amarillo,PATRON,P61,amarillo,IV,207,2,AJUSTE,3,4,1,,1132,estimada: recta por el oscuro,
+27,1,COLOR:amarillo,PATRON,P62,amarillo,IV,280,2,AJUSTE,3,4,1,,1331,estimada: recta por el oscuro,
+28,1,COLOR:amarillo,PATRON,P22,amarillo,IV,334,2,AJUSTE,3,4,1,,1497.0,medida,"FUERA en la A5 del 19-sep (-5,6 %)"
+29,1,COLOR:amarillo,PATRON,P21,amarillo,IV,375,2,AJUSTE,3,4,1,,1562.4,medida,
+30,1,COLOR:amarillo,PATRON,P29,amarillo,IV,442,2,AJUSTE,3,4,1,,1677.0,medida,
+31,1,COLOR:amarillo,PATRON,P30,amarillo,IV,448,2,AJUSTE,3,4,1,,1654.2,medida,
+32,1,COLOR:amarillo,PATRON,P24,amarillo,IV,593,2,AJUSTE,3,4,1,,1982.7,medida,identidad sin confirmar (C-40)
+33,1,COLOR:amarillo,PATRON,P121,amarillo,IX,320,2,AJUSTE,3,4,1,,1441,estimada: recta por el oscuro,
+34,1,COLOR:amarillo,PATRON,P122,amarillo,IX,352,2,AJUSTE,3,4,1,,1528,estimada: recta por el oscuro,
+35,1,COLOR:amarillo,PATRON,P77,amarillo,IX,391,2,AJUSTE,3,4,1,,1635,estimada: recta por el oscuro,
+36,1,COLOR:amarillo,PATRON,P76,amarillo,IX,433,2,AJUSTE,3,4,1,,1750,estimada: recta por el oscuro,
+37,1,COLOR:amarillo,PATRON,P31,amarillo,IX,573,2,AJUSTE,3,4,1,,2085.8,medida,
+38,1,COLOR:amarillo,PATRON,P25,amarillo,IX,576,2,RE-MEDIDA,5,4,1,2,2157.4,medida,
+39,1,COLOR:amarillo,PATRON,P26,amarillo,IX,583,2,AJUSTE,3,4,1,,2208.8,medida,
+40,1,COLOR:amarillo,PATRON,P107,amarillo,XI,478,2,AJUSTE,3,4,1,,1873,estimada: recta por el oscuro,
+41,1,COLOR:amarillo,PATRON,P106,amarillo,XI,493,2,AJUSTE,3,4,1,,1914,estimada: recta por el oscuro,
+42,1,COLOR:amarillo,PATRON,P91,amarillo,XI,516,2,AJUSTE,3,4,1,,1977,estimada: recta por el oscuro,
+43,1,COLOR:amarillo,PATRON,P92,amarillo,XI,522,2,AJUSTE,3,4,1,,1994,estimada: recta por el oscuro,
+44,1,COLOR:amarillo,PATRON,P10,amarillo,XI,680,2,AJUSTE,3,4,1,,2504.3,medida,
+45,1,COLOR:amarillo,PATRON,P9,amarillo,XI,705,2,AJUSTE,3,4,1,,2483.9,medida,
+46,1,COLOR:amarillo,PATRON,P23,amarillo,XI,714,2,AJUSTE,3,4,1,,2735.4,medida,P23 lee mas que P5 con menos certificado (C-39)
+47,1,COLOR:amarillo,PATRON,P8,amarillo,XI,721,2,AJUSTE,3,4,1,,2532.9,medida,
+48,1,COLOR:amarillo,PATRON,P5,amarillo,XI,740,2,AJUSTE,3,4,1,,2459.3,medida,P23 lee mas que P5 con menos certificado (C-39)
+49,1,COLOR:amarillo,PATRON,P20,amarillo,XI,782,2,AJUSTE,3,4,1,,2787.7,medida,
+50,1,COLOR:amarillo,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+51,1,COLOR:amarillo-I,PATRON,P44,amarillo,I,64,8,AJUSTE,5,4,1,,898.6,medida,
+52,1,COLOR:amarillo-I,PATRON,P37,amarillo,I,82,8,AJUSTE,5,4,1,,992.4,medida,
+53,1,COLOR:amarillo-I,PATRON,P34,amarillo,I,86,8,AJUSTE,5,4,1,,958.3,medida,
+54,1,COLOR:amarillo-I,PATRON,P43,amarillo,I,122,8,RE-MEDIDA,5,4,1,8,1151.3,medida,
+55,1,COLOR:amarillo,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+56,1,A5-FIN,A5,P22,amarillo,IV,334,e,CONTROL,3,4,1,,1497.0,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
+57,1,A5-FIN,A5,P28,blanco,IX,484,e,CONTROL,3,4,1,,2277.9,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
+58,1,A5-FIN,A5,P4,blanco,XI,828,e,CONTROL,3,4,1,,3315.8,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
+59,1,FIN,OSCURO,OSCURO,,,0,e,CONTROL,3,4,1,,565,medida,deriva del oscuro
+60,1,FIN,EXPORTAR,,,,,,CONTROL,,,,,,,ZIP de la sesion; copia en Download/RTV/
+61,1,FIN,PAUSA,,,,,,CONTROL,,,,,,,si se apaga el equipo o se cambia la bateria: 10 min de calentamiento al volver
+62,2,INICIO,BATERIA,,,,,9,CONTROL,,,,,,,orden 9: tension y nivel; aviso si baja (RF-CAL-41)
+63,2,INICIO,OSCURO,OSCURO,,,0,e,CONTROL,3,4,1,,565,medida,superficie negra mate; ancla de la recta del codigo 2 (y del 5 si PA-14)
+64,2,A5-INICIO,A5,P22,amarillo,IV,334,e,CONTROL,3,4,1,,1497.0,medida,puente y s_rep (P9-A5); no entra en el ajuste
+65,2,A5-INICIO,A5,P28,blanco,IX,484,e,CONTROL,3,4,1,,2277.9,medida,puente y s_rep (P9-A5); no entra en el ajuste
+66,2,A5-INICIO,A5,P4,blanco,XI,828,e,CONTROL,3,4,1,,3315.8,medida,puente y s_rep (P9-A5); no entra en el ajuste
+67,2,COLOR:rojo,PATRON,P60,rojo,IV,68,4,AJUSTE,3,4,1,,945,estimada: recta por el oscuro,
+68,2,COLOR:rojo,PATRON,P54,rojo,IV,121,4,AJUSTE,3,4,1,,1241,estimada: recta por el oscuro,
+69,2,COLOR:rojo,PATRON,P59,rojo,IV,122,4,AJUSTE,3,4,1,,1247,estimada: recta por el oscuro,
+70,2,COLOR:rojo,PATRON,P11,rojo,IV,194,4,RE-MEDIDA,5,4,1,4,1722.9,medida,
+71,2,COLOR:rojo,PATRON,P57,rojo,IV,218,4,AJUSTE,3,4,1,,1783,estimada: recta por el oscuro,
+72,2,COLOR:rojo,PATRON,P12,rojo,IV,227,4,AJUSTE,3,4,1,,1761.9,medida,
+73,2,COLOR:rojo,PATRON,P120,rojo,IX,110,4,AJUSTE,3,4,1,,1180,estimada: recta por el oscuro,
+74,2,COLOR:rojo,PATRON,P119,rojo,IX,138,4,AJUSTE,3,4,1,,1336,estimada: recta por el oscuro,
+75,2,COLOR:rojo,PATRON,P75,rojo,IX,138,4,AJUSTE,3,4,1,,1336,estimada: recta por el oscuro,
+76,2,COLOR:rojo,PATRON,P74,rojo,IX,169,4,AJUSTE,3,4,1,,1510,estimada: recta por el oscuro,
+77,2,COLOR:rojo,PATRON,P55,rojo,XI,146,4,AJUSTE,3,4,1,,1381,estimada: recta por el oscuro,
+78,2,COLOR:rojo,PATRON,P90,rojo,XI,162,4,AJUSTE,3,4,1,,1470,estimada: recta por el oscuro,
+79,2,COLOR:rojo,PATRON,P105,rojo,XI,164,4,AJUSTE,3,4,1,,1482,estimada: recta por el oscuro,
+80,2,COLOR:rojo,PATRON,P104,rojo,XI,173,4,AJUSTE,3,4,1,,1532,estimada: recta por el oscuro,
+81,2,COLOR:rojo,PATRON,P89,rojo,XI,183,4,AJUSTE,3,4,1,,1588,estimada: recta por el oscuro,
+82,2,COLOR:rojo,PATRON,P53,rojo,XI,279,4,AJUSTE,3,4,1,,2124,estimada: recta por el oscuro,
+83,2,COLOR:rojo,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+84,2,COLOR:cafe,PATRON,P68,cafe,IV,36,4,VERIFICACION,3,4,1,,767,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-15)
+85,2,COLOR:cafe,PATRON,P128,cafe,IX,38,4,VERIFICACION,3,4,1,,778,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-15)
+86,2,COLOR:cafe,PATRON,P83,cafe,IX,55,4,VERIFICACION,3,4,1,,873,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-15)
+87,2,COLOR:cafe,PATRON,P113,cafe,XI,60,4,VERIFICACION,3,4,1,,901,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-15)
+88,2,COLOR:cafe,PATRON,P98,cafe,XI,68,4,VERIFICACION,3,4,1,,945,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-15)
+89,2,COLOR:cafe,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+90,2,COLOR:lila,PATRON,P69,lila,IV,139,4,VERIFICACION,3,4,1,,1342,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-15)
+91,2,COLOR:lila,PATRON,P129,lila,IX,157,4,VERIFICACION,3,4,1,,1442,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-15)
+92,2,COLOR:lila,PATRON,P84,lila,IX,177,4,VERIFICACION,3,4,1,,1554,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-15)
+93,2,COLOR:lila,PATRON,P99,lila,XI,188,4,VERIFICACION,3,4,1,,1616,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-15)
+94,2,COLOR:lila,PATRON,P114,lila,XI,202,4,VERIFICACION,3,4,1,,1694,estimada: recta por el oscuro del rojo intenso (sin datos propios),sin codigo propio: se mide con el del rojo (4); no entra en el ajuste (PA-15)
+95,2,COLOR:lila,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+96,2,COLOR:rojo-I,PATRON,P39,rojo,I,46,b,VERIFICACION,3,4,1,,734.3,medida,verificar; ajuste solo con recta anclada (PA-14)
+97,2,COLOR:rojo-I,PATRON,P38,rojo,I,52,b,VERIFICACION,3,4,1,,743.9,medida,verificar; ajuste solo con recta anclada (PA-14)
+98,2,COLOR:rojo-I,PATRON,P49,rojo,I,81,b,VERIFICACION,3,4,1,,797.2,medida,verificar; ajuste solo con recta anclada (PA-14)
+99,2,COLOR:rojo,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+100,2,COLOR:naranja,PATRON,P70,naranja,IV,80,6,AJUSTE,3,4,1,,1050,estimada: fabrica invertida,
+101,2,COLOR:naranja,PATRON,P71,naranja,IV,84,6,AJUSTE,3,4,1,,1070,estimada: fabrica invertida,
+102,2,COLOR:naranja,PATRON,P72,naranja,IV,93,6,AJUSTE,3,4,1,,1116,estimada: fabrica invertida,
+103,2,COLOR:naranja,PATRON,P130,naranja,IX,98,6,AJUSTE,3,4,1,,1140,estimada: fabrica invertida,
+104,2,COLOR:naranja,PATRON,P131,naranja,IX,102,6,AJUSTE,3,4,1,,1159,estimada: fabrica invertida,
+105,2,COLOR:naranja,PATRON,P132,naranja,IX,117,6,AJUSTE,3,4,1,,1228,estimada: fabrica invertida,
+106,2,COLOR:naranja,PATRON,P85,naranja,IX,118,6,AJUSTE,3,4,1,,1232,estimada: fabrica invertida,
+107,2,COLOR:naranja,PATRON,P86,naranja,IX,124,6,RE-MEDIDA,5,4,1,6,1259,estimada: fabrica invertida,
+108,2,COLOR:naranja,PATRON,P87,naranja,IX,131,6,AJUSTE,3,4,1,,1289,estimada: fabrica invertida,
+109,2,COLOR:naranja,PATRON,P100,naranja,XI,143,6,AJUSTE,3,4,1,,1339,estimada: fabrica invertida,
+110,2,COLOR:naranja,PATRON,P101,naranja,XI,146,6,AJUSTE,3,4,1,,1351,estimada: fabrica invertida,
+111,2,COLOR:naranja,PATRON,P115,naranja,XI,147,6,AJUSTE,3,4,1,,1355,estimada: fabrica invertida,
+112,2,COLOR:naranja,PATRON,P117,naranja,XI,154,6,AJUSTE,3,4,1,,1383,estimada: fabrica invertida,
+113,2,COLOR:naranja,PATRON,P116,naranja,XI,158,6,AJUSTE,3,4,1,,1399,estimada: fabrica invertida,
+114,2,COLOR:naranja,PATRON,P102,naranja,XI,173,6,AJUSTE,3,4,1,,1457,estimada: fabrica invertida,
+115,2,COLOR:naranja,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+116,2,COLOR:naranja-I,PATRON,P32b,naranja,I,68,d,VERIFICACION,3,4,1,,802.8,medida,P32 duplicado en la fuente: leer etiqueta y color en voz alta (C-41)
+117,2,COLOR:naranja-I,PATRON,P50,naranja,I,71,d,VERIFICACION,3,4,1,,907.1,medida,
+118,2,COLOR:naranja-I,PATRON,P33,naranja,I,72,d,VERIFICACION,3,4,1,,849.8,medida,
+119,2,COLOR:naranja-I,PATRON,P41,naranja,I,73,d,VERIFICACION,3,4,1,,898.7,medida,
+120,2,COLOR:naranja,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+121,2,A5-FIN,A5,P22,amarillo,IV,334,e,CONTROL,3,4,1,,1497.0,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
+122,2,A5-FIN,A5,P28,blanco,IX,484,e,CONTROL,3,4,1,,2277.9,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
+123,2,A5-FIN,A5,P4,blanco,XI,828,e,CONTROL,3,4,1,,3315.8,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
+124,2,FIN,OSCURO,OSCURO,,,0,e,CONTROL,3,4,1,,565,medida,deriva del oscuro
+125,2,FIN,EXPORTAR,,,,,,CONTROL,,,,,,,ZIP de la sesion; copia en Download/RTV/
+126,2,FIN,PAUSA,,,,,,CONTROL,,,,,,,si se apaga el equipo o se cambia la bateria: 10 min de calentamiento al volver
+127,3,INICIO,BATERIA,,,,,9,CONTROL,,,,,,,orden 9: tension y nivel; aviso si baja (RF-CAL-41)
+128,3,INICIO,OSCURO,OSCURO,,,0,e,CONTROL,3,4,1,,565,medida,superficie negra mate; ancla de la recta del codigo 2 (y del 5 si PA-14)
+129,3,A5-INICIO,A5,P22,amarillo,IV,334,e,CONTROL,3,4,1,,1497.0,medida,puente y s_rep (P9-A5); no entra en el ajuste
+130,3,A5-INICIO,A5,P28,blanco,IX,484,e,CONTROL,3,4,1,,2277.9,medida,puente y s_rep (P9-A5); no entra en el ajuste
+131,3,A5-INICIO,A5,P4,blanco,XI,828,e,CONTROL,3,4,1,,3315.8,medida,puente y s_rep (P9-A5); no entra en el ajuste
+132,3,COLOR:verde,PATRON,P65,verde,IV,51,3,AJUSTE,3,4,1,,649,estimada: recta por el oscuro,uno de los 9 verdes certificados en 51 exacto: confirmar certificado
+133,3,COLOR:verde,PATRON,P64,verde,IV,54,3,AJUSTE,3,4,1,,654,estimada: recta por el oscuro,
+134,3,COLOR:verde,PATRON,P63,verde,IV,121,3,AJUSTE,3,4,1,,764,estimada: recta por el oscuro,
+135,3,COLOR:verde,PATRON,P124,verde,IX,51,3,AJUSTE,3,4,1,,649,estimada: recta por el oscuro,uno de los 9 verdes certificados en 51 exacto: confirmar certificado
+136,3,COLOR:verde,PATRON,P125,verde,IX,51,3,AJUSTE,3,4,1,,649,estimada: recta por el oscuro,uno de los 9 verdes certificados en 51 exacto: confirmar certificado
+137,3,COLOR:verde,PATRON,P79,verde,IX,51,3,AJUSTE,3,4,1,,649,estimada: recta por el oscuro,uno de los 9 verdes certificados en 51 exacto: confirmar certificado
+138,3,COLOR:verde,PATRON,P80,verde,IX,51,3,AJUSTE,3,4,1,,649,estimada: recta por el oscuro,uno de los 9 verdes certificados en 51 exacto: confirmar certificado
+139,3,COLOR:verde,PATRON,P78,verde,IX,97,3,AJUSTE,3,4,1,,725,estimada: recta por el oscuro,
+140,3,COLOR:verde,PATRON,P123,verde,IX,115,3,RE-MEDIDA,5,4,1,3,754,estimada: recta por el oscuro,
+141,3,COLOR:verde,PATRON,P109,verde,XI,51,3,AJUSTE,3,4,1,,649,estimada: recta por el oscuro,uno de los 9 verdes certificados en 51 exacto: confirmar certificado
+142,3,COLOR:verde,PATRON,P110,verde,XI,51,3,AJUSTE,3,4,1,,649,estimada: recta por el oscuro,uno de los 9 verdes certificados en 51 exacto: confirmar certificado
+143,3,COLOR:verde,PATRON,P94,verde,XI,51,3,AJUSTE,3,4,1,,649,estimada: recta por el oscuro,uno de los 9 verdes certificados en 51 exacto: confirmar certificado
+144,3,COLOR:verde,PATRON,P95,verde,XI,51,3,AJUSTE,3,4,1,,649,estimada: recta por el oscuro,uno de los 9 verdes certificados en 51 exacto: confirmar certificado
+145,3,COLOR:verde,PATRON,P93,verde,XI,85,3,AJUSTE,3,4,1,,705,estimada: recta por el oscuro,
+146,3,COLOR:verde,PATRON,P108,verde,XI,96,3,AJUSTE,3,4,1,,723,estimada: recta por el oscuro,
+147,3,COLOR:verde,PATRON,P15,verde,XI,164,3,AJUSTE,3,4,1,,843.2,medida,
+148,3,COLOR:verde,PATRON,P13,verde,XI,168,3,AJUSTE,3,4,1,,830.9,medida,
+149,3,COLOR:verde,PATRON,P16,verde,XI,170,3,AJUSTE,3,4,1,,846.7,medida,
+150,3,COLOR:verde,PATRON,P14,verde,XI,173,3,AJUSTE,3,4,1,,849.1,medida,
+151,3,COLOR:verde,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+152,3,COLOR:verde-I,PATRON,P40,verde,I,6,a,VERIFICACION,3,4,1,,624.7,medida,a menos de 80 cuentas del oscuro
+153,3,COLOR:verde-I,PATRON,P45,verde,I,7,a,VERIFICACION,3,4,1,,615.6,medida,a menos de 80 cuentas del oscuro
+154,3,COLOR:verde,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+155,3,COLOR:azul,PATRON,P66,azul,IV,89,5,VERIFICACION,3,4,1,,837,estimada: recta por el oscuro,AJUSTE solo si PA-14 = recta anclada
+156,3,COLOR:azul,PATRON,P67,azul,IV,95,5,VERIFICACION,3,4,1,,856,estimada: recta por el oscuro,AJUSTE solo si PA-14 = recta anclada
+157,3,COLOR:azul,PATRON,P126,azul,IX,91,5,VERIFICACION,3,4,1,,843,estimada: recta por el oscuro,AJUSTE solo si PA-14 = recta anclada
+158,3,COLOR:azul,PATRON,P81,azul,IX,92,5,VERIFICACION,3,4,1,,846,estimada: recta por el oscuro,AJUSTE solo si PA-14 = recta anclada
+159,3,COLOR:azul,PATRON,P127,azul,IX,97,5,VERIFICACION,3,4,1,,862,estimada: recta por el oscuro,AJUSTE solo si PA-14 = recta anclada
+160,3,COLOR:azul,PATRON,P82,azul,IX,98,5,VERIFICACION,3,4,1,,865,estimada: recta por el oscuro,AJUSTE solo si PA-14 = recta anclada
+161,3,COLOR:azul,PATRON,P17,azul,XI,83,5,VERIFICACION,3,4,1,,828.4,medida,AJUSTE solo si PA-14 = recta anclada
+162,3,COLOR:azul,PATRON,P18,azul,XI,84,5,VERIFICACION,3,4,1,,813.4,medida,AJUSTE solo si PA-14 = recta anclada
+163,3,COLOR:azul,PATRON,P19,azul,XI,85,5,VERIFICACION,3,4,1,,823.6,medida,AJUSTE solo si PA-14 = recta anclada
+164,3,COLOR:azul,PATRON,P111,azul,XI,93,5,VERIFICACION,3,4,1,,849,estimada: recta por el oscuro,AJUSTE solo si PA-14 = recta anclada
+165,3,COLOR:azul,PATRON,P96,azul,XI,95,5,VERIFICACION,3,4,1,,856,estimada: recta por el oscuro,AJUSTE solo si PA-14 = recta anclada
+166,3,COLOR:azul,PATRON,P112,azul,XI,101,5,VERIFICACION,3,4,1,,874,estimada: recta por el oscuro,AJUSTE solo si PA-14 = recta anclada
+167,3,COLOR:azul,PATRON,P97,azul,XI,102,5,VERIFICACION,3,4,1,,877,estimada: recta por el oscuro,AJUSTE solo si PA-14 = recta anclada
+168,3,COLOR:azul,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+169,3,COLOR:azul-I,PATRON,P42,azul,I,7,c,VERIFICACION,3,4,1,,592.6,medida,a menos de 80 cuentas del oscuro
+170,3,COLOR:azul-I,PATRON,P32a,azul,I,9,c,VERIFICACION,3,4,1,,630.9,medida,P32 duplicado en la fuente: leer etiqueta y color en voz alta (C-41); a menos de 80 cuentas del oscuro
+171,3,COLOR:azul-I,PATRON,P46,azul,I,9,c,VERIFICACION,3,4,1,,644.3,medida,a menos de 80 cuentas del oscuro
+172,3,COLOR:azul-I,PATRON,P47,azul,I,9,c,VERIFICACION,3,4,1,,606.3,medida,a menos de 80 cuentas del oscuro
+173,3,COLOR:azul-I,PATRON,P48,azul,I,9,c,VERIFICACION,3,4,1,,605.4,medida,a menos de 80 cuentas del oscuro
+174,3,COLOR:azul-I,PATRON,P36,azul,I,10,c,VERIFICACION,3,4,1,,638.8,medida,a menos de 80 cuentas del oscuro
+175,3,COLOR:azul,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+176,3,A5-FIN,A5,P22,amarillo,IV,334,e,CONTROL,3,4,1,,1497.0,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
+177,3,A5-FIN,A5,P28,blanco,IX,484,e,CONTROL,3,4,1,,2277.9,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
+178,3,A5-FIN,A5,P4,blanco,XI,828,e,CONTROL,3,4,1,,3315.8,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
+179,3,FIN,OSCURO,OSCURO,,,0,e,CONTROL,3,4,1,,565,medida,deriva del oscuro
+180,3,FIN,EXPORTAR,,,,,,CONTROL,,,,,,,ZIP de la sesion; copia en Download/RTV/

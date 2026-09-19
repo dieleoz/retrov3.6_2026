@@ -6,6 +6,12 @@ se han hecho nunca. Los criterios de aceptación de §5 son **propuestas** sin n
 hay incertidumbre calculada (§9). Mientras eso siga así, lo que produce este proceso es un **ajuste
 contra patrones**, no una calibración trazable.
 
+**Revisión r2 (19-sep-2026, tarde): §12.** Añade el banco guiado de los 133 patrones P1-P132, el flujo
+"Calibrar este equipo", RF-CAL-35 a RF-CAL-43, los defectos D-18 a D-20, las contradicciones C-CAL-16 a
+C-CAL-22 y las decisiones PA-10 a PA-23. **Tampoco está implementado ni medido.** Desde las 12:23 del
+19-sep, SLV-002 tiene escritos y re-medidos los códigos 1 y 2, con el acta aceptada (§12.0): lo que
+decía el párrafo anterior sobre la escritura queda superado para esos dos códigos, y se deja escrito.
+
 Escrita el 19-sep-2026 a partir del código y de los datos de campo de ese día. El código citado es
 el de la app en el commit `ff66f93` (app 3.6.5) y el del firmware V3.6.1 (`.hex` md5
 `8736c05d…`, grabado en SLV-002 según el commit `869d3c6`). Otros agentes están cambiando la app, el
@@ -632,3 +638,352 @@ independientes convertidas a `R`, y el residuo del modelo declarado aparte por t
 - **P-CAL-05:** Para los códigos 8 y b, ¿grado 1 aunque el catálogo permita 2 en el 8 (§4.4)?
 - **P-CAL-06:** ¿APK de calibración separado del de campo (RF-CAL-26), o una sola app con la frase
   local (RF-CAL-27)? Recomendado: las dos cosas.
+
+---
+
+## 12. Revisión r2 (19-sep-2026, tarde): banco guiado y "Calibrar este equipo"
+
+**Nada de esta sección está implementado ni medido.** Es la especificación que recibe el arquitecto
+(fase 2 del ciclo acordado con Diego) y que implementarán la app 3.6.10 y, si hiciera falta, el
+firmware. Parte de `QA-Flujo-Calibracion-V3.6.md` (commit `f45d2a8`, defectos D-01 a D-17 y AT-01 a
+AT-22), de `REVISION-Arquitectura-P9-V3.6.md` (P9-A1 a A6 y P9-B1 a B13), del catálogo nuevo P1-P132
+(commit `bba4dbe`) y de la cola de captura `06_Calibracion/PLAN-Captura-Banco-P1-P132.md`. Los
+requisitos de la app que salen de aquí están en `SPEC-V3.6.md` §3.7 quater (RF-APP-33 a RF-APP-48), y
+sus pruebas en `TDD-V3.6.md` §3 ter.
+
+### 12.0 Estado de SLV-002 del que parte esta revisión
+
+Confirmado con el ZIP `06_Calibracion/SLV-002/campanas/campana_SLV-002_20260919_122727.zip` (md5
+`ce1f35fc64439cbb602d014b725fadfb`, commit `afdd700`). El acta es
+`actas/acta_SLV-002_00211305193B_20260919_122326.txt` y el registro de tramas,
+`tramas/rtv36_20260919_114644.txt` (en adelante **T4**; tiempos en ms desde las 11:46:44).
+
+| Qué | Estado | Evidencia |
+| :--- | :--- | :--- |
+| Código 1 | **Escrito y verificado**, grado 1. `#S,1` a las 12:04:34; re-medida de P28 conforme a las 12:17:36 | T4:1660; T4:2234; acta, líneas 8-14 |
+| Código 2 | **Escrito y verificado**, recta anclada en el oscuro S060 (x = 565,4). `#S,2` a las 12:20:46; re-medida de P5 conforme a las 12:23:13 | T4:2520; T4:2762; acta, líneas 15-21 |
+| Código 8 | **No escrito**: sigue la curva de fábrica | Acta: sólo los códigos 1 y 2 |
+| Acta | **ACEPTADA** a las 12:23:26 | Acta, línea 23; T4:2798 |
+| Fecha | `#SC,2026-09-19#` y `#GC,2026-09-19#`: vence el 2027-09-19 | T4:2763-2798 |
+| Serie | `SLV-002`, grabada de nuevo a las 12:14:04 tras el `SLV-02` de las 12:09:02 | T4:2069-2078; T4:2048-2057 |
+| Persistencia (final de P9-B8) | **Sin comprobar.** No hubo apagado ni ningún `#V#` después del de las 11:46:56 | Único `#V#` de T4: línea 13 |
+| Cabecera del acta y del resumen | **Falsa.** Dicen "DEF mascara 0000" y "No calibrado" porque salen del `#V#` de las 11:46:56, anterior a escribir | Acta, línea 3; `resumen.txt:3-4`; C-CAL-20 |
+
+**Tres defectos nuevos que deja ver ese ZIP**, además de D-01 a D-17 del QA:
+
+- **D-18. La app no vuelve a leer `#V#` después de escribir.** `s.marca` y `s.mascara` sólo se asignan
+  en las pruebas (`Pruebas.java:262-263`; comprobado con Grep y con `grep -n`). El acta guarda
+  `s.firmware()` al abrirse (`AdminActivity.java:729`), y el estado del resumen sale de
+  `Calibracion.estado(f, marca, …)` (`Sesion.java:196`), que con `DEF` da "No calibrado"
+  (`Calibracion.java:141-142`). **El acta aceptada certifica un firmware en `DEF` que ya no lo está.**
+- **D-19. La re-medida no compara con el patrón, sino con el propio equipo.** `Acta.evaluarRemedida`
+  compara la media de R leída con el código contra la curva `#G` evaluada en la `x` que se lee con `e`
+  en la misma colocación (`Acta.java:141-154`; `AdminActivity.java:772-774`). Eso comprueba que el
+  equipo evalúa bien la curva escrita: es lo mismo que `#E`, pero con señal real. **No comprueba la
+  curva frente al certificado** (RF-CAL-18, segunda parte). Además, la tolerancia usa una s entre
+  colocaciones (supuesta, el 3 % de R: `Acta.java:153`; `AdminActivity.java:804`), que no es la
+  dispersión de esa comparación, porque `e` y el código se leen en la misma colocación.
+- **D-20. La re-medida se puede repetir hasta que pase, y el acta sólo guarda la última.**
+  `Acta.remedida()` sobrescribe (`Acta.java:133`). El 19-sep, la primera re-medida del código 1 dio NO
+  CONFORME (R 227,3 frente a 176,7 predicha; T4:2156, 12:17:02). La segunda, 34 s después, dio
+  CONFORME (T4:2234). El acta sólo trae la segunda (línea 14).
+
+**Lo que la re-medida del 19-sep sí permite afirmar**, calculado aquí con la curva `#G` del acta:
+
+| Código | Patrón | R leída | Certificado | Frente al certificado | `x` implícita | `x` de la campaña | Diferencia |
+| :---: | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | P28 | 497,8 | 484 | **+2,9 %** | 2211,5 | 2277,9 (S028) | −2,9 % |
+| 2 | P5 | 693,2 | 740 | **−6,3 %** | 2462,0 | 2459,3 (S024) | +0,1 % |
+
+Las dos cumplen RF-CAL-14 (≤ 10 %) frente al certificado y reproducen la `x` de la campaña dentro de
+2·s_rep·√2 = 6,3 %. **La conclusión "CONFORME" del acta se sostiene, pero por estas cuentas, no por la
+que hizo la app.**
+
+### 12.1 Catálogo P1-P132 y cobertura por código
+
+El catálogo nuevo (`06_Calibracion/patrones_certificados_P1-P132.csv`, md5 `a74222c0…`) tiene 133
+patrones y añade, por primera vez, IV, IX y XI de todos los colores intensos (IV/IX/XI): rojo 6/4/6,
+verde 3/6/10, azul 2/4/7 y naranja 3/6/6, más café 1/2/2 y lila 1/2/2. **La app no lo lleva**: carga
+`assets/patrones_certificados_P1-P31.csv` por nombre fijo (`Sesion.java:229`). Esta tabla sustituye a
+la del §2.2 (con 50 patrones) y se ha calculado con la misma regla (`Asistente.java:75-98`):
+
+| Código | Patrones | Niveles | R | Rango / máx. | Regla | Antes (§2.2) |
+| :---: | ---: | ---: | :--- | ---: | :--- | :--- |
+| 1 | 16 | 16 | 347-828 | 58 % | Hasta grado 2 | Grado 2 |
+| 2 | 24 | 24 | 207-782 | 74 % | Hasta grado 2 | Grado 2 |
+| **3** | 19 | 11 | 51-173 | 71 % | **Hasta grado 2** | Sólo verificar |
+| **4** | 16 | 15 | 68-279 | 76 % | **Hasta grado 2** | Sólo verificar |
+| 5 | 13 | 12 | 83-102 | **19 %** | **Sólo verificar: rango estrecho** | Sólo verificar |
+| **6** | 15 | 15 | 80-173 | 54 % | **Hasta grado 2** | Sin patrones |
+| 7 | 1 | 1 | 96 | — | Sólo verificar | Igual |
+| 8 | 4 | 4 | 64-122 | 48 % | Hasta grado 2 | Igual |
+| a | 2 | 2 | 6-7 | 14 % | Sólo verificar | Igual |
+| b | 3 | 3 | 46-81 | 43 % | Hasta grado 1 | Igual |
+| c | 6 | 3 | 7-10 | 30 % | Sólo verificar (rango < 20) | Igual |
+| d | 4 | 4 | 68-73 | 7 % | Sólo verificar | Igual |
+
+**Contradicción con el encargo (C-CAL-16):** "los códigos 3, 4, 5 y 6 pasan a ser ajustables". Con la
+regla, 3, 4 y 6 sí; **el 5 no**. La salida que se propone es la recta anclada en el oscuro (PA-14), y
+exige cambiar la regla de la app (RF-APP-42). El detalle por código (patrones, rangos de `x`,
+extrapolación y patrón de re-medida) está en `PLAN-Captura-Banco-P1-P132.md` §3.
+
+### 12.2 Requisitos nuevos (RF-CAL-35 a RF-CAL-43)
+
+Todos llevan criterio medible. Los umbrales nuevos son **propuesta** mientras Diego no los apruebe
+(§12.11).
+
+**RF-CAL-35 — Banco guiado de los 133 patrones.** La captura sigue, en su orden, la cola
+`06_Calibracion/cola_banco_P1-P132.csv` (md5 `5ba94658…`):
+
+- calentamiento de 10 min (RF-CAL-01);
+- en cada sesión, batería (`9`), OSCURO y A5 (P22, P28, P4) al inicio, y A5 y OSCURO al final;
+- los patrones, agrupados por color;
+- todo con `e` y M = 4, más 1 disparo de asentamiento por colocación;
+- **K = 5** en el OSCURO y la A5 del inicio del banco, en el patrón de re-medida de cada código y en
+  los cuatro del código 8;
+- **K = 3** en todo lo demás, también en la A5 y el OSCURO del final y en los de las sesiones 2 y 3.
+
+*Criterio:* el diario de la campaña contiene K colocaciones aceptadas por cada fila `PATRON` de la cola
+(o una marca de saltado), y las cuatro de control por cada sesión. Si falta un patrón de uso AJUSTE o
+RE-MEDIDA, su código no se puede calibrar hasta medirlo.
+
+*Por qué K = 3 y no 5:* con s_rep = 2,24 % (A5 del 19-sep), la media de K colocaciones lleva un 1,29 %
+con K = 3 y un 1,00 % con K = 5. En códigos de 15 a 24 patrones, el ruido de colocación que queda en la
+curva es de ~0,3 %, frente a residuos por tipo del 2,8 al 10 %. Tiempo estimado: **≈ 190 min en 3
+sesiones**, frente a ≈ 4 h 25 min a 5 × 4. Modelo y variantes en `PLAN-Captura-Banco-P1-P132.md` §2 y
+§4.
+
+**RF-CAL-36 — Deriva de la sesión.** Con la A5 del inicio y la del final de cada sesión, se calcula
+para cada patrón de la A5 d = (x̄_fin − x̄_ini)/x̄_ini, y D = media de las tres d.
+
+- **Sesión con deriva** si |D| > 2·s_rep·√(1/K_ini + 1/K_fin)/√3. Con s_rep = 2,24 %, K_ini = 5 y
+  K_fin = 3, el umbral es ±1,9 %. Con 3 y 3, ±2,1 %.
+- **OSCURO con deriva** si |x̄_fin − x̄_ini| > máx(5 cuentas ; 3·s_osc·√(1/K_ini + 1/K_fin)).
+- Una sesión con deriva **no entra en ningún ajuste** sin una nota de Diego. Sus series se conservan.
+- *Criterio:* el resumen y el acta muestran, por sesión, D, el umbral y el veredicto.
+
+**RF-CAL-37 — Método por código, fijado en configuración.** Una tabla versionada dentro del APK dice,
+por código, el método (grado 1, grado 2, recta anclada o sólo verificar), el patrón de re-medida y si
+hay dispensa de RF-CAL-14/15/16. El operador no elige grado (P9-B6). La tabla de partida es esta:
+
+| Código | Método | Re-medida | Dispensa | Origen |
+| :---: | :--- | :--- | :--- | :--- |
+| 1 | Grado 1 | P28 | RF-CAL-14/15/16 | Decisión de Diego, 19-sep 11:20 |
+| 2 | Recta anclada en el OSCURO de la sesión | P25 | Ninguna | Decisión de Diego (opción b) |
+| 3, 4, 6 | Grado 1; recta anclada si la libre no pasa `#S` | P123, P11, P86 | Ninguna | PA-16 |
+| 5 | Sólo verificar; recta anclada si PA-14 | P81 | Ninguna | PA-14 |
+| 8 | Grado 1 | P43 | Ninguna | P-CAL-05; C-CAL-15 abierta |
+| 7, a, b, c, d | Sólo verificar | — | — | §12.1; b: PA-14 |
+
+*Criterio:* cambiar la tabla exige compilar, y el acta cita su versión. Con la tabla del APK, la
+pantalla de calibración no tiene ningún control de grado ni de método.
+
+**RF-CAL-38 — s_rep medida, nunca supuesta.** Todo criterio que dependa de la dispersión entre
+colocaciones usa una s_rep **medida**:
+
+- la de la A5 del inicio de la campaña (decisión de Diego: el criterio de la A5, con s ≈ 2,2 %);
+- o la de las K colocaciones de la propia serie, si K ≥ 3.
+
+Si no hay ninguna de las dos, **el criterio no se evalúa**: se bloquea, no se supone. *Criterio:* en
+el acta no aparece la palabra "supuesta". Hoy aparece en las líneas 14 y 21 del acta del 19-sep
+(`Acta.java:159`).
+
+**RF-CAL-39 — Re-medida guiada, con tres comprobaciones.** Tras `#S`, `#G` y `#E` de un código, la app
+pide "Coloque <patrón de la tabla RF-CAL-37> y pulse OK". Mide K = 5 colocaciones con M = 4, alternando
+`e` y el código en cada disparo. Es conforme si se cumplen las tres comprobaciones:
+
+1. **Coherencia en el equipo.** Es lo que hace hoy la app, con otra tolerancia. Con
+   d_i = R_k,i − R_#G(x_e,i) en los n = K·M pares: |d̄| ≤ máx(2 ; 3·s_d/√n). Si falla, la colocación
+   **no es válida** (el equipo se movió entre `e` y el código). Se registra y se repite la colocación.
+   Nunca cuenta como re-medida conforme.
+2. **Reproducción de la campaña:** |x̄_rem − x̄_banco| ≤ 2·s_rep·x̄_banco·√(1/K_rem + 1/K_banco), con la
+   s_rep de RF-CAL-38 y la serie del banco de ese patrón. Detecta un patrón cambiado o mal apoyado.
+3. **Frente al certificado:** |R̄_k − R_cert| ≤ máx(10 % ; 2 unidades) (RF-CAL-14). Es la comprobación
+   metrológica que hoy falta (D-19).
+
+**No conforme** (falla la 2 o la 3): se ofrece **una** repetición. Si también falla, se restaura el
+código a su estado anterior (RF-CAL-22), se relee y se detiene la secuencia (PA-12). *Criterio:* el
+acta lista **todos** los intentos, válidos o no, con su resultado (D-20), y ningún código tiene más de
+dos re-medidas válidas.
+
+**RF-CAL-40 — Café y lila.** Se miden con el código del rojo: 4 si son intensos y b si son tipo I
+(dato de campo de Diego). **Se verifican y no entran en el ajuste del 4** (PA-15). El acta declara el
+residuo de cada uno frente a la curva vigente del 4. *Criterio:* en la cola, los 10 llevan código 4 y
+uso VERIFICACIÓN, y el ajuste del 4 sólo contiene patrones rojos.
+
+**RF-CAL-41 — Batería.** La app lee la batería con la orden `9` al empezar cada sesión, en cada cambio
+de grupo de color, antes de la Fase B y antes de cada `#S`. La tensión se calcula así (derivación en
+§12.8):
+
+- n ≥ 10: V = 10 + (n + 30,09)/90,91;
+- n = 5: V entre 10,39 y 10,44 V;
+- n = 0: V < 10,34 V;
+- n = 177: puede ser el recorte a 99 (V ≥ 12,28 V).
+
+Umbrales propuestos (PA-17):
+
+- **Aviso** si n < 19 (V < 10,54 V, el 20 % de la escala de la pantalla STONE).
+- **Bloqueo de escrituras** (`#S`, `#F`, `#SC`, `#SN`, `#FT`) si n = 0 o si `9` no responde, porque un
+  corte de alimentación durante una escritura devuelve ese registro a fábrica al arrancar
+  (`REVISION-Arquitectura-P9-V3.6.md` §7).
+- La medida no se bloquea.
+
+*Criterio:* cada serie del diario lleva la última V leída, y el acta lleva la V mínima y la máxima de
+la sesión. **Queda por medir** cuánto cambia la `x` con la tensión (T-C45). Hasta entonces, los umbrales
+son de seguridad eléctrica, no metrológicos.
+
+**RF-CAL-42 — Vencimiento.** La calibración vence al año de `#SC` (`Calibracion.vencimiento`,
+`Calibracion.java:109-120`). **Vencida, avisa y no bloquea** (decisión de Diego): se puede medir,
+verificar y volver a calibrar. *Criterio:* con `#GC,2025-09-18#` y la fecha de hoy 2026-09-19, la
+cabecera dice "Calibración vencida (calibrado 2025-09-18, venció 2026-09-18)" y todas las acciones de
+medida siguen activas.
+
+**RF-CAL-43 — Lo que se añade al acta** (amplía RF-CAL-25):
+
+- nombre y SHA-256 del ZIP de entrada, y md5 de la cola;
+- A5 del inicio y del final, D y veredicto de deriva por sesión (RF-CAL-36);
+- s_rep usada y su origen (RF-CAL-38);
+- `x` del OSCURO **medida**. Hoy pone "x = 575", el valor por defecto de `Asistente.X_OSCURO`
+  (`Asistente.java:218`; acta del 19-sep, líneas 13 y 20);
+- batería: V al inicio, V mínima y V antes de cada `#S` (RF-CAL-41);
+- **`#V#` leído después de la última escritura**, con marca y máscara (D-18);
+- todos los intentos de re-medida (D-20);
+- resultado de la persistencia: apagar, encender, `#V#`, `#G` y `#E` (P9-B8);
+- "PIN de fábrica: sí/no" (PA-13);
+- método y dispensas, sacados de la tabla RF-CAL-37, con su versión.
+
+*Criterio:* el acta no se puede aceptar si falta cualquiera de estos campos. Un dato desconocido se
+escribe "no conocido", nunca se deja vacío.
+
+### 12.3 El flujo, en dos fases
+
+Es el del QA (§2.2 y §2.4), con estos cambios:
+
+- **Fase A, medir:** la cola de RF-CAL-35 sustituye a los "patrones mínimos" del QA (§2.3). Se miden
+  todos, y con K = 3 caben en ≈ 190 min. **El conflicto 5 desaparece**: la decisión C se cumple
+  entera.
+- **Fase B, "Calibrar este equipo":** comprobaciones previas; cálculo con la campaña (nunca con medidas
+  de sesión, P9-B7); una pantalla de resumen con una tarjeta por código; una casilla de conformidad por
+  código; secuencia código a código (`#S`, `#G`, `#E` y re-medida RF-CAL-39); persistencia; `#V#`
+  fresco; acta; `#SC` y ZIP. Los requisitos de la app son RF-APP-34 a RF-APP-38, RF-APP-44 y
+  RF-APP-46.
+
+### 12.4 Protecciones en conflicto (QA §2.5): propuesta
+
+No se elimina ninguna protección.
+
+| # | Conflicto | Propuesta | ¿Decide Diego? |
+| :---: | :--- | :--- | :--- |
+| 1 | "Sólo Coloque P28 → OK" frente a P9-B3/B5 | Las 5 colocaciones de la re-medida se quedan, **sin decisiones**: botón a media pantalla, contador "3 de 5" y aviso sonoro. K = 5 da una s_rep propia, y RF-CAL-38 prohíbe suponerla | No: lo exigen P9-B3 y RF-CAL-38 |
+| 2 | "Si falla, restaura a fábrica" frente a RF-CAL-22 | Se restaura **al estado anterior**, que en una primera calibración es fábrica. Es lo que hace hoy `restaurar()` | No |
+| 3 | Re-medida no conforme | RF-CAL-39: las colocaciones inválidas (comprobación 1) se repiten y se registran. Si falla la 2 o la 3, hay **una** repetición; si vuelve a fallar, se restaura el estado anterior y se detiene. Todo queda en el acta (D-20) | **Sí, PA-12** |
+| 4 | RF-CAL-29 (cambiar el PIN) frente a P9-B10 | El flujo no cambia el PIN. El acta anota "PIN de fábrica: sí". RF-CAL-29 queda en suspenso hasta que exista el superadministrador (P9-P6) | **Sí, PA-13** |
+| 5 | Patrones mínimos frente a la decisión C | **Resuelto sin subconjunto:** el banco mide todos a K = 3 (RF-CAL-35). No hace falta aprobar la regla de mínimos del QA §2.3 | Sí: aprobar el protocolo (PA-10) |
+| 6 | Re-medida con un patrón frente a RF-CAL-18/23 ("cada patrón") | En la Fase B se re-mide un patrón por código (RF-CAL-39). **"Cada patrón" se cumple con el banco de verificación** que va después, con `e` y la curva `#G` en float32. La comprobación 1 de RF-CAL-39 demuestra que eso equivale a medir con el código. El acta lo declara | **Sí, PA-11** |
+| 7 | Superadministrador sin implementar | La conformidad por código es un **control de procedimiento**, no una identidad, y el acta lo dice. RF-CAL-26/27 siguen pendientes para producción (P9-P6) | No |
+
+### 12.5 Café y lila: por qué sólo verificar
+
+El detalle y la evidencia están en `PLAN-Captura-Banco-P1-P132.md` §3.9. En resumen:
+
+- ninguno se ha medido;
+- la pendiente de la recta por el oscuro cambia con el color, de 0,18 a 0,61 R por cuenta, así que no
+  se puede suponer que caigan sobre la del rojo;
+- serían 10 puntos frente a 16;
+- y la decisión C es por color.
+
+**Se cierra midiendo:** si tras el banco los 10 cumplen RF-CAL-14 frente a la curva del rojo, pueden
+entrar en otra calibración.
+
+### 12.6 Códigos 3, 4, 5 y 6: qué cambia
+
+- **3, 4 y 6** cumplen la regla con el catálogo nuevo, y se ajustan en grado 1 (PA-16). **En los tres
+  la parte baja está sin medir:** del 3 hay 4 medidos (todos XI, 164-173), del 4 hay 2 y del 6 ninguno.
+  La cobertura real la dirá el banco: `Asistente.proponer` repite la regla con lo **medido**
+  (`Asistente.java:423-433`).
+- **Riesgo con `#S` en el 3:** los verdes de 51 caen, estimados, a unas 84 cuentas del oscuro. Una recta
+  libre que corte el cero por encima de x = 600 da R(600) < 0, y `#S` la rechaza (RF-FW-31,
+  `calibracion_v36.c:404-422`). Si pasa, recta anclada.
+- **El 5** no cumple la regla: recta anclada sólo con PA-14, y cambiando la regla (RF-APP-42).
+- **Nueve verdes certificados en 51 exacto** (P65, P79, P80, P94, P95, P109, P110, P124, P125): C-CAL-21.
+
+### 12.7 La re-medida del 19-sep, revisada
+
+Ver §12.0, D-19 y D-20. **No se reabre la calibración de SLV-002**: hechas las cuentas bien, las dos
+re-medidas cumplen las comprobaciones 2 y 3 de RF-CAL-39. Lo que sí falta es la persistencia (final de
+P9-B8) y un `#V#` que diga `CAL`. Se recomienda hacerlos en el próximo contacto con el equipo (T-C41).
+
+### 12.8 La orden `9`: lo que el firmware devuelve de verdad
+
+**El QA (D-17) y `PROCEDIMIENTO-Calibracion-V3-K42.md:135` dicen que la respuesta a `9` está rota. En
+la 3.6.2 lo está sólo en parte, y se puede invertir** (C-CAL-17):
+
+1. `acquireBatteryVoltage` toma 5 muestras del canal `BATERIA` y promedia las 3 mayores. Después,
+   V = ADC·0,001·4,3, por el divisor de 10k y 33k (`measurement.c:124-146`).
+2. En cada vuelta del bucle de medida, bv = 45,455·(V − 10) − 4,5455. Cada 201 vueltas se recorta a
+   [0 ; 99] y se manda a la variable 207 de la pantalla (`gui.c:349-356`). bv es una `static` de
+   fichero (`gui.c:19`), así que el recorte dura hasta la vuelta siguiente.
+3. Con `9`, en la vuelta siguiente: bv' = 2·bv − 21; si 5 < bv' < 10, bv' = 5; si bv' < 0, bv' = 0;
+   n = (int) bv', y la respuesta es `:<n>:` (`gui.c:329-340`). El `nivel[2]` que desbordaba es
+   `nivel[6]` desde la V3.6 (`gui.c:268`).
+4. Por tanto, n = trunc(90,91·(V − 10) − 30,09): V = 10 + (n + 30,09)/90,91 es el extremo inferior de un intervalo de 11 mV. Los valores 6 a 9 no salen nunca. Hay tres
+   excepciones: n = 5 (V de 10,39 a 10,44), n = 0 (V < 10,34) y n = 177 si coincide con el recorte a
+   99.
+5. `9` entra en la rama de medida (`gui.c:296`): **dispara la lámpara**, como cualquier código, y tarda
+   lo mismo. Por eso no se envía en mitad de una serie.
+6. **Ninguna respuesta `:n:` se ha registrado nunca con la V3.6.** La única petición, del 19-sep a las
+   09:52, quedó sin respuesta porque el equipo estaba mudo
+   (`07 pruebas/campana_103300/tramas/rtv36_20260919_095234.txt:15-16`). La fórmula sale de leer el
+   código: T-C44 la contrasta con un polímetro.
+
+### 12.9 Sólo app o también firmware
+
+| Requisito | ¿Firmware? | Motivo |
+| :--- | :--- | :--- |
+| Banco, Calibrar con un botón, re-medida, reanudación, B12, Importar, aviso de desinstalar, APK con versión, `#V#` fresco y vencimiento | **No** | Todo usa órdenes que ya existen en la 3.6.2 |
+| Serie y fecha en EEPROM | **No** | Ya están en la 3.6.2: `#SN`/`#GN#` y `#SC`/`#GC#` (commit `6a32ca3`) |
+| Códigos 3, 4, 5 y 6 ajustables | **No** | `#S` admite los 12 códigos (`calibracion_v36.c:51`, `:343-350`, `:690-697`). Cambia la regla de cobertura de la app (RF-APP-42) |
+| Aviso de batería | **No** | La orden `9` existe y se puede invertir (§12.8). Tiene dos salvedades: dispara una medida y da tres valores ambiguos |
+| Café y lila con el código del rojo | **No** | Es una tabla de la cola y de la app (RF-APP-47) |
+
+**Lo que sí exigiría cambiar el firmware** (fuera de alcance salvo que Diego decida otra cosa):
+
+| ID | Cambio | Qué toca | Por qué no se propone ahora |
+| :--- | :--- | :--- | :--- |
+| F-1 | **Códigos propios para café y lila** | Firmware: 2 ecuaciones más; bloque EEPROM de 12 a 14 juegos, con su CRC; `#G`, `#S`, `#F` y `#E`; y la máscara de `#V#`, que hoy es de 12 bits. **Pantalla STONE:** botones, imágenes y códigos nuevos (`04_Pantalla_STONE/`). **App de campo:** códigos nuevos | Diego mide café y lila con el rojo. Además, es un cambio de contrato (`PROTOCOLO-V3.6.md`) |
+| F-2 | Orden de batería limpia (p. ej. `#GB#` → V en mV), sin disparar la lámpara y sin recortes | `gui.c` y `calibracion_v36.c` | `9` basta para avisar. Sería una 3.6.3 |
+| F-3 | Cadena de versión propia en `#V#` (C-37) | `calibracion_v36.h:16` | Hoy basta la sonda `#GC#` |
+| F-4 | Bajar el límite de 600 de `#S`, para poder ajustar a y c | `calibracion_v36.c:309-319` | Con certificados de 6-10 y `x` a 27-79 cuentas del oscuro, no hay nada que ajustar |
+
+### 12.10 Contradicciones nuevas
+
+| ID | Contradicción | Fuentes | Cómo se cierra |
+| :--- | :--- | :--- | :--- |
+| **C-CAL-16** | "3, 4, 5 y 6 pasan a ser ajustables" frente a la regla, que deja fuera al 5 (rango del 19 %) | Encargo del 19-sep; `Asistente.java:93-96`; §12.1 | Diego: PA-14 |
+| **C-CAL-17** | "La respuesta a `9` está rota" (QA D-17; PROCEDIMIENTO:135) frente al código de la 3.6.2, que la hace invertible salvo tres valores | `gui.c:268,329-356`; `measurement.c:124-146` | Medir: T-C44 |
+| **C-CAL-18** | RF-CAL-18 pide comparar con el patrón; la app compara con el propio equipo (D-19) | `Acta.java:141-154`; §5 de este documento | Implementar RF-CAL-39 |
+| **C-CAL-19** | El encargo pedía estimar la `x` de P51-P132 con la curva de fábrica invertida; en los 50 medidos, esa estimación falla del −29 % al +50 % | `PLAN-Captura…` §5.5 | La cola usa la recta por el oscuro y marca el origen de cada `x` |
+| **C-CAL-20** | Acta aceptada con "DEF mascara 0000" y "Oscuro (x = 575)", cuando el equipo está en `CAL` y el oscuro medido es 565,4 | Acta del 19-sep, líneas 3, 13 y 20; T4 | `#V#` y persistencia en el próximo contacto (T-C41). **El acta no se reescribe**: se anota al lado |
+| **C-CAL-21** | Nueve verdes certificados en 51 exacto, en tres tipos | Catálogo P1-P132; xlsx, Hoja1 | Diego, con el certificado; el banco dirá si sus `x` coinciden |
+| **C-CAL-22** | La A5 del 19-sep fue "NO CONCLUYENTE" (P22 FUERA) y la propuesta decía "provisional hasta la A5", pero el acta se aceptó | `resumen.txt:187-191`; `PROPUESTA…:535-537`; acta, línea 23 | La A5 del inicio del banco (RF-CAL-35). Si sale conforme, se cierra |
+
+### 12.11 Decisiones para Diego (PA-xx)
+
+Cada una lleva la recomendación de esta revisión. La numeración sigue a la de `SPEC-Registro-Indicador-Interventoria.md` §8 (PA-01 a PA-09, ya usadas) para que ningún ID se repita.
+
+| ID | Pregunta | Recomendación |
+| :--- | :--- | :--- |
+| **PA-10** | ¿Protocolo del banco con M = 4 en todo, K = 3 en general y K = 5 en el OSCURO, la A5 inicial, la re-medida y el código 8? | **Sí.** ≈ 190 min frente a ≈ 4 h 25 min a 5 × 4, y con la decisión C entera (RF-CAL-35) |
+| **PA-11** | ¿El "cada patrón" de RF-CAL-18/23 se cumple con el banco de verificación después de escribir, calculando R con `#G`? | **Sí**, con la comprobación 1 de RF-CAL-39 como prueba de la equivalencia |
+| **PA-12** | ¿Re-medida no conforme: una repetición y, si falla, restaurar y detener? | **Sí.** Nunca "repetir hasta que pase" (D-20) |
+| **PA-13** | ¿El flujo no cambia el PIN, y RF-CAL-29 queda en suspenso hasta que exista el superadministrador? | **Sí** (P9-B10) |
+| **PA-14** | ¿Azul intenso (5) y rojo tipo I (b) con recta anclada en el oscuro, cambiando la regla de cobertura de la app para la recta anclada? | **Sí para el 5**: la fábrica lee −55 % y la recta libre no tiene pendiente. **El b, después del banco**, y sólo si su `x` queda a ≥ 10·s_osc del oscuro |
+| **PA-15** | ¿Café y lila entran en el ajuste del 4 o sólo se verifican? | **Sólo verificar**, con el error declarado (§12.5) |
+| **PA-16** | ¿Códigos 3, 4 y 6 en grado 1, con la recta anclada si la libre no pasa `#S`? ¿Qué se hace con los nueve verdes de 51? | **Grado 1, con la anclada de reserva.** Los de 51 entran sólo si Diego confirma el certificado |
+| **PA-17** | ¿Umbrales de batería: aviso con n < 19 (V < 10,54 V) y bloqueo de escrituras con n = 0 o sin respuesta? | **Sí, provisionales**, hasta medir la `x` frente a V (T-C45) |
+| **PA-18** | ¿Una sesión con deriva (RF-CAL-36) queda fuera del ajuste salvo nota de Diego? | **Sí** |
+| **PA-19** | ¿Patrón de re-medida del 2: P25 en lugar del P5 del 19-sep? | **Sí.** P5 es un XI desordenado (C-39), y P25 queda a +1,0 % con la curva escrita |
+| **PA-20** | ¿P22 se queda en la A5 aunque saliera FUERA? | **Sí**, para no perder la continuidad. Si vuelve a salir FUERA en el banco, se cambia por P21 y se anota |
+| **PA-21** | ¿Catálogo maestro = `06_Calibracion/patrones_certificados_P1-P132.csv`, copiado al APK en la compilación con su md5? | **Sí.** Cierra C-CAL-06 |
+| **PA-22** | ¿Clave de firma propia del proyecto, para poder instalar siempre encima (D-09, P9-P8)? | **Sí.** Sin ella, el aviso de no desinstalar no basta |
+| **PA-23** | ¿Se completan en SLV-002 la persistencia y un `#V#` que diga `CAL` en el próximo contacto? | **Sí** (T-C41). No hace falta reescribir nada |

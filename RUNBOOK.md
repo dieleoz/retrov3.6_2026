@@ -1,5 +1,9 @@
 # RUNBOOK — calibrar un equipo V3 con la V3.6, paso a paso
 
+**Nota del 19-sep-2026, tarde:** las fases 9-11 llevan un bloque "Flujo nuevo, PENDIENTE" con el banco
+guiado P1-P132 y "Calibrar este equipo", que especifican `SPEC-Calibracion-V3.6.md` §12 y `SPEC-V3.6.md`
+r1.3. **No está implementado.** SLV-002 tiene escritos los códigos 1 y 2 desde las 12:23 (fase 11).
+
 **Estado: escrito el 19-sep-2026 a las 09:50, a partir de SLV-002. Las fases 10 y 11 (ajuste y
 escritura) no se han ejecutado todavía en ningún equipo**, y la app 3.6.5 no se ha probado en el
 equipo. Pensado para el **segundo equipo V3**. Adaptado de
@@ -196,6 +200,23 @@ cambiar el firmware.
   compartir varias veces (L-21); XI desordenados respecto a su certificado (L-22). A las 09:50 faltan
   P27, P28, P24, P30 ×9, los tipo I y el giro de los XI.
 
+- **Flujo nuevo, PENDIENTE (app 3.6.10, que no existe todavía).** Especificado en
+  `05_Documentacion/SPEC-Calibracion-V3.6.md` §12 (RF-CAL-35 y RF-CAL-36) y `SPEC-V3.6.md` RF-APP-33.
+  Sustituye a las acciones 1-4 **cuando la 3.6.10 pase T-S00 a T-S23 del TDD**. Hasta entonces, manda lo
+  de arriba.
+  1. Conectar. La serie sale de `#GN#` y se coteja con la MAC y la campaña (RF-APP-35).
+  2. **"Medir el banco"**: la app sigue la cola `06_Calibracion/cola_banco_P1-P132.csv` (133 patrones,
+     P1-P132 con P32a/P32b; `06_Calibracion/PLAN-Captura-Banco-P1-P132.md`). El operador sólo coloca y
+     pulsa OK.
+  3. Cada sesión empieza con batería (`9`), OSCURO y A5 (P22, P28, P4), y termina con A5 y OSCURO. Tres
+     sesiones de unos 60 min, agrupadas por color. Todo a 3 × 4, salvo OSCURO y A5 del inicio, los
+     patrones de re-medida y el código 8, que van a 5 × 4. **≈ 190 min en total** (estimación).
+  4. Café y lila se miden con el código del rojo (4) y sólo se verifican (PA-15).
+  5. Al final de cada sesión, ZIP automático con copia en `Download/RTV/`. **No desinstalar la app**:
+     instalar encima.
+  6. Si la A5 del final se aparta de la del inicio más de ±2 %, la sesión queda "con deriva" y no entra
+     en el ajuste sin una nota de Diego (RF-CAL-36).
+
 ## Fase 10 — Ajuste
 
 - **Objetivo.** Curvas nuevas por código **para este equipo**, con el residuo por tipo declarado.
@@ -212,6 +233,11 @@ cambiar el firmware.
      "como sale".
 - **Criterio de salida.** Propuesta aceptada por Diego por escrito.
 
+- **Flujo nuevo, PENDIENTE (app 3.6.10).** El operador no ajusta: el método por código viene fijado en
+  el APK (RF-CAL-37). Código 1, grado 1; código 2, recta anclada en el OSCURO de la sesión; 3, 4 y 6,
+  grado 1 si Diego lo aprueba (PA-16); 5, sólo con recta anclada (PA-14); 8, grado 1; el resto se
+  verifica. **La fase 10 se funde con la 11** en el botón "Calibrar este equipo".
+
 ## Fase 11 — Escritura, `#E` y acta
 
 - **Puerta.** Fase 10 aceptada. Pruebas del equipo en APTO en la misma sesión.
@@ -226,6 +252,30 @@ cambiar el firmware.
      pantalla. Acta de antes y después en `06_Calibracion/<serie>/`.
 - **Criterio de salida.** `#E` idéntico a la curva enviada; `#V#` en `CAL` con la máscara esperada;
   acta con residuo por tipo, commit.
+
+- **Flujo nuevo, PENDIENTE (app 3.6.10).** `SPEC-Calibracion-V3.6.md` §12.3 y RF-APP-34 a RF-APP-46:
+  1. "Calibrar este equipo" (pantalla Campaña). Las comprobaciones previas son automáticas: serie y MAC
+     iguales a las de la campaña, firmware 3.6.2 (`#GC#`), A5 y OSCURO medidos, M homogéneo, batería
+     (n ≥ 19) y ninguna calibración a medias.
+  2. Una pantalla de resumen con una tarjeta por código, una casilla de conformidad por código y una
+     nota. "Calibrar".
+  3. La app escribe **código a código**: `9` → `#S` → `#G` → 5 `#E` → `#V#` → "Coloque <patrón> y pulse
+     OK", con 5 colocaciones. La re-medida tiene tres comprobaciones: coherencia, reproducción del banco
+     y certificado (RF-CAL-39). Si no es conforme, una repetición; si vuelve a fallar, restaura y se
+     detiene.
+  4. "Apague el equipo, espere 5 s y enciéndalo": `#V#`, `#G` y `#E` de lo escrito.
+  5. Acta completa → "Aceptar y grabar fecha" (`#SC`, vence a +1 año; vencida avisa y no bloquea) → ZIP.
+  6. Si se corta a mitad, al reconectar la app ofrece continuar. Si el corte fue durante `#S`, hace
+     P9-B12 sola.
+- **Qué pasó en SLV-002 el 19-sep, tarde** (ZIP `campana_SLV-002_20260919_122727.zip`, md5 `ce1f35fc…`):
+  - Códigos 1 y 2 escritos y re-medidos; acta ACEPTADA a las 12:23:26; `#SC` 2026-09-19; código 8 sin
+    escribir.
+  - **Faltan la persistencia y un `#V#` que diga `CAL`**: la cabecera del acta dice "DEF 0000" por un
+    `#V#` anterior a escribir (D-18).
+  - La primera re-medida del 1 dio NO CONFORME y se repitió hasta pasar, y el acta sólo guarda la
+    segunda (D-20).
+  - La serie se grabó mal una vez (`SLV-02`) y se corrigió a las 12:14.
+  - Hacer T-C41 en el próximo contacto.
 
 ## Fase 12 — App de producción, informe y registros
 
