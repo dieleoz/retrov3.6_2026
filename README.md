@@ -30,7 +30,8 @@ pantalla y la app del cliente sigan funcionando. Contrato: [`05_Documentacion/PR
 
 | Carpeta o fichero | Qué hay |
 | :--- | :--- |
-| `ROADMAP.md` | Puertas P1-P8 y orden de ejecución. **Empezar por aquí** |
+| `ROADMAP.md` | Puertas P1-P12 y orden de ejecución. **Empezar por aquí** |
+| [`RUNBOOK.md`](RUNBOOK.md) | Procedimiento paso a paso para calibrar un equipo V3 con la V3.6 (pensado para el segundo equipo) |
 | `ROADMAP-MEJORAS-App.md` | 44 mejoras de la app de campo evaluadas para la V3.6 (18 aplican, 17 adaptadas, 9 no) y los defectos que no se deben repetir |
 | `ARQUITECTURA.map` | Grafo del sistema: 85 nodos, contradicciones abiertas CA1-CA7 |
 | `HISTORIA.md` | Cómo se llegó aquí y los errores que no deben repetirse |

@@ -1,42 +1,44 @@
 # RETOMAR — dónde se quedó el trabajo
 
-**Cierre de sesión:** 18-sep-2026, 20:40. Repositorio `D:\IT\P_RetroVertical_V3.6` (remoto
-`github.com/dieleoz/retrov3.6_2026`). Detalle en `ROADMAP.md` → "DÓNDE QUEDAMOS".
+**Puesto al día:** 19-sep-2026, 09:50. Repositorio `D:\IT\P_RetroVertical_V3.6` (remoto
+`github.com/dieleoz/retrov3.6_2026`). Detalle en `ROADMAP.md` → "DÓNDE QUEDAMOS"; procedimiento en
+`RUNBOOK.md`.
 
 ## Estado
 
-- **SLV-002 (Concesionaria Vial Andina) GRABADO con la V3.6** a las 20:24: `.hex` md5 `680b6a7d…`,
-  commit `f75ff88`. IPE dio *Program Succeeded*. El "Verify failed" posterior es normal, por la
-  protección de código. **El firmware original se perdió** (autorizado).
-- **G4 CERRADA el 19-sep-2026:** V3.6 detectada, coeficientes de fábrica, `#E` 60/60 exacto, 13 comandos y repetibilidad de 4 cuentas (acta en `06_Calibracion/SLV-002/`).
-- App **RTV V3.6 3.6.2** (md5 `e5c6ffad…`) en `03_App_Movil\RTV-V3.6.apk`. No usar la 3.6.0.
-- **Línea base "como llegó":** barrido de 255 bytes en oscuro y 8 blancos por pantalla
-  (`06_Calibracion`, `ROADMAP.md`). **P4 por Bluetooth no se llegó a medir.**
+- **SLV-002 (Concesionaria Vial Andina)** lleva el firmware **V3.6.1**, grabado a las 09:36 (`.hex`
+  md5 `8736c05d…`, commit `869d3c6`, log en `01_Firmware/lecturas_equipos/SLV-002/`). **Aún no se ha
+  comprobado en el equipo tras grabarlo.** La V3.6 anterior (18-sep) pasó G4 el 19-sep (`#E` 60/60).
+  El firmware original se perdió (autorizado).
+- **Firmware 3.6.2 pendiente:** añade `#FT#` (temperatura a fábrica). Se grabará con el PICkit, que
+  sigue conectado.
+- **App vigente: 3.6.4** (commit `090c84c`, APK md5 `efb0386b…`). La 3.6.5 (campaña guiada por equipo,
+  un solo ZIP, `ff66f93`) no se ha probado en el equipo.
+- **Calibración:** decisión C de Diego para los códigos 1 y 2. Ningún coeficiente escrito todavía.
+- **Falta medir en SLV-002:** P27 y P28 (blancos IX, imprescindibles), P24 (series 2065 y 2443
+  contradictorias), P30 ×9, los tipo I y el giro de los XI. Datos del 19-sep en
+  `07 pruebas/19092026_0900/` (sin commit).
+- **Documentos en curso** (otros agentes): SPEC/TDD reconciliados y matriz; `SPEC-Calibracion-V3.6.md`;
+  `SPEC-Registro-Indicador-Interventoria.md`; catálogo `08_Senales/`.
 
-## Lo primero mañana (G4: pruebas tras grabar)
+## Lo siguiente
 
-1. **PICkit desconectado de la placa.** Apagar y encender el equipo. Comprobar que la pantalla arranca
-   igual.
-2. **No regresión en el equipo real:** OTROS PAPELES → BLANCO, 3 disparos. **P3 debe dar ~513 y P7
-   ~790**, como antes de grabar.
-3. **App 3.6.2 → Pruebas**, con el equipo sobre un patrón. Esperado: `#V#` → `V3.6 … DEF`; los 12
-   códigos responden; la prueba 5 (`#E`) sin regresiones. Compartir el registro.
-4. Opcional: **Botones de pantalla** (`#KC#`, pulsar un botón, `#K#`) para mapear la STONE de SLV-002.
-
-## Después, para calibrar (P7-bis y P8)
-
-- Cerrar en simulador **T-A23** (conversión `float` ↔ texto) y **T-A30** (límites de `#ST` sobre todo el
-  rango de T). Hasta entonces **no ejecutar T-C32** ni escribir `#ST`.
-- **Decidido por Diego (19-sep-2026): opción C**, un compromiso entre XI e IV/IX para la curva intensa
-  del blanco y del amarillo (`ROADMAP.md`).
-- Medir P1-P31 con `e` (ya existe en la V3.6) y ajustar en la app (grado+2 puntos); escribir con
-  `#S`; volver a medir; acta.
+1. Grabar la 3.6.2, desconectar el PICkit, apagar y encender, y G4 abreviada (`#V#`, `#GT#`, `#G`,
+   `#E`) con la app.
+2. Terminar la campaña con la app 3.6.5 (modo guiado) y exportar un solo ZIP.
+3. Ajuste con la opción C, escritura con `#S`, `#E` y acta (P8).
+4. Tubería P9-P12: validación del arquitecto, propuesta de app de producción, APK de producción,
+   informe PDF y registros para la interventoría.
+5. Segundo equipo V3, con `RUNBOOK.md`.
 
 ## Prompt para retomar
 
 ```
-Retomamos la V3.6 del Retrorreflectómetro Vertical. Lee D:\IT\P_RetroVertical_V3.6\RETOMAR.md y
-ROADMAP.md ("DÓNDE QUEDAMOS"). SLV-002 quedó grabado ayer con la V3.6 (hex 680b6a7d) y falta
-probarlo en el equipo (G4). Te paso los resultados de P3/P7 por pantalla y el registro de la app
-3.6.2. Tú orquestas con subagentes; repos V3.6 y V4.6 son independientes del V5.
+Retomamos la V3.6 del Retrorreflectómetro Vertical. Lee D:\IT\P_RetroVertical_V3.6\RETOMAR.md,
+ROADMAP.md ("DÓNDE QUEDAMOS") y RUNBOOK.md. SLV-002 lleva el firmware 3.6.1 (hex 8736c05d, grabado
+el 19-sep 09:36) sin comprobar en el equipo; la 3.6.2 (#FT#) está pendiente de grabar. App vigente
+3.6.4; la 3.6.5 (campaña guiada) sin probar. Falta medir P27, P28, P24, P30 x9, tipo I y giro de los
+XI; después, ajuste con la opción C y acta. Compruébalo todo con git log antes de citarlo. Tú
+orquestas con subagentes; los repos V3.6 y V4.6 son independientes del V5, y la calibración es por
+equipo, nunca compartida.
 ```
