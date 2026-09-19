@@ -10,3 +10,8 @@ App 3.6.9, firmware 3.6.2, serie SLV-002 grabada. Importa la de 10:33 y anade A5
 campana_SLV-002_20260919_122727.zip
 md5    ce1f35fc64439cbb602d014b725fadfb
 Acta ACEPTADA 12:23:26: codigo 1 (grado 1) y codigo 2 (recta anclada en oscuro x=565,4) escritos, #E OK, re-medidas P28 (497,8 vs 498,7) y P5 (693,2 vs 693,3) CONFORMES. Codigo 8 NO escrito (sigue de fabrica). #SC 2026-09-19 (vence 2027-09-19). OJO: la cabecera 'DEF 0000' y 'No calibrado' vienen de un #V# leido a las 12:04, antes de escribir (defecto de la app); #G de 12:20:47 confirma las curvas nuevas.
+
+campana_SLV-002_20260919_121009.zip
+md5    9d05c173e5751058f8f7dccb50ab7185
+sha256 532dac66fac55ea03d30f99eb8fe6f6410f4daa73c266f9396c32c2628bcdbaa
+Estado intermedio: codigo 1 escrito sin re-medida; serie SLV-02 por error. Copiado de 07 pruebas/19092026_1210/ el 19-sep-2026.

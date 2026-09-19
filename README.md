@@ -3,11 +3,12 @@
 Firmware, app y documentación de la **generación V3** del retrorreflectómetro vertical SAT-LUX/V3,
 con **PIC18F47K42**, placa **"SATLUX H-IoT"** y pantalla **STONE STA035WT-01**, reconstruida en 2026.
 
-> **Ningún equipo está calibrado todavía con acta aceptada.** SLV-002 (Concesionaria Vial Andina)
-> lleva el firmware **3.6.2** desde el 19-sep-2026 10:37. El código 1 se escribió y se verificó con
-> `#E` a las 12:04; lo que según Diego se escribió después **no tiene ZIP ni registro en el
-> repositorio** y el acta no está aceptada (ver `ROADMAP.md`, "DÓNDE QUEDAMOS"). La QA de la app 3.6.9
-> dice que **no está lista para un operador sin soporte**. El firmware original de SLV-002 se perdió
+> **SLV-002 (Concesionaria Vial Andina) está calibrado sólo en los códigos 1 y 2**, y sin validar
+> con el banco completo. Lleva el firmware **3.6.2** desde el 19-sep-2026 10:37. El acta se aceptó a
+> las 12:23:26. Los códigos 1 y 2 se verificaron con `#E` y con re-medida CONFORME (P28 y P5). El
+> código 8 no se escribió. Serie `SLV-002`; `#SC` 2026-09-19, que vence el 2027-09-19. Evidencia:
+> ZIP de las 12:27, md5 `ce1f35fc…`, commit `afdd700`. El resto de códigos sigue de fábrica. La QA de
+> la app 3.6.9 dice que **no está lista para un operador sin soporte**. El firmware original de SLV-002 se perdió
 > al grabar (estaba protegido; pérdida autorizada por Diego).
 
 ## Por qué existe
@@ -57,7 +58,7 @@ verificar**.
 | [`05_Documentacion/PROCEDIMIENTO-Calibracion-V3-K42.md`](05_Documentacion/PROCEDIMIENTO-Calibracion-V3-K42.md) | Procedimiento de calibración del V3 K42 |
 | [`06_Calibracion/SLV-002/PROPUESTA-Ajuste-SLV-002-2026-09-19.md`](06_Calibracion/SLV-002/PROPUESTA-Ajuste-SLV-002-2026-09-19.md) | Propuesta de ajuste de SLV-002 con las decisiones de Diego de las 11:20 |
 | [`06_Calibracion/SLV-002/ACTA-antes-y-despues-grabacion.md`](06_Calibracion/SLV-002/ACTA-antes-y-despues-grabacion.md) | Acta de la grabación (G4) |
-| `06_Calibracion/SLV-002/campanas/` + `HUELLAS.txt` | ZIP de las campañas de 10:33 y 12:00 con md5 y SHA-256 |
+| `06_Calibracion/SLV-002/campanas/` + `HUELLAS.txt` | ZIP de las 10:33, 12:00, 12:10 (estado intermedio) y 12:27 (acta aceptada), con sus huellas |
 | [`08_Senales/CATALOGO-Senales-Manual-2024.md`](08_Senales/CATALOGO-Senales-Manual-2024.md) | 376 señales verticales del Manual 2024 con iconos propios (`senales.csv`, `indice.html`) |
 | [`ROADMAP-MEJORAS-App.md`](ROADMAP-MEJORAS-App.md) | 44 mejoras de la app de campo evaluadas para la V3.6 |
 | [`ARQUITECTURA.map`](ARQUITECTURA.map), [`HISTORIA.md`](HISTORIA.md) | Grafo del sistema y cómo se llegó aquí |
