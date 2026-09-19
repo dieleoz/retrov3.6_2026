@@ -1,9 +1,14 @@
 # Revisión de arquitectura P9 — V3.6 (firmware 3.6.2, app 3.6.6)
 
 **Nada de lo que aprueba este documento está medido en SLV-002 con la 3.6.2**: la 3.6.2 no está
-grabada y la 3.6.1 que se supone grabada no se ha leído nunca con `#V#` (C-36). Todo lo que sigue sale
-de leer el fuente, de las pruebas en simulador archivadas y de cálculos hechos en esta revisión, que se
-indican como tales.
+grabada. Todo lo que sigue sale de leer el fuente, de las pruebas en simulador archivadas, de la
+campaña del 19-sep (commit `5d184bf`) y de cálculos hechos en esta revisión, que se indican como tales.
+
+**r1 (19-sep-2026, tras el primer commit de este documento).** Durante la revisión llegó el commit
+`5d184bf`: campaña completa de SLV-002, `06_Calibracion/SLV-002/campanas/campana_SLV-002_20260919_103300.zip`
+(md5 `4c50dbf6…`, SHA-256 `3aae14a9…`, recalculados aquí e iguales a `HUELLAS.txt`), hecha con la
+**app 3.6.5** y el **firmware 3.6.1**. Cierra o cambia varias cosas; se integran en §2, §5, §6, §8 y en
+la nueva §4 bis, que rehace aquí el ajuste de la opción C con esos datos.
 
 - **Fecha:** 19-sep-2026. Revisor adversario, puerta P9 (`ROADMAP.md`, tabla P9-P12).
 - **Firmware revisado:** V3.6.2, commit `6a32ca3`, `hex/RetroVertical_V3.6.hex` md5
@@ -30,7 +35,7 @@ Rutas de firmware relativas a `01_Firmware/RetroVertical_V3.6.X/`; de app, a
 | Decisión | Veredicto | En una frase |
 | :--- | :--- | :--- |
 | **(a) Grabar la 3.6.2 en SLV-002** | **APROBADO CON CONDICIONES** (P9-A1 a P9-A5) | Por fuente, la ruta de medida es la de la 3.6.0/3.6.1 y la ecuación es la de 2020; la EEPROM nueva no solapa nada; configuración igual. Las condiciones son de orden y de comprobación tras grabar |
-| **(b) Escribir la calibración con la app 3.6.6** | **APROBADO CON CONDICIONES** (P9-B1 a P9-B12). **Hoy no se puede escribir:** bloquean P9-B1 a P9-B7 | La herramienta sirve: escritura, relectura, `#E` y restauración son correctas y seguras. Lo que falta son datos y decisiones, no código |
+| **(b) Escribir la calibración con la app 3.6.6** | **APROBADO CON CONDICIONES** (P9-B1 a P9-B13). **Hoy no se puede escribir:** bloquean P9-B1, B3, B5, B6 y B13 | La herramienta sirve: escritura, relectura, `#E` y restauración son correctas y seguras. Lo que falta es grabar y verificar la 3.6.2, decisiones de Diego y un límite que la app no comprueba (la curva en oscuro, §4 bis) |
 | **(c) Pasar a la propuesta de app de producción (P10)** | **APROBADO CON CONDICIONES** (P9-P1 a P9-P9) | Se puede escribir la propuesta. La APK de producción (P11) no se entrega hasta cerrar P8 con la 3.6.2 verificada en SLV-002 |
 
 **C1 / C-47:** **cerrada, modificada** (§4). La ida y vuelta exacta deja de exigirse; la sustituyen
@@ -50,10 +55,13 @@ Primero lo que no se sostiene, con su evidencia.
    de temperatura. Además **T-A20 sólo cubre la ecuación** (`pruebas/T-A20.md:13-15`: `reflectivityValue
    = x` → función), no la adquisición ni el factor de temperatura. Consecuencia: la 3.6.2 no cambia nada
    respecto a la 3.6.0/3.6.1, pero el "como llegó" de SLV-002 no es comparable con lo que mida ahora.
-2. **"SLV-002 lleva hoy la 3.6.1."** Es probable, no está comprobado. El registro de IPE
-   (`01_Firmware/lecturas_equipos/SLV-002/grabacion_V3.6.1_2026-09-19.log`) dice *Program Succeeded* hasta
-   `0x1d07f`, que cuadra con el tamaño de la 3.6.1 (último byte `0x1D009`, calculado aquí), pero nadie ha
-   leído `#V#` después (`ROADMAP.md:26-27`, C-36).
+2. **"SLV-002 lleva hoy la 3.6.1."** **Confirmado (r1)**, no por el ROADMAP, que a las 09:50 lo daba
+   sin comprobar (`ROADMAP.md:26-27`), sino por el `pruebas.txt` del ZIP de `5d184bf`: a las 09:56,
+   `#V# -> #V,3.6,2026-09-19,DEF,0000#`, pruebas 1-6 en OK, "APTO para calibrar". La fecha descarta la
+   3.6.0 y la 3.6.2 no se había compilado (commit a las 10:19). Cuadra con el registro de IPE (hasta
+   `0x1d07f`; último byte de la 3.6.1 en `0x1D009`, calculado aquí). **C-36 cerrada.** Hecho nuevo del
+   mismo fichero: a las 09:52, tras la grabación, **el equipo no respondía a nada** (4 sondas en
+   *timeout*) hasta apagarlo y encenderlo. Pasa a P9-A3 y a §7.
 3. **CAMBIOS §8.4: "Tras grabar, comprobar el md5 de la lectura ICSP."** **No se puede.** La
    protección de código está activa: `CONFIG5L = 0xFE` (bit CP a 0) en los tres `.hex` (extraído aquí de
    `0x300008`), y el propio registro de grabación lee ceros (`grabacion_V3.6.1_2026-09-19.log`:
@@ -76,12 +84,14 @@ Primero lo que no se sostiene, con su evidencia.
    en los dos `.hex`, comprobado aquí). Ese texto va a cada serie de la campaña
    (`CampanaActivity.java:361`) y a la exportación (`Campanas.java:214`). Con la 3.6.2 grabada, el ZIP
    dirá un firmware que no es. Condición P9-B11.
-7. **"La curva C del código 2 en grado 2 da R(600) ≈ −60."** **No lo he recalculado**: los datos
-   (`07 pruebas/19092026_0900/`) no están en ningún commit y P24 está sin decidir (C-40). La cifra sale
-   de la MATRIZ (§5.1.4, "cálculo en `double`, no medida"). Lo que sí está comprobado es que la app no
-   deja escribir una curva así: `criterioFirmwareS` la bloquea (`Asistente.java:222-241,350-353`) y
-   propone la recta (`:354-366`), y aunque se enviara, el firmware la rechaza antes de tocar RAM o
-   EEPROM (`calibracion_v36.c:698-699`).
+7. **"La curva C del código 2 en grado 2 da R(600) ≈ −60."** La conclusión (grado 1) se sostiene; **la
+   cifra no**. Con la campaña completa de `5d184bf` (14 patrones amarillos no tipo I, media de la serie
+   elegida), el grado 2 da **R(600) ≈ −150**, y además **no es creciente**: tiene un máximo en
+   x ≈ 3530 y R(4300) ≈ 756 (§4 bis). La −60 era de los datos parciales de las 09:00. En cualquier caso
+   la app no deja escribirla: `criterioFirmwareS` (`Asistente.java:222-241,350-353`) y la forma C2
+   (`:179-208`) la bloquean y proponen la recta (`:354-366`); y aunque se enviara, el firmware la rechaza
+   antes de tocar RAM o EEPROM (`calibracion_v36.c:698-699`). **Hallazgo nuevo, más serio, en §4 bis:
+   el grado 2 del blanco pasa todos los filtros y da R ≈ 220 en oscuro.**
 8. **Menor.** CAMBIOS §6 da "ROM 57 009 B"; `hex/memoria.txt` da 56 996 B. Sin efecto.
 
 ---
@@ -209,6 +219,71 @@ el camino barato es transportar los `float` en hex (L-09), no reescribir `strtod
 
 ---
 
+## 4 bis. La opción C con la campaña completa (r1, cálculo de esta revisión, no medida)
+
+Datos: media de la serie elegida de cada patrón en el `resumen.txt` del ZIP de `5d184bf` (P5, la
+elegida a 90°). Patrones de la clase de los códigos 1 y 2 (no tipo I): blanco P1, P2, P3, P4, P6, P7,
+P27, P28 (8); amarillo P5, P8, P9, P10, P20-P26, P29-P31 (14). Mínimos cuadrados sin ponderar sobre las
+medias, como `Asistente.puntos` + `Ajuste.ajustar`; criterio de `#S` evaluado en float32 en cada `x`
+entera de 600 a 4300, como `criterioFirmwareS`. `numpy.polyfit`, no la app.
+
+| Código, grado | c2 | c1 | c0 | R(575) | R(600) | R(4300) | `#S` | Creciente 200-4400 |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | :--- | :--- |
+| 1 blanco, grado 1 | 0 | 0,298477 | −162,28 | 9 | 17 | 1121 | pasa | sí |
+| 1 blanco, grado 2 | 5,947e-5 | −3,694e-3 | 201,13 | **219** | 220 | 1285 | pasa | sí |
+| 2 amarillo, grado 1 | 0 | 0,318077 | −98,64 | **84** | 92 | 1269 | pasa | sí |
+| 2 amarillo, grado 2 | −1,128e-4 | 0,797432 | −587,49 | — | **−150** | 756 | rechaza en 600 | **no** (máximo en x ≈ 3530) |
+| Fábrica, código 1 / código 2 | | | | 25 / 21 | | | | |
+
+**Hallazgo: el grado 2 del blanco pasa C2 y `#S` y deja el equipo leyendo R ≈ 220 en oscuro.** x ≈ 575
+es la `x` en oscuro de la V3.6 en SLV-002 (`06_Calibracion/SLV-002/ACTA-antes-y-despues-grabacion.md:40`).
+El patrón blanco más bajo está en x = 1674 (P3): por debajo, la parábola sale de su vértice (x ≈ 31) y
+queda plana en ~200-220. **Una lámina blanca degradada, o nada, leería unas 200 unidades.** Ni C2
+(`Asistente.java:179-208`, sólo creciente, ≤ 4000 y no negativa) ni el criterio de `#S` (que sólo mira
+[0 ; 4000]) lo ven. La recta del amarillo tiene el mismo defecto, menor: 84 en oscuro frente a 21 de
+fábrica. Para la interventoría, que busca señales **por debajo** de un mínimo, sobrestimar lo bajo es el
+error peligroso. Se cierra midiendo: `x` en oscuro con la 3.6.2 y, si hay, una lámina blanca y otra
+amarilla de R bajo (< 100). Mientras tanto, condición P9-B13.
+
+**Residuo por tipo del grado 1** (RF-CAL-15; umbrales **propuestos**: sesgo ≤ 5 %, RMS ≤ 6 %):
+
+| Código | Tipo | n | Nueva: sesgo / RMS | Fábrica: sesgo / RMS |
+| :--- | :--- | ---: | :--- | :--- |
+| 1 | IV | 2 | −0,8 % / **10,0 %** | +38,2 % / 39,1 % |
+| 1 | IX | 2 | +3,1 % / 4,9 % | +33,9 % / 34,0 % |
+| 1 | XI | 4 | −0,9 % / 2,8 % | +0,8 % / 2,6 % |
+| 2 | IV | 5 | +0,6 % / **8,2 %** | +21,1 % / 22,5 % |
+| 2 | IX | 3 | +1,4 % / 2,5 % | +24,2 % / 24,2 % |
+| 2 | XI | 6 | −0,0 % / 4,8 % | +12,5 % / 13,2 % |
+
+Con los umbrales propuestos, **el grado 1 no cumple el RMS de IV en ninguno de los dos colores**, aunque
+reduce el error de fábrica a menos de la mitad en IV e IX. En el XI blanco la curva nueva no mejora a la
+de fábrica (RMS 2,8 frente a 2,6 %): RF-CAL-16 ("no empeorar"), propuesto, lo marcaría. Lo decide Diego
+(P-CAL-01); este documento no elige.
+
+Datos de la campaña que cierran contradicciones (calculado aquí sobre `campana.csv` del ZIP, 51 series
+elegidas, 459 disparos):
+
+- **C-46:** el disparo más alejado de la mediana de su serie, en todas las elegidas, está a **17 cuentas**
+  (S008, P49). Ni la regla de 30 ni la de 50 descartarían nada: la diferencia no afecta a esta campaña.
+- **C-CAL-09:** `s` máxima 9,79 (P10, S035) ≤ 10: los dos umbrales dan lo mismo.
+- **C-38:** desvío medio frente a la mediana, por posición, tras descartar el asentamiento: −3,6 · −1,3
+  · −0,8 · −1,1 · +0,5 · +1,4 · +1,3 · +1,3 · +2,9. Es una **rampa de ~6,5 cuentas a lo largo de la
+  serie**, igual en todas, no sólo un primer disparo bajo. Con el mismo protocolo (1 + 9) en campaña y en
+  verificación, es un término común que el ajuste absorbe en `c0`. Lo que no se puede es cambiar el
+  número de disparos entre campaña, verificación y campo.
+- **C-40:** la única serie de P24 da 1982,7: a −3/−4 % de la serie de 2048-2076 y a −19 % de la de
+  2438-2453. Entre sesiones otros patrones se han movido lo mismo (P7 3231-3237 → 3122, −3,4 %; P5
+  2526-2584 → 2457-2459). Apoya la candidata de ~2000; lo cierra Diego confirmando la etiqueta de S047.
+- **C-39:** el blanco XI ya sale ordenado (P1 2961 < P7 3122 < P6 3168 < P4 3316). El amarillo XI no: P5
+  (740) da 2459, el menor de los seis. Sigue abierta en amarillo.
+- **C-CAL-03:** medidos en una sesión, P25 < P26 ya en orden; **P29 (442) 1677 > P30 (448) 1654** sigue
+  invertido (−1,4 %, dentro del 3 % de la app).
+- **C-CAL-14:** entre la sesión de las 09:00 y la de las 10:15 hay movimientos de hasta −3,4 % (P7) y
+  −3/−5 % (P5). La reproducibilidad entre sesiones es peor que el 2,5 % supuesto.
+
+---
+
 ## 5. Pregunta 3 — ¿Está lista la app 3.6.6 para escribir la calibración (P8)?
 
 ### 5.1 Lo revisado en el código
@@ -229,19 +304,25 @@ el camino barato es transportar los `float` en hex (L-09), no reescribir `strtod
 
 ### 5.2 Lo que bloquea escribir
 
-1. **Firmware del equipo sin identificar** (C-36): P9-A3 hecha y en verde.
-2. **Campaña incompleta**: P27 y P28 (blancos IX), P24 (C-40), P30 ×9, y P25/P26/P29/P31 en la misma
-   sesión (C-CAL-03). Y la campaña **cerrada y exportada**: `medidasParaAjuste` cae a las medidas sueltas
-   de la sesión si la campaña no tiene series elegidas (`Sesion.java:191-199`), y el informe del ajuste no
-   dice de dónde salen los puntos.
-3. **Asentamiento** (C-38/C-CAL-04): N de disparos descartados fijado con datos.
-4. **Descolgado** (C-46): aplicar las dos reglas (30 y 50) a las series elegidas.
+Estado r1, tras la campaña de `5d184bf`. Tachado = resuelto por los datos.
+
+1. **La 3.6.2 grabada y verificada** (P9-A1 a P9-A5). C-36 ya está cerrada para la 3.6.1 (§2.2).
+2. ~~Campaña incompleta~~ **Resuelto:** 50 patrones, 51 series elegidas, ZIP con huellas en git. La
+   campaña se hizo con la app 3.6.5, que no tiene evento `CIERRE`; la congela el SHA-256 del commit. Queda
+   un riesgo de uso: `medidasParaAjuste` cae a las medidas sueltas de la sesión si la campaña abierta no
+   tiene series elegidas (`Sesion.java:191-199`), y el informe del ajuste no dice de dónde salen los
+   puntos (P9-B7).
+3. **Asentamiento** (C-38): ya medido (§4 bis). Falta que Diego fije que el protocolo 1 + 9 es el mismo
+   en verificación y en campo (P9-B3).
+4. ~~Descolgado (C-46)~~ **Resuelto para esta campaña** (§4 bis: máximo 17 cuentas).
 5. **Aceptación** (SPEC-Calibracion §5, P-CAL-01): la app no calcula el residuo por tipo (RF-CAL-15), el
-   "no empeorar" (RF-CAL-16) ni la validación cruzada (RF-CAL-17). Se calculan fuera y Diego los firma
-   **antes** del primer `#S`.
-6. **Método de medida** (C-CAL-08): decisión de Diego.
-7. **Grado del código 2** (P-16): se acepta el que deje pasar la app con los datos definitivos; si es 1,
-   se escribe en el acta por qué.
+   "no empeorar" (RF-CAL-16) ni la validación cruzada (RF-CAL-17). Con los umbrales propuestos, el
+   grado 1 no cumple el RMS de IV (§4 bis). Diego decide umbrales y resultado **antes** del primer `#S`.
+6. **Método de medida** (C-CAL-08) y **etiqueta de P24** (C-40): decisiones de Diego.
+7. **Grado:** el código 2 va en grado 1 (el grado 2 no pasa ni `#S` ni C2, §4 bis). El código 1 **no**
+   puede ir en grado 2 sin resolver el oscuro: P9-B13.
+8. **Comportamiento en oscuro y por debajo del patrón más bajo** (§4 bis): la app no lo comprueba.
+   P9-B13.
 
 ### 5.3 Lo que no bloquea (con su sustituto para P8)
 
@@ -264,26 +345,26 @@ el camino barato es transportar los `float` en hex (L-09), no reescribir `strtod
 | :--- | :--- | :--- |
 | C-01 `x` distinta del firmware original | No bloquea | **No se puede cerrar**: el original se borró el 18-sep. Queda escrito que el "como llegó" no es comparable (§2.1) |
 | C-30 sin fábrica para la temperatura | No bloquea | Grabar la 3.6.2 y P9-A3 (`#FT#` → `#OK#`, `DEF,0000`) |
-| C-36 qué firmware lleva SLV-002 | **Bloquea P8** | P9-A1 (antes de grabar) y P9-A3 (después) |
+| C-36 qué firmware lleva SLV-002 | **Cerrada (r1)** para la 3.6.1: `#V#` a las 09:56 en el `pruebas.txt` del ZIP (§2.2). Tras grabar la 3.6.2 se reabre hasta P9-A3 | P9-A3 |
 | C-37 `#V#` no distingue versiones | Bloquea producción | Hoy, sonda `#GC#`. Decisión P-15 para el próximo firmware |
-| C-38 / C-CAL-04 primer disparo | **Bloquea P8** | T-C38: desvío por posición del `resumen.txt` de la 3.6.6 en la campaña completa; N = primera posición cuyo desvío medio frente a la mediana de las posiciones siguientes es menor que la mitad de la `s` típica |
-| C-39 / C-CAL-02 XI desordenados | No bloquea P8 si el acta declara el residuo XI; bloquea producción (procedimiento de campo) | Prueba de giro (RF-CAL-06): P5, P6, P7, P23 en 4 orientaciones |
-| C-40 / C-CAL-01 P24 | **Bloquea P8** | Nueva serie de P24 con la etiqueta leída en voz alta, y P20 en la misma sesión |
+| C-38 / C-CAL-04 primer disparo | **Medida (r1)**: rampa común de ~6,5 cuentas en la serie (§4 bis). Bloquea P8 sólo hasta que Diego fije el protocolo 1 + 9 para verificación y campo | La causa física sigue sin medir: `x` frente al tiempo desde el disparo anterior |
+| C-39 / C-CAL-02 XI desordenados | No bloquea P8 si el acta declara el residuo XI; bloquea producción (procedimiento de campo). r1: el blanco ya sale ordenado; el amarillo no (P5) | Prueba de giro (RF-CAL-06): P5, P8, P9, P23 en 4 orientaciones (P5 a 0° y 90° ya da 2457 y 2459) |
+| C-40 / C-CAL-01 P24 | **Bloquea P8** hasta una confirmación | r1: S047 da 1982,7 (§4 bis). La cierra Diego confirmando la etiqueta física de S047 |
 | C-41 / C-CAL-05 P32 duplicado | No bloquea (P32a/b son azul y naranja tipo I: códigos c y d, que no se ajustan) | Diego lee la etiqueta física |
 | C-42 / C-CAL-11 tres rangos de `x` | No bloquea P8 (la app aplica la intersección y el firmware manda); bloquea producción | Decisión P-12, con dos medidas: `x` en oscuro con la 3.6.2 y `x` del patrón más alto. Ojo: `e` devuelve 0 por encima de 4000 (`arreglar_dato` en la rama de `e`, `ecuacionesCalibracion.c:191-193`) |
 | C-43 umbrales de cobertura | No bloquea (sólo impiden ajustar) | T-C39 con los tipo I |
 | C-44 T-A23 "cerrada" | Cerrada por esta revisión (§4) | — |
 | C-45 RF-APP-03 | Cerrada (SPEC r1.2) | — |
-| C-46 descolgado | **Bloquea P8** en forma débil | T-A39 con las 17 series literales y las de la campaña: listar disparos entre 30 y 50 cuentas de la mediana en las series elegidas. Si no hay ninguno, la diferencia de reglas no afecta a P8 |
+| C-46 descolgado | **No bloquea P8 (r1)**: máximo 17 cuentas en las 51 series elegidas (§4 bis). Sigue abierta para producción: SPEC dice 30, el código 50 (`Veredicto.java:38`) | T-A39 con las 17 series del 19-sep 09:00 |
 | C-47 / C-CAL-12 C1 | Cerrada, modificada (§4) | — |
-| C-CAL-03 IX/IV desordenados | **Bloquea P8** | P25, P26, P29, P30, P31 en la misma sesión |
+| C-CAL-03 IX/IV desordenados | **No bloquea (r1)**: medidos en una sesión; queda P29/P30 invertido −1,4 %, que el acta declara | Segunda pasada de P29 y P30 con recolocación |
 | C-CAL-06 catálogo maestro | No bloquea P8: P1-P31 son idénticos en los dos CSV (4 primeros campos, comparado aquí). El acta cita el md5 del asset (`bc4604b0…`). Bloquea producción | Decisión: un maestro |
 | C-CAL-07 SPEC dice sólo 1 y 2 | No bloquea (documental) | Corregir la SPEC |
 | C-CAL-08 método de medida | **Bloquea P8** | Decisión de Diego |
-| C-CAL-09 dos umbrales de `s` | No bloquea si todas las series elegidas tienen `s` ≤ 10 (en C2, ≤ 7,7) | Comprobación sobre los datos |
+| C-CAL-09 dos umbrales de `s` | **No bloquea (r1)**: `s` máxima 9,79 en las elegidas | — |
 | C-CAL-10 criterio de `#S` doble | No bloquea (§5.1) | T-A41 en MDB con una curva cuyo mínimo caiga entre dos enteros |
 | C-CAL-13 runbook dice 3.6.1 sin grabar | No bloquea (documental) | Actualizar el runbook a la 3.6.2 |
-| C-CAL-14 reproducibilidad entre sesiones | No bloquea la escritura; bloquea declarar incertidumbre | Campaña de otro día (§9 de SPEC-Calibracion) |
+| C-CAL-14 reproducibilidad entre sesiones | No bloquea la escritura; bloquea declarar incertidumbre. r1: hasta −3,4 % (P7) y −3/−5 % (P5) entre las 09:00 y las 10:15 | Campaña de otro día (§9 de SPEC-Calibracion) |
 | C-CAL-15 tipo I sin nota de certificado | **Bloquea ajustar 8 y b**; no 1 ni 2 | Certificado de los tipo I, o 8 y b sólo se verifican |
 
 ---
@@ -303,6 +384,7 @@ Bluetooth.
 | Corte de alimentación durante una escritura | El registro a medias falla la CRC y vuelve a fábrica al arrancar; si es el de temperatura/PIN, también el PIN vuelve a `2026` (`:187-198`) | Reescribir. Nunca deja el equipo bloqueado |
 | Escritura de EEPROM con interrupciones apagadas, ~4 ms por byte, hasta ~1 s en la primera (`memory.c:172-190`; CAMBIOS §4.6) | Pueden perderse bytes que lleguen en ese tiempo | La app espera la respuesta de `#S`/`#F` hasta 5 s (`AdminActivity.java:480,522,567`) antes de enviar nada más |
 | Trama `#` sin cerrar o de más de 96 bytes (`uart_module.c:61,87-91,113-115`) | Se descarta | Sola, a los 2 s o en el siguiente `#` |
+| Tras grabar, Bluetooth mudo (19-sep 09:52, `pruebas.txt` del ZIP de `5d184bf`) | No responde a nada | Apagar y encender (P9-A3) |
 | Caída del enlace a mitad de `escribir()` | La excepción corta la secuencia (`AdminActivity.java:190-191`): puede quedar escrito sin `#E` ni restauración | P9-B12 |
 | `e` a un equipo sin identificar | En la V3 2020 dejó el Bluetooth mudo hasta apagar (`RUNBOOK.md:91`). La app no lo envía antes de identificar (`Pruebas.java:286-289`) | Apagar y encender |
 | **Regrabar un equipo ya calibrado** | El borrado de IPE deja la EEPROM a 0xFF: se pierden coeficientes, serie, fecha y PIN | No es una orden de la app, pero es el riesgo mayor para el cliente. P9-A4 y P9-P7 |
@@ -315,11 +397,11 @@ Bluetooth.
 
 | N.º | Condición | Comprobación |
 | :--- | :--- | :--- |
-| **P9-A1** | Antes de conectar el PICkit: `#V#`, 12 `#G`, `#GT#` y `#GC#` con la app o un terminal, archivados en `01_Firmware/lecturas_equipos/SLV-002/` | `#V#` con fecha `2026-09-19` y `#GC#` → `#ERR,FORMATO#` confirman que llevaba la 3.6.1 (cierra C-36 hacia atrás); fecha `2026-09-18`, la 3.6.0 |
+| **P9-A1** | Antes de conectar el PICkit: `#V#`, 12 `#G`, `#GT#` y `#GC#` con la app o un terminal, archivados en `01_Firmware/lecturas_equipos/SLV-002/` | `#V#` con fecha `2026-09-19` y `#GC#` → `#ERR,FORMATO#`: sigue en la 3.6.1 y en `DEF` (nadie ha escrito nada desde las 09:56). Cualquier `CAL` en la máscara: se para, porque grabar lo borraría |
 | **P9-A2** | Se graba sólo el `.hex` de md5 `9d5d5e39…`, con su md5 recalculado en la misma sesión y el registro de IPE guardado | Registro con *Program Succeeded* y memoria de programa hasta ≈ `0x1DB7F` (último byte `0x1DB67`), no `0x1d07f` (3.6.1). El "Verify failed" posterior es CP (§2.3) |
-| **P9-A3** | Tras apagar y encender, G4 abreviada (T-C37 adaptada). **Si algo falla, no se escribe nada** | `#V,3.6,2026-09-19,DEF,0000#`; `#GC,NONE#` y `#GN,NONE#` (esto distingue la 3.6.2); 12 `#G` = fábrica a `ULP_G`; `#GT#` = fábrica; `#E` 60/60 contra la tabla de fábrica; `#L,2026#` → `#OK#`; `#FT#` → `#OK#` y `#V#` sigue en `DEF,0000`; `#S,2,<fábrica>#` → `#ERR,FORMATO#` (rechazada antes de tocar RAM, `:698`); `#Q#` |
+| **P9-A3** | Tras desconectar el PICkit, apagar y encender (tras la 3.6.1 el equipo estuvo mudo hasta apagarlo, §2.2), G4 abreviada (T-C37 adaptada). **Si algo falla, no se escribe nada** | `#V,3.6,2026-09-19,DEF,0000#`; `#GC,NONE#` y `#GN,NONE#` (esto distingue la 3.6.2); 12 `#G` = fábrica a `ULP_G`; `#GT#` = fábrica; `#E` 60/60 contra la tabla de fábrica; `#L,2026#` → `#OK#`; `#FT#` → `#OK#` y `#V#` sigue en `DEF,0000`; `#S,2,<fábrica>#` → `#ERR,FORMATO#` (rechazada antes de tocar RAM, `:698`); `#Q#` |
 | **P9-A4** | **Orden:** la 3.6.2 se graba **antes** del primer `#S`. Grabar después de calibrar borra la calibración | Acta: hora de grabación anterior a la de la primera trama `#S` del registro de la app |
-| **P9-A5** | Puente de medida: con `e`, asentamiento y 9 disparos, tres patrones ya medidos en la campaña (uno por debajo de x ≈ 1600, uno hacia 2100, uno por encima de 3000; p. ej. P22, P28 y P4) | Media dentro del 3 % de la media de campaña (la reproducibilidad observada entre sesiones llega a 2,5 %, C-CAL-14). Fuera: se para y se investiga antes de seguir |
+| **P9-A5** | Puente de medida **en la misma sesión**: con `e`, asentamiento y 9 disparos, tres patrones de la campaña (uno por debajo de x ≈ 1600, uno hacia 2100, uno por encima de 3000; p. ej. P22, P28 y P4) **justo antes de grabar (3.6.1) y justo después (3.6.2)**, sin mover el montaje más que para recolocar | Diferencia de medias ≤ 2 % por patrón (en una misma sesión se han visto +1,3 % en P23 y 0,1 % en P5 a 0°/90°). No se compara con la campaña de las 10:15: entre sesiones hay hasta −5 % (C-CAL-14, §4 bis). Fuera: se para y se investiga |
 | P9-A6 | Documental: CAMBIOS §8.4 retira "md5 de la lectura ICSP"; `fuente.md5` se verifica contra el blob (`git show <commit>:<ruta> \| md5sum`) o se declara el md5 del fichero con el fin de línea del árbol | Revisión del documento. No bloquea grabar |
 
 ### 8.2 Para escribir la calibración con la app 3.6.6 (b)
@@ -327,9 +409,9 @@ Bluetooth.
 | N.º | Condición | Comprobación |
 | :--- | :--- | :--- |
 | **P9-B1** | P9-A1 a P9-A5 cumplidas | Registro de G4 en el acta |
-| **P9-B2** | Campaña completa, cerrada y exportada: P27, P28, P24, P30 ×9 y P25/P26/P29/P31 en una sesión | Evento `CIERRE` y `EXPORTA` con SHA-256 en el diario; el acta cita ese SHA-256 |
-| **P9-B3** | N de asentamiento fijado con T-C38 (C-38) | `resumen.txt` de la campaña, desvío por posición; firma de Diego |
-| **P9-B4** | C-46 comprobada sobre los datos (T-A39) | Lista de disparos a 30-50 cuentas de su mediana en las series elegidas; vacía, o decidida por Diego a la vista |
+| P9-B2 | ~~Campaña completa, cerrada y exportada~~ **Cumplida (r1)** con `5d184bf` | El acta cita el SHA-256 `3aae14a9…` del ZIP. La app 3.6.5 no tiene evento `CIERRE`: lo congela el commit |
+| **P9-B3** | Protocolo de disparos fijo (C-38): el mismo asentamiento + 9 de la campaña en la re-medida de verificación y en campo, porque la rampa de ~6,5 cuentas es común (§4 bis) | Firma de Diego en el acta |
+| P9-B4 | ~~C-46 comprobada sobre los datos~~ **Cumplida (r1)**: máximo 17 cuentas | §4 bis |
 | **P9-B5** | Criterios de SPEC-Calibracion §5 calculados desde `campana.csv` **antes** de escribir (RF-CAL-14 a 17), y umbrales aprobados (P-CAL-01) | Hoja de cálculo o script en `06_Calibracion/SLV-002/` y firma de Diego |
 | **P9-B6** | Método de medida decidido (C-CAL-08) y P24 resuelto (C-40) | Decisión escrita |
 | **P9-B7** | El ajuste se hace con la campaña (no con medidas sueltas de sesión) | El informe del asistente lista exactamente los patrones y `n` de las series elegidas del ZIP |
@@ -338,6 +420,7 @@ Bluetooth.
 | P9-B10 | No se cambia el PIN de SLV-002 en P8. Si Diego decide cambiarlo, el PIN nuevo se le entrega por un canal fuera de la app y el acta dice que se cambió | Acta; registro de la app sin `#P` |
 | P9-B11 | El acta anota a mano el firmware (md5 del `.hex` y respuesta de `#GC#`), porque la app rotula la 3.6.2 como 3.6.1 | Acta, bloque "Equipo" |
 | P9-B12 | Si la escritura de un código termina en error de enlace: reconectar, `#G,k#`, `#E` en 5 puntos, y restaurar con la copia si no coincide con lo enviado ni con lo anterior. Nunca se sigue con otro código antes | Registro técnico de la app |
+| **P9-B13** | **Oscuro y parte baja.** Para cada curva que se vaya a escribir, el acta muestra R en la `x` de oscuro medida con la 3.6.2 (hoy ≈ 575) y en la `x` del patrón más bajo del código, frente a fábrica. Con los datos de hoy: código 1 en grado 1 (el grado 2 da ≈ 219 en oscuro) y código 2 en grado 1 (≈ 84 en oscuro, frente a 21 de fábrica). Diego acepta por escrito el valor en oscuro de cada curva o se escribe otra; y el acta declara que por debajo del patrón más bajo (P3, R 378; P22, R 334) la lectura no está calibrada | Acta, bloque "Ajuste"; `x` de oscuro medida tras P9-A3 |
 
 8 y b, además: sólo con el certificado de los tipo I o la aprobación explícita de Diego de sus valores
 (C-CAL-15). Si no, se verifican sin ajustar.
@@ -350,7 +433,7 @@ Bluetooth.
 | P9-P2 | Identificación de firmware sin ambigüedad: sondear `#GC#`/`#GN#`, no inferir por fecha; pedir para el próximo firmware una cadena de versión propia (C-37, P-15) | Requisito en la SPEC de P10 |
 | P9-P3 | La validez de una calibración la decide la huella (`#G` ×12 + `#GT#` frente al certificado); `#GC` es informativo. Detecta `#F,k#` parcial por la máscara de `#V#` código a código | Requisito con prueba JVM |
 | P9-P4 | Restauración (C3) y PIN en clases Java puras, con T-A32 y T-A19 | Pruebas en verde |
-| P9-P5 | Un único rango de `x` de uso (C-42, P-12) y tratamiento explícito de `e` = 0 por encima de 4000 | Decisión escrita y requisito |
+| P9-P5 | Un único rango de `x` de uso (C-42, P-12) y tratamiento explícito de `e` = 0 por encima de 4000. La validación de la curva añade el valor en oscuro y marca como "fuera del rango calibrado" toda lectura por debajo del patrón más bajo del código (§4 bis): es el lado en que la interventoría decide si una señal incumple | Decisión escrita, requisito y prueba JVM |
 | P9-P6 | Superadministrador (SPEC-Calibracion §8) antes de exponer `#S`, `#F`, `#FT`, `#SC`, `#SN` o `#P` a un operador | Requisito y prueba |
 | P9-P7 | Procedimiento de regrabación de un equipo calibrado: copia de `#G` ×12, `#GT#`, `#GN#`, `#GC#` antes de grabar, y restauración y verificación después | Paso del runbook |
 | P9-P8 | APK atada a un commit, con md5 declarado en un commit (C-16) | Commit |
@@ -371,6 +454,9 @@ Reproducible desde `D:\IT\P_RetroVertical_V3.6` en `6a32ca3`:
 - Pruebas JVM: `javac -encoding UTF-8 -sourcepath app/src/main/java app/src/test/java/…/*.java` y
   `JUnitCore` con las seis clases: `OK (71 tests)`.
 - Catálogos: comparación de las filas P1-P31 (4 primeros campos) de los dos CSV.
+- Campaña (r1): `resumen.txt`, `campana.csv` y `pruebas.txt` leídos del ZIP de `5d184bf`; ajuste con
+  `numpy.polyfit` sobre las medias de las series elegidas y criterio de `#S` en float32; residuo por tipo
+  frente a la curva nueva y a la de fábrica; desvío máximo frente a la mediana y desvío por posición.
 
-Lo que **no** se ha hecho: grabar, medir, recompilar el `.hex` o el APK, ni rehacer el ajuste con los
-datos del 19-sep.
+Lo que **no** se ha hecho: grabar, medir, recompilar el `.hex` o el APK, ni pasar los datos por la app
+(el ajuste de §4 bis reproduce su método, no es su salida).
