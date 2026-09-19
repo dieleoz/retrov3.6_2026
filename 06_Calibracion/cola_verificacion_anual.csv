@@ -1,0 +1,36 @@
+orden,sesion,bloque,paso,patron,color,tipo,valor_certificado,codigo_equipo,uso,K,M,asentamiento,remedida_de_codigo,x_esperada,origen_x,nota
+1,1,INICIO,CALENTAMIENTO,,,,,,,,,,,,,10 min encendido antes de la primera serie (RF-CAL-01)
+2,1,INICIO,BATERIA,,,,,9,CONTROL,,,,,,,orden 9: tension y nivel; aviso si baja (RF-CAL-41)
+3,1,INICIO,OSCURO,OSCURO,,,0,e,CONTROL,5,4,1,,565,medida,superficie negra mate; ancla = media de OSCURO inicio y fin de la sesion (P10-C3)
+4,1,A5-INICIO,A5,P22,amarillo,IV,334,e,CONTROL,5,4,1,,1497.0,medida,puente y s_rep (P9-A5); no entra en el ajuste
+5,1,A5-INICIO,A5,P28,blanco,IX,484,e,CONTROL,5,4,1,,2277.9,medida,puente y s_rep (P9-A5); no entra en el ajuste
+6,1,A5-INICIO,A5,P4,blanco,XI,828,e,CONTROL,5,4,1,,3315.8,medida,puente y s_rep (P9-A5); no entra en el ajuste
+7,1,COLOR:blanco,PATRON,P28,blanco,IX,484,1,VERIFICACION,3,4,1,,2277.9,medida,verificacion anual: verificacion anual del codigo 1 (su patron de re-medida)
+8,1,COLOR:blanco,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+9,1,COLOR:blanco-I,PATRON,P35,blanco,I,96,7,VERIFICACION,3,4,1,,1114.7,medida,verificacion anual: verificacion anual del codigo 7
+10,1,COLOR:blanco-I,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+11,1,COLOR:amarillo,PATRON,P25,amarillo,IX,576,2,VERIFICACION,3,4,1,,2157.4,medida,verificacion anual: verificacion anual del codigo 2 (su patron de re-medida)
+12,1,COLOR:amarillo,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+13,1,COLOR:amarillo-I,PATRON,P43,amarillo,I,122,8,VERIFICACION,3,4,1,,1151.3,medida,verificacion anual: verificacion anual del codigo 8 (su patron de re-medida)
+14,1,COLOR:amarillo-I,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+15,1,COLOR:rojo,PATRON,P11,rojo,IV,194,4,VERIFICACION,3,4,1,,1722.9,medida,verificacion anual: verificacion anual del codigo 4 (su patron de re-medida)
+16,1,COLOR:rojo,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+17,1,COLOR:rojo-I,PATRON,P49,rojo,I,81,b,VERIFICACION,3,4,1,,797.2,medida,recta anclada; conformidad de Diego a RF-CAL-14 pendiente; verificacion anual: verificacion anual del codigo b (su patron de re-medida)
+18,1,COLOR:rojo-I,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+19,1,COLOR:naranja,PATRON,P86,naranja,IX,124,6,VERIFICACION,3,4,1,,1259,estimada: fabrica invertida,verificacion anual: verificacion anual del codigo 6 (su patron de re-medida)
+20,1,COLOR:naranja,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+21,1,COLOR:naranja-I,PATRON,P41,naranja,I,73,d,VERIFICACION,3,4,1,,898.7,medida,verificacion anual: verificacion anual del codigo d
+22,1,COLOR:naranja-I,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+23,1,COLOR:verde,PATRON,P123,verde,IX,115,3,VERIFICACION,3,4,1,,754,estimada: recta por el oscuro,verificacion anual: verificacion anual del codigo 3 (su patron de re-medida)
+24,1,COLOR:verde,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+25,1,COLOR:verde-I,PATRON,P40,verde,I,6,a,VERIFICACION,3,4,1,,624.7,medida,a menos de 80 cuentas del oscuro; verificacion anual: verificacion anual del codigo a
+26,1,COLOR:verde-I,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+27,1,COLOR:azul,PATRON,P81,azul,IX,92,5,VERIFICACION,5,4,1,,846,estimada: recta por el oscuro,uso segun la tabla RF-CAL-37 del APK (PA-14); verificacion anual: verificacion anual del codigo 5 (su patron de re-medida); K = 5 como fuerza BancoCola (P10-C3)
+28,1,COLOR:azul,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+29,1,COLOR:azul-I,PATRON,P36,azul,I,10,c,VERIFICACION,3,4,1,,638.8,medida,a menos de 80 cuentas del oscuro; verificacion anual: verificacion anual del codigo c
+30,1,COLOR:azul-I,BATERIA,,,,,9,CONTROL,,,,,,,control al cambiar de grupo
+31,1,A5-FIN,A5,P22,amarillo,IV,334,e,CONTROL,3,4,1,,1497.0,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
+32,1,A5-FIN,A5,P28,blanco,IX,484,e,CONTROL,3,4,1,,2277.9,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
+33,1,A5-FIN,A5,P4,blanco,XI,828,e,CONTROL,3,4,1,,3315.8,medida,deriva de la sesion frente a A5-INICIO (RF-CAL-36)
+34,1,FIN,OSCURO,OSCURO,,,0,e,CONTROL,5,4,1,,565,medida,deriva del oscuro y segunda mitad del ancla
+35,1,FIN,EXPORTAR,,,,,,CONTROL,,,,,,,ZIP de la sesion; copia en Download/RTV/
