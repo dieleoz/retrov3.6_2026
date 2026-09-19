@@ -1,109 +1,85 @@
 package com.dpi.retrov36;
 
-import java.util.Arrays;
-import java.util.List;
-
 /**
- * Protocolo de disparos (3.6.15, decision PROTOCOLO-MIN de Diego; 3.6.16 con P14 §3). Java puro.
+ * Protocolo de un firmware (RTV 1.0, RF-APP-U06 de SPEC-App-Unica-V36-V46.md; ESTUDIO-Tecnologia §6). Java puro.
  *
- * - Por defecto, 1 colocacion x 4 disparos (mas el asentamiento), en la campana y en el banco ("rapido").
- * - En el banco, "preciso" = el K x M de la cola.
- * - A5 y OSCURO se quedan en K = 5 (fuente de la s_rep y del ancla; P10, P13).
- * - 3.6.16 (P14 §3, P10-C3): los patrones de AJUSTE y RE-MEDIDA de los codigos que se van a escribir (8, b, 5),
- *   P81 y toda RE-MEDIDA van en "preciso", 5 x 4, tambien en modo rapido. Decision de Diego (6048453), fila
- *   PROTOCOLO-AJUSTE de decisiones.csv (valor PRECISO, RAPIDO o LIBRE). Sin fila, PRECISO.
- * - Los patrones de TIPO-I-REPETIR (P34, P37, P43, P44, P38, P39, P49; 6048453) se repiten en preciso, 5 x 4.
- * - La re-medida de cada codigo NO cambia: 5 x 4 (Remedida3611, P12 y P13).
+ * Sustituye al booleano "es V3.6": ninguna pantalla pregunta por la version, pregunta al protocolo que puede
+ * hacer. Cada firmware es una implementacion: {@link ProtocoloV2020}, {@link ProtocoloV36},
+ * {@link ProtocoloV4Original} y {@link ProtocoloV46}. Lo que es dato (dominio de x, cola, coherencia en DEF,
+ * bateria) viene del CSV de firmwares ({@link PerfilFirmware}); lo que es sintaxis de tramas, de aqui.
  */
-public final class Protocolo {
+public interface Protocolo {
 
-    public static final int K_DEFECTO = 1;
-    public static final int M_DEFECTO = 4;
-    /** A5 y OSCURO: nunca menos de 5 colocaciones. */
-    public static final int K_CONTROL = 5;
-    /** "Preciso" de los patrones de lo que se escribe (P10-C3). */
-    public static final int K_PRECISO = 5;
-    public static final int M_PRECISO = 4;
-    /** Codigos que se van a escribir en SLV-002 (P14 §3). */
-    public static final List<Character> CODIGOS_A_ESCRIBIR = Arrays.asList('8', 'b', '5');
-    /** Valor provisional de PROTOCOLO-AJUSTE sin decision de Diego. */
-    public static final String PROVISIONAL = "PRECISO";
+    /** Los firmwares de SPEC-App-Unica §1 que la app sabe tratar. */
+    enum Firmware {
+        F2020("V3 2020 (sin e)"),
+        F36("V3.6"),
+        V4_ORIGINAL("V4 original (F-40/F-41), sin identificar la versión exacta"),
+        F46("V4.6"),
+        DESCONOCIDO("desconocido");
 
-    private Protocolo() { }
+        public final String texto;
 
-    /** {K, M} para un paso del banco, con PROTOCOLO-AJUSTE = PRECISO (el provisional). */
-    public static int[] efectivo(BancoCola.Paso p, boolean rapido) {
-        return efectivo(p, rapido, null);
-    }
-
-    /** true si el paso es de lo que se escribe (AJUSTE/RE-MEDIDA de 8, b, 5, todos los del 5, P81 o una RE-MEDIDA). */
-    public static boolean deAjuste(BancoCola.Paso p) {
-        if (!"PATRON".equals(p.tipo)) {
-            return false;
+        Firmware(String t) {
+            texto = t;
         }
-        if ("RE-MEDIDA".equals(p.uso) || "P81".equals(p.patron)) {
-            return true;
-        }
-        return p.codigo.length() == 1 && CODIGOS_A_ESCRIBIR.contains(p.codigo.charAt(0))
-                && ("AJUSTE".equals(p.uso) || "5".equals(p.codigo));
     }
 
-    /**
-     * {K, M} para un paso del banco. protocoloAjuste: valor de PROTOCOLO-AJUSTE en decisiones.csv (null = el
-     * provisional, PRECISO).
-     */
-    public static int[] efectivo(BancoCola.Paso p, boolean rapido, String protocoloAjuste) {
-        if ("OSCURO".equals(p.tipo) || "A5".equals(p.tipo)) {
-            return new int[]{Math.max(p.k, K_CONTROL), p.m > 0 ? p.m : M_DEFECTO};
-        }
-        String pa = protocoloAjuste == null ? PROVISIONAL : protocoloAjuste;
-        if (deAjuste(p) && "PRECISO".equals(pa)) {
-            return new int[]{K_PRECISO, M_PRECISO};
-        }
-        return rapido ? new int[]{K_DEFECTO, M_DEFECTO} : new int[]{p.k, p.m};
-    }
+    Firmware firmware();
 
-    /** Como efectivo(p, rapido, protocoloAjuste), y ademas los patrones que Diego manda repetir van a 5 x 4. */
-    public static int[] efectivo(BancoCola.Paso p, boolean rapido, String protocoloAjuste, List<String> repetir) {
-        if (aRepetir(p, repetir)) {
-            return new int[]{K_PRECISO, M_PRECISO};
-        }
-        return efectivo(p, rapido, protocoloAjuste);
-    }
+    /** Texto para cabeceras y registros. */
+    String nombre();
 
-    /** true si el paso mide un patron de TIPO-I-REPETIR. */
-    public static boolean aRepetir(BancoCola.Paso p, List<String> repetir) {
-        return repetir != null && "PATRON".equals(p.tipo) && repetir.contains(p.patron);
-    }
+    /** true si la trama puede enviarse a este firmware (lista cerrada; RF-APP-U06, T-U10). */
+    boolean permitida(String trama);
 
-    /** {K, M} minimo que exige el ajuste de un codigo; null si no se exige nada (LIBRE). */
-    public static int[] requerido(String protocoloAjuste) {
-        String pa = protocoloAjuste == null ? PROVISIONAL : protocoloAjuste;
-        if ("LIBRE".equals(pa)) {
-            return null;
-        }
-        return "RAPIDO".equals(pa) ? new int[]{K_DEFECTO, M_DEFECTO} : new int[]{K_PRECISO, M_PRECISO};
-    }
+    /** Trama que mide R con la clave k; null si la clave no existe en este firmware. */
+    String tramaMedida(char k);
 
-    /** {K, M} de una serie: colocaciones y disparos validos de la mas larga. */
-    public static int[] deSerie(Campana.Serie s) {
-        int m = 0;
-        for (double[] g : s.colocaciones()) {
-            m = Math.max(m, g.length);
-        }
-        return new int[]{s.colocaciones().size(), m};
-    }
+    Tramas.Tipo tipoMedida();
 
-    /** null si la serie cumple lo requerido (K >= K_req y M >= M_req: 5 x 9 de la 3.6.11 vale como 5 x 4); si no, "P34 3×3". */
-    public static String incumple(String patron, Campana.Serie s, int[] req) {
-        if (req == null || s == null) {
-            return null;
-        }
-        int[] km = deSerie(s);
-        return km[0] >= req[0] && km[1] >= req[1] ? null : patron + " " + km[0] + "×" + km[1];
-    }
+    long timeoutMedidaMs();
 
-    public static String texto(int[] km, boolean rapido) {
-        return km[0] + " × " + km[1] + (rapido ? " (rápido)" : " (preciso)");
-    }
+    /** R de la respuesta de medida; null si no cuadra. */
+    Integer valorMedida(String trama);
+
+    /** true si el firmware da x, directa o por inversion (V3 2020). Sin x no hay banco ni pruebas 3-6. */
+    boolean daX();
+
+    /** Trama que lee x (en bruto) para la clave k; null si no hay trama directa. */
+    String tramaX(char k);
+
+    Tramas.Tipo tipoX();
+
+    /** x de la respuesta; null si no cuadra. */
+    Double valorX(String trama, char k);
+
+    /** Trama de bateria; null si el firmware no la tiene. */
+    String tramaBateria();
+
+    Tramas.Tipo tipoBateria();
+
+    /** n de la respuesta de bateria; null si no cuadra. */
+    Integer valorBateria(String trama);
+
+    /** true si habla el contrato de administracion "#...#" (V3.6 rev. 1.1, y la V4.6 que lo adopta). */
+    boolean administra();
+
+    /** true si se puede calibrar ("Calibrar este equipo", Avanzado). */
+    boolean calibra();
+
+    /** Por que no se calibra; "" si se calibra. */
+    String motivoNoCalibra();
+
+    /** true si se puede medir el banco (hay x). */
+    boolean mideBanco();
+
+    /** Por que no se mide el banco; "" si se mide. */
+    String motivoNoBanco();
+
+    /** Etiqueta de una medida de la clave k (RF-APP-U07: el tipo 1 del V4 original no es retrorreflexion). */
+    String etiquetaMedida(char k);
+
+    /** Perfil de datos del firmware (CSV). */
+    PerfilFirmware perfil();
 }

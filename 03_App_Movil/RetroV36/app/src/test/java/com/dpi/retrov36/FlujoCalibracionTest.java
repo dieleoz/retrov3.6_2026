@@ -1334,4 +1334,44 @@ public class FlujoCalibracionTest {
         assertEquals(2, sim.cuantas("#GC#"));
         assertEquals(10, FlujoCalibracion.MAX_NO_VALIDAS);
     }
+
+    // ------------------------------------------------------------------ RTV 1.0: T-U15
+
+    /**
+     * T-U15: el mismo flujo "Calibrar todo" con la V4.6 simulada (PROTOCOLO-V4.6 §4): x con "#X,k#", R con
+     * "@LEERV", bateria con "#GB#"; ningun byte suelto ni 'e'. Mismas preguntas al operador que con la V3.6.
+     */
+    @Test
+    public void tU15ElMismoFlujoConLaV46() throws Exception {
+        FlujoCalibracion f36 = flujo();
+        String r36 = f36.calibrarTodo(sel('8'), "Diego", "V3.6");
+        assertTrue(r36, r36.startsWith("Sesión completa: 8 ACEPTADO;"));
+        List<String> titulos36 = new ArrayList<>(operador.titulos);
+        // la misma sesion, desde cero, contra la V4.6
+        preparar();
+        EquipoSimuladoV46 v46 = new EquipoSimuladoV46(sim);
+        ctx = FlujoCalibracion.identificar(v46, "SLV-002", MAC, apto, "6/6", "RTV 1.0.0 (10000)");
+        assertTrue(ctx.protocolo instanceof ProtocoloV46);
+        assertTrue(ctx.es362);
+        PerfilFirmware conCola = new PerfilFirmware(Protocolo.Firmware.F46, 0, 4095, "cola_banco_P1-P132.csv", "E",
+                "por_fijar", "prueba");
+        ctx.protocolo = new ProtocoloV46(conCola);
+        v46.recibidas.clear();
+        FlujoCalibracion f = new FlujoCalibracion(v46, operador, almacen, cola, campana, catalogo, decisiones, ctx, reloj);
+        f.pin("1234");
+        String r = f.calibrarTodo(sel('8'), "Diego", "V4.6");
+        assertTrue(r, r.startsWith("Sesión completa: 8 ACEPTADO;"));
+        assertEquals("mismas pantallas y preguntas", titulos36, operador.titulos);
+        assertTrue(v46.cuantas("#X,8#") > 0);
+        assertTrue(v46.cuantas("@LEERV,AMA,1@") > 0);
+        assertTrue(v46.cuantas("#GB#") > 0);
+        for (String t : v46.recibidas) {
+            assertTrue(t, t.startsWith("#") || Tramas.esLeervValida(t));
+        }
+        assertEquals(1, sim.cuantas("#S,8,"));
+        // sin cola de la V4.6 en firmwares.csv, las previas no dejan calibrar (A-5)
+        ctx.protocolo = new ProtocoloV46(PerfilFirmware.porDefecto(Protocolo.Firmware.F46));
+        FlujoCalibracion g = new FlujoCalibracion(v46, operador, almacen, cola, campana, catalogo, decisiones, ctx, reloj);
+        assertNotNull(g.motivoPrevias());
+    }
 }

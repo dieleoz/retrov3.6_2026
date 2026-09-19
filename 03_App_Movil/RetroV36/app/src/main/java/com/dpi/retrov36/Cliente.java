@@ -17,7 +17,8 @@ import java.util.concurrent.Executors;
  *   vacia la entrada.
  * - Cada peticion acaba en uno de tres desenlaces: VALIDA, TIMEOUT o
  *   INESPERADA. La trama literal va siempre al registro.
- * - Ninguna peticion con '@' salvo la sonda de V4 (Tramas.peticionPermitida).
+ * - Solo las tramas de la lista cerrada del protocolo detectado (Protocolo.permitida); antes de detectar,
+ *   solo las de la deteccion (Deteccion.PERMITIDAS: #V#, #GC#, #GN#, 9, 6 y la sonda).
  */
 public final class Cliente implements EnlaceSerie.OyenteRx, Canal {
 
@@ -115,14 +116,15 @@ public final class Cliente implements EnlaceSerie.OyenteRx, Canal {
     @Override
     public Respuesta pedir(String peticion, Tramas.Tipo tipo, long timeoutMs)
             throws IOException, InterruptedException {
-        if (!Tramas.peticionPermitida(peticion, Sesion.get().version == Sesion.Version.V36)) {
-            throw new IllegalArgumentException("peticion no permitida: " + peticion
-                    + " ('@' fuera de la sonda V4, o 'e' a un equipo que no es V3.6)");
+        // RTV 1.0 (RF-APP-U06): lista cerrada del protocolo detectado; antes de detectar, solo las de la deteccion.
+        Protocolo proto = Sesion.get().protocolo;
+        if (proto == null ? !Deteccion.permitida(peticion) : !proto.permitida(peticion)) {
+            throw new IllegalArgumentException("peticion no permitida: " + peticion + " (no está en la lista de "
+                    + (proto == null ? "la detección" : proto.nombre()) + ")");
         }
         EnlaceSerie enlace = EnlaceSerie.instancia();
         boolean almohadilla = peticion.startsWith("#");
-        boolean corta = almohadilla && ultimaFueAlmohadilla
-                && Sesion.get().version == Sesion.Version.V36;
+        boolean corta = almohadilla && ultimaFueAlmohadilla && proto != null && proto.administra();
         esperarPausa(enlace, corta);
         ultimaFueAlmohadilla = almohadilla;
         receptor.vaciar();

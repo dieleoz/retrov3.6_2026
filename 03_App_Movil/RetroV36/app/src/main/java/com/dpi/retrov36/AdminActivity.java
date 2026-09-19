@@ -202,13 +202,14 @@ public class AdminActivity extends Base {
             return;
         }
         Sesion s = Sesion.get();
-        boolean v36 = s.version == Sesion.Version.V36;
+        boolean v36 = s.administra() && s.protocolo.calibra();
         boolean ab = abierto();
         panel.setVisibility(ab ? View.VISIBLE : View.GONE);
         btnEntrar.setEnabled(v36 && !ab && !ocupado && EnlaceSerie.instancia().estaConectado());
         if (!v36) {
             txtAcceso.setText("Modo administrador desactivado: el firmware detectado es " + s.firmware()
-                    + ". Sólo el firmware V3.6 guarda la calibración en EEPROM y acepta órdenes #...#. "
+                    + (s.protocolo != null && !s.protocolo.calibra() ? ". " + s.protocolo.motivoNoCalibra() : "")
+                    + ". Sólo el firmware V3.6 (y la V4.6, cuando exista) guarda la calibración en EEPROM y acepta órdenes #...#. "
                     + "En un V3 2020 las ecuaciones están en el código: calibrar exige recompilar y grabar por ICSP "
                     + "(PROCEDIMIENTO-Calibracion-V3-K42.md §6).");
         } else if (ab) {
@@ -301,7 +302,7 @@ public class AdminActivity extends Base {
 
     private void entrar() {
         Sesion s = Sesion.get();
-        if (s.version != Sesion.Version.V36) {
+        if (!s.administra() || !s.protocolo.calibra()) {
             refrescar();
             return;
         }

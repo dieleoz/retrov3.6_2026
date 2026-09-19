@@ -393,7 +393,7 @@ public final class Campana {
     }
 
     /**
-     * Protocolo de disparos de la campana (P9-B3): K x M mas frecuente entre las series
+     * ProtocoloDisparos de disparos de la campana (P9-B3): K x M mas frecuente entre las series
      * elegidas. {1, 9} si no hay ninguna (el de la campana del 19-sep).
      */
     public int[] protocolo() {

@@ -18,9 +18,41 @@ public final class Ops {
     public static final int[] X_COMPROBACION = {500, 1000, 2000, 3000, 4000};
 
     private final Canal canal;
+    /** Protocolo del firmware (RTV 1.0): con que tramas se mide, se lee x y se lee la bateria. */
+    private final Protocolo protocolo;
 
     public Ops(Canal canal) {
+        this(canal, new ProtocoloV36());
+    }
+
+    public Ops(Canal canal, Protocolo protocolo) {
         this.canal = canal;
+        this.protocolo = protocolo == null ? new ProtocoloV36() : protocolo;
+    }
+
+    public Protocolo protocolo() {
+        return protocolo;
+    }
+
+    /** R de la clave k con la trama de medida del protocolo; null si no hubo respuesta valida. */
+    public Integer medirR(char k) throws IOException, InterruptedException {
+        String t = protocolo.tramaMedida(k);
+        if (t == null) {
+            return null;
+        }
+        Cliente.Respuesta r = canal.pedir(t, protocolo.tipoMedida(), protocolo.timeoutMedidaMs());
+        return r.valida() ? protocolo.valorMedida(r.trama) : null;
+    }
+
+    /** x en bruto para la clave k ('e' en la V3.6, "#X,k#" en la V4.6); null si no hubo respuesta o no hay x. */
+    public Double medirX(char k) throws IOException, InterruptedException {
+        String t = protocolo.tramaX(k);
+        if (t == null) {
+            return null;
+        }
+        Cliente.Respuesta r = canal.pedir(t, protocolo.tipoX(),
+                protocolo.tipoX() == Tramas.Tipo.ADMIN ? TIMEOUT_ESCRITURA_MS : TIMEOUT_MEDIDA_MS);
+        return r.valida() ? protocolo.valorX(r.trama, k) : null;
     }
 
     public Cliente.Respuesta pedir(String t) throws IOException, InterruptedException {
@@ -96,10 +128,15 @@ public final class Ops {
         return mal.length() == 0 ? null : "#E no reproduce la curva:" + mal;
     }
 
-    /** Orden 9 (RF-CAL-41). */
+    /** Bateria (RF-CAL-41, RF-APP-43): '9' en la V3.6, "#GB#" en la V4.6 (unidad por fijar). */
     public Bateria.Lectura bateria() throws IOException, InterruptedException {
-        Cliente.Respuesta r = canal.pedir("9", Tramas.Tipo.BATERIA, TIMEOUT_MEDIDA_MS);
-        return Bateria.interpretar(r.valida() ? Bateria.n(r.trama) : null);
+        String t = protocolo.tramaBateria();
+        if (t == null) {
+            return Bateria.interpretar(null);
+        }
+        Cliente.Respuesta r = canal.pedir(t, protocolo.tipoBateria(), TIMEOUT_MEDIDA_MS);
+        Integer n = r.valida() ? protocolo.valorBateria(r.trama) : null;
+        return "n9".equals(protocolo.perfil().bateriaUnidad) ? Bateria.interpretar(n) : Bateria.interpretarSinUnidad(n, t);
     }
 
     /** Resultado de una restauracion: ok solo si la relectura #G coincide con lo que habia. */

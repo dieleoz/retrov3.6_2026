@@ -97,8 +97,9 @@ public class PruebasActivity extends Base implements Pruebas.Oyente {
         if (Pruebas.get().enCurso()) {
             return;
         }
-        if (s.version == Sesion.Version.V4) {
-            alerta("Firmware no admitido", "Es un V4: esta app no aplica.");
+        if (s.protocolo != null && !s.protocolo.permitida("1")) {
+            alerta("Línea base", "La línea base de esta pantalla envía los códigos de un byte y 9 (V3). Con "
+                    + s.protocolo.nombre() + " no aplica: mida con \"Medir\" (@LEERV).");
             return;
         }
         int pos = spPatronLb.getSelectedItemPosition();
@@ -107,7 +108,7 @@ public class PruebasActivity extends Base implements Pruebas.Oyente {
         }
         final Patron p = patrones.get(pos);
         new AlertDialog.Builder(this).setTitle("Línea base: T-B03 y T-B09")
-                .setMessage("Firmware: " + s.firmware() + (s.version == Sesion.Version.SIN_DETECTAR
+                .setMessage("Firmware: " + s.firmware() + (s.sinDetectar()
                         ? " (se detectará primero: #V#, 9, 6; nunca e)" : "") + "\n\nColoque el equipo sobre " + p.nombre
                         + " y no lo mueva ni toque el gatillo. Se enviarán los 12 códigos y después 9.")
                 .setPositiveButton("Empezar", (d, w) -> fase1(p))
@@ -146,17 +147,17 @@ public class PruebasActivity extends Base implements Pruebas.Oyente {
                 String det = "";
                 Sesion s = Sesion.get();
                 if (forzar) {
-                    s.version = Sesion.Version.V3_2020;
-                    s.eDisponible = false;
+                    s.protocolo = new ProtocoloV2020();
+                    s.detectado = true;
                     det = "Versión FORZADA por el operador: V3 2020 sin e (la detección no identificó el equipo).\n";
                     Registro.nota(LineaBase.ETIQUETA + " version forzada por el operador: V3 2020 sin e");
-                } else if (s.version == Sesion.Version.SIN_DETECTAR || s.version == Sesion.Version.DESCONOCIDA) {
+                } else if (s.protocolo == null) {
                     progresoLb("detección de versión...");
                     det = "Detección:\n" + Pruebas.get().detectar(s) + "\n";
                     Registro.nota(LineaBase.ETIQUETA + " deteccion: " + det);
-                    if (!s.versionMedible()) {
+                    if (!s.versionMedible() || !s.protocolo.permitida("1")) {
                         final String detF = det;
-                        final boolean esV4 = s.version == Sesion.Version.V4;
+                        final boolean esV4 = s.protocolo != null;
                         enUi(() -> {
                             lineaBaseEnCurso = false;
                             pantallaEncendida(false);
@@ -164,7 +165,8 @@ public class PruebasActivity extends Base implements Pruebas.Oyente {
                             txtLineaBase.setText(detF + Cliente.instancia().consejoSiMudo());
                             cambio();
                             if (esV4) {
-                                alerta("Es un V4", "La detección identificó un V4: esta app no aplica.");
+                                alerta("Línea base", "La detección identificó " + Sesion.get().versionTexto()
+                                        + ": la línea base de bytes no aplica. Mida con \"Medir\".");
                                 return;
                             }
                             new AlertDialog.Builder(this).setTitle("Detección sin resultado")

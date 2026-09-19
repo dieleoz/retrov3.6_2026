@@ -41,8 +41,9 @@ public class ConexionActivity extends Base {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
-        texto("RTV V3.6 " + BuildConfig.VERSION_NAME + " - retrorreflectómetro vertical V3 / V3.6 (PIC18F47K42). "
-                + "Mide patrones y, sólo con firmware V3.6, calibra.");
+        texto("RTV " + BuildConfig.VERSION_NAME + " - retrorreflectómetro vertical V3, V3.6 y V4 (PIC18F47K42). "
+                + "Detecta el firmware al hacer las pruebas. Mide con todos; calibra con la V3.6 (y la V4.6 cuando "
+                + "exista). Con un V4 sin grabar, sólo medir y verificar.");
         btnPruebas = boton("1. Pruebas del equipo", v -> startActivity(new Intent(this, PruebasActivity.class)));
         btnMedir = boton("2. Medida de patrones", v -> startActivity(new Intent(this, MedidaActivity.class)));
         btnCampana = boton("3. Campaña de calibración (guiada, un solo envío)",
@@ -65,6 +66,7 @@ public class ConexionActivity extends Base {
         listaDispositivos.setOrientation(LinearLayout.VERTICAL);
         raiz.addView(listaDispositivos);
         Campanas.iniciar(this);
+        PerfilesApp.iniciar(this);
         pedirPermisos();
         avisoSinExportar();
     }
@@ -111,9 +113,18 @@ public class ConexionActivity extends Base {
         Sesion s = Sesion.get();
         btnPruebas.setEnabled(con);
         btnMedir.setEnabled(con);
-        btnBotones.setEnabled(con && s.version == Sesion.Version.V36);
-        btnAdmin.setEnabled(con);
-        btnCalibrar.setEnabled(con);
+        btnBotones.setEnabled(con && s.administra());
+        // RF-APP-U07: con un firmware que no calibra, los botones se deshabilitan y dicen por que.
+        Protocolo p = s.protocolo;
+        boolean calibra = p == null || p.calibra();
+        boolean banco = p == null || p.mideBanco();
+        btnAdmin.setEnabled(con && calibra);
+        btnCalibrar.setEnabled(con && calibra);
+        btnCampana.setEnabled(banco);
+        btnCalibrar.setText("4. Calibrar este equipo" + (calibra ? "" : "\n(" + p.motivoNoCalibra() + ")"));
+        btnAdmin.setText("Modo administrador" + (calibra ? "" : "\n(" + p.motivoNoCalibra() + ")"));
+        btnCampana.setText("3. Campaña de calibración (guiada, un solo envío)" + (banco ? "" : "\n(" + p.motivoNoBanco() + ")"));
+        btnMedir.setText("2. Medida de patrones" + (p != null && !p.daX() ? " (R con @LEERV)" : ""));
         listaDispositivos.setEnabled(!EnlaceSerie.instancia().estaConectando());
     }
 

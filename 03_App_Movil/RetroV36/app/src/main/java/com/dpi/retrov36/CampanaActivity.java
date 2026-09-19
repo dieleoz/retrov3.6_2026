@@ -80,9 +80,9 @@ public class CampanaActivity extends Base {
                 + "Cada exportación deja una copia en Download/RTV/.");
         // 3.6.15 (PROTOCOLO-MIN de Diego): por defecto 1 colocacion x 4 disparos; A5 y OSCURO, K = 5.
         edK = campo("Colocaciones K", InputType.TYPE_CLASS_NUMBER);
-        edK.setText(String.valueOf(Protocolo.K_DEFECTO));
+        edK.setText(String.valueOf(ProtocoloDisparos.K_DEFECTO));
         edN = campo("Disparos por colocación M", InputType.TYPE_CLASS_NUMBER);
-        edN.setText(String.valueOf(Protocolo.M_DEFECTO));
+        edN.setText(String.valueOf(ProtocoloDisparos.M_DEFECTO));
         fila(edK, edN);
         edTol = campo("Tolerancia de orden (%)", InputType.TYPE_CLASS_NUMBER);
         edTol.setText("3");
@@ -381,12 +381,12 @@ public class CampanaActivity extends Base {
         modoA5 = false;
         if (modoOscuro) {
             seriesOscuroAlEntrar = campana.seriesDe(Campana.OSCURO.nombre).size();
-            edK.setText(String.valueOf(Protocolo.K_CONTROL));
+            edK.setText(String.valueOf(ProtocoloDisparos.K_CONTROL));
             edN.setText("9");
             Registro.nota("campana: preajuste OSCURO activado");
         } else {
-            edK.setText(String.valueOf(Protocolo.K_DEFECTO));
-            edN.setText(String.valueOf(Protocolo.M_DEFECTO));
+            edK.setText(String.valueOf(ProtocoloDisparos.K_DEFECTO));
+            edN.setText(String.valueOf(ProtocoloDisparos.M_DEFECTO));
         }
         pintar();
     }
@@ -400,8 +400,8 @@ public class CampanaActivity extends Base {
             txtResultado.setText(A5.evaluar(campana).texto);
             Registro.nota("campana: preajuste A5 activado");
         } else {
-            edK.setText(String.valueOf(Protocolo.K_DEFECTO));
-            edN.setText(String.valueOf(Protocolo.M_DEFECTO));
+            edK.setText(String.valueOf(ProtocoloDisparos.K_DEFECTO));
+            edN.setText(String.valueOf(ProtocoloDisparos.M_DEFECTO));
         }
         pintar();
     }
@@ -427,8 +427,9 @@ public class CampanaActivity extends Base {
             alerta("Campaña cerrada", "La campaña está cerrada (solo lectura).");
             return;
         }
-        if (!EnlaceSerie.instancia().estaConectado() || !s.versionMedible()) {
-            alerta("No se puede medir", "Conecte con el equipo y pase las pruebas (firmware: " + s.firmware() + ").");
+        if (!EnlaceSerie.instancia().estaConectado() || !s.versionMedible() || !s.protocolo.mideBanco()) {
+            alerta("No se puede medir", s.protocolo != null && !s.protocolo.mideBanco() ? s.protocolo.motivoNoBanco()
+                    : "Conecte con el equipo y pase las pruebas (firmware: " + s.firmware() + ").");
             return;
         }
         if (campana == null || !campana.esDeEsteEquipo(s.mac)) {
@@ -469,7 +470,8 @@ public class CampanaActivity extends Base {
         final double tolOrden = tol();
         Cliente.instancia().ejecutar(() -> {
             try {
-                char codigo = s.version == Sesion.Version.V36 ? 'e' : '6';
+                String tx = s.protocolo == null ? null : s.protocolo.tramaX('1');
+                char codigo = tx == null ? '6' : tx.length() == 1 ? tx.charAt(0) : 'X';
                 Campana.Serie serie = campana.nuevaSerie(Sesion.ahoraIso(), s.serie(), s.mac, s.firmware(), p.nombre,
                         orientacion, codigo);
                 Registro.nota("campana: " + serie.id + " " + p.nombre + " a " + orientacion + "°, " + kCol + " colocaciones x "

@@ -154,7 +154,7 @@ public final class Registro {
         Intent envio = new Intent(Intent.ACTION_SEND);
         envio.setType("text/plain");
         envio.putExtra(Intent.EXTRA_STREAM, uri);
-        envio.putExtra(Intent.EXTRA_SUBJECT, "RTV V3.6 - " + f.getName());
+        envio.putExtra(Intent.EXTRA_SUBJECT, "RTV " + BuildConfig.VERSION_NAME + " - " + f.getName());
         envio.setClipData(ClipData.newRawUri(f.getName(), uri));
         envio.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         return Intent.createChooser(envio, "Compartir registro");

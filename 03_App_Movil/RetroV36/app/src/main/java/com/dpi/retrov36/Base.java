@@ -379,7 +379,7 @@ public abstract class Base extends AppCompatActivity implements EnlaceSerie.Oyen
         Intent i = new Intent(Intent.ACTION_SEND_MULTIPLE);
         i.setType("text/*");
         i.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
-        i.putExtra(Intent.EXTRA_SUBJECT, "RTV V3.6 - " + s.identidad());
+        i.putExtra(Intent.EXTRA_SUBJECT, "RTV " + BuildConfig.VERSION_NAME + " - " + s.identidad());
         i.putExtra(Intent.EXTRA_TEXT, s.identidad() + "\nPruebas: " + s.resumenPruebas);
         i.setClipData(clip);
         i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);

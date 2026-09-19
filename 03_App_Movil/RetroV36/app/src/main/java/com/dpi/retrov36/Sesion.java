@@ -19,27 +19,23 @@ import java.util.Locale;
 /** Estado de la conexion en curso: equipo, version, pruebas y medidas. */
 public final class Sesion {
 
-    public enum Version {
-        SIN_DETECTAR("sin detectar"),
-        V36("V3.6"),
-        V3_2020("V3 2020"),
-        V4("V4 (la app no aplica)"),
-        DESCONOCIDA("desconocida");
-
-        public final String texto;
-
-        Version(String t) {
-            texto = t;
-        }
-    }
-
     private static final Sesion INSTANCIA = new Sesion();
 
     public static Sesion get() {
         return INSTANCIA;
     }
 
-    public volatile Version version = Version.SIN_DETECTAR;
+    /**
+     * Protocolo del firmware detectado (RTV 1.0, RF-APP-U06); null si no se ha detectado o no se reconocio.
+     * Las pantallas preguntan al protocolo que puede hacer, no por la version.
+     */
+    public volatile Protocolo protocolo;
+    /** true tras una deteccion, aunque no se reconociera el firmware. */
+    public volatile boolean detectado;
+    /** Diario del estado oculto del V4 original (RF-APP-U08). */
+    public final DiarioEstadoOculto diario = new DiarioEstadoOculto();
+    /** Serie declarada por el perfil de equipos.csv ("" si no hay). */
+    public volatile String serieDeclaradaPerfil = "";
     public volatile String fechaFirmware = "";
     /** "CAL" o "DEF" en V3.6; vacio en otro caso. */
     public volatile String marca = "";
@@ -63,8 +59,6 @@ public final class Sesion {
      * desactiva. No se reinicia al reconectar.
      */
     public volatile int disparosAsentamiento = 1;
-    /** true si el equipo responde a 'e' (siempre en V3.6 segun contrato). */
-    public volatile boolean eDisponible;
     public volatile String nombre = "";
     public volatile String mac = "";
 
@@ -115,7 +109,10 @@ public final class Sesion {
         this.nombre = nombre;
         this.mac = mac;
         serieManual = "";
-        version = Version.SIN_DETECTAR;
+        protocolo = null;
+        detectado = false;
+        diario.reiniciar();
+        serieDeclaradaPerfil = "";
         fechaFirmware = "";
         marca = "";
         mascara = -1;
@@ -124,7 +121,6 @@ public final class Sesion {
         fechaCalibracion = null;
         ultimaAlmohadillaMs = 0;
         fallosPin = 0;
-        eDisponible = false;
         for (int i = 0; i < leidas.length; i++) {
             leidas[i] = null;
         }
@@ -147,9 +143,18 @@ public final class Sesion {
     /** Serie tecleada por el operador cuando el nombre SPP no la trae; vacia si no. */
     public volatile String serieManual = "";
 
-    /** true si se sabe la serie (del nombre "..._<serie>" o tecleada). */
+    /** RTV 1.0 (RF-APP-U11, U13): con la V4.6 la serie es la de #GN#, nunca tecleada; en blanco, no hay serie. */
+    private boolean serieDeV46() {
+        Protocolo p = protocolo;
+        return p != null && p.firmware() == Protocolo.Firmware.F46;
+    }
+
+    /** true si se sabe la serie (#GN# de la V4.6; si no, del nombre "..._<serie>", tecleada o de equipos.csv). */
     public boolean serieConocida() {
-        if (!serieManual.isEmpty()) {
+        if (serieDeV46()) {
+            return serieEquipo != null && !Calibracion.NONE.equals(serieEquipo);
+        }
+        if (!serieManual.isEmpty() || !serieDeclaradaPerfil.isEmpty()) {
             return true;
         }
         String n = nombre == null ? "" : nombre;
@@ -158,35 +163,70 @@ public final class Sesion {
     }
 
     public String serie() {
+        if (serieDeV46()) {
+            return serieConocida() ? serieEquipo : "";
+        }
         if (!serieManual.isEmpty()) {
             return serieManual;
+        }
+        if (!serieDeclaradaPerfil.isEmpty()) {
+            return serieDeclaradaPerfil;
         }
         String n = nombre == null ? "" : nombre;
         int i = n.lastIndexOf('_');
         return (i >= 0 && i < n.length() - 1) ? n.substring(i + 1) : n;
     }
 
+    public boolean sinDetectar() {
+        return protocolo == null && !detectado;
+    }
+
+    /** Nombre del firmware, o "sin detectar" / "desconocido". */
+    public String versionTexto() {
+        Protocolo p = protocolo;
+        return p != null ? p.nombre() : detectado ? "desconocido" : "sin detectar";
+    }
+
     public String firmware() {
-        switch (version) {
-            case V36:
+        Protocolo p = protocolo;
+        if (p == null) {
+            return versionTexto();
+        }
+        switch (p.firmware()) {
+            case F36:
                 return "V3.6 " + fechaFirmware + (variante == Calibracion.Variante.V362 ? " (3.6.2)"
                         : (limitesS() ? " (3.6.1)" : " (3.6.0, sin límites de #S)")) + " " + marca
                         + (mascara >= 0 ? String.format(Locale.US, " mascara %04X", mascara) : "");
-            case V3_2020:
-                return "V3 2020 (sin e)";
+            case F46:
+                return "V4.6 " + fechaFirmware + " " + marca
+                        + (mascara >= 0 ? String.format(Locale.US, " mascara %04X", mascara) : "");
             default:
-                return version.texto;
+                return p.nombre();
         }
     }
 
+    /** true si habla el contrato "#...#" (V3.6 o V4.6). */
+    public boolean administra() {
+        Protocolo p = protocolo;
+        return p != null && p.administra();
+    }
+
+    /** true si el equipo tiene serie y fecha en EEPROM (#GN#, #GC#): V3.6.2 y V4.6. */
     public boolean es362() {
-        return version == Version.V36 && variante == Calibracion.Variante.V362;
+        Protocolo p = protocolo;
+        return p != null && p.administra()
+                && (p.firmware() == Protocolo.Firmware.F46 || variante == Calibracion.Variante.V362);
+    }
+
+    /** RF-APP-U11: marca de la serie cuando no sale de #GN#. */
+    public String marcaSerie() {
+        return Deteccion.marcaSerie(protocolo, variante, serieEquipo);
     }
 
     /** Serie del equipo, fecha de calibracion, vencimiento y estado (3.6.2). */
     public String datosCalibracion() {
-        if (version != Version.V36) {
-            return "Serie y fecha de calibración: no disponibles en " + version.texto;
+        if (!administra()) {
+            return "Serie y fecha de calibración: no disponibles en " + versionTexto();
         }
         if (!es362()) {
             return "Serie y fecha de calibración: el firmware no es la 3.6.2 (no tiene #GN#/#GC#)";
@@ -201,7 +241,7 @@ public final class Sesion {
 
     /** Identidad para cabeceras y exportaciones. */
     public String identidad() {
-        return "equipo " + nombre + " (serie " + serie() + ", MAC " + mac + "), firmware " + firmware();
+        return "equipo " + nombre + " (serie " + serie() + marcaSerie() + ", MAC " + mac + "), firmware " + firmware();
     }
 
     /**
@@ -213,14 +253,16 @@ public final class Sesion {
         return fechaFirmware != null && fechaFirmware.compareTo("2026-09-19") >= 0;
     }
 
+    /** true si se puede medir la x de los patrones (hay x, directa o por inversion). */
     public boolean versionMedible() {
-        return version == Version.V36 || version == Version.V3_2020;
+        Protocolo p = protocolo;
+        return p != null && p.daX();
     }
 
     /** Ecuacion con la que responde el equipo al codigo k. */
     public Ecuacion ecuacionVigente(char k) {
         int i = Fabrica.indice(k);
-        if (version == Version.V36 && i >= 0 && leidas[i] != null) {
+        if (administra() && i >= 0 && leidas[i] != null) {
             return leidas[i];
         }
         return Fabrica.ecuacion(k);

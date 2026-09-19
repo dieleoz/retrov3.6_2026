@@ -95,13 +95,14 @@ public class CalibrarActivity extends Base {
         Sesion s = Sesion.get();
         ctx.conectado = EnlaceSerie.instancia().estaConectado();
         ctx.es362 = s.es362();
+        ctx.protocolo = s.protocolo != null ? s.protocolo : new ProtocoloV36();
         ctx.firmware = s.firmware();
         ctx.apto = s.apto;
         ctx.resumenPruebas = s.resumenPruebas;
         ctx.serieGN = s.serieEquipo;
         ctx.nombreBT = s.nombre;
         ctx.mac = s.mac;
-        ctx.app = "RTV " + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")";
+        ctx.app = "RTV " + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ", sucede a 3.6.16)";
     }
 
     private void construir() {

@@ -102,19 +102,19 @@ public class Version3616Test {
     public void losPatronesARepetirVanA5x4YLoDeAjusteTambien() throws Exception {
         BancoCola q = cola(BancoCola.Tipo.COMPLETO);
         for (String p : REPETIR) {
-            int[] km = Protocolo.efectivo(paso(q, p), true, "PRECISO", REPETIR);
+            int[] km = ProtocoloDisparos.efectivo(paso(q, p), true, "PRECISO", REPETIR);
             assertEquals(p, 5, km[0]);
             assertEquals(p, 4, km[1]);
         }
         // Un tipo I que no se repite y no es de lo que se escribe: 1 x 4 en rapido.
         for (BancoCola.Paso p : q.pasos) {
-            if ("PATRON".equals(p.tipo) && !Protocolo.deAjuste(p) && !REPETIR.contains(p.patron)) {
-                assertEquals(1, Protocolo.efectivo(p, true, "PRECISO", REPETIR)[0]);
+            if ("PATRON".equals(p.tipo) && !ProtocoloDisparos.deAjuste(p) && !REPETIR.contains(p.patron)) {
+                assertEquals(1, ProtocoloDisparos.efectivo(p, true, "PRECISO", REPETIR)[0]);
                 break;
             }
         }
-        assertEquals(5, Protocolo.requerido("PRECISO")[0]);
-        assertNull(Protocolo.requerido("LIBRE"));
+        assertEquals(5, ProtocoloDisparos.requerido("PRECISO")[0]);
+        assertNull(ProtocoloDisparos.requerido("LIBRE"));
     }
 
     // ---------------------------------------------------------- cola representativa v2
@@ -123,7 +123,9 @@ public class Version3616Test {
     public void laColaRepresentativaV2SoloTieneA5YOscuroDeControl() throws Exception {
         BancoCola q = cola(BancoCola.Tipo.REPRESENTATIVO);
         assertEquals("70ef3b868db85ef75743936a6218935e", q.md5);
-        byte[] repo = Files.readAllBytes(new File("../../../06_Calibracion/cola_banco_representativo_v2.csv").toPath());
+        // El fichero de 06_Calibracion se versiona en LF; un checkout con autocrlf lo deja en CRLF: se normaliza.
+        byte[] repo = new String(Files.readAllBytes(new File("../../../06_Calibracion/cola_banco_representativo_v2.csv")
+                .toPath()), StandardCharsets.UTF_8).replace("\r\n", "\n").getBytes(StandardCharsets.UTF_8);
         assertEquals("la del APK es la de 06_Calibracion", q.md5, PaquetesZip.md5(repo));
         for (BancoCola.Paso p : q.pasos) {
             // solo la bateria de inicio de sesion (orden 9); la de cada color salio en la v2
@@ -152,7 +154,7 @@ public class Version3616Test {
         BancoCola.Paso conEq = null;
         String eq = null;
         for (BancoCola.Paso p : q.pasos) {
-            if (!"PATRON".equals(p.tipo) || Protocolo.deAjuste(p) || REPETIR.contains(p.patron)) {
+            if (!"PATRON".equals(p.tipo) || ProtocoloDisparos.deAjuste(p) || REPETIR.contains(p.patron)) {
                 continue;
             }
             for (String e : g.equivalentes(p.patron)) {
@@ -170,7 +172,7 @@ public class Version3616Test {
         // Un patron de lo que se escribe (no de los que se repiten) medido a 3 x 3: no cuenta.
         BancoCola.Paso aj8 = null;
         for (BancoCola.Paso p : q.pasos) {
-            if (Protocolo.deAjuste(p) && !REPETIR.contains(p.patron) && g.equivalentes(p.patron).size() <= 1) {
+            if (ProtocoloDisparos.deAjuste(p) && !REPETIR.contains(p.patron) && g.equivalentes(p.patron).size() <= 1) {
                 aj8 = p;
                 break;
             }

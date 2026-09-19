@@ -11,8 +11,8 @@ android {
         applicationId "com.dpi.retrov36"
         minSdkVersion 24
         targetSdkVersion 30
-        versionCode 3616
-        versionName "3.6.16"
+        versionCode 10000
+        versionName "1.0.0"
     }
 
     buildTypes {

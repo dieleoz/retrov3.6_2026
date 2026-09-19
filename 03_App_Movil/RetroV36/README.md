@@ -1,10 +1,10 @@
-# RTV V3.6 — app Android del Retrorreflectómetro Vertical V3 / V3.6
+# RTV — app única del Retrorreflectómetro Vertical (V3, V3.6, V4 y V4.6)
 
 **Estado, 18-sep-2026: compila y pasa sus tests JVM. No se ha probado contra ningún equipo.** El modo
 V3.6 no se puede probar: el firmware V3.6 no existe todavía en ningún equipo. Lo que sí debe funcionar
 es la medida contra un V3 2020 (SLV-002), y eso tampoco se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 3616`, `versionName 3.6.16` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.16 → 3616) (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36` (no cambia), etiqueta "RTV", `versionCode 10000`, `versionName 1.0.0` (RTV 1.0.0, sucede a 3.6.16; decisión VERSION de Diego). Antes: `versionCode 3616`, `versionName 3.6.16` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.16 → 3616) (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -115,6 +115,57 @@ Reglas que salen de ahí, en el código:
   envía sólo `1`-`8`, `a`-`d` y `9`.
 - Tras 3 peticiones seguidas sin un solo byte, la app aconseja apagar y encender el equipo y lo anota
   en el registro.
+
+## RTV 1.0.0-rc1 (rama `rtv-1.0`): app única V3.6 y V4.6
+
+**Sin medir. Ninguna trama V4 ni V4.6 de esta app se ha visto en un terminal serie, y el firmware V4.6 no
+existe.** Contrato: `05_Documentacion/SPEC-App-Unica-V36-V46.md` y la revisión P2
+(`REVISION-Arquitectura-V46-P2.md` del repositorio V4.6, veredicto (b), MVP de la capa de protocolo).
+
+- **`Protocolo`** (RF-APP-U06) sustituye al "es V3.6". Hay cuatro implementaciones:
+  - `ProtocoloV36`;
+  - `ProtocoloV2020`: sin `e` ni `#`;
+  - `ProtocoloV4Original`: sólo las 12 `@LEERV`;
+  - `ProtocoloV46`: las 12 `@LEERV` y el contrato `#`, más `#X,k#` y `#GB#`, según PROTOCOLO-V4.6 §4.
+
+  Cada una tiene su lista cerrada de tramas, y `Cliente` rechaza cualquier trama que no esté en ella. Las
+  pantallas preguntan al protocolo qué puede hacer: medir, calibrar, medir el banco o leer x.
+- **Lo que es dato va en `firmwares.csv`** (RF-APP-U09): el dominio de x, la cola del banco, la coherencia en
+  `DEF` (`G` o `E`) y la unidad de la batería.
+- **`Enlace`**: no se ha separado como interfaz propia. `Canal` ya cumple ese papel para las pruebas.
+- **Detección** (`Deteccion`, RF-APP-U01 a U04). El orden es `#V#` → `9` → `6` → sonda `@LEERV,BLA,2@`
+  (C-U01), con 5 s de espera. La respuesta sólo se acepta con la forma estricta `@LEERV,<entero>@`, y lo que
+  sigue (`/n/r` + `0x00`) se descarta. Nunca se envía `e` ni una `@` que no sea la sonda.
+- **Perfil por MAC** (RF-APP-U02 con A-3):
+  - Los perfiles firmados van en `equipos.csv`, con el régimen de `decisiones.csv`. De momento no tiene
+    filas: el perfil del V3-2 espera a M-3.
+  - La app guarda un perfil aprendido por MAC con la huella de `#V#`. Si `#V#` cambia, el perfil caduca.
+  - Un perfil firmado con `caduca_con_v` deja de aplicarse, sin contradecir, cuando el equipo responde con
+    esa versión.
+  - Un perfil `SOLO_SONDA` se salta si el operador pide la detección completa, o si lo aprendido ya vio una
+    V4.6.
+- **V4 original** (RF-APP-U07 y U08):
+  - Sólo mide R entera con `@LEERV`. Los tipo 1 llevan su etiqueta y cada medida anota el diario del estado
+    oculto.
+  - No calibra, no entra en Avanzado y no mide banco. Cada botón deshabilitado muestra el motivo: "Equipo V4
+    sin firmware V4.6: sólo medir y verificar".
+  - Las pruebas 3-6 no aplican.
+- **V4.6** (RF-APP-U09 y U13): sigue el mismo flujo "Calibrar todo" que la V3.6. Las diferencias:
+  - x se lee con `#X,k#`, R con `@LEERV` y la batería con `#GB#`;
+  - la serie sale siempre de `#GN#`. En blanco, no se abre campaña hasta dar de alta la serie.
+  - Mientras `firmwares.csv` no traiga la cola de la V4.6, no calibra ni mide el banco (A-5: sólo en
+    simulador).
+- **Simuladores:**
+  - `EquipoSimuladoV4` reproduce el V4.1: el bloqueo por `@` sin `LEERV`, el `0x00`, el segundo de espera
+    y el `error` arrastrado.
+  - `EquipoSimuladoV46` reproduce el contrato de §4 sobre la 3.6.2 simulada.
+- **Pruebas:** `RtvUnicaTest` (18) y `FlujoCalibracionTest.tU15ElMismoFlujoConLaV46`. En total son 245 y
+  pasan todas, T-S00 incluida.
+- **Pendiente:**
+  - T-U16, a medias: falta la coherencia por `#E` contra el literal de la V4.1, que depende de F-1 y F-5.
+  - T-U17: el V4 original no mide banco, así que no hay cola de verificación.
+  - T-U18: sólo registros; faltan el ZIP y el acta.
+  - AT-U01 a AT-U11: ninguna se ha hecho con un equipo.
 
 ## Cambios de la 3.6.16 (REVISION-Arquitectura-P14-V3.6.md, QA-App-3.6.15.md, decisiones de 6048453)
 

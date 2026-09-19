@@ -395,11 +395,11 @@ public class BancoActivity extends Base {
                     : "REHACER".equals(est.get(paso.orden)) ? " (A REHACER: " + motivoRehacer(paso.orden) + ")" : "";
             txtPaso.setText("Sesión " + paso.sesion + " · paso " + paso.orden + reintento + "\n" + paso.instruccion()
                     + (paso.esMedida() ? String.format(Locale.US, "\n%d colocaciones × %d disparos + %d de asentamiento%s",
-                    Protocolo.efectivo(paso, prefRapido(), protocoloAjuste(), repetir())[0],
-                    Protocolo.efectivo(paso, prefRapido(), protocoloAjuste(), repetir())[1], paso.asentamiento,
+                    ProtocoloDisparos.efectivo(paso, prefRapido(), protocoloAjuste(), repetir())[0],
+                    ProtocoloDisparos.efectivo(paso, prefRapido(), protocoloAjuste(), repetir())[1], paso.asentamiento,
                     "OSCURO".equals(paso.tipo) || "A5".equals(paso.tipo) ? " (A5 y OSCURO: siempre K = 5)"
-                            : Protocolo.aRepetir(paso, repetir()) ? " (preciso: Diego manda repetirlo, TIPO-I-REPETIR)"
-                            : Protocolo.deAjuste(paso) && !"RAPIDO".equals(protocoloAjuste())
+                            : ProtocoloDisparos.aRepetir(paso, repetir()) ? " (preciso: Diego manda repetirlo, TIPO-I-REPETIR)"
+                            : ProtocoloDisparos.deAjuste(paso) && !"RAPIDO".equals(protocoloAjuste())
                             ? " (preciso: patrón de lo que se escribe, PROTOCOLO-AJUSTE)"
                             : prefRapido() ? " (rápido; con 1 colocación la reproducibilidad no se evalúa)" : " (preciso)") : "")
                     + (paso.esMedida() && !paso.codigo.isEmpty() ? "\nCódigo " + paso.codigo + ", uso " + paso.uso : "")
@@ -485,15 +485,15 @@ public class BancoActivity extends Base {
         ocupado = true;
         pintar();
         Cliente.instancia().ejecutar(() -> {
-            Integer n = null;
+            Bateria.Lectura lec = Bateria.interpretar(null);
             String err = null;
             try {
-                Cliente.Respuesta r = Cliente.instancia().pedir("9", Tramas.Tipo.BATERIA, Cliente.TIMEOUT_MEDIDA_MS);
-                n = r.valida() ? Bateria.n(r.trama) : null;
+                // RTV 1.0: la trama de bateria es la del protocolo ('9' en la V3.6, "#GB#" en la V4.6).
+                lec = new Ops(Cliente.instancia(), Sesion.get().protocolo).bateria();
             } catch (IOException | InterruptedException | RuntimeException e) {
                 err = EnlaceSerie.descripcion(e);
             }
-            final Bateria.Lectura l = Bateria.interpretar(n);
+            final Bateria.Lectura l = lec;
             final String ferr = err;
             enUi(() -> {
                 ocupado = false;
@@ -542,7 +542,7 @@ public class BancoActivity extends Base {
         /** El operador confirmo "¿Era Pxx?" (preferencia de la 3.6.14). */
         boolean confirmado;
 
-        /** Protocolo efectivo de este paso (3.6.15, PROTOCOLO-MIN): K colocaciones x M disparos. */
+        /** ProtocoloDisparos efectivo de este paso (3.6.15, PROTOCOLO-MIN): K colocaciones x M disparos. */
         final int kEf;
         final int mEf;
         final String protocolo;
@@ -551,10 +551,10 @@ public class BancoActivity extends Base {
             this.p = p;
             this.campana = c;
             this.nombre = "OSCURO".equals(p.tipo) ? Campana.OSCURO.nombre : p.patron;
-            int[] km = Protocolo.efectivo(p, rapido, protocoloAjuste, repetir);
+            int[] km = ProtocoloDisparos.efectivo(p, rapido, protocoloAjuste, repetir);
             this.kEf = km[0];
             this.mEf = km[1];
-            this.protocolo = Protocolo.texto(km, rapido && km[0] == Protocolo.K_DEFECTO);
+            this.protocolo = ProtocoloDisparos.texto(km, rapido && km[0] == ProtocoloDisparos.K_DEFECTO);
         }
 
         String texto() {
@@ -617,8 +617,9 @@ public class BancoActivity extends Base {
 
     private void medir(BancoCola.Paso p) {
         Sesion s = Sesion.get();
-        if (!s.versionMedible()) {
-            alerta("No se puede medir", "Pase antes las pruebas del equipo (firmware: " + s.firmware() + ").");
+        if (!s.versionMedible() || !s.protocolo.mideBanco()) {
+            alerta("No se puede medir", s.protocolo != null && !s.protocolo.mideBanco() ? s.protocolo.motivoNoBanco()
+                    : "Pase antes las pruebas del equipo (firmware: " + s.firmware() + ").");
             return;
         }
         if (enCurso != null) {

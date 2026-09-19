@@ -61,7 +61,7 @@ public class BotonesActivity extends Base {
         if (btnLeer == null) {
             return;
         }
-        boolean v36 = Sesion.get().version == Sesion.Version.V36;
+        boolean v36 = Sesion.get().administra();
         boolean con = EnlaceSerie.instancia().estaConectado();
         btnVaciar.setEnabled(v36 && con && !ocupado);
         btnLeer.setEnabled(v36 && con && !ocupado);

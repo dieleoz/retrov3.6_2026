@@ -33,6 +33,10 @@ public class MedidaActivity extends Base {
     private TextView txtEstado;
     private TextView txtTabla;
     private List<Patron> patrones = new ArrayList<>();
+    /** RTV 1.0: clave de @LEERV para medir R con un firmware sin x (V4 original). */
+    private Spinner spClave;
+    /** Medidas de R de esta pantalla (V4 original), en texto. */
+    private final List<String> medidasR = new ArrayList<>();
     private volatile boolean midiendo;
     private volatile boolean parar;
 
@@ -44,6 +48,18 @@ public class MedidaActivity extends Base {
                 + "(naranja intenso) invirtiendo su ecuación.");
         spPatron = new Spinner(this);
         raiz.addView(spPatron);
+        spClave = new Spinner(this);
+        List<String> claves = new ArrayList<>();
+        for (char k : Fabrica.CODIGOS) {
+            String t = Tramas.tramaLeerv(k);
+            claves.add(k + "  " + t.substring(7, t.length() - 1) + "  (" + Fabrica.color(k) + ", tipo "
+                    + (Tramas.esTipo1(k) ? "1" : "2 = otros papeles") + ")");
+        }
+        ArrayAdapter<String> adc = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, claves);
+        adc.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spClave.setAdapter(adc);
+        spClave.setVisibility(android.view.View.GONE);
+        raiz.addView(spClave);
         edN = campo("Lecturas por patrón (N)", InputType.TYPE_CLASS_NUMBER);
         edN.setText("3");
         edAsentamiento = campo("Disparos de asentamiento descartados antes de la serie (0 = ninguno)",
@@ -81,6 +97,7 @@ public class MedidaActivity extends Base {
         Sesion s = Sesion.get();
         boolean con = EnlaceSerie.instancia().estaConectado();
         btnMedir.setEnabled(con && !midiendo && !Pruebas.get().enCurso());
+        spClave.setVisibility(sinX(s) ? android.view.View.VISIBLE : android.view.View.GONE);
         // P9-B3: el asentamiento no cambia mientras dura una calibracion.
         edAsentamiento.setEnabled(!s.calibrando());
         if (s.calibrando()) {
@@ -92,10 +109,14 @@ public class MedidaActivity extends Base {
                 txtEstado.setText("Sin conexión.");
             } else if (s.apto == null) {
                 txtEstado.setText("Antes de medir hay que pasar las pruebas del equipo.");
+            } else if (sinX(s)) {
+                txtEstado.setText(s.protocolo.nombre() + ": se mide R con @LEERV (sin x). Elija patrón y clave. "
+                        + ProtocoloV4Original.MOTIVO + ".");
             } else if (!s.versionMedible()) {
-                txtEstado.setText("Firmware " + s.version.texto + ": esta app no mide con él.");
+                txtEstado.setText("Firmware " + s.versionTexto() + ": esta app no mide con él.");
             } else {
-                txtEstado.setText("Listo. Método: " + (s.version == Sesion.Version.V36 ? "'e' directa" : "'6' invertido"));
+                String tx = s.protocolo.tramaX('1');
+                txtEstado.setText("Listo. Método: " + (tx == null ? "'6' invertido" : "'" + tx + "' directa"));
             }
         }
     }
@@ -109,8 +130,12 @@ public class MedidaActivity extends Base {
                     .setNegativeButton("Cancelar", null).show();
             return;
         }
+        if (sinX(s)) {
+            medirR(s);
+            return;
+        }
         if (!s.versionMedible()) {
-            alerta("No se puede medir", "Firmware " + s.version.texto + ".");
+            alerta("No se puede medir", "Firmware " + s.versionTexto() + ".");
             return;
         }
         if (!s.apto && !s.medirNoAptoAceptado) {
@@ -208,7 +233,97 @@ public class MedidaActivity extends Base {
         });
     }
 
+    /** true si el firmware no da x y solo se mide R (V4 original, RF-APP-U07). */
+    private static boolean sinX(Sesion s) {
+        return s.protocolo != null && !s.protocolo.daX();
+    }
+
+    /**
+     * RF-APP-U07/U08: medida de R con @LEERV (V4 original). El entero se guarda como entero. El tipo 1 lleva su
+     * etiqueta y no se compara con el certificado; cada medida de otros papeles lleva la previa de tipo 1 (el
+     * error oculto del V4.1) o "estado previo desconocido".
+     */
+    private void medirR(Sesion s) {
+        int pos = spPatron.getSelectedItemPosition();
+        int kp = spClave.getSelectedItemPosition();
+        if (pos < 0 || pos >= patrones.size() || kp < 0) {
+            return;
+        }
+        int n;
+        try {
+            n = Integer.parseInt(edN.getText().toString().trim());
+            if (n < 1 || n > 50) {
+                throw new NumberFormatException();
+            }
+        } catch (NumberFormatException e) {
+            alerta("N", "Escriba un número de lecturas entre 1 y 50.");
+            return;
+        }
+        final Patron p = patrones.get(pos);
+        final char k = Fabrica.CODIGOS[kp];
+        final Protocolo proto = s.protocolo;
+        final int total = n;
+        midiendo = true;
+        parar = false;
+        pantallaEncendida(true);
+        refrescar();
+        Registro.nota("medida R de " + p.nombre + " con " + proto.tramaMedida(k) + " x" + total + " (" + s.identidad() + ")");
+        Cliente.instancia().ejecutar(() -> {
+            String fin = "Terminado.";
+            for (int i = 0; i < total && !parar; i++) {
+                final int q = i + 1;
+                enUi(() -> txtEstado.setText("Midiendo " + p.nombre + ": lectura " + q + " de " + total + "..."));
+                try {
+                    Cliente.Respuesta r = Cliente.instancia().pedir(proto.tramaMedida(k), proto.tipoMedida(),
+                            proto.timeoutMedidaMs());
+                    Integer v = r.valida() ? proto.valorMedida(r.trama) : null;
+                    String nota = s.diario.anotar(k, v, false);
+                    String et = proto.etiquetaMedida(k);
+                    String cmp = v == null || Tramas.esTipo1(k) ? ""
+                            : String.format(Locale.US, "; frente al certificado %.0f: %+.1f %%", p.valor,
+                            100.0 * (v - p.valor) / p.valor);
+                    String linea = String.format(Locale.US, "%s %s: %s [%s]%s; %s", p.nombre, proto.tramaMedida(k),
+                            v == null ? r.describir() : String.valueOf(v), et, cmp, nota);
+                    Registro.nota("medida R: " + linea + " (" + s.identidad() + ")");
+                    synchronized (medidasR) {
+                        medidasR.add(linea);
+                    }
+                } catch (IOException e) {
+                    fin = "Detenido: " + EnlaceSerie.descripcion(e);
+                    break;
+                } catch (InterruptedException e) {
+                    fin = "Interrumpido.";
+                    break;
+                } catch (RuntimeException e) {
+                    fin = "Error interno: " + EnlaceSerie.descripcion(e);
+                    Registro.nota(fin);
+                    break;
+                }
+                enUi(this::pintarTabla);
+            }
+            final String f = fin + (s.diario.aviso().isEmpty() ? "" : "\n" + s.diario.aviso())
+                    + Cliente.instancia().consejoSiMudo();
+            enUi(() -> {
+                midiendo = false;
+                pantallaEncendida(false);
+                refrescar();
+                txtEstado.setText(f);
+                pintarTabla();
+            });
+        });
+    }
+
     private void pintarTabla() {
+        synchronized (medidasR) {
+            if (!medidasR.isEmpty()) {
+                StringBuilder sb = new StringBuilder("Medidas de R (@LEERV, enteras):\n");
+                for (String l : medidasR) {
+                    sb.append(l).append('\n');
+                }
+                txtTabla.setText(sb.toString());
+                return;
+            }
+        }
         Map<String, List<Medida>> por = new LinkedHashMap<>();
         for (Medida m : Sesion.get().medidas()) {
             List<Medida> l = por.get(m.patron.nombre);

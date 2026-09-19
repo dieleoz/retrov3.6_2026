@@ -80,7 +80,10 @@ public final class FlujoCalibracion {
     /** Lo que la sesion sabe del equipo conectado. */
     public static final class Contexto {
         public boolean conectado;
+        /** true si el equipo habla el contrato de la 3.6.2 con serie y fecha (V3.6.2, o la V4.6 que lo adopta). */
         public boolean es362;
+        /** Protocolo del firmware (RTV 1.0): con que tramas se mide, se lee x y la bateria. */
+        public Protocolo protocolo = new ProtocoloV36();
         public String firmware = "";
         /** null: pruebas sin hacer. */
         public Boolean apto;
@@ -184,7 +187,7 @@ public final class FlujoCalibracion {
     public FlujoCalibracion(Canal canal, Operador operador, AlmacenActa almacen, BancoCola cola, Campana campana,
                             List<Patron> catalogo, Decisiones decisiones, Contexto ctx, Reloj reloj) throws IOException {
         this.canal = canal;
-        this.ops = new Ops(canal);
+        this.ops = new Ops(canal, ctx.protocolo);
         this.operador = operador;
         this.almacen = almacen;
         this.cola = cola;
@@ -243,8 +246,11 @@ public final class FlujoCalibracion {
         Tramas.InfoVersion v = o.leerV();
         Cliente.Respuesta gc = v == null ? null : o.pedir("#GC#");
         boolean v362 = gc != null && Calibracion.variante(gc.trama) == Calibracion.Variante.V362;
-        c.es362 = v != null && "3.6".equals(v.version) && v362;
-        c.firmware = v == null ? "sin detectar" : "V" + v.version + " " + v.fecha + (v362 ? " (3.6.2) " : " ") + v.marca
+        boolean v46 = v != null && "4.6".equals(v.version);
+        c.protocolo = v46 ? new ProtocoloV46() : new ProtocoloV36();
+        // RTV 1.0: la V4.6 adopta el contrato de la 3.6.2 (#GN#, #GC#), asi que cuenta como tal.
+        c.es362 = v != null && ("3.6".equals(v.version) && v362 || v46 && gc != null && gc.valida());
+        c.firmware = v == null ? "sin detectar" : "V" + v.version + " " + v.fecha + (v362 && !v46 ? " (3.6.2) " : " ") + v.marca
                 + " mascara " + String.format(Locale.US, "%04X", Math.max(0, v.mascara));
         if (c.es362) {
             Cliente.Respuesta gn = o.pedir("#GN#");
@@ -347,6 +353,9 @@ public final class FlujoCalibracion {
         l.add(new Previa(ctx.conectado, ctx.conectado ? "Conectado con " + ctx.nombreBT : "Sin conexión: conecte con el equipo"));
         l.add(new Previa(ctx.es362, ctx.es362 ? "Firmware " + ctx.firmware
                 : "El firmware no está detectado como 3.6.2 (" + ctx.firmware + "): pase las pruebas del equipo"));
+        // RTV 1.0 (RF-APP-U07): el protocolo dice si este firmware se calibra.
+        l.add(new Previa(ctx.protocolo.calibra(), ctx.protocolo.calibra() ? "Protocolo " + ctx.protocolo.nombre()
+                : ctx.protocolo.motivoNoCalibra()));
         boolean apto = Boolean.TRUE.equals(ctx.apto);
         l.add(new Previa(apto, ctx.apto == null ? "Pruebas del equipo sin hacer: páselas antes"
                 : apto ? "Pruebas: APTO (" + ctx.resumenPruebas + ")"
@@ -668,17 +677,17 @@ public final class FlujoCalibracion {
      * el protocolo que exige PROTOCOLO-AJUSTE (provisional: 5 × 4). null si cumplen; si no, el motivo.
      */
     private String protocoloIncumplido(char k, TablaCalibracion.Fila f) {
-        if (!Protocolo.CODIGOS_A_ESCRIBIR.contains(k) || campana == null) {
+        if (!ProtocoloDisparos.CODIGOS_A_ESCRIBIR.contains(k) || campana == null) {
             return null;
         }
-        int[] req = Protocolo.requerido(protocoloAjuste());
+        int[] req = ProtocoloDisparos.requerido(protocoloAjuste());
         Set<String> pats = new java.util.TreeSet<>(patronesAjuste(k));
         if (!f.remedida.isEmpty()) {
             pats.add(f.remedida);
         }
         StringBuilder mal = new StringBuilder();
         for (String pt : pats) {
-            String m = Protocolo.incumple(pt, campana.elegida(pt), req);
+            String m = ProtocoloDisparos.incumple(pt, campana.elegida(pt), req);
             if (m != null) {
                 mal.append(mal.length() == 0 ? "" : ", ").append(m);
             }
@@ -1268,12 +1277,13 @@ public final class FlujoCalibracion {
                 double[] xe = new double[Remedida3611.M];
                 double[] rk = new double[Remedida3611.M];
                 String falla = null;
-                Integer va;
+                Double va;
                 try {
-                    va = ops.medir('e');
+                    // RTV 1.0: x con la trama del protocolo ('e' en la V3.6, "#X,k#" en la V4.6).
+                    va = ops.medirX(k);
                     for (int i = 0; i < Remedida3611.M && falla == null; i++) {
-                        Integer vx = ops.medir('e');
-                        Integer vr = ops.medir(k);
+                        Double vx = ops.medirX(k);
+                        Integer vr = ops.medirR(k);
                         if (vx == null || vr == null) {
                             falla = "par " + (i + 1) + " sin respuesta";
                         } else {

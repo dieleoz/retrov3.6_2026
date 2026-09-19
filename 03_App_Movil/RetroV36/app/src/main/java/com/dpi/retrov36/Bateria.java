@@ -47,6 +47,21 @@ public final class Bateria {
         return m.find() ? Integer.parseInt(m.group(1)) : null;
     }
 
+    /**
+     * Bateria de un firmware cuya unidad aun no esta fijada ("#GB#" de la V4.6, PROTOCOLO-V4.6 §4.4): sin
+     * respuesta bloquea las escrituras (RF-APP-43); con respuesta, se anota tal cual y solo 0 bloquea. Los
+     * umbrales de aviso se fijaran con la unidad.
+     */
+    public static Lectura interpretarSinUnidad(Integer n, String trama) {
+        if (n == null) {
+            return new Lectura(null, "Batería: sin respuesta a " + trama + ". Se bloquean las escrituras; la medida sigue.",
+                    true, true);
+        }
+        boolean bloqueo = n == 0;
+        return new Lectura(n, "Batería " + trama + " = " + n + " (unidad por fijar en la V4.6; sin umbral de aviso)"
+                + (bloqueo ? ": bloqueadas las escrituras." : ""), false, bloqueo);
+    }
+
     /** @param n null = sin respuesta. */
     public static Lectura interpretar(Integer n) {
         if (n == null) {

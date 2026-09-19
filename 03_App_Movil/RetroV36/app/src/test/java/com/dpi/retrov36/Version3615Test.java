@@ -109,19 +109,19 @@ public class Version3615Test {
                 if (!p.esMedida()) {
                     continue;
                 }
-                int[] r = Protocolo.efectivo(p, true);
-                int[] pr = Protocolo.efectivo(p, false);
+                int[] r = ProtocoloDisparos.efectivo(p, true);
+                int[] pr = ProtocoloDisparos.efectivo(p, false);
                 if ("OSCURO".equals(p.tipo) || "A5".equals(p.tipo)) {
                     assertEquals(t + " " + p.orden, 5, r[0]);
                     assertEquals(5, pr[0]);
-                } else if (Protocolo.deAjuste(p)) {
+                } else if (ProtocoloDisparos.deAjuste(p)) {
                     // 3.6.16 (PROTOCOLO-AJUSTE, 6048453): lo que se escribe va a 5 x 4 tambien en rapido.
                     assertEquals(t + " " + p.orden, 5, r[0]);
                     assertEquals(4, r[1]);
                     assertEquals(5, pr[0]);
                     assertEquals(4, pr[1]);
                     // con RAPIDO firmado, vuelve a 1 x 4
-                    assertEquals(1, Protocolo.efectivo(p, true, "RAPIDO")[0]);
+                    assertEquals(1, ProtocoloDisparos.efectivo(p, true, "RAPIDO")[0]);
                 } else {
                     assertEquals(1, r[0]);
                     assertEquals(4, r[1]);
@@ -130,8 +130,8 @@ public class Version3615Test {
                 }
             }
         }
-        assertEquals(1, Protocolo.K_DEFECTO);
-        assertEquals(4, Protocolo.M_DEFECTO);
+        assertEquals(1, ProtocoloDisparos.K_DEFECTO);
+        assertEquals(4, ProtocoloDisparos.M_DEFECTO);
         assertEquals("la re-medida no baja de 5 x 4", 5, Remedida3611.K);
     }
 
@@ -144,7 +144,7 @@ public class Version3615Test {
             if (!p.esMedida() || p.sesion != 1) {
                 continue;
             }
-            int[] km = Protocolo.efectivo(p, true);
+            int[] km = ProtocoloDisparos.efectivo(p, true);
             String pat = "OSCURO".equals(p.tipo) ? Campana.OSCURO.nombre : p.patron;
             double x = "OSCURO".equals(p.tipo) ? 565 : p.xEsperada;
             Campana.Serie s = c.nuevaSerie("f", "SLV-002", MAC, "V3.6", pat, 0, 'e');

@@ -137,14 +137,25 @@ public final class Pruebas {
             actual = 2;
             poner(2, Estado.EN_CURSO, "");
             String det = detectar(s);
-            boolean medible = s.versionMedible();
-            poner(2, medible ? Estado.OK : Estado.FALLO, det);
-            if (!medible) {
+            Protocolo proto = s.protocolo;
+            if (proto == null) {
+                poner(2, Estado.FALLO, det);
                 for (int n = 3; n <= 6; n++) {
-                    poner(n, Estado.FALLO, "No ejecutada: versión " + s.version.texto + ".");
+                    poner(n, Estado.FALLO, "No ejecutada: firmware " + s.versionTexto() + ".");
                 }
-                terminar(false, "NO APTO: " + (s.version == Sesion.Version.V4
-                        ? "es un V4; esta app no aplica." : "versión de firmware no reconocida."));
+                terminar(false, "NO APTO: firmware no reconocido o no responde como su perfil.");
+                return;
+            }
+            poner(2, Estado.OK, det);
+            // RTV 1.0: las pruebas 3-6 son las de la V3 (bytes, 'e' o 6 invertido, fabrica de 2020). Sin x (V4
+            // original) no aplican; con la V4.6, esperan a su tabla de tramas firmada (F-1) y a la x definida (F-5).
+            if (!proto.daX() || !proto.permitida("1")) {
+                String por = !proto.daX() ? proto.motivoNoBanco()
+                        : "V4.6: pruebas 3-6 pendientes de la tabla de tramas firmada (F-1) y de la x (F-5)";
+                for (int n = 3; n <= 6; n++) {
+                    poner(n, Estado.NO_APLICA, por + ".");
+                }
+                terminar(true, proto.nombre() + ": sólo detección. " + (proto.calibra() ? "" : proto.motivoNoCalibra()));
                 return;
             }
             comprobarCancelacion();
@@ -152,7 +163,7 @@ public final class Pruebas {
             // 5. Solo V3.6
             actual = 5;
             boolean ok5 = true;
-            if (s.version == Sesion.Version.V36) {
+            if (s.administra()) {
                 poner(5, Estado.EN_CURSO, "");
                 ok5 = prueba5(s);
             } else {
@@ -175,7 +186,7 @@ public final class Pruebas {
             for (Coherencia.Linea l : c.lineas) {
                 sb.append('\n').append(l.texto());
             }
-            sb.append("\nCoeficientes: ").append(s.version == Sesion.Version.V36
+            sb.append("\nCoeficientes: ").append(s.administra()
                     ? "los leídos con #G" : "los de fábrica (ecuacionesCalibracion.c:3-42)");
             poner(4, c.apto ? Estado.OK : (c.invalida ? Estado.INVALIDA : Estado.FALLO), sb.toString());
             comprobarCancelacion();
@@ -198,7 +209,7 @@ public final class Pruebas {
                 }
             }
             Repetibilidad.Resultado r6 = Repetibilidad.evaluar(Estadistica.aVector(xs), fallidas);
-            d6.append("Código ").append(s.version == Sesion.Version.V36 ? "e" : "6 (invertido)").append(". ").append(r6.texto);
+            d6.append("Código ").append(s.administra() ? "e" : "6 (invertido)").append(". ").append(r6.texto);
             poner(6, r6.apto ? Estado.OK : Estado.FALLO, d6.toString());
 
             boolean apto = p(1).estado == Estado.OK && p(2).estado == Estado.OK
@@ -249,85 +260,42 @@ public final class Pruebas {
         avisar();
     }
 
-    /** Prueba 2, segun el contrato. Devuelve el detalle. */
+    /**
+     * Prueba 2 (RTV 1.0): deteccion del firmware con {@link Deteccion} (#V# -> 9 -> 6 -> sonda
+     * "@LEERV,BLA,2@"), con el perfil firmado de equipos.csv y el aprendido de esta MAC. Devuelve el detalle.
+     */
     String detectar(Sesion s) throws IOException, InterruptedException {
-        Cliente c = Cliente.instancia();
-        StringBuilder d = new StringBuilder();
-        Cliente.Respuesta rv = c.pedir("#V#", Tramas.Tipo.ADMIN, Cliente.TIMEOUT_ADMIN_MS + 500);
-        d.append("#V# -> ").append(rv.describir()).append('\n');
-        Tramas.InfoVersion iv = rv.valida() ? Tramas.parsearVersion(rv.trama) : null;
-        if (iv != null && "3.6".equals(iv.version)) {
-            s.version = Sesion.Version.V36;
-            s.fechaFirmware = iv.fecha;
-            s.marca = iv.marca;
-            s.mascara = iv.mascara;
-            s.eDisponible = true;
-            d.append("Versión V3.6, fecha ").append(iv.fecha).append(", marca ").append(iv.marca);
-            if (iv.tieneMascara()) {
-                d.append(String.format(Locale.US, ", máscara %04X: ", iv.mascara));
-                StringBuilder cal = new StringBuilder();
-                for (int i = 0; i < Fabrica.CODIGOS.length; i++) {
-                    if (iv.codigoAjustado(i)) {
-                        cal.append(Fabrica.CODIGOS[i]).append(' ');
-                    }
-                }
-                d.append(cal.length() == 0 ? "ningún código ajustado" : "ajustados " + cal.toString().trim());
-                d.append(iv.temperaturaAjustada() ? "; temperatura ajustada" : "; temperatura de fábrica");
-            } else {
-                d.append(" (sin máscara: trama de la revisión 1.0 del contrato)");
-            }
-            // 3.6.1 y 3.6.2 tienen la misma fecha de compilacion: se distinguen con #GC#,
-            // que solo se envia porque #V# ya identifico una V3.6.
-            Cliente.Respuesta rgc = c.pedir("#GC#", Tramas.Tipo.ADMIN, Cliente.TIMEOUT_ADMIN_MS);
-            s.variante = Calibracion.variante(rgc.trama);
-            d.append("\n#GC# -> ").append(rgc.describir()).append(": ");
-            if (s.variante == Calibracion.Variante.V362) {
-                s.fechaCalibracion = Calibracion.fechaDe(rgc.trama);
-                Cliente.Respuesta rgn = c.pedir("#GN#", Tramas.Tipo.ADMIN, Cliente.TIMEOUT_ADMIN_MS);
-                s.serieEquipo = rgn.valida() ? Calibracion.serieDe(rgn.trama) : null;
-                d.append("firmware 3.6.2\n#GN# -> ").append(rgn.describir()).append('\n').append(s.datosCalibracion());
-            } else if (s.variante == Calibracion.Variante.V361) {
-                d.append("firmware 3.6.1 (no tiene serie ni fecha de calibración)");
-            } else {
-                d.append("variante no reconocida: no se usan las órdenes de la 3.6.2");
-            }
-            return d.toString();
+        return detectar(s, false);
+    }
+
+    /** @param completa true si el operador pide la deteccion completa aunque el perfil sea SOLO_SONDA. */
+    String detectar(Sesion s, boolean completa) throws IOException, InterruptedException {
+        android.content.Context ctx = PerfilesApp.app();
+        PerfilesEquipo.Perfil firmado = ctx == null ? null : PerfilesApp.firmado(ctx, s.mac);
+        PerfilesEquipo.Aprendido aprendido = ctx == null ? null : PerfilesApp.aprendido(ctx, s.mac);
+        s.protocolo = null;
+        Deteccion.Resultado r = Deteccion.detectar(Cliente.instancia(), firmado, aprendido, completa);
+        s.detectado = true;
+        s.protocolo = r.protocolo;
+        s.diario.reiniciar();
+        if (r.version != null) {
+            s.fechaFirmware = r.version.fecha;
+            s.marca = r.version.marca;
+            s.mascara = r.version.mascara;
         }
-        if (iv != null) {
-            s.version = Sesion.Version.DESCONOCIDA;
-            d.append("Responde a #V# con versión ").append(iv.version).append(": no es la del contrato.");
-            return d.toString();
+        s.variante = r.variante;
+        s.serieEquipo = r.serieEquipo;
+        s.fechaCalibracion = r.fechaCalibracion;
+        if (firmado != null && !firmado.serieDeclarada.isEmpty()) {
+            s.serieDeclaradaPerfil = firmado.serieDeclarada;
         }
-        // NUNCA se envia 'e' a un equipo sin identificar: en SLV-002 (V3 2020
-        // sin 'e'), tras 'e' el equipo dejo de responder a todo (18-sep-2026,
-        // app 3.6.0 y barrido; hipotesis sin confirmar). En un V3 2020, #V#, 9
-        // y 6 disparan una medida; la pausa de Cliente protege el siguiente envio.
-        Cliente.Respuesta r9 = c.pedir("9", Tramas.Tipo.BATERIA, Cliente.TIMEOUT_MEDIDA_MS);
-        d.append("9 -> ").append(r9.describir()).append('\n');
-        if (r9.valida()) {
-            s.version = Sesion.Version.V3_2020;
-            s.eDisponible = false;
-            d.append("Versión V3 2020 (responde :n: a 9). Se medirá con 6 invertido; nunca con e.");
-            return d.toString();
+        if (ctx != null && r.opera() && !r.huella.isEmpty() && s.mac != null && !s.mac.isEmpty()) {
+            PerfilesApp.guardar(ctx, new PerfilesEquipo.Aprendido(s.mac, r.firmware, r.huella, Sesion.ahoraIso()));
         }
-        Cliente.Respuesta r6 = c.pedir("6", Tramas.Tipo.MEDIDA, Cliente.TIMEOUT_MEDIDA_MS);
-        d.append("6 -> ").append(r6.describir()).append('\n');
-        if (r6.valida()) {
-            s.version = Sesion.Version.V3_2020;
-            s.eDisponible = false;
-            d.append("Versión V3 2020 (responde ::n a 6). Se medirá con 6 invertido; nunca con e.");
-            return d.toString();
+        StringBuilder d = new StringBuilder(r.detalle);
+        if (s.es362()) {
+            d.append('\n').append(s.datosCalibracion());
         }
-        // RF-APP-U04: el V4.1 espera 1 s mas antes de medir (V4.1:Serial.c:182-188): 5 s de espera.
-        Cliente.Respuesta r4 = c.pedir(Tramas.SONDA_V4, Tramas.Tipo.LEERV, 5000);
-        d.append(Tramas.SONDA_V4).append(" -> ").append(r4.describir()).append('\n');
-        if (r4.valida()) {
-            s.version = Sesion.Version.V4;
-            d.append("Es un V4 (protocolo @LEERV). Esta app no aplica.");
-            return d.toString();
-        }
-        s.version = Sesion.Version.DESCONOCIDA;
-        d.append("Ninguna de las tres sondas respondió como espera el contrato.");
         return d.toString();
     }
 
@@ -453,7 +421,7 @@ public final class Pruebas {
         Cliente c = Cliente.instancia();
         StringBuilder d = new StringBuilder();
         boolean ok = true;
-        boolean v36 = s.version == Sesion.Version.V36;
+        boolean v36 = "e".equals(s.protocolo.tramaX('1'));
         Integer eIni = null;
         if (v36) {
             // La 'e' inicial de la deriva no puede ser un primer disparo (sale bajo).

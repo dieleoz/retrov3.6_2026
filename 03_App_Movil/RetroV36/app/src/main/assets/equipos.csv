@@ -1,0 +1,7 @@
+# Perfiles de equipo por MAC (RTV 1.0, RF-APP-U02 con A-3; PerfilesEquipo.java). Regimen de decisiones.csv:
+# solo vale con fecha AAAA-MM-DD, firmante Diego y documento.
+# perfil: SOLO_SONDA (solo se envia la sonda: firmware sin fuente) o el firmware esperado (F36, F46, V4_ORIGINAL, F2020),
+# que la deteccion confirma. variante: F41, F40 o vacio. caduca_con_v: version de #V# con la que el perfil deja de
+# aplicarse (p. ej. 4.6 tras regrabar). serie_declarada: la serie, marcada "declarada, no leida del equipo".
+# Sin filas: el perfil del V3-2 (SLV-003-2026) espera a M-3 (AT-U05 corregida) y a su MAC.
+mac,perfil,variante,serie_declarada,caduca_con_v,fecha,firmante,documento,nota

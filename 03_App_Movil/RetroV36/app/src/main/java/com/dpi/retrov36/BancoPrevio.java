@@ -89,8 +89,8 @@ public final class BancoPrevio {
         }
         Decisiones.Decision rep = d.decision("TIPO-I-REPETIR", equipo);
         List<String> repetir = rep == null ? new ArrayList<String>() : rep.repetidos;
-        int[] req = Protocolo.requerido(d.valor("PROTOCOLO-AJUSTE", equipo));
-        int[] preciso = {Protocolo.K_PRECISO, Protocolo.M_PRECISO};
+        int[] req = ProtocoloDisparos.requerido(d.valor("PROTOCOLO-AJUSTE", equipo));
+        int[] preciso = {ProtocoloDisparos.K_PRECISO, ProtocoloDisparos.M_PRECISO};
         // 2. Repetir en preciso lo que Diego mando repetir y esta HECHO fuera de protocolo.
         Map<Integer, String> est = c.pasos();
         for (BancoCola.Paso p : cola.pasos) {
@@ -99,7 +99,7 @@ public final class BancoPrevio {
             }
             String sid = c.seriePaso(p.orden);
             Campana.Serie s = sid == null || sid.isEmpty() ? null : c.serie(sid);
-            String mal = Protocolo.incumple(p.patron, s, preciso);
+            String mal = ProtocoloDisparos.incumple(p.patron, s, preciso);
             if (s != null && mal != null && RehacerBanco.motivoNoRehacer(c, cola, p.orden) == null) {
                 RehacerBanco.rehacer(c, cola, p.orden, "repetir en preciso " + preciso[0] + "×" + preciso[1]
                         + " (TIPO-I-REPETIR de Diego, 6048453): la serie estaba a " + mal.substring(p.patron.length() + 1), fecha);
@@ -125,7 +125,7 @@ public final class BancoPrevio {
                 if (s == null || s.anulada != null || !s.aceptada) {
                     continue;
                 }
-                if (Protocolo.deAjuste(p) && Protocolo.incumple(pat, s, req) != null) {
+                if (ProtocoloDisparos.deAjuste(p) && ProtocoloDisparos.incumple(pat, s, req) != null) {
                     continue;          // de lo que se escribe, medido fuera del protocolo: se mide otra vez
                 }
                 boolean equiv = !pat.equals(p.patron);
@@ -162,7 +162,7 @@ public final class BancoPrevio {
         for (BancoCola.Paso p : cola.pasos) {
             String e = est.get(p.orden);
             if (e == null || "REHACER".equals(e) || "SALTADO".equals(e)) {
-                s += BancoCola.segundos(p, Protocolo.efectivo(p, rapido, protocoloAjuste, repetir));
+                s += BancoCola.segundos(p, ProtocoloDisparos.efectivo(p, rapido, protocoloAjuste, repetir));
             }
         }
         return s / 60.0;

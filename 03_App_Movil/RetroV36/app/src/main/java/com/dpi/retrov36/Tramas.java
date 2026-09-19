@@ -21,7 +21,89 @@ public final class Tramas {
 
     /** Revision 1.1 del contrato (§4 bis, O-01): 96 bytes. La 1.0 decia 48. */
     public static final int MAX_TRAMA = 96;
-    public static final String SONDA_V4 = "@LEERV,BLA,1@";
+    /**
+     * Sonda de deteccion del V4 (RF-APP-U04, C-U01 cerrada por la revision P2 §4 y el encargo de la RTV 1.0):
+     * "@LEERV,BLA,2@", otros papeles. Lee el 'error' oculto del V4.1 pero no lo escribe
+     * (V4.1:Aplicacion.c:297-298 solo en la rama de tipo 1). Deja la pantalla en BLANCO tipo 2 (H-06).
+     */
+    public static final String SONDA_V4 = "@LEERV,BLA,2@";
+    /** Espera de la sonda y de toda @LEERV (RF-APP-U04): el V4.1 espera 1 s antes de medir. */
+    public static final long TIMEOUT_LEERV_MS = 5000;
+    /** Los 6 colores de @LEERV, en el orden de las claves 1-6 (PROTOCOLO-V4.6 §4.2). */
+    public static final String[] COLORES_V4 = {"BLA", "AMA", "VER", "ROJ", "AZU", "NAR"};
+    private static final Pattern P_LEERV_PETICION = Pattern.compile("@LEERV,(BLA|AMA|VER|ROJ|AZU|NAR),([12])@");
+    private static final Pattern P_LEERV_VALOR = Pattern.compile("@LEERV,(-?\\d{1,6})@");
+
+    /** true si p es, byte a byte, una de las 12 peticiones @LEERV validas (T-U10). */
+    public static boolean esLeervValida(String p) {
+        return p != null && P_LEERV_PETICION.matcher(p).matches();
+    }
+
+    /** "@LEERV,<COLOR>,<tipo>@" para la clave k (PROTOCOLO-V4.6 §4.2: 1-6 tipo 2, 7, 8, a-d tipo 1). */
+    public static String tramaLeerv(char k) {
+        int i = Fabrica.indice(k);
+        if (i < 0) {
+            return null;
+        }
+        return "@LEERV," + COLORES_V4[i % 6] + "," + (i < 6 ? 2 : 1) + "@";
+    }
+
+    /** Clave de una peticion @LEERV valida (inversa de tramaLeerv); 0 si no lo es. */
+    public static char claveDeLeerv(String p) {
+        Matcher m = p == null ? null : P_LEERV_PETICION.matcher(p);
+        if (m == null || !m.matches()) {
+            return 0;
+        }
+        int c = java.util.Arrays.asList(COLORES_V4).indexOf(m.group(1));
+        return Fabrica.CODIGOS["2".equals(m.group(2)) ? c : 6 + c];
+    }
+
+    /** true si la clave k mide con tipo 1 en @LEERV. */
+    public static boolean esTipo1(char k) {
+        return Fabrica.indice(k) >= 6;
+    }
+
+    /** "@LEERV,127@" -> 127 (RF-APP-U05: solo "@LEERV,<entero>@"); null si no cuadra. */
+    public static Integer valorLeerv(String trama) {
+        if (trama == null) {
+            return null;
+        }
+        Matcher m = P_LEERV_VALOR.matcher(trama);
+        if (!m.find()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(m.group(1));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** "#X,k,x#" (PROTOCOLO-V4.6 §4.4) -> x; null si no cuadra o k no coincide. */
+    public static Double parsearX(String trama, char k) {
+        String[] c = campos(trama);
+        if (c == null || c.length != 3 || !"X".equals(c[0]) || !String.valueOf(k).equals(c[1])) {
+            return null;
+        }
+        try {
+            return num(c[2]);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** "#GB,n#" (PROTOCOLO-V4.6 §4.4) -> n; null si no cuadra. La unidad esta por fijar en la V4.6. */
+    public static Integer parsearGB(String trama) {
+        String[] c = campos(trama);
+        if (c == null || c.length != 2 || !"GB".equals(c[0])) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(c[1].trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
 
     public enum Tipo {
         /** "::n" sin terminador: completa tras un silencio. */
@@ -42,17 +124,6 @@ public final class Tramas {
      * ("@LEERV,BLA,1@") y "@LEERV,127,45@" no son respuesta.
      */
     private static final Pattern P_LEERV = Pattern.compile("@LEERV,-?\\d{1,6}@");
-
-    /**
-     * 'e' solo a un equipo identificado como V3.6. En SLV-002 (V3 2020 sin 'e')
-     * el equipo dejo de responder tras 'e' (18-sep-2026; hipotesis sin confirmar).
-     */
-    public static boolean peticionPermitida(String p, boolean esV36) {
-        if ("e".equals(p) && !esV36) {
-            return false;
-        }
-        return peticionPermitida(p);
-    }
 
     /** true si la peticion puede enviarse: sin '@', salvo la sonda de V4. */
     public static boolean peticionPermitida(String p) {

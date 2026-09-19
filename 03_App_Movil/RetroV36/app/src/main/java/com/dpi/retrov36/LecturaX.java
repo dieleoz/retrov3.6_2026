@@ -49,9 +49,31 @@ public final class LecturaX {
     }
 
     public static Lectura leer(Sesion s) throws IOException, InterruptedException {
-        // 'e' SOLO en V3.6. En SLV-002 (V3 2020) 'e' deja el equipo sin
-        // responder por Bluetooth (hipotesis del 18-sep-2026, sin confirmar).
-        char k = s.version == Sesion.Version.V36 && s.eDisponible ? 'e' : '6';
+        return leer(s, '1');
+    }
+
+    /**
+     * RTV 1.0: la trama sale del protocolo. 'e' en la V3.6; "#X,k#" en la V4.6 (x con la luz y la rama del
+     * codigo k: la cola de la V4.6 dira la clave por patron); '6' invertido en el V3 de 2020, a quien nunca se
+     * envia 'e' (en SLV-002 lo dejo sin responder, 18-sep-2026, hipotesis). Sin x (V4 original), no se lee.
+     */
+    public static Lectura leer(Sesion s, char clave) throws IOException, InterruptedException {
+        Protocolo p = s.protocolo;
+        if (p == null || !p.daX()) {
+            throw new IllegalStateException("el firmware " + s.versionTexto() + " no da x");
+        }
+        String tx = p.tramaX(clave);
+        if (tx != null && tx.length() > 1) {
+            Cliente.Respuesta r = Cliente.instancia().pedir(tx, p.tipoX(), Cliente.TIMEOUT_ADMIN_MS + 1000);
+            Double x = r.valida() ? p.valorX(r.trama, clave) : null;
+            String metodo = tx + " directa";
+            if (x == null) {
+                return new Lectura(clave, r, Double.NaN, Double.NaN, metodo, r.valida() ? "no cuadra: " + r.trama
+                        : r.describir());
+            }
+            return new Lectura(clave, r, x, 0, metodo, "");
+        }
+        char k = tx != null ? tx.charAt(0) : '6';
         Cliente.Respuesta r = Cliente.instancia().pedir(String.valueOf(k), Tramas.Tipo.MEDIDA,
                 Cliente.TIMEOUT_MEDIDA_MS);
         String metodo = k == 'e' ? "e directa" : "6 invertido";
