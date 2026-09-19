@@ -121,6 +121,31 @@ tests en verde como argumento de entrega.
 Regla: **una prueba que no asevera no cuenta.** Un recuento de tests en verde dice, como mucho, que
 nada reventó. Los defectos Altos de las últimas puertas salieron de reproducir a mano, no de la suite.
 
+**Y una segunda regla, más fina, que costó tres tropiezos la noche del 19-sep-2026: una prueba que
+sí asevera tampoco demuestra nada si el valor esperado salió del propio código que prueba.**
+
+El criterio no es el cuidado que se puso, es **de dónde vino el valor esperado**:
+
+- **Cuenta como cobertura** cuando viene de una fuente **ajena al código**: el fuente del firmware,
+  el contrato de tramas, una decisión escrita de Diego, un certificado.
+- **No cuenta** cuando se leyó de la salida, o de código recién escrito. Detecta regresiones, que no
+  es poco, pero no demuestra que el comportamiento sea el correcto.
+
+Los tres casos reales, para que se reconozcan:
+
+1. El acta salía diciendo `firmado por Firmado por "Ana Ruiz", ITVIAL SAS, …` —el anuncio
+   duplicado— y **la prueba aseveraba esa cadena**, copiada de la salida. No podía fallar nunca.
+2. El simulador respondía `#T,25.0,25.0#`, **simétrico**, mientras el firmware manda el circuito
+   primero. La app leía la óptica del campo equivocado y **ninguna prueba podía verlo**, porque
+   invertir dos campos iguales no falla. Habría metido un 0 estructural en la única columna que se
+   ajusta.
+3. Una prueba de la firma construía los literales del acta y aseveraba sobre ellos: comprueba la
+   idea que tiene el autor del código, no el código.
+
+Consecuencia práctica: **al entregar, el recuento va separado** —cuántas aseveran un requisito y
+cuántas fijan comportamiento— y una prueba nueva se acompaña de **su salida en rojo** contra la
+versión anterior. Si nunca se ha visto fallar, no se sabe qué vigila.
+
 ## 8. Compilar la app
 
 La receta está en **`03_App_Movil/RetroV36/README.md:13-22`**, y **no** en la skill `compilar-apk`,
