@@ -118,3 +118,8 @@ acta propios** (L-23). Se sigue [`RUNBOOK.md`](RUNBOOK.md) de la fase 0 a la 11.
 
 - **Los dos V4:** repositorio `D:\IT\P_RetroVertical_V4.6` (remoto `dieleoz/retrov4.6_2026`), en
   espera. Lo aprendido aquí pasa a su `APRENDIDO-DE-V3.6.md` y a su runbook.
+- **Registro de medidas periódicas para la interventoría:**
+  [`SPEC-Registro-Indicador-Interventoria.md`](05_Documentacion/SPEC-Registro-Indicador-Interventoria.md)
+  (19-sep-2026, sin validar). Inventario de señales por vía, lecturas por color, equipo y calibración
+  con vencimiento en todo registro, paquete exportable con hashes. Requisitos RF-REG-01 a 28, núcleo y
+  mejora; el umbral queda abierto (PA-04). Entra en la SPEC de la app de producción (P10).
