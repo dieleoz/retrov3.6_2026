@@ -212,6 +212,21 @@ public final class Decisiones {
         return validas.containsKey(clave(id, equipo));
     }
 
+    /** 3.6.17 (B-01): todos los patrones que alguna decision de este equipo saca del ajuste ("EXCLUYE Pxx"). */
+    public List<String> excluidosDe(String equipo) {
+        List<String> l = new ArrayList<>();
+        for (Decision x : validas.values()) {
+            if (x.equipo.equals(equipo)) {
+                for (String p : x.excluidos) {
+                    if (!l.contains(p)) {
+                        l.add(p);
+                    }
+                }
+            }
+        }
+        return l;
+    }
+
     public Decision decision(String id, String equipo) {
         return validas.get(clave(id, equipo));
     }

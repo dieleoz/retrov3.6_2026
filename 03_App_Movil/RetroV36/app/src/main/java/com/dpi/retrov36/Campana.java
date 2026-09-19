@@ -165,6 +165,8 @@ public final class Campana {
     private String colaTipo = "COMPLETO";
     private String colaMd5 = "";
     private boolean colaElegida;
+    /** 3.6.17: el tipo de banco lo eligio el operador a mano (COLA con "manual"); si no, lo eligio la app. */
+    private boolean colaManual;
     /** QA-3614-04: una anulacion tambien deja el ZIP entregado viejo. */
     private int anuladasDesdeExportar;
     /** Estado de cada paso de la cola del banco (orden -> HECHO / SALTADO). */
@@ -276,7 +278,7 @@ public final class Campana {
         anadirSerie(anterior);
         anadirSerie(nueva);
         serieActual = nueva;
-        renombrados.add(new String[]{fecha == null ? "" : fecha, anterior, nueva, operador == null ? "" : operador});
+        renombrados.add(new String[]{fecha == null ? "" : fecha, anterior, nueva, operador == null ? "" : operador, ""});
         evento("RENOMBRA", fecha, anterior, nueva, operador == null ? "" : operador, mac);
     }
 
@@ -287,10 +289,17 @@ public final class Campana {
     public void revertirRenombrado(String nueva, String anterior, String fecha, String motivo) throws IOException {
         comprobarAbierta();
         serieActual = anterior;
+        renombrados.add(new String[]{fecha == null ? "" : fecha, nueva, anterior, motivo == null ? "" : motivo, REVIERTE});
         evento("RENOMBRA_REVIERTE", fecha, nueva, anterior, motivo == null ? "" : motivo);
     }
 
-    /** RENOMBRA de este diario: {fecha, anterior, nueva, operador}. */
+    /** Marca de un RENOMBRA_REVIERTE en {@link #renombrados()} (quinto campo). */
+    public static final String REVIERTE = "REVIERTE";
+
+    /**
+     * RENOMBRA y RENOMBRA_REVIERTE de este diario, en orden: {fecha, anterior, nueva, operador o motivo, tipo}; tipo
+     * "" para RENOMBRA y REVIERTE para la vuelta atras (3.6.17, S-01: los dos viajan).
+     */
     private final List<String[]> renombrados = new ArrayList<>();
 
     public List<String[]> renombrados() {
@@ -299,8 +308,12 @@ public final class Campana {
 
     /** true si el historial ya tiene el RENOMBRA anterior -> nueva. */
     public boolean tieneRenombrado(String anterior, String nueva) {
+        return tiene(anterior, nueva, "");
+    }
+
+    private boolean tiene(String anterior, String nueva, String tipo) {
         for (String[] r : renombrados) {
-            if (r[1].equalsIgnoreCase(anterior) && r[2].equalsIgnoreCase(nueva)) {
+            if (r[1].equalsIgnoreCase(anterior) && r[2].equalsIgnoreCase(nueva) && tipo.equals(r.length > 4 ? r[4] : "")) {
                 return true;
             }
         }
@@ -313,9 +326,17 @@ public final class Campana {
      */
     public int copiarRenombrados(List<String[]> otros, String origen) throws IOException {
         int n = 0;
+        String de = origen == null || origen.isEmpty() ? "" : " (copiado de " + origen + ")";
         for (String[] r : otros) {
-            if (!tieneRenombrado(r[1], r[2])) {
-                renombrar(r[1], r[2], r[0], r[3] + (origen == null || origen.isEmpty() ? "" : " (copiado de " + origen + ")"));
+            boolean revierte = r.length > 4 && REVIERTE.equals(r[4]);
+            if (revierte) {
+                // S-01: la vuelta atras tambien viaja, para que la serie actual no quede en la que no entro.
+                if (!tiene(r[1], r[2], REVIERTE)) {
+                    revertirRenombrado(r[1], r[2], r[0], r[3] + de);
+                    n++;
+                }
+            } else if (!tieneRenombrado(r[1], r[2])) {
+                renombrar(r[1], r[2], r[0], r[3] + de);
                 n++;
             }
         }
@@ -506,6 +527,11 @@ public final class Campana {
      * lo ya medido se vuelve a contar desde las series (BancoPrevio).
      */
     public void elegirCola(String tipo, String md5) throws IOException {
+        elegirCola(tipo, md5, false);
+    }
+
+    /** @param manual true si lo eligio el operador en el selector (3.6.17: solo asi se queda en COMPLETO). */
+    public void elegirCola(String tipo, String md5, boolean manual) throws IOException {
         comprobarAbierta();
         if (!tipo.equals(colaTipo)) {
             pasos.clear();
@@ -515,7 +541,13 @@ public final class Campana {
         colaTipo = tipo;
         colaMd5 = md5 == null ? "" : md5;
         colaElegida = true;
-        evento("COLA", tipo, colaMd5);
+        colaManual = manual;
+        evento("COLA", tipo, colaMd5, manual ? "manual" : "");
+    }
+
+    /** true si el tipo de banco lo eligio el operador a mano. */
+    public boolean colaManual() {
+        return colaManual;
     }
 
     /** true si la campana ya tiene su tipo de banco (evento COLA). */
@@ -1223,10 +1255,11 @@ public final class Campana {
                 anadirSerie(c.get(2));
                 anadirSerie(c.get(3));
                 serieActual = c.get(3);
-                renombrados.add(new String[]{c.get(1), c.get(2), c.get(3), c.size() > 4 ? c.get(4) : ""});
+                renombrados.add(new String[]{c.get(1), c.get(2), c.get(3), c.size() > 4 ? c.get(4) : "", ""});
                 return true;
             case "RENOMBRA_REVIERTE":
                 serieActual = c.get(3);
+                renombrados.add(new String[]{c.get(1), c.get(2), c.get(3), c.size() > 4 ? c.get(4) : "", REVIERTE});
                 return true;
             case "COLA":
                 if (!c.get(1).equals(colaTipo)) {
@@ -1236,6 +1269,7 @@ public final class Campana {
                 }
                 colaTipo = c.get(1);
                 colaMd5 = c.size() > 2 ? c.get(2) : "";
+                colaManual = c.size() > 3 && "manual".equals(c.get(3));
                 colaElegida = true;
                 return true;
             case "ANULA": {

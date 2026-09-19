@@ -90,8 +90,13 @@ en las UART (RC0/RC1, RB0/RB1), pero **eso es la v4.0 del disco, no lo que lleva
   - `NEW SAMPLE`, `DecimasAjuste` y `Adc Ajuste T` **no están en ningún fuente del disco**:
     `grep` en `*.c` de las bases y de `old\VERTICAL`, y segunda búsqueda con ripgrep en
     `D:\@Proyect\IT` (`*.c,h,txt,md,i,p1,lst`) y en todo `D:\IT`: sin resultados.
-- **Pantalla.** La lectura construye tramas binarias STONE: 15 `MOVLW 0xA5` y 17 `MOVLW 0x5A`,
-  como la v4.0 (`Stone.c:27,30`; su `.hex` tiene 18 y 20). **No tiene ninguna trama JSON `ST<{...}>ET`**,
+- **Pantalla.** La lectura construye tramas binarias STONE: 15 `MOVLW 0xA5` y **15** `MOVLW 0x5A`,
+  como la v4.0 (`Stone.c:27,30`; su `.hex` tiene **18 y 18**). *Errata corregida el 19-sep-2026: aquí
+  decía "17" para la lectura y "18 y 20" para la v4.0. Esas cifras contaban el par de bytes `5A 0E` en
+  cualquier dirección, también en impares (en la lectura, 0x1726d y 0x173d3), que no son
+  instrucciones; alineado a palabra salen 15 y 18
+  (`V4.6:01_Firmware/lecturas_equipos/tools/identificar_lectura.py --verificar-v3-2`). La conclusión
+  no cambia.* **No tiene ninguna trama JSON `ST<{...}>ET`**,
   y el `.hex` V4.1 tiene 32 (`App_Stone.c:271-372`). Cuadra con la STVA035WT-01 de 2.ª generación.
 - **Oscilador.** CONFIG1L = 0x8C: `RSTOSC` = HFINTOSC 64 MHz, `FEXTOSC` = OFF; `OSCFRQ` = 0x08
   (0x18f60). Igual que v4.0 y V4.1 (`device_config.c:50-51`, `mcc.c:65,71`). SLV-002 y la V3.6

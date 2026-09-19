@@ -117,6 +117,26 @@ public class FlujoCalibracionTest {
             return l;
         }
 
+        /** SHA-256 que "exporta" el almacen antes de cerrar un acta aceptada (P14-B02); null = no exporta. */
+        String sha;
+
+        @Override
+        public String soporteSha256(Acta a) {
+            return sha;
+        }
+
+        @Override
+        public Acta ultimaCerrada() throws IOException {
+            return diariosCerrados.isEmpty() ? null
+                    : Acta.leer(new StringReader(diariosCerrados.get(diariosCerrados.size() - 1)));
+        }
+
+        @Override
+        public void anadirAUltimaCerrada(String linea) {
+            int i = diariosCerrados.size() - 1;
+            diariosCerrados.set(i, diariosCerrados.get(i) + linea + "\n");
+        }
+
         /** Tras matar la app: la memoria se pierde, el disco no. */
         Almacen reabrir() {
             Almacen n = new Almacen();
@@ -561,8 +581,8 @@ public class FlujoCalibracionTest {
         FlujoCalibracion g = flujo();
         String r = g.calibrar(sel(), "", "");
         assertTrue(r, r.contains("no se ha repetido"));
-        assertEquals(0, g.acta().escribiendo());
-        assertNull(g.acta().codigo('8'));
+        // 3.6.17 (F-01): el acta queda vacia y se descarta sola.
+        assertNull(g.acta());
         assertEquals("con No, no se repite el #S", 0, sim.cuantas("#S,8,"));
     }
 
@@ -864,7 +884,10 @@ public class FlujoCalibracionTest {
         FlujoCalibracion f = flujo();
         String r = f.calibrar(sel('8'), "Diego", "x");
         assertTrue(r, r.contains("Escritura del código 8 fallida") && r.contains("Restaurado"));
-        assertNull(f.acta().codigo('8'));
+        // 3.6.17 (F-01): sin ningun codigo escrito, el acta se descarta sola y queda archivada con el intento.
+        assertNull(f.acta());
+        assertTrue(r, r.contains("se descartó sola"));
+        assertTrue(almacen.cerradas.get(0).contains("acta vacía"));
         assertFalse(ajustado('8'));
     }
 
@@ -933,7 +956,9 @@ public class FlujoCalibracionTest {
         assertTrue(almacen.cerradas.get(1).contains("Código b"));
         assertTrue(almacen.cerradas.get(2).contains("Código 5"));
         // T-C41 una vez y una persistencia por codigo: el T-C41 de b y 5 aprovecha la persistencia anterior.
-        assertEquals(apagados + 4, sim.apagados);
+        // 3.6.17 (F-04): el #SC del 8 es una escritura: el T-C41 del b apaga el suyo. El del 5 usa la persistencia
+        // del b (su aceptacion ya no escribe #SC). 1 + 3 persistencias + 1 = 5.
+        assertEquals(apagados + 5, sim.apagados);
         assertEquals("3.6.16: #SC una sola vez al dia (se lee #GC# antes)", 1, sim.cuantas("#SC,"));
         assertTrue(almacen.cerradas.get(2).contains("patrones 5"));
         assertFalse(almacen.cerradas.get(2).contains("P81 (n ="));      // P81 fuera del ajuste del 5
@@ -1162,20 +1187,31 @@ public class FlujoCalibracionTest {
         almacen = almacen.reabrir();
         FlujoCalibracion g = flujo();
         assertTrue(g.rechazoPendiente());
-        // salida terminal: solo con la firma de Diego
+        // salida terminal: solo con la firma de Diego, que es el PIN del equipo (F-02), no un nombre tecleado
         assertTrue(g.cerrarSinRestaurar("Operador", "x").contains("lo firma Diego"));
+        assertTrue(g.cerrarSinRestaurar("no soy diego", "x").contains("lo firma Diego"));
         assertNotNull(g.acta());
-        String c = g.cerrarSinRestaurar("Diego Zúñiga", "el #F no entra; se revisa en taller");
+        String c = g.cerrarSinRestaurar("1234", "el #F no entra; se revisa en taller");
         assertTrue(c, c.startsWith("Acta cerrada SIN RESTAURAR") && c.contains("8"));
         assertNull(g.acta());
-        assertTrue(almacen.cerradas.get(0).contains("RECHAZADA SIN RESTAURAR, firmado por Diego"));
+        assertTrue(almacen.cerradas.get(0).contains("RECHAZADA SIN RESTAURAR, firmado por Diego (PIN del equipo"));
         assertEquals(0, sim.cuantas("#SC,"));
-        assertTrue(g.cerrarSinRestaurar("Diego", "x").startsWith("Solo se cierra"));
+        assertTrue(g.cerrarSinRestaurar("1234", "x").startsWith("Solo se cierra"));
+        // F-03: no se calibra al instante; Diego libera con su PIN y entonces si
+        int s1 = sim.cuantas("#S,");
+        assertTrue(g.motivoPrevias(), g.motivoPrevias() != null && g.motivoPrevias().contains("SIN RESTAURAR"));
+        String r3 = g.calibrar(sel('8'), "Diego", "x");
+        assertTrue(r3, r3.contains("SIN RESTAURAR"));
+        assertEquals(s1, sim.cuantas("#S,"));
+        assertTrue(g.liberarTrasCierre("0000", "x").contains("No se libera"));
+        assertTrue(g.liberarTrasCierre("1234", "curva del 8 comprobada con #G").startsWith("Liberado por Diego"));
+        assertNull(g.bloqueoSinRestaurar());
     }
 
     /** P14-01: el atajo de T-C41 no sobrevive a un rechazo con restauracion ni a otra pulsacion. */
     @Test
     public void p1401ElAtajoDeTC41NoSobreviveAUnRechazo() throws Exception {
+        sim.fecha = HOY;              // la fecha ya es la de hoy: no hay #SC que anule el atajo (F-04)
         FlujoCalibracion f = flujo();
         operador.respuestas.put("Acta del código b", 1);
         String r = f.calibrarTodo(sel('8', 'b'), "Diego", "x");
@@ -1281,8 +1317,10 @@ public class FlujoCalibracionTest {
         sim.conectado = true;
         assertEquals("SLV-002", sim.serie);
         assertTrue(campana.esSerie("SLV-002") && campana.esSerie("SLV-002-2026"));
+        // 3.6.17 (S-04): el equipo dice SLV-002 y la campana SLV-002-2026: no se calibra hasta repetir el cambio
         FlujoCalibracion f = flujo();
-        assertNull(f.motivoPrevias());
+        assertNotNull(f.motivoPrevias());
+        assertTrue(f.motivoPrevias(), f.motivoPrevias().contains("Cambiar serie"));
         String t = FlujoCalibracion.renombrarSerie(sim, campana, "1234", "SLV-002-2026", "SLV-002-2026", "Diego", "t");
         assertTrue(t, t.startsWith("Serie cambiada: SLV-002 -> SLV-002-2026"));
     }
@@ -1373,5 +1411,70 @@ public class FlujoCalibracionTest {
         ctx.protocolo = new ProtocoloV46(PerfilFirmware.porDefecto(Protocolo.Firmware.F46));
         FlujoCalibracion g = new FlujoCalibracion(v46, operador, almacen, cola, campana, catalogo, decisiones, ctx, reloj);
         assertNotNull(g.motivoPrevias());
+    }
+
+    // ------------------------------------------------------------------ 3.6.17 (REVISION-P15)
+
+    /** P14-B02: el acta aceptada cita el SHA-256 del ZIP de soporte exportado justo antes de cerrarla. */
+    @Test
+    public void p14B02ElActaCitaElShaDelSoporte() throws Exception {
+        almacen.sha = "ab12cd34";
+        calibrarYAceptar8();
+        assertTrue(almacen.cerradas.get(0).contains("ZIP de soporte (SHA-256): ab12cd34"));
+    }
+
+    /** F-01: con la bateria a 0 no queda un acta vacia que bloquee: se descarta sola y se sigue al cambiarla. */
+    @Test
+    public void f01ConLaBateriaA0ElActaVaciaSeDescartaSola() throws Exception {
+        sim.bateriaN = 0;
+        FlujoCalibracion f = flujo();
+        String r = f.calibrarTodo(sel('8'), "Diego", "x");
+        assertTrue(r, r.contains("10,34"));
+        assertNull(f.acta());
+        assertEquals(0, sim.cuantas("#S,"));
+        sim.bateriaN = 120;
+        f.leerBateria();
+        String r2 = f.calibrarTodo(sel('8'), "Diego", "x");
+        assertTrue(r2, r2.startsWith("Sesión completa: 8 ACEPTADO;"));
+    }
+
+    /** F-02: la frase registrada de Diego (FRASE-DIEGO, su SHA-256 en decisiones.csv) tambien firma. */
+    @Test
+    public void f02LaFraseRegistradaDeDiegoFirma() throws Exception {
+        String h = PaquetesZip.sha256("frase larga de diego".getBytes(StandardCharsets.UTF_8));
+        decisiones = Decisiones.leer(decisionesDelApk() + "FRASE-DIEGO,SLV-002," + h + ",2026-09-20,Diego,DOC.md,,\n");
+        FlujoCalibracion f = flujo();
+        f.calibrar(sel('8'), "Diego", "x");
+        sim.inyectar("#F,8#", EquipoSimulado.Falla.OK_SIN_HACER, 10);
+        f.rechazar("prueba");
+        assertTrue(f.rechazoPendiente());
+        assertTrue(f.cerrarSinRestaurar("frase corta", "x").contains("lo firma Diego"));
+        String c = f.cerrarSinRestaurar("frase larga de diego", "x");
+        assertTrue(c, c.startsWith("Acta cerrada SIN RESTAURAR (firmado por Diego (frase registrada"));
+    }
+
+    /** F-04: el #SC del acta del 8 es una escritura: el T-C41 del b apaga el suyo. */
+    @Test
+    public void f04ElScAnulaElAtajoDelTC41() throws Exception {
+        FlujoCalibracion f = flujo();
+        String r = f.calibrarTodo(sel('8', 'b'), "Diego", "x");
+        assertTrue(r, r.startsWith("Sesión completa: 8 ACEPTADO; b ACEPTADO;"));
+        assertEquals(1, sim.cuantas("#SC,"));
+        assertTrue(almacen.cerradas.get(1), almacen.cerradas.get(1).contains("T-C41 apagado: propio"));
+    }
+
+    /** S-04: si la serie del equipo no es la actual de la campana, no se calibra; al repetir el cambio, si. */
+    @Test
+    public void s04LaSerieDelActaEsLaDelEquipo() throws Exception {
+        campana.renombrar("SLV-002", "SLV-002-2026", "t", "Diego");       // la app murio antes del #SN
+        FlujoCalibracion f = flujo();
+        assertTrue(f.motivoPrevias(), f.motivoPrevias().contains("El equipo dice SLV-002"));
+        assertEquals(0, f.calibrarTodo(sel('8'), "Diego", "x").indexOf("Sesión completa") < 0 ? 0 : 1);
+        String t = FlujoCalibracion.renombrarSerie(sim, campana, "1234", "SLV-002-2026", "SLV-002-2026", "Diego", "t");
+        assertTrue(t, t.startsWith("Serie cambiada"));
+        FlujoCalibracion g = flujo();
+        assertNull(g.motivoPrevias());
+        assertTrue(g.calibrarTodo(sel('8'), "Diego", "x").startsWith("Sesión completa: 8 ACEPTADO;"));
+        assertTrue(almacen.cerradas.get(0).contains("Equipo: SLV-002-2026"));
     }
 }
