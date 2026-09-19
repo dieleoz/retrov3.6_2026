@@ -332,7 +332,7 @@ public final class Pruebas {
                 d.append("#G,").append(k).append("# -> ").append(r.describir()).append(" (no cuadra)\n");
                 continue;
             }
-            boolean igual = e.igualFloat32(Fabrica.ecuacion(k));
+            boolean igual = e.igualFloat32(Fabrica.ecuacion(k)); // ULP_G: ver Ecuacion
             boolean ajustado = conMascara ? ((s.mascara >> i) & 1) != 0 : "CAL".equals(s.marca);
             d.append(k).append(": ").append(igual ? "= fábrica" : "distinta de fábrica");
             if (conMascara) {
@@ -356,13 +356,21 @@ public final class Pruebas {
             ok = false;
             d.append("Marca \"").append(s.marca).append("\": no es CAL ni DEF.\n");
         }
-        // #E: cada codigo reproduce exactamente su ecuacion (la leida con #G),
-        // emulada en float32 como manda el contrato 1.1.
+        // #E: verificacion EXACTA de no regresion (SPEC RF-APP-07 [MOD r1.1]).
+        // #E devuelve enteros, sin paso por texto: en un codigo a "fabrica" debe
+        // coincidir EXACTAMENTE con la emulacion de 2020 hecha con la tabla de
+        // fabrica de la app, no con lo leido por #G (que puede estar a 2 ulp).
+        // En un codigo ajustado no hay tabla de referencia: se emula con #G y
+        // una diferencia de 1 unidad se anota como posible error de impresion.
         int exactas = 0;
         int distintas = 0;
+        int avisos = 0;
         for (int i = 0; i < Fabrica.CODIGOS.length; i++) {
             char k = Fabrica.CODIGOS[i];
-            Ecuacion e = s.leidas[i];
+            Ecuacion leida = s.leidas[i];
+            boolean aFabrica = conMascara ? ((s.mascara >> i) & 1) == 0
+                    : ("DEF".equals(s.marca) || (leida != null && leida.igualFloat32(Fabrica.ecuacion(k))));
+            Ecuacion ref = aFabrica ? Fabrica.ecuacion(k) : leida;
             for (int x : X_COMPROBACION) {
                 comprobarCancelacion();
                 Cliente.Respuesta r = c.pedir("#E," + k + "," + x + "#", Tramas.Tipo.ADMIN,
@@ -375,23 +383,30 @@ public final class Pruebas {
                             .append(" (no cuadra)\n");
                     continue;
                 }
-                if (e == null) {
-                    continue; // ya contado como fallo de #G
+                if (ref == null) {
+                    continue; // codigo ajustado sin #G: ya contado como fallo
                 }
-                int esperado = e.respuestaFloat32(x);
+                int esperado = ref.respuestaFloat32(x);
                 if (v == esperado) {
                     exactas++;
+                } else if (!aFabrica && Math.abs(v - esperado) == 1) {
+                    avisos++;
+                    d.append("#E,").append(k).append(',').append(x).append("# = ").append(v)
+                            .append(", la app espera ").append(esperado)
+                            .append(" (código ajustado: 1 unidad, posible error de %.8E en #G; aviso, no fallo)\n");
                 } else {
                     ok = false;
                     distintas++;
                     d.append("#E,").append(k).append(',').append(x).append("# = ").append(v)
                             .append(", la app espera ").append(esperado)
-                            .append(Math.abs(v - esperado) == 1
-                                    ? " (1 unidad: posible redondeo de la librería float de XC8, R-05)" : "")
+                            .append(aFabrica ? " (código a fábrica: REGRESIÓN respecto de 2020)" : "")
                             .append('\n');
                 }
             }
             poner(5, Estado.EN_CURSO, d.toString());
+        }
+        if (avisos > 0) {
+            d.append(avisos).append(" avisos de 1 unidad en códigos ajustados.\n");
         }
         d.append("#E: ").append(exactas).append(" coincidencias exactas, ").append(distintas)
                 .append(" discrepancias, en x = 500, 1000, 2000, 3000, 4000.");

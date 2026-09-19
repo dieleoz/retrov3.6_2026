@@ -459,7 +459,10 @@ public class AdminActivity extends Base {
         Cliente.Respuesta r = Cliente.instancia().pedir(trama, Tramas.Tipo.ADMIN, 5000);
         String res = resultado(r);
         Ecuacion e = releer(k);
-        boolean ok = e != null && e.igualFloat32(anterior);
+        // #F repone el valor de ROM (misma impresion: ULP_G). #S con los valores
+        // anteriores pasa otra vez por strtod: impresion + strtod + impresion.
+        boolean ok = e != null && e.igualFloat32(anterior, eraFabrica ? Ecuacion.ULP_G
+                : Ecuacion.ULP_S + Ecuacion.ULP_G);
         return "restauración con " + (eraFabrica ? "#F," + k + "#" : "#S (valores anteriores)") + " -> " + res
                 + (ok ? "; la relectura coincide con el estado anterior" : "; la relectura NO coincide con el estado anterior: "
                 + (e == null ? "sin relectura" : e.toString()));
@@ -477,7 +480,7 @@ public class AdminActivity extends Base {
             String res = resultado(r);
             Ecuacion e = releer(k);
             String estado = e == null ? "la relectura #G falló"
-                    : (e.igualFloat32(ts.enviada) ? "la relectura coincide con lo enviado"
+                    : (e.igualFloat32(ts.enviada, Ecuacion.ULP_S) ? "la relectura coincide con lo enviado"
                     : (e.igualFloat32(anterior) ? "la relectura coincide con el estado ANTERIOR"
                     : "la relectura no coincide ni con lo enviado ni con lo anterior: " + e));
             String salida;
@@ -487,8 +490,8 @@ public class AdminActivity extends Base {
                 if (e == null || !e.igualFloat32(anterior)) {
                     salida += " Se restaura el estado anterior: " + restaurar(k, anterior);
                 }
-            } else if (e != null && e.igualFloat32(ts.enviada)) {
-                salida = "#S OK y " + estado + " (1 ulp). Mida ahora al menos un patrón con el código " + k
+            } else if (e != null && e.igualFloat32(ts.enviada, Ecuacion.ULP_S)) {
+                salida = "#S OK y " + estado + " (" + Ecuacion.ULP_S + " ulp). Mida ahora al menos un patrón con el código " + k
                         + " para verificar.";
             } else {
                 salida = "#S OK pero " + estado + ". Se restaura el estado anterior: " + restaurar(k, anterior);

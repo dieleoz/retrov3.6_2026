@@ -307,13 +307,26 @@ public class CalculoTest {
         assertTrue(t.texto.startsWith("#S,d,-1.23456789E-07,-8.76543211E-05,"));
     }
 
+    private static float ulpsArriba(float v, int n) {
+        for (int i = 0; i < n; i++) {
+            v = Math.nextUp(v);
+        }
+        return v;
+    }
+
     @Test
-    public void igualdadFloat32ConUnUlp() {
+    public void igualdadFloat32ConCuatroUlp() {
+        // XC8 2.10: %.8E con hasta 2 ulp y strtod con hasta 3 (CAMBIOS-V3.6.md §3.4).
         Ecuacion f = Fabrica.ecuacion('1');
-        Ecuacion casi = new Ecuacion(0, Math.nextUp((float) f.c2), f.c1, f.c0);
-        assertTrue(f.igualFloat32(casi));
-        Ecuacion otra = new Ecuacion(0, f.c2 * 1.001, f.c1, f.c0);
-        assertFalse(f.igualFloat32(otra));
+        assertEquals(4, Ecuacion.ULP_G);
+        Ecuacion a2 = new Ecuacion(0, ulpsArriba((float) f.c2, 2), f.c1, f.c0);
+        Ecuacion a4 = new Ecuacion(0, f.c2, ulpsArriba((float) f.c1, 4), f.c0);
+        Ecuacion a5 = new Ecuacion(0, f.c2, ulpsArriba((float) f.c1, 5), f.c0);
+        assertTrue("2 ulp: chip recien grabado", f.igualFloat32(a2));
+        assertTrue(f.igualFloat32(a4));
+        assertFalse(f.igualFloat32(a5));
+        assertTrue("tras #S: strtod 3 + impresion 2", f.igualFloat32(a5, Ecuacion.ULP_S));
+        assertFalse(f.igualFloat32(new Ecuacion(0, f.c2 * 1.001, f.c1, f.c0)));
     }
 
     @Test

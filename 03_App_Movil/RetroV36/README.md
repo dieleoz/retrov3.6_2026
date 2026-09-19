@@ -4,7 +4,7 @@
 V3.6 no se puede probar: el firmware V3.6 no existe todavía en ningún equipo. Lo que sí debe funcionar
 es la medida contra un V3 2020 (SLV-002), y eso tampoco se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 361`, `versionName 3.6.1` (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36`, etiqueta "RTV V3.6", `versionCode 362`, `versionName 3.6.2` (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -65,7 +65,7 @@ que queda anotado en el registro. Medir con NO APTO pide una confirmación.
 | 2 | Versión | Con ≥ 1500 ms entre envíos: `#V#` → si `#V,3.6,...#`, V3.6. Si no, `9` → si `:n:`, V3 2020. Si no, `6` → si `::n`, V3 2020. **Nunca `e`** (ver Lección). Si no, `@LEERV,BLA,1@` → si `@LEERV,...@`, V4 (la app no aplica). **Ninguna otra trama con `@`** | V3.6 o V3 2020 |
 | 3 | Códigos | Envía `1`-`8`, `a`-`d` y, si el equipo la tiene, `e` | Los 12 responden `::n` en < 2,5 s. En V3.6 `e` es obligatoria |
 | 4 | Coherencia | Invierte las 12 respuestas a `x` con las ecuaciones vigentes (fábrica en V3 2020; las leídas con `#G` en V3.6) | Cada código a ±tolerancia (15 por defecto, editable) **más su resolución** de la referencia: la `x` de `e` si la hay, si no la mediana. Así `b` (rojo opaco, ~15 cuentas por unidad de R hacia x ≈ 600) no se castiga. Un 0 es "no evaluable". Hacen falta 6 evaluables |
-| 5 | Sólo V3.6 | `#GT#`; `#G,k#` de los 12; marca `CAL`/`DEF` y máscara de `#V#`; `#E,k,x#` en x = 500, 1000, 2000, 3000, 4000 | Todo se analiza. Un código que la máscara da por "fábrica" debe coincidir con la tabla de fábrica a 1 ulp de float32. Cada `#E` debe dar **exactamente** lo que la app calcula en float32, en el orden de 2020 |
+| 5 | Sólo V3.6 | `#GT#`; `#G,k#` de los 12; marca `CAL`/`DEF` y máscara de `#V#`; `#E,k,x#` en x = 500, 1000, 2000, 3000, 4000 | Todo se analiza. Un código que la máscara da por "fábrica" debe coincidir con la tabla de fábrica a **4 ulp** de float32 (XC8 2.10 imprime `%.8E` con hasta 2 ulp de error y `strtod` lee con hasta 3: CAMBIOS-V3.6.md §3.4, SPEC C-12). La no regresión **exacta** va por `#E`: en un código a fábrica debe coincidir exactamente con la emulación de 2020 hecha con la tabla de fábrica de la app, no con `#G`. En un código ajustado se emula con `#G` y 1 unidad de diferencia es aviso, no fallo |
 | 6 | Repetibilidad | 5 lecturas seguidas con `e` (o `6` invertido) | Ninguna fallida y desviación ≤ 10 cuentas. **Umbral provisional**, sin medir |
 
 La app no puede comprobar el CRC de la EEPROM por sí misma: se fía de la marca y de la máscara que
@@ -141,7 +141,7 @@ nombre existe, se añade `_2`, `_3`...
   (x ≈ 3580), queda bloqueado.
 - **Escribir:** confirmación con coeficientes antiguos y nuevos, R de ambos sobre los patrones y la
   trama. Antes, copia de los 12 juegos; después, `#S` (9 cifras, `%.8E`), relectura `#G` y
-  comparación a 1 ulp. **C3:** si la relectura no coincide con lo enviado, o si `#S` da `#ERR` o no
+  comparación a 5 ulp (`strtod` 3 + impresión 2; `Ecuacion.ULP_S`). **C3:** si la relectura no coincide con lo enviado, o si `#S` da `#ERR` o no
   responde y el estado releído no es el anterior, la app **restaura sola**: `#F,k#` si lo anterior era
   fábrica, o `#S` con los valores anteriores. Después relee y avisa. Ante `#ERR` no afirma que "no ha
   cambiado nada": informa de lo que relee.

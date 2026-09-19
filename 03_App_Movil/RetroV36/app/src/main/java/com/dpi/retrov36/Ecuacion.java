@@ -67,14 +67,39 @@ public final class Ecuacion {
         return r > TECHO_FIRMWARE ? 0 : (int) r;
     }
 
-    /** Igualdad coeficiente a coeficiente como float32, con 1 ulp de margen (O-02). */
+    /**
+     * Tolerancia, en ulp de float32, para comparar coeficientes leidos con #G.
+     *
+     * De donde sale: el firmware midio en simulador (01_Firmware/RetroVertical_V3.6.X/
+     * CAMBIOS-V3.6.md §3.4 y §4.1; SPEC-V3.6 C-12 y RF-APP-07 [MOD r1.1]) que
+     * con la biblioteca de XC8 2.10 sprintf("%.8E") se equivoca hasta en 2 ulp
+     * y strtod hasta en 3. El contrato (O-02) pedia 1 ulp; con 1 ulp un chip
+     * recien grabado sale NO APTO al leer sus propios coeficientes de fabrica.
+     *
+     * - ULP_G = 4: #G frente a la tabla de fabrica, o frente a otra lectura #G.
+     *   Error medido: 2 ulp al imprimir; 4 por decision del coordinador
+     *   (18-sep-2026), con margen.
+     * - ULP_S = 5: #G tras #S frente a lo enviado. La app manda texto exacto de
+     *   9 cifras; strtod del equipo (3 ulp) + sprintf al releer (2 ulp) = 5.
+     *   Con 4 un #S correcto podria darse por fallido y restaurarse.
+     * Cuando el firmware pase T-A23 (conversion exacta) se vuelve a 1 ulp.
+     */
+    public static final int ULP_G = 4;
+    public static final int ULP_S = 5;
+
+    /** Igualdad coeficiente a coeficiente como float32, con ULP_G ulp de margen. */
     public boolean igualFloat32(Ecuacion o) {
+        return igualFloat32(o, ULP_G);
+    }
+
+    /** Igualdad coeficiente a coeficiente como float32, con 'ulps' ulp de margen. */
+    public boolean igualFloat32(Ecuacion o, int ulps) {
         double[] a = comoVector();
         double[] b = o.comoVector();
         for (int i = 0; i < 4; i++) {
             float fa = (float) a[i];
             float fb = (float) b[i];
-            if (Math.abs(fa - fb) > Math.ulp(fa)) {
+            if (Math.abs(fa - fb) > ulps * Math.ulp(fa)) {
                 return false;
             }
         }
