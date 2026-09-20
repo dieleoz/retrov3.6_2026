@@ -345,6 +345,21 @@ public class FlujoCalibracionTest {
         assertTrue(ac, ac.contains("ACEPTADA"));
     }
 
+    /**
+     * RF-COV-06 / RF-APP-U37: el acta dice de donde sale la serie que la encabeza. Hasta la rc6 no lo decia, y
+     * un acta con serie declarada por el operador era indistinguible de una con serie leida del equipo
+     * (riesgo R-U18). Aqui SLV-002 tiene la serie en EEPROM, asi que el acta tiene que decir que la dio #GN#.
+     */
+    @Test
+    public void elActaDiceSiLaSerieLaDioElEquipo() throws Exception {
+        FlujoCalibracion f = flujo();
+        assertEquals("SLV-002 responde a #GN#", "", ctx.marcaSerie);
+        f.calibrar(sel('8'), "Diego", "banco completo");
+        Acta a = f.acta();
+        assertEquals("el acta deja escrito de dónde salió la serie", "leída del equipo con #GN#", a.dato("serie"));
+        assertTrue("y se lee en el texto del acta, no solo en el fichero", a.texto().contains("serie: leída del equipo"));
+    }
+
     // --------------------------------------------------------------- T-S07
 
     @Test

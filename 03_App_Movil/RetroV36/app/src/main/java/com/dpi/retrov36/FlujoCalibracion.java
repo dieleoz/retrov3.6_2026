@@ -107,6 +107,16 @@ public final class FlujoCalibracion {
         public String resumenPruebas = "";
         /** Serie leida con #GN#. */
         public String serieGN;
+        /**
+         * RTV 1.0.0-rc6 (RF-COV-06, y RF-APP-U37 de SPEC-App-Unica-Familias-y-ZIP.md): marca de la serie
+         * cuando NO sale de #GN# sino que la declaro el operador ({@link Sesion#marcaSerie()},
+         * {@link Deteccion#MARCA_DECLARADA}); "" cuando la dio el equipo.
+         *
+         * Hasta la rc5 su unico consumidor era el texto del correo (Sesion.java:300) y NO llegaba al acta: un
+         * acta con serie declarada pasaba por acta con serie leida (riesgo R-U18). Ahora entra en el acta al
+         * abrirla, asi que queda en disco, en el ZIP y en el informe de calibracion.
+         */
+        public String marcaSerie = "";
         public String nombreBT = "";
         public String mac = "";
         public String app = "";
@@ -275,6 +285,11 @@ public final class FlujoCalibracion {
             Cliente.Respuesta gn = o.pedir("#GN#");
             c.serieGN = gn.valida() ? Calibracion.serieDe(gn.trama) : null;
         }
+        // RF-COV-06: misma regla que Deteccion.marcaSerie (:35-39). La serie sale de #GN# solo si el firmware
+        // tiene el contrato de la 3.6.2 (o es V4.6) Y respondio algo que no es NONE; en cualquier otro caso la
+        // declaro el operador, y el acta tiene que decirlo.
+        c.marcaSerie = c.es362 && c.serieGN != null && !Calibracion.NONE.equals(c.serieGN)
+                ? "" : Deteccion.MARCA_DECLARADA;
         return c;
     }
 
@@ -1065,6 +1080,11 @@ public final class FlujoCalibracion {
         acta = new Acta(campana.serieConHistoria(), campana.mac, ctx.firmware, Remedida3611.K, Remedida3611.M, 1, reloj.ahoraIso());
         acta.tabla = TablaCalibracion.VERSION;
         almacen.adjuntar(acta);
+        // RF-COV-06 / RF-APP-U37: de donde sale la serie que encabeza el acta. Va PRIMERO entre los datos
+        // (Acta.texto los escribe en el orden de insercion, Acta.java:759-761) para que se lea junto a la
+        // cabecera y no al final. Un acta con serie declarada no puede pasar por una con serie leida.
+        acta.dato("serie", ctx.marcaSerie == null || ctx.marcaSerie.isEmpty()
+                ? "leída del equipo con #GN#" : "DECLARADA por el operador, no leída del equipo");
         acta.dato("md5 de la cola", cola.md5);
         acta.dato("banco", campana.colaTipo());
         Anclas.Valor sr = sRep();

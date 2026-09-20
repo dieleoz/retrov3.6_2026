@@ -45,6 +45,15 @@ public class ConexionActivity extends Base {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+        // APK corto "RTV Calibra" (SPEC-App-Calibracion-Coviandina.md): otra aplicacion, con su propio
+        // applicationId, construida del mismo fuente. Su pantalla de entrada es CortoActivity. El reenvio va
+        // aqui, y no en un <intent-filter> por variante, para que el manifiesto siga siendo uno solo. En la app
+        // de campo BuildConfig.CORTO es false y esto no se ejecuta nunca (app/build.gradle).
+        if (BuildConfig.CORTO) {
+            startActivity(new Intent(this, CortoActivity.class));
+            finish();
+            return;
+        }
         texto("RTV " + BuildConfig.VERSION_NAME + " - retrorreflectómetro vertical V3.6 y V4.6. Conecte el equipo en la lista "
                 + "de abajo; las pruebas se hacen solas. Después: tomar muestras y grabar.");
         // 3.6.17 (principio de Diego: "tomar muestras y luego darle a grabar; poco más"): dos botones grandes.

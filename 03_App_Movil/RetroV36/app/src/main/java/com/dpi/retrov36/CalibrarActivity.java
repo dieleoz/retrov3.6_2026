@@ -105,6 +105,9 @@ public class CalibrarActivity extends Base {
         ctx.apto = s.apto;
         ctx.resumenPruebas = s.resumenPruebas;
         ctx.serieGN = s.serieEquipo;
+        // RF-COV-06: la marca "serie declarada, no leída del equipo" llega al acta. Hasta la rc5 se quedaba en
+        // el texto del correo (Sesion.java:300) y el acta no la llevaba.
+        ctx.marcaSerie = s.marcaSerie();
         ctx.nombreBT = s.nombre;
         ctx.mac = s.mac;
         ctx.app = "RTV " + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ", sucede a 3.6.16)";

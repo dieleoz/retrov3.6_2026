@@ -18,19 +18,24 @@
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
+        android:label="${etiqueta}"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
 
         <activity
             android:name=".ConexionActivity"
-            android:label="@string/app_name">
+            android:label="${etiqueta}">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- APK corto "RTV Calibra" (SPEC-App-Calibracion-Coviandina.md). Pantalla unica; es la de entrada
+             cuando BuildConfig.CORTO es true (buildType "coviandina"), por el reenvio de ConexionActivity. -->
+        <activity android:name=".CortoActivity" android:label="${etiqueta}"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
 
         <activity android:name=".PruebasActivity" android:label="Pruebas del equipo" />
         <activity android:name=".MedidaActivity" android:label="Medida de patrones" />

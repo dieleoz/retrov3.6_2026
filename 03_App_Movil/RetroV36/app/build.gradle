@@ -15,12 +15,36 @@ android {
         // Cada rc lleva su propio par para que no se confundan en el telefono (RF-APP-41).
         versionCode 10005
         versionName "1.0.0-rc6"
+        // Valores por defecto de la app de campo. El APK corto los cambia en el buildType "coviandina".
+        buildConfigField "boolean", "CORTO", "false"
+        manifestPlaceholders = [etiqueta: "RTV"]
     }
 
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        /**
+         * APK corto "RTV Calibra" (05_Documentacion/SPEC-App-Calibracion-Coviandina.md §5).
+         *
+         * applicationId propio: las dos apps caben a la vez en el telefono. Hasta la rc5 eran la misma
+         * aplicacion, asi que instalar una borraba la otra y volver atras exigia desinstalar, que se lleva
+         * la campana por delante (Campanas guarda en ctx.getFilesDir(), Campanas.java:66). La noche del
+         * 19-sep eso obligo a repartir el trabajo entre dos moviles.
+         *
+         * Nada mas hace falta: el FileProvider ya declara "${applicationId}.ficheros"
+         * (AndroidManifest.xml:48), asi que su autoridad se separa sola — dos apps con la misma autoridad
+         * no podrian instalarse juntas — y ningun fuente Java escribe el nombre del paquete como literal.
+         */
+        coviandina {
+            initWith debug
+            signingConfig signingConfigs.debug
+            applicationIdSuffix ".calibra"
+            versionNameSuffix "-calibra"
+            buildConfigField "boolean", "CORTO", "true"
+            manifestPlaceholders = [etiqueta: "RTV Calibra"]
+            matchingFallbacks = ['debug']
         }
     }
 
