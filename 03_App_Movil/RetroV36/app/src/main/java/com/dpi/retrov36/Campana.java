@@ -215,6 +215,11 @@ public final class Campana {
     private String colaTipo = "COMPLETO";
     private String colaMd5 = "";
     private boolean colaElegida;
+    /**
+     * RTV 1.0.0-rc6: familia de firmware de la campana (evento FAMILIA). "" = todavia no se sabe. Bloquea igual
+     * que la MAC, porque la MAC NO cambia al grabar y la escala de x si (ver Familia).
+     */
+    private String familia = Familia.DESCONOCIDA;
     /** 3.6.17: el tipo de banco lo eligio el operador a mano (COLA con "manual"); si no, lo eligio la app. */
     private boolean colaManual;
     /** QA-3614-04: una anulacion tambien deja el ZIP entregado viejo. */
@@ -600,6 +605,34 @@ public final class Campana {
         return colaManual;
     }
 
+    /**
+     * RTV 1.0.0-rc6: familia de firmware de la campana (evento FAMILIA), o "" mientras no se sepa. Viaja en el
+     * diario igual que el tipo de banco (evento COLA), asi que va en los dos ZIP sin tocar el formato.
+     */
+    public String familia() {
+        return familia;
+    }
+
+    /**
+     * Fija la familia de firmware de la campana. La primera vez la escribe en el diario; despues, si llega otra
+     * distinta, LANZA: mezclar familias en un campana.csv no se puede deshacer (ver Familia). Una familia
+     * desconocida no fija nada ni bloquea nada.
+     *
+     * @throws IllegalArgumentException si la familia que llega no es compatible con la de la campana.
+     */
+    public void fijarFamilia(String fam) throws IOException {
+        if (fam == null || fam.isEmpty()) {
+            return;
+        }
+        if (!Familia.compatibles(familia, fam)) {
+            throw new IllegalArgumentException(Familia.porQueNoSeMezclan(familia, fam));
+        }
+        if (familia.isEmpty()) {
+            familia = fam;
+            evento("FAMILIA", fam, Familia.texto(fam));
+        }
+    }
+
     /** true si la campana ya tiene su tipo de banco (evento COLA). */
     public boolean colaElegida() {
         return colaElegida;
@@ -648,6 +681,8 @@ public final class Campana {
             throw new IllegalArgumentException("serie de otro equipo (MAC " + mac + "); esta campaña es de "
                     + this.equipo + " " + this.mac);
         }
+        // RTV 1.0.0-rc6: la familia de firmware bloquea igual que la MAC, y se deja escrita en el diario.
+        fijarFamilia(Familia.de(firmware));
         Serie s = new Serie(nuevoId(), fecha, equipo, mac, firmware, patron, orientacion, codigo);
         series.add(s);
         evento("SERIE", s.id, fecha, equipo, mac, firmware, patron, orientacion, codigo);
@@ -1311,6 +1346,11 @@ public final class Campana {
                 Serie s = new Serie(c.get(1), c.get(2), c.get(3), c.get(4), c.get(5), c.get(6),
                         Integer.parseInt(c.get(7)), c.get(8).charAt(0));
                 series.add(s);
+                // RTV 1.0.0-rc6: un diario anterior a la rc6 no trae FAMILIA; se deduce de la primera serie que
+                // la diga. Asi la guarda de familia vale tambien para los ZIP ya exportados.
+                if (familia.isEmpty()) {
+                    familia = Familia.de(c.get(5));
+                }
                 return true;
             }
             case "DISPARO": {
@@ -1389,6 +1429,12 @@ public final class Campana {
             case "RENOMBRA_REVIERTE":
                 serieActual = c.get(3);
                 renombrados.add(new String[]{c.get(1), c.get(2), c.get(3), c.size() > 4 ? c.get(4) : "", REVIERTE});
+                return true;
+            case "FAMILIA":
+                // RTV 1.0.0-rc6. Al LEER no se bloquea: un diario se lee entero para poder decir de quien es
+                // (ImportadorCampana lo lee en una Campana suelta antes de comparar). El bloqueo es de la
+                // importacion y de nuevaSerie, no del lector.
+                familia = Familia.de(c.get(1));
                 return true;
             case "COLA":
                 if (!c.get(1).equals(colaTipo)) {

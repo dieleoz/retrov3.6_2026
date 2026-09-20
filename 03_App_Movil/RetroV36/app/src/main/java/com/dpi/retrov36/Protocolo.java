@@ -90,6 +90,15 @@ public interface Protocolo {
     /** Por que no se calibra; "" si se calibra. */
     String motivoNoCalibra();
 
+    /**
+     * RTV 1.0.0-rc6: QUE HAY QUE HACER para que este equipo se pueda calibrar; "" si no hay nada que hacer o no
+     * se sabe. Un motivo que solo niega ("sin x no hay banco") deja al operador sin saber por donde seguir; esto
+     * es la frase que se lo dice. No es algo que haga la app: es una instruccion para la persona.
+     */
+    default String queHacerParaCalibrar() {
+        return "";
+    }
+
     /** true si se puede medir el banco (hay x). */
     boolean mideBanco();
 

@@ -11,6 +11,16 @@ package com.dpi.retrov36;
 public final class ProtocoloV4Original implements Protocolo {
 
     public static final String MOTIVO = "Equipo V4 sin firmware V4.6: sólo medir y verificar";
+
+    /**
+     * RTV 1.0.0-rc6: lo que le falta a este equipo no es una función de la app, es firmware. Visto en campo el
+     * 19-sep con SLV-028 (MAC 00:22:09:01:65:10): responde "@LEERV,BLA,2@" en 3,1 s e ignora "#V#", '9' y '6'.
+     * Sin "#X" no hay x que ajustar, así que la app hace bien en no ofrecerle banco; lo que faltaba era decirle
+     * al operador por dónde seguir en vez de dejarlo en una negación.
+     */
+    public static final String QUE_HACER = "Para poder calibrarlo hay que grabarle el firmware V4.6 (por ICSP, con "
+            + "autorización escrita del propietario). Tal como está, este equipo sólo mide y se verifica contra "
+            + "patrones certificados.";
     public static final String ETIQUETA_TIPO1_V41 = "señal tipo 1, cuentas/10, no es retrorreflexión";
     public static final String ETIQUETA_TIPO1_SIN = "tipo 1 sin interpretar";
 
@@ -143,8 +153,14 @@ public final class ProtocoloV4Original implements Protocolo {
     }
 
     @Override
+    public String queHacerParaCalibrar() {
+        return QUE_HACER;
+    }
+
+    @Override
     public String motivoNoBanco() {
-        return MOTIVO + ". Sin x no hay banco.";
+        // El texto de "Sin x no hay banco" se conserva (lo comprueba RtvUnicaTest); lo que se añade es qué hacer.
+        return MOTIVO + ". Sin x no hay banco. " + QUE_HACER;
     }
 
     /** RF-APP-U07: el tipo 1 del V4.1 es la señal en cuentas/10; en un firmware sin identificar, sin interpretar. */

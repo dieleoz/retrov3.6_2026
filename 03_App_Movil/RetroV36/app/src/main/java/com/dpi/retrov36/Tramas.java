@@ -27,8 +27,17 @@ public final class Tramas {
      * (V4.1:Aplicacion.c:297-298 solo en la rama de tipo 1). Deja la pantalla en BLANCO tipo 2 (H-06).
      */
     public static final String SONDA_V4 = "@LEERV,BLA,2@";
-    /** Espera de la sonda y de toda @LEERV (RF-APP-U04): el V4.1 espera 1 s antes de medir. */
-    public static final long TIMEOUT_LEERV_MS = 5000;
+    /**
+     * Espera de la sonda y de toda @LEERV (RF-APP-U04): el V4.1 espera 1 s antes de medir.
+     *
+     * RTV 1.0.0-rc6: medido en campo el 19-sep con SLV-028 (V4 original), "@LEERV,BLA,2@" tarda 3,1-3,3 s de
+     * punta a punta. Con los 5000 ms de la rc5 el margen era de 1,7 s (un 55 %): basta para una lectura suelta,
+     * pero en una tanda larga una sola peticion que se pase del plazo se cuenta como timeout y corta la tanda.
+     * Se sube a 8000 ms, que deja mas del doble de margen sobre lo medido. Subirlo NO cuesta tiempo cuando el
+     * equipo responde: el plazo se cierra con la trama, no esperando (Cliente.pedir:141-153). Solo se paga con
+     * un equipo mudo, y ahi ya no hay tanda que salvar.
+     */
+    public static final long TIMEOUT_LEERV_MS = 8000;
     /** Los 6 colores de @LEERV, en el orden de las claves 1-6 (PROTOCOLO-V4.6 §4.2). */
     public static final String[] COLORES_V4 = {"BLA", "AMA", "VER", "ROJ", "AZU", "NAR"};
     private static final Pattern P_LEERV_PETICION = Pattern.compile("@LEERV,(BLA|AMA|VER|ROJ|AZU|NAR),([12])@");

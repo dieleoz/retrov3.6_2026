@@ -1,12 +1,13 @@
 # RTV — app única del Retrorreflectómetro Vertical (V3, V3.6, V4 y V4.6)
 
-**Estado, 19-sep-2026 (RTV 1.0.0-rc5): compila y pasa 333 tests JVM (304 aseveran, 29 no). NADA de esto se ha probado contra
-un equipo físico ni en un teléfono.** El modo V3.6 no se puede probar: el firmware V3.6 no existe todavía
+**Estado, 19-sep-2026 (RTV 1.0.0-rc6): compila y pasa 345 tests JVM (316 aseveran, 29 no). NADA de esto se ha probado
+contra un equipo físico ni en un teléfono: los defectos que corrige la rc6 SÍ se midieron en campo, pero la
+corrección no.** El modo V3.6 no se puede probar: el firmware V3.6 no existe todavía
 en ningún equipo. La V4.6 tampoco existe grabada: se prueba contra `EquipoSimuladoV46`. Lo que sí debe
 funcionar es la medida contra un V3 2020 (SLV-002) y contra un V4 original (`@LEERV`), y ninguna de las
 dos se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36` (no cambia), etiqueta "RTV", `versionCode 10004`, `versionName 1.0.0-rc5` (RTV 1.0.0, sucede a 3.6.16; decisión VERSION de Diego). La **rc1** se compiló con `10000`/`1.0.0` y es **anterior** a la mezcla de la 3.6.17 (`3dcaf41`): ese par no se reutiliza. Antes: `versionCode 3616`, `versionName 3.6.16` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.16 → 3616) (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36` (no cambia), etiqueta "RTV", `versionCode 10005`, `versionName 1.0.0-rc6` (RTV 1.0.0, sucede a 3.6.16; decisión VERSION de Diego). rc5 = `10004`. La **rc1** se compiló con `10000`/`1.0.0` y es **anterior** a la mezcla de la 3.6.17 (`3dcaf41`): ese par no se reutiliza. Antes: `versionCode 3616`, `versionName 3.6.16` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.16 → 3616) (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -31,7 +32,14 @@ no se versionan.
 
 ### Tests JVM
 
-`app/src/test/`: 29 clases, **333 tests** en la RTV 1.0.0-rc5 (321 de la rc4 + `SerieYAdminV46Test` 12: **9 aseveran un requisito** —la serie del SLV-003-2026 y la puerta del modo administrador, con el valor esperado tomado de `CAMBIOS-V4.6.md:259`, del registro de campo de las 18:53, de la decisión SERIE-2 de Diego y de la tabla de tramas §4.4 de la V4.6— y **3 fijan comportamiento** (saneado de lo tecleado). Medido sobre las 333: **304 contienen al menos un `assert`/`fail`; 29 no contienen ninguno** y, por la regla del CLAUDE.md §7, no cuentan como cobertura. La rc4 fueron 321 (316 de la rc3 + `FirmaActaTest` 5; la rc3 anadio `RitmoTest` 5 +
+`app/src/test/`: 30 clases, **345 tests** en la RTV 1.0.0-rc6 (333 de la rc5 + `Rc6DefectosTest` 12: **8 aseveran
+un requisito** —los defectos medidos en campo la noche del 19-sep con SLV-002, SLV-003-2026 y SLV-028: el ZIP de
+otro banco, la guarda de familia de firmware con la MAC repetida, el ZIP que sirve para calcular, el mensaje del
+V4 original y el plazo de `@LEERV` frente a los 3,1-3,3 s medidos— y **4 fijan comportamiento**. Las 8 se vieron
+en ROJO contra la rc5 (`d7d7b4d`) antes de arreglarlas. Además, **una de las 333 aseveraba el defecto D-1**
+(`Version3616Test.importarConservaElTipoDeBancoOTraeSoloLasSeries`) y se corrigió el valor esperado, no el
+arreglo. Añadir `Rc6DefectosTest` a la lista de clases al ejecutar con JUnit a mano. La rc5 fueron 333 (321 de la
+rc4 + `SerieYAdminV46Test` 12: **9 aseveran un requisito** —la serie del SLV-003-2026 y la puerta del modo administrador, con el valor esperado tomado de `CAMBIOS-V4.6.md:259`, del registro de campo de las 18:53, de la decisión SERIE-2 de Diego y de la tabla de tramas §4.4 de la V4.6— y **3 fijan comportamiento** (saneado de lo tecleado). Medido sobre las 333: **304 contienen al menos un `assert`/`fail`; 29 no contienen ninguno** y, por la regla del CLAUDE.md §7, no cuentan como cobertura. La rc4 fueron 321 (316 de la rc3 + `FirmaActaTest` 5; la rc3 anadio `RitmoTest` 5 +
 `TemperaturaRtv10Test` 11 + la del formato de la firma,
 más T-U15 en `FlujoCalibracionTest`), entre ellas `FlujoCalibracionTest` (el flujo "Calibrar este equipo" de
 extremo a extremo contra `EquipoSimulado`) y `RupturaRtv10Test` (ruptura frente a la 3.6.17 y cobertura de la rc2).

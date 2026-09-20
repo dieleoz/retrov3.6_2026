@@ -290,15 +290,33 @@ public class Version3616Test {
         ImportadorCampana.importarDiario(a, d.toString(), catalogo, "zip");
         assertEquals("REPRESENTATIVO", a.colaTipo());
         assertEquals("HECHO", a.pasos().get(p.orden));
-        // destino COMPLETO: trae las series, no los pasos, y lo dice
+        // RTV 1.0.0-rc6 (D-1). Hasta la rc5 esta prueba aseveraba que un destino en COMPLETO SIN trabajo propio
+        // se quedaba en COMPLETO y no recibia ni un paso. Eso es lo que rompio en campo la noche del 19-sep: el
+        // codigo 8 salia "no calibrable" y quedaban 81 patrones por medir (109 min), medido en Rc6DefectosTest.
+        // La prueba consagraba el defecto, asi que se corrige el valor esperado, no el arreglo.
+        //
+        // destino COMPLETO SIN trabajo propio: adopta el banco del ZIP, que es con el que se midio lo que trae
         Campana b = new Campana(catalogo, "SLV-002", MAC);
         b.escribirEn(new StringWriter());
         b.elegirCola("COMPLETO", cola(BancoCola.Tipo.COMPLETO).md5);
         ImportadorCampana.Resultado r = ImportadorCampana.importarDiario(b, d.toString(), catalogo, "zip");
-        assertEquals("COMPLETO", b.colaTipo());
+        assertEquals("REPRESENTATIVO", b.colaTipo());
         assertEquals(1, b.series().size());
-        assertTrue(b.pasos().isEmpty());
-        assertTrue(r.texto(), r.avisos.toString().contains("se traen las series, no los pasos"));
+        assertEquals("HECHO", b.pasos().get(p.orden));
+        assertEquals("REPRESENTATIVO", r.bancoAdoptado);
+
+        // destino COMPLETO CON trabajo propio: no se pisa; trae las series, no los pasos, y lo dice
+        Campana b2 = new Campana(catalogo, "SLV-002", MAC);
+        b2.escribirEn(new StringWriter());
+        b2.elegirCola("COMPLETO", cola(BancoCola.Tipo.COMPLETO).md5);
+        b2.anotarPaso(1, "HECHO", "", "t", "calentamiento");
+        ImportadorCampana.Resultado r2 = ImportadorCampana.importarDiario(b2, d.toString(), catalogo, "zip");
+        assertEquals("COMPLETO", b2.colaTipo());
+        assertEquals(1, b2.series().size());
+        assertEquals("el paso propio sigue ahí", "HECHO", b2.pasos().get(1));
+        assertEquals("y no entra ninguno del ZIP", null, b2.pasos().get(p.orden));
+        assertEquals("REPRESENTATIVO", r2.bancoPorResolver);
+        assertTrue(r2.texto(), r2.avisos.toString().contains("no entra es el AVANCE del banco"));
     }
 
     // ---------------------------------------------------------- RF-APP-50 y C-P14-3

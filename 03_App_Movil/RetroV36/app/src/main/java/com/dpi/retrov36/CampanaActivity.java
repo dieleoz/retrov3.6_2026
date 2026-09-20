@@ -108,11 +108,13 @@ public class CampanaActivity extends Base {
         titulo("Enviar");
         // QA-3615-07: dos ZIP. El ligero (incremental) para enviar a diario; el de soporte, con todo, es el que se
         // importa en otro telefono.
-        Button lig = boton("Exportar (ZIP ligero)", v -> exportar());
-        Button sop = boton("ZIP de soporte (todo)", v -> exportarSoporte());
+        // RTV 1.0.0-rc6 (D-2): el nombre de cada botón dice para qué sirve su ZIP.
+        Button lig = boton("ZIP ligero (enviar; NO calibra)", v -> exportar());
+        Button sop = boton("ZIP de soporte (el que calibra)", v -> exportarSoporte());
         fila(lig, sop);
-        texto("El ZIP ligero lleva sólo lo nuevo desde el anterior. El ZIP de soporte lleva todo (series, tramas, "
-                + "pruebas, actas y diario) y es el que se importa en otro teléfono.");
+        texto("El ZIP ligero lleva sólo lo nuevo desde el anterior y NO lleva " + Entregables.CSV + ": no sirve para "
+                + "calcular coeficientes ni se puede importar. El ZIP de soporte lleva todo (series, tramas, pruebas, "
+                + "actas y diario) y es el que se importa en otro teléfono y con el que se calcula.");
 
         titulo("Lista de patrones");
         spColor = new Spinner(this);
@@ -743,6 +745,7 @@ public class CampanaActivity extends Base {
             try {
                 StringBuilder t = new StringBuilder();
                 List<String> antiguas = new ArrayList<>();
+                String porResolver = "";
                 for (Uri u : uris) {
                     byte[] datosF;
                     try (InputStream in = getContentResolver().openInputStream(u)) {
@@ -762,6 +765,9 @@ public class CampanaActivity extends Base {
                     if (diario != null) {
                         ImportadorCampana.Resultado ir = ImportadorCampana.importarDiario(campana, diario,
                                 campana.catalogo(), nombre + " md5 " + md5);
+                        if (!ir.bancoPorResolver.isEmpty()) {
+                            porResolver = ir.bancoPorResolver;
+                        }
                         t.append("campaña exportada (diario del ZIP): ").append(ir.texto()).append('\n');
                     } else if (l == null) {
                         t.append("el ZIP no trae campana.csv ni el diario: importe el ZIP de soporte (soporte_…zip)\n");
@@ -772,6 +778,12 @@ public class CampanaActivity extends Base {
                         antiguas.addAll(l);
                         t.append("CSV de medidas antiguo\n");
                     }
+                }
+                // RTV 1.0.0-rc6 (D-1): si el ZIP venia de otro banco y no se pudo adoptar, se pregunta UNA vez,
+                // aqui, con el boton que lo arregla. Hasta la rc5 solo se avisaba y el operador tenia que dar con
+                // "Banco: … (cambiar)" en la pantalla del Banco (BancoActivity:60,420) para poder calibrar.
+                if (!porResolver.isEmpty()) {
+                    t.append(resolverBanco(porResolver)).append('\n');
                 }
                 // 3.6.16: lo ya medido cuenta en el banco y lo que Diego manda repetir vuelve a la cola.
                 String bp = aplicarBancoPrevio(campana);
@@ -793,6 +805,44 @@ public class CampanaActivity extends Base {
                 pintar();
             });
         });
+    }
+
+    /**
+     * RTV 1.0.0-rc6 (D-1): el ZIP venía de otro banco y la campaña ya tenía pasos propios, así que adoptarlo en
+     * silencio habría borrado esos pasos (Campana.elegirCola:586-590). Se pregunta UNA vez, en el hilo de trabajo
+     * y con el botón que lo resuelve; lo ya medido se conserva (las series no se tocan) y BancoPrevio lo vuelve a
+     * contar en la cola nueva. Se llama desde la importación, nunca sola.
+     */
+    private String resolverBanco(String tipo) {
+        BancoCola.Tipo t = BancoCola.Tipo.de(tipo);
+        BancoCola q = colaApk(t);
+        String antes = campana == null ? "-" : campana.colaTipo();
+        if (q == null || campana == null || campana.cerrada()) {
+            return "Banco: el ZIP es de un banco " + tipo + " que no se puede poner aquí; la campaña sigue en " + antes + ".";
+        }
+        int r;
+        try {
+            r = preguntar("El ZIP es de otro banco",
+                    "El ZIP es de un banco " + tipo + " y esta campaña va en " + antes + ".\n\n"
+                            + "Mientras vayan en bancos distintos NO entran los pasos del ZIP, y al calibrar los "
+                            + "códigos salen \"no calibrable: faltan patrones de AJUSTE o RE-MEDIDA del banco\".\n\n"
+                            + "Lo ya medido se conserva: las series no se tocan y se vuelven a contar en el banco nuevo.",
+                    "Pasar al banco " + tipo, "Seguir en " + antes, null);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return "Banco: no se pudo preguntar; la campaña sigue en " + antes + ".";
+        }
+        if (r != 0) {
+            Registro.nota("campana: el operador sigue en el banco " + antes + " con un ZIP de banco " + tipo);
+            return "Banco: sigue en " + antes + " (el ZIP era de " + tipo + "). Se cambia en Banco, botón \"Banco: …\".";
+        }
+        try {
+            campana.elegirCola(t.name(), q.md5, true);
+        } catch (IOException | RuntimeException e) {
+            return "Banco: no se pudo pasar a " + tipo + ": " + e.getMessage();
+        }
+        Registro.nota("campana: banco " + antes + " -> " + t.name() + " al importar un ZIP de ese banco (D-1)");
+        return "Banco: esta campaña pasa a " + t.name() + " (era " + antes + "), como el ZIP.";
     }
 
     private void cerrarCampana() {

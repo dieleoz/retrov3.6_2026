@@ -41,6 +41,18 @@ public final class ImportadorCampana {
         public int pasos;
         public int anuladas;
         public int renombrados;
+        /**
+         * RTV 1.0.0-rc6 (D-1): tipo de banco del ZIP que la campana ADOPTO al importar, o "" si no cambio de
+         * banco. Se adopta cuando la campana no tiene ningun paso propio: quedarse en el banco anterior deja
+         * sin medir todos los AJUSTE de la cola nueva y ningun codigo sale calibrable (BancoCola.calibrable:316).
+         */
+        public String bancoAdoptado = "";
+        /**
+         * RTV 1.0.0-rc6 (D-1): tipo de banco del ZIP que NO se pudo adoptar porque la campana ya tiene pasos
+         * propios (cambiar de cola los borraria, Campana.elegirCola:586-590). La pantalla lo pregunta UNA vez,
+         * con su boton; "" si no hay nada que preguntar.
+         */
+        public String bancoPorResolver = "";
         public final List<String> avisos = new ArrayList<>();
         public String texto() {
             return series + " series importadas (" + disparos + " disparos), " + yaEstaban + " ya estaban"
@@ -95,6 +107,20 @@ public final class ImportadorCampana {
                         + "); la abierta es de " + c.equipo + " (" + c.mac + "): no se importa nada");
             }
         }
+        // RTV 1.0.0-rc6: la FAMILIA de firmware bloquea igual que el equipo y la MAC, y por la misma razon: lo
+        // que entra ya no se puede separar. La MAC no basta — no cambia al grabar, porque es del modulo
+        // Bluetooth — y al SLV-003-2026 se le grabo la V4.6 el 19-sep sin que cambiara la suya.
+        // Se comprueban TODAS las familias del diario, no solo la primera: si el propio ZIP mezclara dos, la
+        // guarda pasaria y luego nuevaSerie lanzaria a mitad de la escritura, rompiendo la atomicidad (P10-C8).
+        comprobarFamilia(c, todo.familia());
+        for (Campana.Serie s : todo.series()) {
+            comprobarFamilia(c, Familia.de(s.firmware));
+            if (!Familia.compatibles(todo.familia(), Familia.de(s.firmware))) {
+                throw new IllegalArgumentException("el ZIP mezcla firmwares de familias distintas ("
+                        + Familia.texto(todo.familia()) + " y " + Familia.texto(Familia.de(s.firmware))
+                        + "): no se importa nada");
+            }
+        }
         // QA-3610-08: atomico tambien por diario. Todo patron (original y reasignado) tiene que estar en
         // el catalogo ANTES de escribir nada; si no, reasignar lanzaria a mitad de la importacion.
         for (Campana.Serie s : todo.series()) {
@@ -113,12 +139,22 @@ public final class ImportadorCampana {
             }
         }
         // QA-3615-03 / P14-B01: el tipo de banco viaja. Un diario sin COLA pero con PASO es de la cola completa
-        // (3.6.10 a 3.6.14). Si no casa con la cola de esta campana, no se importa nada.
-        // Si la cola no casa, se traen las series (que no dependen de la cola) y NO los PASO, cuyos ordenes son de la
-        // otra cola; lo ya medido se cuenta despues con BancoPrevio.
+        // (3.6.10 a 3.6.14). Los ordenes de una cola no valen en otra, asi que los PASO solo se traen si el banco
+        // del ZIP es el de la campana.
+        //
+        // RTV 1.0.0-rc6 (D-1, campo del 19-sep, noche): hasta la rc5 la campana se quedaba en SU banco y la
+        // importacion solo lo AVISABA. Con un banco distinto no llega ni un PASO, asi que ningun codigo sale
+        // calibrable (BancoCola.calibrable:316 -> FlujoCalibracion.plan:584 "no calibrable: faltan patrones de
+        // AJUSTE o RE-MEDIDA"), y el operador tenia que adivinar que se arreglaba en otra pantalla. Ahora:
+        //   - si la campana no tiene NINGUN paso propio, adopta el banco del ZIP (no se pierde nada: no hay
+        //     estado de cola que borrar) y los PASO entran;
+        //   - si ya tiene pasos propios, no se pisan en silencio: se deja dicho en bancoPorResolver para que la
+        //     pantalla lo pregunte una sola vez, con su boton.
         String tipoOrigen = todo.colaElegida() ? todo.colaTipo() : todo.pasos().isEmpty() ? null : "COMPLETO";
-        boolean destinoConCola = c.colaElegida() || !c.pasos().isEmpty();
-        boolean pasosValen = tipoOrigen != null && (!destinoConCola || tipoOrigen.equals(c.colaTipo()));
+        boolean destinoConPasos = !c.pasos().isEmpty();
+        boolean mismoBanco = tipoOrigen != null && tipoOrigen.equals(c.colaTipo());
+        boolean adoptar = tipoOrigen != null && !mismoBanco && !destinoConPasos;
+        boolean pasosValen = tipoOrigen != null && (mismoBanco || adoptar);
         Set<String> vistas = claves(c);
         Map<String, String> idPorClave = new java.util.HashMap<>();
         for (Campana.Serie s : c.series()) {
@@ -126,12 +162,24 @@ public final class ImportadorCampana {
         }
         Map<String, String> nuevoId = new java.util.HashMap<>();
         Resultado r = new Resultado();
-        if (tipoOrigen != null && !destinoConCola) {
+        if (adoptar) {
+            String antes = c.colaTipo();
+            boolean elegidoAntes = c.colaElegida();
             c.elegirCola(tipoOrigen, todo.colaMd5());
+            r.bancoAdoptado = tipoOrigen;
+            if (elegidoAntes) {
+                // El texto es para el operador: nada de "pasos" ni de "colas".
+                r.avisos.add("esta campaña pasa al banco " + tipoOrigen + ", que es con el que se midió el ZIP (iba "
+                        + "con el " + antes + "). Así cuenta todo lo que trae y no hay que volver a medirlo");
+            }
         }
         if (tipoOrigen != null && !pasosValen) {
-            r.avisos.add("el ZIP es de un banco " + tipoOrigen + " y esta campaña de un banco " + c.colaTipo()
-                    + ": se traen las series, no los pasos; lo ya medido cuenta al abrir el Banco");
+            r.bancoPorResolver = tipoOrigen;
+            // Texto para el operador: dice qué pasa, qué se pierde y qué hacer.
+            r.avisos.add("el ZIP se midió con el banco " + tipoOrigen + " y esta campaña va con el banco "
+                    + c.colaTipo() + ", en el que ya hay trabajo hecho. Las MEDIDAS del ZIP entran todas; lo que no "
+                    + "entra es el AVANCE del banco, porque los dos bancos no llevan los mismos patrones ni en el "
+                    + "mismo orden. Mientras sigan en bancos distintos, al calibrar saldrá \"no calibrable\"");
         }
         // QA-3615-02: el historial de series (RENOMBRA) viaja: otro telefono reconoce la serie nueva.
         r.renombrados = c.copiarRenombrados(todo.renombrados(), origen);
@@ -241,6 +289,31 @@ public final class ImportadorCampana {
             s.add(x.firmware);
         }
         return s;
+    }
+
+    /**
+     * RTV 1.0.0-rc6: guarda dura de familia. Si la campaña abierta y lo que viene son de familias distintas,
+     * no entra nada, igual que con otra MAC. Una familia desconocida —un diario anterior a la rc6 que ni
+     * siquiera diga el firmware— no bloquea: de no saber no se concluye nada.
+     *
+     * @throws IllegalArgumentException si no son compatibles.
+     */
+    static void comprobarFamilia(Campana c, String viene) {
+        if (!Familia.compatibles(c.familia(), viene)) {
+            throw new IllegalArgumentException(Familia.porQueNoSeMezclan(c.familia(), viene)
+                    + " No se importa nada.");
+        }
+    }
+
+    /** Familia de un conjunto de textos de firmware; la primera que se identifique. */
+    static String familiaDe(Iterable<String> firmwares) {
+        for (String f : firmwares) {
+            String fam = Familia.de(f);
+            if (!fam.isEmpty()) {
+                return fam;
+            }
+        }
+        return Familia.DESCONOCIDA;
     }
 
     /** Avisa si las series importadas son de otro firmware que las que ya hay. */
@@ -384,6 +457,8 @@ public final class ImportadorCampana {
                 fws.add(campo(f, col, "firmware"));
             }
         }
+        // RTV 1.0.0-rc6: la familia bloquea tambien por esta via (un campana.csv suelto). Antes de escribir nada.
+        comprobarFamilia(c, familiaDe(fws));
         Set<String> vistas = claves(c);
         Resultado r = new Resultado();
         compararFirmware(c, fws, r);

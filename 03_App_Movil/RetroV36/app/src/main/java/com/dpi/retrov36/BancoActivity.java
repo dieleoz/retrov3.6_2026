@@ -76,8 +76,9 @@ public class BancoActivity extends Base {
             pintar();
         });
         raiz.addView(chkRapido);
-        Button exp = boton("Exportar (ZIP ligero)", v -> exportar(null));
-        Button sop = boton("ZIP de soporte", v -> exportarSoporte());
+        // RTV 1.0.0-rc6 (D-2): el nombre de cada botón dice para qué sirve su ZIP. El ligero no calcula nada.
+        Button exp = boton("ZIP ligero (enviar; NO calibra)", v -> exportar(null));
+        Button sop = boton("ZIP de soporte (el que calibra)", v -> exportarSoporte());
         fila(exp, sop);
         cargar();
     }
@@ -321,6 +322,36 @@ public class BancoActivity extends Base {
         }).setNegativeButton("Cancelar", null).show();
     }
 
+    /**
+     * RTV 1.0.0-rc6 (D-2): al TERMINAR el banco salen los dos ZIP y se comparte el de soporte, que es el único
+     * con el que se calculan coeficientes (Entregables). El ligero se sigue haciendo primero para no romper la
+     * cadena incremental de la campaña —SLV-002 está a medio calibrar con ella— y queda en Download/RTV/ sin
+     * abrir el selector; el que se ofrece a compartir es el de soporte.
+     *
+     * exportarSoporte no anota nada en el diario ni toca indice_&lt;clave&gt;.txt (Campanas.java:656-689): añadirlo
+     * no cambia ni un byte de los ZIP ligeros que ese equipo ya produjo.
+     */
+    private void exportarFinDeBanco() {
+        exportar(null, false);
+        if (campana == null) {
+            return;
+        }
+        Campanas.Exportacion ex;
+        try {
+            ex = Campanas.exportarSoporte(this, campana.serieActual(), campana.mac);
+        } catch (IOException | RuntimeException e) {
+            alerta("ZIP de soporte", "El banco ha terminado, pero no se pudo preparar el ZIP de soporte (el que "
+                    + "sirve para calcular coeficientes): " + e.getMessage() + ". Púlselo a mano en \"ZIP de soporte\".");
+            return;
+        }
+        txtResultado.setText("Banco terminado.\nZIP de soporte: " + ex.zip.getName() + "\nmd5 " + ex.md5 + "\nsha256 "
+                + ex.sha256 + "\nCopia: " + ex.copia + "\n" + Entregables.AVISO_SOPORTE
+                + "\n\nEl ZIP ligero de la sesión también quedó en Download/RTV/. " + AVISO_LIGERO);
+        compartirZip(ex, "Soporte de " + campana.serieConHistoria() + " (" + campana.mac + ") al terminar el banco "
+                + "— es el ZIP que sirve para calcular coeficientes");
+        pintar();
+    }
+
     /** RF-APP-51: ZIP de soporte, aparte (es el que se importa en otro telefono). */
     private void exportarSoporte() {
         if (campana == null) {
@@ -329,7 +360,7 @@ public class BancoActivity extends Base {
         try {
             Campanas.Exportacion ex = Campanas.exportarSoporte(this, campana.serieActual(), campana.mac);
             txtResultado.setText("ZIP de soporte: " + ex.zip.getName() + "\nmd5 " + ex.md5 + "\nsha256 " + ex.sha256
-                    + "\nCopia: " + ex.copia);
+                    + "\nCopia: " + ex.copia + "\n" + Entregables.AVISO_SOPORTE);
             compartirZip(ex, "Soporte de " + campana.serieConHistoria() + " (" + campana.mac + ")");
         } catch (IOException | RuntimeException e) {
             alerta("ZIP de soporte", "No se pudo preparar: " + e.getMessage());
@@ -341,9 +372,14 @@ public class BancoActivity extends Base {
      * ese fichero la herramienta que calcula los coeficientes rechaza el ZIP. El ligero es el que sale solo al
      * terminar el banco, asi que hay que decirlo donde el operador lo lee, no solo en el javadoc de
      * Campanas.exportar (:603-605).
+     *
+     * RTV 1.0.0-rc6 (D-2): decirlo no basto. En campo, el 19-sep de noche, el que salio al terminar el banco
+     * seguia siendo el ligero y el bueno hubo que pedirlo a mano. Ahora, al TERMINAR el banco, salen los dos y
+     * el que se comparte es el de soporte (exportarFinDeBanco). El ligero sigue saliendo solo en cada paso
+     * EXPORTAR de sesion: es incremental y su cadena de indice.sha256 no se toca, porque SLV-002 esta a medio
+     * calibrar con ella (Campanas.exportar:628-649).
      */
-    static final String AVISO_LIGERO = "Este es el ZIP LIGERO: sirve para enviar y archivar, NO para calcular "
-            + "coeficientes (no lleva campana.csv). Para eso, \"ZIP de soporte\".";
+    static final String AVISO_LIGERO = Entregables.AVISO_LIGERO + " Para eso, \"ZIP de soporte\".";
 
     /** Orden del ultimo paso EXPORTAR hecho solo (para no repetirlo en cada pintar). */
     private int autoExportado = -1;
@@ -544,9 +580,10 @@ public class BancoActivity extends Base {
         if (paso == null) {
             txtPaso.setText("Banco completo.");
             // 3.6.17 (principio de Diego): al terminar, el ZIP sale solo, una vez.
+            // RTV 1.0.0-rc6 (D-2): y el que sale es el que SIRVE.
             if (!exportadoAlFinal && !campana.pasos().isEmpty() && ocupado == false && enCurso == null) {
                 exportadoAlFinal = true;
-                exportar(null);
+                exportarFinDeBanco();
                 return;
             }
         } else {

@@ -373,8 +373,11 @@ public final class FlujoCalibracion {
         l.add(new Previa(ctx.es362, ctx.es362 ? "Firmware " + ctx.firmware
                 : "El firmware no está detectado como 3.6.2 (" + ctx.firmware + "): pase las pruebas del equipo"));
         // RTV 1.0 (RF-APP-U07): el protocolo dice si este firmware se calibra.
+        // RTV 1.0.0-rc6: y, si no se calibra, dice QUE HACER para que se pueda; dejarlo en la negación fue lo
+        // que se vio en campo el 19-sep con SLV-028 (un V4 original, al que le falta la V4.6 grabada).
         l.add(new Previa(ctx.protocolo.calibra(), ctx.protocolo.calibra() ? "Protocolo " + ctx.protocolo.nombre()
-                : ctx.protocolo.motivoNoCalibra()));
+                : ctx.protocolo.motivoNoCalibra() + (ctx.protocolo.queHacerParaCalibrar().isEmpty() ? ""
+                : ". " + ctx.protocolo.queHacerParaCalibrar())));
         boolean apto = Boolean.TRUE.equals(ctx.apto);
         l.add(new Previa(apto, ctx.apto == null ? "Pruebas del equipo sin hacer: páselas antes"
                 : apto ? "Pruebas: APTO (" + ctx.resumenPruebas + ")"
@@ -582,8 +585,13 @@ public final class FlujoCalibracion {
             return new Plan(k, f, null, Double.NaN, "", "", "sin cola o sin campaña");
         }
         if (!cola.calibrable(String.valueOf(k), campana.pasos())) {
+            // RTV 1.0.0-rc6 (D-1): en campo el motivo fue que lo medido venia de OTRO banco, y el mensaje de la rc5
+            // no decia donde se arreglaba. Se dice aqui, que es donde el operador lo lee.
             return new Plan(k, f, null, Double.NaN, "", "",
-                    "no calibrable: faltan patrones de AJUSTE o RE-MEDIDA del banco (medidos o saltados)");
+                    "no calibrable: faltan patrones de AJUSTE o RE-MEDIDA del banco " + campana.colaTipo()
+                            + " (medidos o saltados)" + (campana.pasos().isEmpty()
+                            ? "; esta campaña no tiene ni un paso anotado en ese banco: si lo medido vino de un ZIP "
+                            + "de otro banco, cámbielo en Banco, botón \"Banco: …\"" : ""));
         }
         if (f.todosLosPasos) {
             String falta = pasosSinHacer(k);
