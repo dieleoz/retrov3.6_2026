@@ -336,6 +336,15 @@ public class BancoActivity extends Base {
         }
     }
 
+    /**
+     * RTV 1.0.0-rc5: el ZIP ligero NO lleva campana.csv (Campanas.java:579-580, solo con completo = true), y sin
+     * ese fichero la herramienta que calcula los coeficientes rechaza el ZIP. El ligero es el que sale solo al
+     * terminar el banco, asi que hay que decirlo donde el operador lo lee, no solo en el javadoc de
+     * Campanas.exportar (:603-605).
+     */
+    static final String AVISO_LIGERO = "Este es el ZIP LIGERO: sirve para enviar y archivar, NO para calcular "
+            + "coeficientes (no lleva campana.csv). Para eso, \"ZIP de soporte\".";
+
     /** Orden del ultimo paso EXPORTAR hecho solo (para no repetirlo en cada pintar). */
     private int autoExportado = -1;
 
@@ -391,10 +400,17 @@ public class BancoActivity extends Base {
 
     private void cargar() {
         Sesion s = Sesion.get();
-        if (s.mac == null || s.mac.isEmpty() || !s.serieConocida()) {
-            txtPaso.setText("Conecte con el equipo (y, si hace falta, dé su serie en Campaña) antes de medir el banco.");
+        if (s.mac == null || s.mac.isEmpty()) {
+            txtPaso.setText("Conecte con el equipo antes de medir el banco.");
             btnOk.setEnabled(false);
             btnSaltar.setEnabled(false);
+            return;
+        }
+        // RTV 1.0.0-rc5: sin serie no hay campana, y sin campana no hay cola, ni banco, ni boton que arranque.
+        // Hasta la rc4 esto era un callejon sin salida en la pantalla a la que va el operador ("Tomar muestras")
+        // y la serie solo se podia teclear en Avanzado -> Campana. Ahora se pide aqui mismo.
+        if (s.hayQuePedirSerie()) {
+            pedirSerie(s);
             return;
         }
         try {
@@ -446,6 +462,47 @@ public class BancoActivity extends Base {
         Registro.nota("banco: cola " + tipo.name() + " md5 " + cola.md5 + ", " + cola.pasos.size() + " pasos");
         pintar();
     }
+
+    /**
+     * RTV 1.0.0-rc5: la serie de ESTA sesion, tecleada por el operador. Mismo dialogo que
+     * {@link CampanaActivity} (la serie es una sola cosa y se decide en un solo sitio:
+     * {@link Sesion#aceptarSerieTecleada}). No graba nada en el equipo: eso es #SN, en el modo administrador.
+     */
+    private void pedirSerie(Sesion s) {
+        if (dialogoSerieAbierto) {
+            return;
+        }
+        dialogoSerieAbierto = true;
+        final EditText e = new EditText(this);
+        e.setHint("Serie del equipo, p. ej. SLV-003-2026");
+        new AlertDialog.Builder(this).setTitle("Serie del equipo")
+                .setMessage("El nombre Bluetooth (" + s.nombre + ") no trae la serie y el equipo responde "
+                        + "#GN," + Calibracion.NONE + "# (sin serie grabada). Escríbala: la campaña y el banco son de "
+                        + "este equipo y no se mezclan con otros.\n\nQueda marcada \"declarada, no leída del equipo\". "
+                        + "Para grabarla en el equipo: Avanzado ▸ Modo administrador ▸ Alta / Cambiar serie (#SN).")
+                .setView(e).setCancelable(false)
+                .setPositiveButton("Aceptar", (d, w) -> {
+                    dialogoSerieAbierto = false;
+                    if (!s.aceptarSerieTecleada(e.getText().toString())) {
+                        sinSerie();
+                        return;
+                    }
+                    Registro.nota("serie tecleada por el operador (banco): " + s.serie());
+                    cargar();
+                })
+                .setNegativeButton("Cancelar", (d, w) -> {
+                    dialogoSerieAbierto = false;
+                    sinSerie();
+                }).show();
+    }
+
+    private void sinSerie() {
+        txtPaso.setText("Sin serie no se puede medir el banco: vuelva a entrar y escríbala, o déla en Campaña.");
+        btnOk.setEnabled(false);
+        btnSaltar.setEnabled(false);
+    }
+
+    private boolean dialogoSerieAbierto;
 
     private void pintar() {
         if (cola == null || campana == null) {
@@ -1232,9 +1289,10 @@ public class BancoActivity extends Base {
                     + ". Comparta el ZIP ahora para no depender del teléfono.");
         }
         txtResultado.setText((compartir ? "" : "ZIP de la sesión guardado solo. ") + "ZIP: " + ex.zip.getName() + "\nmd5 "
-                + ex.md5 + "\nsha256 " + ex.sha256 + "\nCopia: " + ex.copia);
+                + ex.md5 + "\nsha256 " + ex.sha256 + "\nCopia: " + ex.copia + "\n" + AVISO_LIGERO);
         if (compartir) {
-            compartirZip(ex, "Banco de " + campana.equipo + " (" + campana.mac + "), " + Sesion.get().firmware());
+            compartirZip(ex, "Banco de " + campana.equipo + " (" + campana.mac + "), " + Sesion.get().firmware()
+                    + " — ZIP ligero (para calcular coeficientes hace falta el ZIP de soporte)");
         }
         pintar();
     }

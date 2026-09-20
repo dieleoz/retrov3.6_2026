@@ -149,13 +149,12 @@ public class CampanaActivity extends Base {
                             + "el ajuste son de este equipo y no se mezclan con otros.")
                     .setView(e).setCancelable(false)
                     .setPositiveButton("Aceptar", (d, w) -> {
-                        String t = e.getText().toString().trim();
-                        if (t.isEmpty()) {
+                        // RTV 1.0.0-rc5: la regla vive en Sesion, y la comparte "Tomar muestras" (BancoActivity).
+                        if (!s.aceptarSerieTecleada(e.getText().toString())) {
                             finish();
                             return;
                         }
-                        s.serieManual = t;
-                        Registro.nota("serie tecleada por el operador: " + t);
+                        Registro.nota("serie tecleada por el operador: " + s.serie());
                         abrir();
                     })
                     .setNegativeButton("Cancelar", (d, w) -> finish()).show();

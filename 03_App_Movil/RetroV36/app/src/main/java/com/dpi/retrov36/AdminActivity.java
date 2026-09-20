@@ -61,6 +61,9 @@ public class AdminActivity extends Base {
     private EditText edSerie;
     private Button btnSerie;
     private Button btnFT;
+    /** RTV 1.0.0-rc5: #F,k# y #F,*# escriben calibracion; candado propio, no el de la puerta. */
+    private Button btnFabUno;
+    private Button btnFabTodos;
 
     private interface Tarea {
         String correr() throws IOException, InterruptedException;
@@ -164,9 +167,11 @@ public class AdminActivity extends Base {
         }
         spFabrica.setAdapter(adaptador(fa));
         panel.addView(spFabrica);
-        Button uno = boton("Restaurar este (#F,k#)", v -> confirmarFabrica(false));
-        Button todos = boton("Restaurar todos (#F,*#)", v -> confirmarFabrica(true));
-        fila(uno, todos);
+        // RTV 1.0.0-rc5: #F y #FT escriben la calibracion, asi que llevan su propio candado (puedeCalibrar),
+        // el mismo que antes cerraba la puerta entera. Con un V4.6 quedan apagados y se dice por que.
+        btnFabUno = boton("Restaurar este (#F,k#)", v -> confirmarFabrica(false));
+        btnFabTodos = boton("Restaurar todos (#F,*#)", v -> confirmarFabrica(true));
+        fila(btnFabUno, btnFabTodos);
 
         titulo("Cambiar PIN");
         edPinActual = campo("PIN actual", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD);
@@ -202,14 +207,18 @@ public class AdminActivity extends Base {
             return;
         }
         Sesion s = Sesion.get();
-        boolean v36 = s.administra() && s.protocolo.calibra();
+        // RTV 1.0.0-rc5: la puerta la gobierna administra(), no calibra(). Con calibra() un V4.6 —que administra
+        // pero cuya calibracion sigue candada— se quedaba sin ninguna via de darse de alta la serie (#SN), y
+        // como su EEPROM se borra al grabar, #GN# se quedaba en NONE para siempre. Las escrituras que si son
+        // calibracion (#F, #FT) llevan su propio candado, mas abajo.
+        boolean puerta = s.puedeAdmin();
+        boolean cal = s.puedeCalibrar();
         boolean ab = abierto();
         panel.setVisibility(ab ? View.VISIBLE : View.GONE);
-        btnEntrar.setEnabled(v36 && !ab && !ocupado && EnlaceSerie.instancia().estaConectado());
-        if (!v36) {
+        btnEntrar.setEnabled(puerta && !ab && !ocupado && EnlaceSerie.instancia().estaConectado());
+        if (!puerta) {
             txtAcceso.setText("Modo administrador desactivado: el firmware detectado es " + s.firmware()
-                    + (s.protocolo != null && !s.protocolo.calibra() ? ". " + s.protocolo.motivoNoCalibra() : "")
-                    + ". Sólo el firmware V3.6 (y la V4.6, cuando exista) guarda la calibración en EEPROM y acepta órdenes #...#. "
+                    + ". Sólo los firmwares que hablan el contrato #...# (V3.6 y V4.6) tienen modo administrador. "
                     + "En un V3 2020 las ecuaciones están en el código: calibrar exige recompilar y grabar por ICSP "
                     + "(PROCEDIMIENTO-Calibracion-V3-K42.md §6).");
         } else if (ab) {
@@ -223,7 +232,9 @@ public class AdminActivity extends Base {
         }
         btnEscribir.setEnabled(!ocupado);
         boolean v362 = s.es362();
-        txtCal.setText(s.datosCalibracion() + (v362 ? "" : "\nGrabar serie y restaurar temperatura exigen la 3.6.2."));
+        txtCal.setText(s.datosCalibracion() + (v362 ? "" : "\nGrabar serie y restaurar temperatura exigen la 3.6.2.")
+                + (puerta && !cal ? "\n" + s.protocolo.motivoNoCalibra()
+                + ": el alta de serie (#SN) sí está disponible; volver a fábrica (#F, #FT), no." : ""));
         btnSerie.setEnabled(ab && !ocupado && v362);
         Acta acta = s.acta;
         txtActa.setText(acta == null ? "Sin acta en curso (el acta se lleva en Calibrar este equipo)." : acta.texto()
@@ -250,7 +261,10 @@ public class AdminActivity extends Base {
                 spRemedida.setAdapter(adaptador(et));
             }
         }
-        btnFT.setEnabled(ab && !ocupado && v362);
+        // RTV 1.0.0-rc5: las tres escrituras de calibracion, con su propio candado (antes lo hacia la puerta).
+        btnFT.setEnabled(ab && !ocupado && v362 && cal);
+        btnFabUno.setEnabled(ab && !ocupado && cal);
+        btnFabTodos.setEnabled(ab && !ocupado && cal);
     }
 
     /** Ejecuta una operacion con el equipo en el hilo de trabajo y muestra el resultado. */

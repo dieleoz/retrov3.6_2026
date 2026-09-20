@@ -151,11 +151,16 @@ public class ConexionActivity extends Base {
         Protocolo p = s.protocolo;
         boolean calibra = p == null || p.calibra();
         boolean banco = p == null || p.mideBanco();
-        btnAdmin.setEnabled(con && calibra);
+        // RTV 1.0.0-rc5: el modo administrador lo gobierna administra(), no calibra(): detras viven el alta de
+        // serie (#SN), el PIN y #Q, que no son calibracion. Con calibra(), un V4.6 no podia darse de alta la
+        // serie y #GN# se quedaba en NONE. Lo que si es calibracion queda candado dentro de esa pantalla.
+        boolean admin = p == null || p.administra();
+        btnAdmin.setEnabled(con && admin);
         btnCalibrar.setEnabled(con && calibra);
         btnCampana.setEnabled(banco);
         btnCalibrar.setText("4. Calibrar este equipo" + (calibra ? "" : "\n(" + p.motivoNoCalibra() + ")"));
-        btnAdmin.setText("Modo administrador" + (calibra ? "" : "\n(" + p.motivoNoCalibra() + ")"));
+        btnAdmin.setText("Modo administrador" + (admin ? (calibra ? "" : "\n(alta de serie #SN; la calibración, no)")
+                : "\n(" + p.nombre() + ": sin órdenes #...#)"));
         btnCampana.setText("3. Campaña de calibración (guiada, un solo envío)" + (banco ? "" : "\n(" + p.motivoNoBanco() + ")"));
         btnMedir.setText("2. Medida de patrones" + (p != null && !p.daX() ? " (R con @LEERV)" : ""));
         listaDispositivos.setEnabled(!EnlaceSerie.instancia().estaConectando());

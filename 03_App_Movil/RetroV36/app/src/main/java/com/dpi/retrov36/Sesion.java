@@ -106,9 +106,15 @@ public final class Sesion {
 
     /** Se llama al conectar: todo lo del equipo anterior se olvida. */
     public synchronized void reiniciar(String nombre, String mac) {
+        // RTV 1.0.0-rc5: la serie tecleada sobrevive a una reconexion AL MISMO EQUIPO (misma MAC). Si se cae el
+        // Bluetooth a mitad del banco, el operador no tiene que volver a teclearla; si se conecta otro equipo,
+        // se olvida, que es lo que esta funcion existe para hacer.
+        boolean mismoEquipo = mac != null && !mac.isEmpty() && mac.equalsIgnoreCase(this.mac);
         this.nombre = nombre;
         this.mac = mac;
-        serieManual = "";
+        if (!mismoEquipo) {
+            serieManual = "";
+        }
         protocolo = null;
         detectado = false;
         diario.reiniciar();
@@ -177,6 +183,54 @@ public final class Sesion {
         String n = nombre == null ? "" : nombre;
         int i = n.lastIndexOf('_');
         return (i >= 0 && i < n.length() - 1) ? n.substring(i + 1) : n;
+    }
+
+    /**
+     * RTV 1.0.0-rc5: hay equipo conectado pero la app no sabe de que serie es. Hasta que lo sepa no se abre
+     * campana (ConexionActivity) ni se mide el banco (BancoActivity), asi que hay que preguntarselo al
+     * operador ahi mismo, no solo en "Campana".
+     *
+     * Caso que lo destapo: al SLV-003-2026 le cambiaron el modulo Bluetooth y el de repuesto se anuncia con
+     * su nombre de fabrica, sin serie ("HC-06", V4.6:01_Firmware/RetroVertical_V4.6.X/CAMBIOS-V4.6.md:259);
+     * su EEPROM se borro al grabar, asi que #GN# responde NONE (registro de campo, 19-sep-2026 18:53); y
+     * equipos.csv no trae ninguna fila con su MAC. Las tres vias de {@link #serieConocida()} fallan a la vez.
+     */
+    public boolean hayQuePedirSerie() {
+        return mac != null && !mac.isEmpty() && !serieConocida();
+    }
+
+    /**
+     * RTV 1.0.0-rc5: acepta la serie que teclea el operador para ESTA sesion. No se graba en el equipo (eso es
+     * #SN, en el modo administrador): solo nombra la campana, y queda marcada "declarada, no leida del equipo"
+     * ({@link Deteccion#MARCA_DECLARADA}). Vacia o solo espacios: no se acepta y nada cambia.
+     *
+     * @return true si se acepto.
+     */
+    public boolean aceptarSerieTecleada(String t) {
+        String s = t == null ? "" : t.trim();
+        if (s.isEmpty()) {
+            return false;
+        }
+        serieManual = s;
+        return true;
+    }
+
+    /**
+     * RTV 1.0.0-rc5: quien puede abrir el modo administrador (#L). Lo gobierna {@link Protocolo#administra()},
+     * no {@link Protocolo#calibra()}: detras de esa puerta viven el alta de serie (#SN), el PIN y el cierre
+     * (#Q), que son administracion y no calibracion. Gobernarla con calibra() dejaba a un V4.6 —que administra
+     * pero no calibra— sin ninguna via de darse de alta la serie, con lo que #GN# se quedaba en NONE para
+     * siempre. Las escrituras que si son calibracion llevan su propio candado ({@link #puedeCalibrar()}).
+     */
+    public boolean puedeAdmin() {
+        Protocolo p = protocolo;
+        return p != null && p.administra();
+    }
+
+    /** RTV 1.0.0-rc5: quien puede escribir curvas o devolverlas a fabrica. Sigue siendo calibra(). */
+    public boolean puedeCalibrar() {
+        Protocolo p = protocolo;
+        return p != null && p.calibra();
     }
 
     public boolean sinDetectar() {

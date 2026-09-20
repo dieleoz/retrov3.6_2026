@@ -3,7 +3,7 @@
 **Ninguna de estas se ha cerrado midiendo contra un equipo físico.** Se dejan escritas, sin elegir, hasta
 que alguien las mida. Si alguien las cierra, que sustituya la entrada por el resultado medido y su fecha.
 
-Estado: RTV 1.0.0-rc3, 19-sep-2026.
+Estado: RTV 1.0.0-rc5, 19-sep-2026.
 
 ---
 
@@ -109,3 +109,35 @@ reales delante.
 
 **Cómo se cierra:** escribiendo el umbral con el documento que lo sostenga. La guarda ya está y no hay que
 tocar nada más.
+
+---
+
+## C-06 · Con la V4.6 hay dos oscuros, de dos luces, y sólo uno llega al ancla
+
+**Sin medir. No bloquea medir el banco; sí puede estropear los coeficientes que salgan de él.**
+
+La cola de la V4.6 mide el oscuro **dos veces en cada extremo de cada sesión**, con dos luces distintas:
+`cola_banco_representativo_v46.csv`, filas de orden **3, 30, 35 y 82** con `codigo_equipo = 1` (luz alta,
+«AMA, BLA, ROJ, NAR») y **4, 31, 36 y 83** con `codigo_equipo = 3` (luz baja, «AZU, VER»). Son ocho pasos
+`OSCURO`, no cuatro, y la razón es de firmware: la V4.6 enciende una luz por color
+(`V4.1:Optical_Capture.c:62-75`).
+
+Pero las ocho series se guardan **con el mismo nombre**: `BancoActivity.java:721` bautiza toda serie de
+tipo `OSCURO` como `Campana.OSCURO.nombre`, que es la cadena `"OSCURO"` (`Campana.java:421`). Y
+`Campana.elegida(patron)` devuelve **una sola serie por nombre** (`Campana.java:835-850`): la elegida a
+mano o, si no, la última aceptada. Aguas abajo se toma **un único `x_oscuro`** como ancla **para los doce
+códigos**.
+
+**La consecuencia posible, que es lo que hay que medir:** como la de luz baja es la última de cada
+extremo (órdenes 4, 31, 36, 83), la que gana por «última aceptada» sería **la de luz baja**, y estaría
+anclando también las curvas de luz alta. Si las dos luces dan oscuros distintos —que es de esperar, y por
+eso la cola las separa—, el ancla de ocho de los doce códigos estaría desplazada.
+
+**Lo que no está perdido:** el dato crudo sí distingue las dos. Cada serie lleva su clave de luz en el
+campo `codigo` del diario, así que las ocho se pueden separar a posteriori sin volver a medir.
+
+**Cómo se cierra:** midiendo los dos oscuros en el mismo equipo y comparándolos. Si difieren, el arreglo
+natural es que el nombre de la serie del oscuro lleve la clave de luz (`OSCURO-1`, `OSCURO-3`) y que el
+ancla se calcule por luz; eso toca `BancoActivity`, `Campana` y la herramienta de coeficientes, y **no es
+un cambio de una línea**. Hasta entonces, **no dar por buenos unos coeficientes de V4.6 sin comprobar de
+qué oscuro salió el ancla.**
