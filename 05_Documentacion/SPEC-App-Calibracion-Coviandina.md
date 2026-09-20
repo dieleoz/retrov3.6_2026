@@ -1,0 +1,214 @@
+# SPEC — "RTV Calibra": cargar el ZIP y calibrar. App corta, aparte, para las cuatro familias
+
+**Sin medir. No se ha probado en un teléfono ni contra un equipo.** Sale de leer
+`03_App_Movil/RetroV36/` en la rama `rtv-1.0` (base `d7d7b4d`, RTV 1.0.0-rc5) y de ejecutar la suite
+JVM contra `EquipoSimulado`. El APK corto **compila y nada más**: no se ha instalado ni arrancado en
+ningún teléfono, ni se ha visto conviviendo con la app de campo.
+
+**Origen.** Diego, 19-sep-2026, noche: *"genera una versión de apk que sea cargar el .zip y darle
+calibrar, poco más"*, y después *"dame un apk que funcione para todos, que sea cargar el .zip
+reducido, darle calibrar, nombre, nota, serial, acta y ya"*.
+
+**Documento hermano, que manda sobre lo suyo:** `SPEC-App-Unica-Familias-y-ZIP.md` (qué puede cada
+familia y qué ZIP le corresponde). Los requisitos `RF-APP-U28` a `RF-APP-U38` son de allí; aquí sólo
+se dice **dónde caen dentro del camino corto**.
+
+---
+
+## 1. Por qué existe
+
+Para escribir **un solo código** en un equipo **ya medido** hicieron falta más de una hora y cuatro
+pantallas. No falló el cálculo: **la app avisó de un desajuste y se quedó quieta**, y el operador tuvo
+que adivinar que la salida estaba en otra pantalla.
+
+La cadena, verificada línea a línea:
+
+1. El ZIP venía de un banco `REPRESENTATIVO` y la campaña del teléfono nuevo estaba en `COMPLETO`.
+2. `ImportadorCampana.java:119-135` (rc5): cuando los tipos no casan se traen las series y **no los
+   `PASO`**, con el aviso *"lo ya medido cuenta al abrir el Banco"*.
+3. Ese aviso **no era cierto del todo**: `BancoPrevio.aplicar` sólo reconstruye pasos `PATRON`
+   (`BancoPrevio.java:139`). Los `OSCURO` y los `A5` **no los reconstruye nadie** — los únicos puntos
+   que escriben pasos son `BancoActivity.java:608`, `BancoPrevio.java:158`,
+   `ImportadorCampana.java:203`, `RehacerBanco.java:78` y `Campana.java:786`.
+4. Sin pasos, `BancoCola.calibrable` (`:315`) devuelve `false` y `FlujoCalibracion.plan:584` corta con
+   *"no calibrable: faltan patrones de AJUSTE o RE-MEDIDA"*. Detrás esperaba una segunda puerta:
+   `Anclas.oscuro` sin `OSCURO` de la sesión (`Anclas.java:80`) y `Anclas.sRep` sin `A5`
+   (`:102-116`), que además tumba la previa de `FlujoCalibracion.java:406` y bloquea **todos** los
+   códigos a la vez.
+
+**La app corta borra el caso por construcción: no hay campaña previa.** Su entrada es el ZIP y la
+campaña nace vacía, así que `destinoConCola` es `false` (`ImportadorCampana.java:120`) y la cola del
+ZIP se adopta sola (`:129-131`). El desajuste de bancos no puede darse aquí.
+
+> El arreglo del caso general —que la campaña **de campo** adopte el banco del ZIP en vez de avisar—
+> lo está haciendo otro agente en `ImportadorCampana` (D-1). **No es de este documento.**
+
+---
+
+## 2. El flujo, seis pasos y ni uno más
+
+```
+cargar el ZIP  →  calibrar  →  nombre  →  nota  →  serie  →  acta  →  fin
+```
+
+Antes del paso 1: conectar el equipo. Al conectar, **las pruebas del equipo arrancan solas**
+(`ConexionActivity.java:123-125`), porque sin ellas no hay `#GN#`, ni firmware detectado, ni previas
+— y sin previas no se escribe. Eso no se toca.
+
+**RF-COV-01 — Una sola pantalla.** La app abre en la lista de equipos emparejados. No hay menú, ni
+"Avanzado", ni banco, ni medida de patrones, ni modo administrador, ni cierre de campaña.
+
+**RF-COV-02 — Paso 1: "Cargar el ZIP".** Un botón, el selector del sistema (`ACTION_OPEN_DOCUMENT`,
+sin permiso de almacenamiento). La app abre o crea la campaña de la serie y la MAC del equipo
+conectado, importa el diario del ZIP adoptando su banco, aplica `BancoPrevio` y **deja el equipo
+listo para calibrar**. Sin paso intermedio y sin que el operador sepa qué es una cola.
+
+**RF-COV-03 — Paso 1 bis: lo que la app dice después de cargar.** En texto plano, bajo el botón:
+cuántas series han entrado, de qué banco, **qué códigos quedan listos** y, uno por uno, **por qué no
+lo están los demás**, con el motivo tomado literal de `BancoCola.calibrable` y de `Anclas`. Es
+exactamente lo que esa noche no se veía en ninguna pantalla. Un código que la cola sólo verifica (7,
+a, c, d en la completa) no dice "faltan patrones": dice **"esta cola sólo lo verifica"**.
+
+**RF-COV-04 — Paso 2: "Calibrar".** Abre `CalibrarActivity`, **sin cambios**: previas, una tarjeta por
+código con su motivo, **nombre del superadministrador** (paso 3), **nota de la conformidad** (paso 4),
+casilla por código, PIN una vez por conexión, escritura, re-medida, persistencia y **acta** (paso 6).
+
+**RF-COV-05 — Paso 5: la serie, una vez y en un solo sitio.** Un botón que muestra la serie vigente y
+permite teclearla cuando el equipo responde `#GN,NONE#`, cuando le cambiaron el módulo y se anuncia
+`HC-06`, o cuando el nombre no la trae. Vía única: `Sesion.aceptarSerieTecleada`, el mismo diálogo de
+`BancoActivity.java:471-491`. **No graba nada en el equipo**: el alta por `#SN` sigue en el modo
+administrador de la app de campo. Se resuelve al cargar el ZIP y no se vuelve a preguntar.
+
+**RF-COV-06 — La marca "serie declarada" llega al acta.** Si la serie la tecleó el operador y no la
+leyó el equipo, **el acta lo dice en su primera línea**. El dato existe (`Sesion.marcaSerie()`,
+`Sesion.java:278-280`) y hoy **no llega ni al ZIP ni al acta**: hoy su único consumidor es el correo
+(`:299-300`). Es `RF-APP-U37` del documento hermano, y el camino corto es su sitio natural porque el
+acta se arma aquí, al final. **Riesgo que cierra: R-U18**, un acta con serie declarada pasando por
+acta con serie leída.
+
+**RF-COV-07 — Al terminar: "Guardar / Compartir".** El ZIP ligero y el de soporte, con su copia en
+`Download/RTV/`, en un solo selector (`ConexionActivity.java:173-189`). El informe de calibración
+sigue saliendo solo al aceptar el acta (`CalibrarActivity.java:520-546`).
+
+**RF-COV-08 — No hay nada más.** Lo que no está en esta lista, no está en esta app.
+
+---
+
+## 3. Qué pasa cuando algo no cuadra
+
+| Situación | Qué hace la app |
+| :--- | :--- |
+| El ZIP es **de otra familia** que el equipo conectado | **No entra nada.** Un diálogo, con el motivo y qué hacer (`RF-APP-U32`) |
+| El ZIP es **de otro equipo** (serie o MAC) | No entra nada, con las dos series y las dos MAC (`ImportadorCampana.java:93-96`) |
+| El ZIP es el **ligero** (incremental) | Lo dice y pide el de soporte. Se detecta **por dentro**, no por el nombre (`ImportadorCampana.java:54-64`) |
+| El ZIP no trae diario ni `campana.csv` | Lo dice y pide el de soporte |
+| Patrón que no está en el catálogo | Lo dice y no entra nada (`ImportadorCampana.java:100-107`) |
+| Falta el `OSCURO` o la `A5` | Se dice **al cargar**, código a código, con el motivo de `Anclas` |
+| Equipo sin conectar, o sin serie | "Cargar" y "Calibrar" apagados, diciendo qué falta |
+| Pruebas sin pasar, o NO APTO | Previa en rojo. No se calibra (`FlujoCalibracion.java:379`) |
+| Familia que hoy no se calibra | Una línea que dice **qué le falta a ese equipo**, no sólo que no se puede |
+
+**RF-COV-09 — El rechazo por familia detiene el paso 1, y está bien que lo detenga.** El documento
+hermano lo deja como decisión de flujo, no suya (`SPEC-App-Unica-Familias-y-ZIP.md`, §5). **Aquí se
+decide: detiene.** Mezclar `x` de escalas distintas produce coeficientes que *parecen* buenos, y eso
+es peor que un diálogo. La diferencia con la noche del 19-sep no es que haya fricción: es que la
+fricción **dice qué hacer y se resuelve en el sitio**, en vez de avisar y quedarse quieta. El texto
+lleva siempre la salida: *"abra una campaña aparte para la etapa anterior"*.
+
+**RF-COV-10 — Ningún botón apagado sin decir qué hacer.** Cuatro familias, y tres de ellas hoy no se
+calibran. Eso **no es un fallo de esta app**, es el estado del proyecto, y se dice así:
+
+| Familia | Qué se puede | Qué se le dice al operador |
+| :--- | :--- | :--- |
+| **V3.6** | Todo: calibrar y escribir | — |
+| **V4.6** | Medir y banco; calibrar **no** | La calibración está candada a propósito hasta que exista una V4.6 grabada |
+| **V4 original** | Ni banco ni calibrar | Necesita que le graben el firmware **V4.6**: sin `#X` no hay `x` |
+| **V3 2020** | Ni banco ni calibrar | Necesita que le graben el firmware **V3.6**: no tiene órdenes `#…#` |
+
+La frase sale de `Protocolo.queHacerParaCalibrar()`, **que es del otro agente y no se duplica aquí**
+(ver §6).
+
+---
+
+## 4. Lo que no se toca
+
+- **El cálculo, los criterios y las dispensas son los mismos ficheros:** `Asistente`, `Ajuste`,
+  `Anclas`, `TablaCalibracion`, `Remedida3611`, sin una línea de diferencia. **Si un número sale
+  distinto del de la app de campo con el mismo ZIP, es un fallo de esta app, no una variante.**
+- **Escribir sigue exigiendo el equipo conectado**, con previas, PIN, relectura, persistencia y acta.
+  Esto simplifica la navegación, no las garantías.
+- **La lista blanca de tramas por perfil no se afloja** (`Protocolo.permitida`): es lo que impide
+  colgar un equipo.
+- Las pruebas heredadas, en verde, sin excepción.
+
+---
+
+## 5. Cómo conviven las dos apps: `applicationId` propio
+
+**Decisión: aplicación aparte.** Hasta la rc5 son la misma aplicación, así que **no caben las dos en
+un teléfono**: instalar una borra la otra, y volver atrás exige desinstalar, que se lleva la campaña
+por delante (`Campanas` guarda en `ctx.getFilesDir()`, `Campanas.java:66`). Esa noche eso obligó a
+repartir el trabajo entre dos móviles.
+
+Comprobado **abriendo el código**, no razonando:
+
+- `applicationId "com.dpi.retrov36"` (`app/build.gradle:11`); se le añade el sufijo `.calibra`.
+- El `FileProvider` declara `android:authorities="${applicationId}.ficheros"`
+  (`AndroidManifest.xml:52`): **la autoridad se separa sola**. Es lo que hace posible la convivencia —
+  dos apps con la misma autoridad no pueden instalarse a la vez.
+- **Ningún fuente Java escribe el nombre del paquete como literal** fuera de su línea `package`
+  (comprobado sobre los 67 ficheros de `main`). Nada da por supuesto un paquete concreto.
+- Almacenamiento: `ctx.getFilesDir()` (`Campanas.java:66,148,210`). **Cada app tiene el suyo**, y el
+  de la corta nace vacío — que es justo lo que se quiere, porque su entrada es el ZIP.
+- El ZIP se lee por `ACTION_OPEN_DOCUMENT` + `openInputStream` (`CampanaActivity.java:715,749`):
+  permiso puntual del sistema, **sin permiso de almacenamiento**.
+- Firma: las dos salen del almacén de depuración de Gradle. Son **paquetes distintos**: no hay
+  conflicto de firma y ninguna instalación toca a la otra.
+- Emparejamiento Bluetooth: es del sistema. El equipo **sigue emparejado**; la app nueva sí vuelve a
+  pedir el permiso de ubicación, porque es otro paquete.
+
+**Verificado en los dos binarios** (`aapt dump badging`):
+
+| APK | Paquete | Etiqueta | versionName |
+| :--- | :--- | :--- | :--- |
+| `app-debug.apk` | `com.dpi.retrov36` | RTV | `1.0.0-rc6` |
+| `app-coviandina.apk` | `com.dpi.retrov36.calibra` | RTV Calibra | `1.0.0-rc6-calibra` |
+
+**Lo que hay que vigilar, y queda dicho:** las dos escriben en el **mismo** `Download/RTV/`
+(`Campanas.java:245`). Los nombres llevan serie y fecha, así que no se pisan, pero la carpeta mezcla
+lo de las dos.
+
+### La pregunta que esta SPEC no cierra por su cuenta
+
+**¿La corta sustituye a la larga para el operador de campo?** **No, y no debería.** La corta calibra a
+partir de un ZIP **ya medido**; para producir ese ZIP hacen falta el banco, las pruebas y la línea
+base, que sólo están en la larga. Lo que se simplifica es **calibrar**, no **medir**. Se instalan
+juntas y cada una hace lo suyo. La decisión es de Diego; aquí queda el argumento.
+
+---
+
+## 6. Dos correcciones, una a otro documento y otra a mí mismo
+
+**A mí mismo.** Escribí `AppCorta.queLeFalta(Firmware)` para decir qué le falta a cada familia. Otro
+agente ha añadido, en paralelo, `Protocolo.queHacerParaCalibrar()` (`Protocolo.java:98`,
+`ProtocoloV4Original.java:156`). **Su sitio es mejor que el mío**: la frase pertenece al protocolo,
+que es quien sabe qué puede cada firmware, y así la usan las dos apps. **Mi función se retira y se
+llama a la suya.** Lo dejo escrito para que no vuelva a aparecer duplicada.
+
+**Al documento hermano.** `SPEC-App-Unica-Familias-y-ZIP.md` dice que el ZIP de soporte se distingue
+del ligero *"únicamente por el prefijo del nombre del fichero: nada dentro dice qué es"*. **No es
+exacto.** `ImportadorCampana.esIncremental` (`:54-64`) lo decide **mirando dentro**: el ligero trae
+`indice.sha256` o una entrada con `.desde_`. La app corta lo usa y rechaza el ligero por contenido,
+no por nombre. Lo que **sí** es cierto es lo de fondo —y sigue abierto—: **nada dentro del ZIP declara
+su familia**, que es `RF-APP-U29`, y ahí el documento hermano tiene toda la razón.
+
+---
+
+## 7. Lo que esta SPEC NO ha comprobado
+
+- Nada se ha probado **en un teléfono** ni **contra un equipo**.
+- Las dos apps **no se han visto instaladas a la vez**: que convivan sale de leer el manifiesto y el
+  `build.gradle` y de mirar los dos APK con `aapt`, no de haberlas instalado.
+- `RF-COV-06` (la marca de serie declarada en el acta) y `RF-COV-09` (el rechazo por familia)
+  **están especificados y no implementados**: dependen de trabajo que hoy es de otro agente.
+- El camino corto se ha ejercitado **sólo en la JVM**, con el ZIP archivado de las 15:10.
