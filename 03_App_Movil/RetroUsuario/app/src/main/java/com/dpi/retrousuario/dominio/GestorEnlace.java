@@ -44,4 +44,28 @@ public final class GestorEnlace {
         }
         return Decision.CERRAR_Y_CONECTAR;
     }
+
+    /**
+     * Arq ALTO, segunda parte (sobre 0.3.2): un enlace REUTILIZADO puede estar muerto sin que
+     * {@code EnlaceBluetooth.vivo()} lo supiera todavía — la caída se detecta AL LEER o AL ENVIAR,
+     * no antes de intentarlo ({@link EstadoEnlace}) — así que un primer silencio a "#V#" sobre un
+     * REUTILIZADO no basta para concluir "no compatible": puede ser el equipo real diciendo que no
+     * es 3.6.x, o puede ser un socket que ya no escucha nadie. Antes de concluir "no compatible" se
+     * cierra ese enlace y se reintenta con una conexión nueva.
+     *
+     * <p>Sólo dispara con silencio real (nada recibido dentro del plazo,
+     * {@link DetectorEquipo.ResultadoDeteccion#sinRespuesta()}): una trama que SÍ llegó pero no es
+     * compatible (otro firmware, "#ERR#"...) es una respuesta de verdad, no un enlace muerto — ese
+     * caso concluye "no compatible" a la primera, con o sin reutilización.</p>
+     *
+     * <p><b>"UNA vez":</b> tras el reintento la conexión ya no es reutilizada (es nueva), así que
+     * una segunda llamada con {@code sobreEnlaceReutilizado = false} siempre da {@code false} — no
+     * hace falta un contador aparte, lo impone el propio parámetro.</p>
+     *
+     * @param sobreEnlaceReutilizado true si la detección se hizo con {@link Decision#REUTILIZAR}.
+     * @param sinRespuesta {@link DetectorEquipo.ResultadoDeteccion#sinRespuesta()} de esa detección.
+     */
+    public static boolean debeReintentarConexionNueva(boolean sobreEnlaceReutilizado, boolean sinRespuesta) {
+        return sobreEnlaceReutilizado && sinRespuesta;
+    }
 }

@@ -27,10 +27,12 @@ public final class DetectorEquipo {
     public static final class ResultadoDeteccion {
         private final Resultado resultado;
         private final RespuestaV respuestaV;
+        private final boolean sinRespuesta;
 
-        private ResultadoDeteccion(Resultado resultado, RespuestaV respuestaV) {
+        private ResultadoDeteccion(Resultado resultado, RespuestaV respuestaV, boolean sinRespuesta) {
             this.resultado = resultado;
             this.respuestaV = respuestaV;
+            this.sinRespuesta = sinRespuesta;
         }
 
         public Resultado resultado() {
@@ -40,6 +42,15 @@ public final class DetectorEquipo {
         /** No nulo sólo si {@link #resultado()} es {@link Resultado#COMPATIBLE}. */
         public RespuestaV respuestaV() {
             return respuestaV;
+        }
+
+        /** Arq ALTO (sobre 0.3.2): true si "#V#" no trajo NADA dentro del plazo (silencio: el canal
+         *  devolvió null) — a diferencia de una trama que sí llegó pero no es compatible (otro
+         *  firmware, "#ERR#"...), que es una respuesta de verdad. Siempre false si
+         *  {@link #resultado()} es {@link Resultado#COMPATIBLE}. Sólo el silencio sobre un enlace
+         *  REUTILIZADO puede ser, en realidad, un socket muerto ({@link GestorEnlace#debeReintentarConexionNueva}). */
+        public boolean sinRespuesta() {
+            return sinRespuesta;
         }
     }
 
@@ -61,12 +72,12 @@ public final class DetectorEquipo {
     public static ResultadoDeteccion detectar(Canal canal, ParametrosRitmo params) {
         String respuesta = canal.enviar("#V#", params.plazoTramaMs());
         if (!RespuestaV.esCompatible(respuesta)) {
-            return new ResultadoDeteccion(Resultado.NO_COMPATIBLE, null);
+            return new ResultadoDeteccion(Resultado.NO_COMPATIBLE, null, respuesta == null);
         }
         RespuestaV v = RespuestaV.analizar(respuesta);
         if (v == null) {
-            return new ResultadoDeteccion(Resultado.NO_COMPATIBLE, null);
+            return new ResultadoDeteccion(Resultado.NO_COMPATIBLE, null, false);
         }
-        return new ResultadoDeteccion(Resultado.COMPATIBLE, v);
+        return new ResultadoDeteccion(Resultado.COMPATIBLE, v, false);
     }
 }

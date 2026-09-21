@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 
 import com.dpi.retrousuario.dominio.Canal;
+import com.dpi.retrousuario.dominio.EstadoEnlace;
 import com.dpi.retrousuario.dominio.FuenteBytes;
 
 import java.io.IOException;
@@ -35,6 +36,8 @@ final class EnlaceBluetooth implements Canal, FuenteBytes {
     private final LinkedBlockingQueue<Integer> bytesRecibidos = new LinkedBlockingQueue<>();
     private final long tApertura = System.currentTimeMillis(); // M2: t_ms de tramas.log es desde aqui.
     private final String macConectada;
+    /** Arq ALTO: `vivo()` ya no es sólo socket.isConnected() (dominio.EstadoEnlace). */
+    private final EstadoEnlace estado = new EstadoEnlace();
 
     private EnlaceBluetooth(BluetoothSocket socket, OutputStream salida, InputStream entrada, String macConectada) {
         this.socket = socket;
@@ -64,10 +67,12 @@ final class EnlaceBluetooth implements Canal, FuenteBytes {
         return macConectada;
     }
 
-    /** C1: si el socket sigue conectado — lo que decide {@link com.dpi.retrousuario.dominio.GestorEnlace}
-     *  entre reutilizar este enlace o cerrarlo antes de abrir uno nuevo. */
+    /** Arq ALTO (sobre 0.3.2): ya NO es sólo `socket.isConnected()` — eso sólo pasa a false cuando
+     *  la app llama `close()`, nunca porque el equipo se haya caído solo (el hilo lector traga esa
+     *  IOException, abajo). `dominio.EstadoEnlace` lleva la bandera "caído" aparte; lo que decide
+     *  {@link com.dpi.retrousuario.dominio.GestorEnlace} entre reutilizar este enlace o cerrarlo. */
     boolean vivo() {
-        return socket.isConnected();
+        return estado.vivo(socket.isConnected());
     }
 
     private void leerSinParar(InputStream entrada) {
@@ -79,8 +84,12 @@ final class EnlaceBluetooth implements Canal, FuenteBytes {
                     bytesRecibidos.add(b[i] & 0xFF);
                 }
             }
+            // Arq ALTO: fin de flujo sin excepcion (EOF) tambien es el enlace caido, no sólo la
+            // IOException del catch de abajo — el otro lado pudo cerrar limpio en vez de romper.
+            estado.marcarCaido();
         } catch (IOException cerrado) {
             // El socket se cerro (desconexion voluntaria o perdida de enlace): el hilo termina solo.
+            estado.marcarCaido();
         }
     }
 
@@ -91,6 +100,7 @@ final class EnlaceBluetooth implements Canal, FuenteBytes {
             salida.write(trama.getBytes(StandardCharsets.US_ASCII));
             salida.flush();
         } catch (IOException e) {
+            estado.marcarCaido(); // Arq ALTO: un envio que falla es tan "caido" como una lectura rota.
             return null;
         }
         return esperarTrama(plazoMs);
@@ -149,6 +159,7 @@ final class EnlaceBluetooth implements Canal, FuenteBytes {
             salida.flush();
         } catch (IOException e) {
             // Sin conexion: el disparo se trata como "sin respuesta" (plazo vencido), igual que un timeout.
+            estado.marcarCaido(); // Arq ALTO: igual que enviar().
         }
     }
 

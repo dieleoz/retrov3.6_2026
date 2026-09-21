@@ -5,7 +5,9 @@ import org.junit.Test;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * T-USR-01 (TDD-V3.6.md:1794-1805): detección sólo V3.6, nunca 'e', nunca otro firmware.
@@ -28,6 +30,7 @@ public class DetectorEquipoTest {
         assertEquals("3.6", r.respuestaV().version());
         assertEquals("2026-09-21", r.respuestaV().fechaCompilacion());
         assertEquals(RespuestaV.EstadoAjuste.CAL, r.respuestaV().estadoAjuste());
+        assertFalse("arq ALTO: compatible siempre es una respuesta de verdad, nunca silencio", r.sinRespuesta());
         // Fuente: PROTOCOLO-V3.6.md:42 y RF-USR-01 ("se envía únicamente #V#").
         assertEquals(Arrays.asList("#V#"), equipo.tramasRecibidas());
         assertSinBytesProhibidos(equipo);
@@ -41,6 +44,10 @@ public class DetectorEquipoTest {
         DetectorEquipo.ResultadoDeteccion r = DetectorEquipo.detectar(equipo);
 
         assertEquals(DetectorEquipo.Resultado.NO_COMPATIBLE, r.resultado());
+        // arq ALTO: silencio real (nada llegó) -- distinto de "llegó algo pero no es compatible" (c),
+        // abajo. Es el único caso que GestorEnlace.debeReintentarConexionNueva puede convertir en un
+        // reintento con conexión nueva, si la detección se hizo sobre un enlace REUTILIZADO.
+        assertTrue(r.sinRespuesta());
         assertEquals(Arrays.asList("#V#"), equipo.tramasRecibidas());
         assertSinBytesProhibidos(equipo);
     }
@@ -54,6 +61,9 @@ public class DetectorEquipoTest {
         DetectorEquipo.ResultadoDeteccion r = DetectorEquipo.detectar(equipo);
 
         assertEquals(DetectorEquipo.Resultado.NO_COMPATIBLE, r.resultado());
+        // arq ALTO: SÍ llegó una trama (de un V4 real) -- no es silencio, así que no dispara el
+        // reintento de GestorEnlace.debeReintentarConexionNueva aunque el enlace fuera reutilizado.
+        assertFalse(r.sinRespuesta());
         assertEquals(Arrays.asList("#V#"), equipo.tramasRecibidas());
         assertSinBytesProhibidos(equipo);
     }
