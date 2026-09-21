@@ -31,12 +31,23 @@ orden de trabajo en `ROADMAP.md`; procedimiento del 8 y la b en
 
 Lo que dice el registro del HONOR de las 19:12, con la rc3:
 
-- abrió la campaña de SLV-002 **con 0 series**: la campaña de la mañana, la del acta, **no la ve**;
+- abrió la campaña de SLV-002 **con 0 series**. La ruta del fichero es la misma en la 3.6.9, la rc3 y
+  la rc6 (`Campanas.java:66,82`), así que **no es una migración**: los datos de la app se borraron
+  entre las 12:27 y las 19:12 (desinstalación o "borrar datos"). Es hipótesis, sin registro del
+  borrado. El acta de los códigos 1 y 2 sigue en el ZIP de las 12:27; la app no la necesita, porque
+  las curvas del 1 y del 2 van fijas en el APK (`TablaCalibracion.java:234-246`);
 - importó el ZIP de las 18:11 en una campaña de cola **COMPLETO** (129 series, 69 pasos hechos,
-  "quedan 64 patrones"): la trampa del ZIP representativo dentro de una campaña completa;
-- pruebas del equipo **NO APTO** (coherencia de fórmulas y repetibilidad de `e`), sin explicar aún;
-- batería con n = 0: escrituras bloqueadas. Se envió `#L`, se previsualizó el 8 con recta anclada y
-  se cerró con `#Q`. **No se envió `#S`.**
+  "quedan 64 patrones"): la trampa del ZIP representativo dentro de una campaña completa. Así, los
+  OSCURO de sesión no tienen paso y el 8 no se podría anclar;
+- pruebas del equipo: **la primera tanda NO APTO, la segunda APTO** (l.586 y l.1170);
+- batería con n = 0: escrituras bloqueadas. Se envió `#L`; la recta anclada del 8 que se vio es la
+  **vista previa de Avanzado** (ancla en la serie S123, x = 571), **no** la del flujo "Calibrar", que
+  ancla en la media de los OSCURO de sesión (569,08 según el informe). Cerró con `#Q`. **No se envió
+  `#S`.**
+
+Corregido el mismo 21-sep (queda la errónea junto a la buena): en `a6174dc` este fichero decía
+"pruebas NO APTO, sin explicar" y daba la recta anclada de Avanzado como "la del 8". Lo cerró el
+análisis de la rc6 releyendo el registro y `AdminActivity.java:522-535`.
 
 Consecuencias: el HONOR ya no puede volver a la 3.6.17 sin desinstalar, y desinstalar borra la
 campaña. La rc3 escribe en el acta `firmado por Firmado por "…"` (arreglado en la rc4, `23c5fef`).
@@ -53,18 +64,23 @@ campaña. La rc3 escribe en el acta `firmado por Firmado por "…"` (arreglado e
   código sin guardar, dos pruebas nunca se han visto en rojo, le faltan arquitecto y QA.
 - La 3.6.17 fue rechazada por arquitecto (P16) y QA; no se entrega.
 
-## En curso (21-sep)
+## Hecho el 21-sep por la mañana
 
-1. **Análisis rc6 sobre rc3 en el HONOR** (subagente, sólo lectura): si la rc6 conserva la campaña
-   al instalarse encima, qué cambia en el camino del 8 y la b, qué código sin revisar lo toca, por
-   qué la rc3 no ve la campaña de la mañana y qué hacer con la cola COMPLETO. **Diego no calibra
-   hasta tener esto.**
-2. **Cerrar la app corta** (subagente, worktree sobre `rtv-1.0`): recompilar sobre árbol limpio, ver
-   en rojo las dos pruebas pendientes, prueba propia de RF-COV-09.
+1. **Análisis rc6 sobre rc3 en el HONOR** (sólo lectura). Veredicto: la firma de 3.6.8 a rc6 es la
+   misma (`~/.android/debug.keystore`); la de la rc3 no se puede comprobar porque su APK no está en el
+   disco. Si Android rechaza la instalación, **no desinstalar**. Camino limpio de la campaña, igual en
+   rc4 y rc6: "ZIP de soporte (todo)" → "Nueva campaña (archiva la actual)" → **sin abrir el Banco**,
+   importar el ZIP de las 18:11 → comprobar REPRESENTATIVO con 80 pasos hechos. **Recomienda la rc4**
+   (`RTV-V1.0.0-rc4.apk`, md5 `a41fb09c…`, en `D:\IT\wt_rtv10_App_Movil\`) tras arquitecto y
+   QA del salto rc2 → rc4. Trae una lista de once cambios al procedimiento, sin aplicar.
+2. **App corta cerrada en la JVM**, rama local `rtv-1.0-cierre` (`0a849fe`, `7faaf38`), 360 pruebas.
+   Arregla RF-COV-09: `Familia.compatibles` deja pasar una familia desconocida (`Familia.java:88`),
+   así que una campaña vacía admite un ZIP de otra familia. **Esto sigue igual en la app de campo.**
+   Sus APK repiten `1.0.0-rc6`/10005 con otro binario: hay que subir la versión.
 
 ## Lo siguiente
 
-1. Con el análisis: decidir teléfono y versión (rc4, rc6 o app corta) y corregir el procedimiento.
+1. Diego decide versión (recomendado rc4) y teléfono (HONOR). Se aplican los cambios al procedimiento.
 2. Arquitecto y QA de la versión elegida. Sin los dos vistos buenos no se entrega.
 3. Diego calibra: **el 8 y su acta; la b después**, con recta anclada en oscuro. Cambiar batería si
    la orden 9 da n = 0. Si la re-medida falla con x a 0,5-3 % y la R sale bien, es el umbral

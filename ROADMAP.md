@@ -97,8 +97,8 @@ Ningún paso empieza sin cerrar el anterior. Mientras tanto **no se escribe nada
 
 | # | Paso | Quién | Sale | Estado |
 | :---: | :--- | :--- | :--- | :--- |
-| 1 | **Análisis rc6 sobre rc3 en el HONOR**: conserva o no la campaña, cambios en el camino del 8 y la b, código sin revisar, campaña de la mañana que la rc3 no ve, cola COMPLETO | Subagente, sólo lectura | Informe con cambios al procedimiento | **En curso** |
-| 2 | **Cerrar la app corta** "RTV Calibra": recompilar sobre árbol limpio, pruebas en rojo, RF-COV-09 | Subagente, worktree en `rtv-1.0` | Commits, APK con md5 y `aapt` | **En curso** |
+| 1 | **Análisis rc6 sobre rc3 en el HONOR**: conserva o no la campaña, cambios en el camino del 8 y la b, código sin revisar, campaña de la mañana que la rc3 no ve, cola COMPLETO | Subagente, sólo lectura | Informe con cambios al procedimiento | Hecho: recomienda rc4 |
+| 2 | **Cerrar la app corta** "RTV Calibra": recompilar sobre árbol limpio, pruebas en rojo, RF-COV-09 | Subagente, worktree en `rtv-1.0` | Commits, APK con md5 y `aapt` | Hecho en JVM (`rtv-1.0-cierre`) |
 | 3 | Elegir teléfono y versión; corregir `PROCEDIMIENTO-Escribir-8-y-b.md` | Principal y Diego | Procedimiento al día | Tras 1 |
 | 4 | **Arquitecto y QA** de la versión elegida | Subagentes, modelo capaz | Dos veredictos escritos | Tras 3 |
 | 5 | **Calibrar el 8** y aceptar su acta; **después la b**. Recta anclada en oscuro; sin ICSP | Diego con la app | Códigos escritos, relectura, re-medida | Tras 4 |
