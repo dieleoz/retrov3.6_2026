@@ -6,3 +6,18 @@
 06_Calibracion/*/tramas/*.txt -text
 .githooks/* text eol=lf
 .topes text eol=lf
+
+# RetroUsuario (condicion QA-10): fuente en LF para que el md5 declarado (fuente.md5) no cambie con
+# el fin de linea de quien clona. Los binarios se excluyen explicitamente (van DESPUES: en
+# .gitattributes manda el patron que matchea mas tarde para la misma ruta).
+03_App_Movil/RetroUsuario/** text eol=lf
+03_App_Movil/RetroUsuario/**/*.png binary
+03_App_Movil/RetroUsuario/**/*.jpg binary
+03_App_Movil/RetroUsuario/**/*.jar binary
+03_App_Movil/RetroUsuario/**/*.apk binary
+03_App_Movil/RetroUsuario/**/*.zip binary
+03_App_Movil/RetroUsuario/**/*.jks binary
+03_App_Movil/RetroUsuario/**/*.keystore binary
+# El md5 declarado, igual que la regla global *.md5 de arriba: byte a byte, sin normalizar EOL
+# (si no, el propio eol=lf de esta seccion se lo comeria: gana el ultimo patron que matchea la ruta).
+03_App_Movil/RetroUsuario/fuente.md5 -text
