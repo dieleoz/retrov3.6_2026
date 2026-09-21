@@ -1762,37 +1762,41 @@ APK, tramas en crudo). **AT-U05 y AT-U06 son encargos de medida**: su resultado 
 
 ## 8. App de usuario
 
-**r5, 21-sep-2026: cierra las condiciones del `arquitecto-iot` (APTO CON CONDICIONES al incremento 1,
-sobre `3f9e02d`).** Cambios de fondo sobre r4: cuarentena de `Q` ms tras un plazo vencido, con lo
-recibido durante ella descartado y anotado en `tramas.log` (T-USR-24, nuevo caso (e)); T-USR-24(b) con
-un simulador que descarta el byte de N+1 mientras "mide" (como V3.6 `gui.c:342-346`) y responde tarde a
-N; columnas `latitud`/`longitud` (ya no `lat`/`lon`) y formato completo de `medidas.csv` en T-USR-21a,
-con cabecera y una fila aseveradas byte a byte; T-USR-06 sin "NO CUMPLE" en el incremento 1 (no hay
-columna de cumple) y con la media numérica de (d) (320/3 → 107) y un caso nuevo, par, que ejercita el
-",5"; T-USR-06b, nuevo, para el disparo anulado por plazo (repetir hasta 2 veces, luego anular la
-serie); T-USR-01(a) acotada a "antes de confirmar `#V,3.6,`, sólo sale `#V#`"; T-USR-01c, nuevo, para
-`exigir_362` y para `#ERR,EEPROM#` como "sin respuesta útil"; T-USR-19, T-USR-20 y T-USR-21 partidas en
-`a` (incremento 1) y `b` (incremento 2); T-USR-25 a T-USR-28, nuevas (persistencia entre reinicios,
-ritmo con borrado de 80 ms, exportación repetible, `lecturas_por_color` en Ajustes). Requisitos:
-[`SPEC-App-Usuario-V3.6.md`](SPEC-App-Usuario-V3.6.md) r5 (RF-USR-01 a RF-USR-16), organizada en **dos
-incrementos** (SPEC §0): **Incremento 1, "Medir y exportar"** — RF-USR-01 a 06, 15, 15 bis, 16; fichas
-T-USR-01, 01b, 01c, 02, 03, 03b, 04, 06, 06b, 07, 19a, 20a, 21a, 22, 23, 24, 25, 26, 27, 28.
-**Incremento 2, "Señal a señal"**, depende de propuestas ▸ pendientes de Diego (umbral doble, geometría,
-15 m) — RF-USR-07 a 14; fichas T-USR-05, 08 a 18, 19b, 20b, 21b. Ninguna ficha de esta sección sustituye
-a `T-C30` (§3, "App del cliente", operador real): esa sigue `PENDIENTE sin fecha` hasta que exista un
-operador con esta app delante de un equipo (R-09). El valor esperado de cada ficha viene de una fuente
-ajena al código de esta app —protocolo, firmware, el catálogo, SPEC-REG, el Manual 2024 o una decisión
-de Diego—, nunca de la salida de código todavía por escribir; donde el valor de ejemplo es un cálculo de
-este trabajo y no una cita literal, se dice así. Receta **R-JVM** (§1): JVM contra `EquipoSimulado`, un
-simulador propio de esta sección, o un fichero CSV de prueba; nivel **A** salvo que se diga otra cosa.
-**Las precisiones de Diego del 21-sep están registradas**: caen todas bajo la **nota 11 (USR-DETALLE)**
-de `DECISIONES-Diego-2026-09-19.md`, puntos (a)-(f); no existen notas 12-15 separadas. De los puntos (a)-
-(f), sólo (a) y (b) llevan frases **literales** entre comillas en esa nota; (c), (d), (e) y (f) son el
-resumen del analista, sin comillas en la fuente: una cita entre comillas de esos puntos en esta sección
-es, como mucho, tan literal como el resumen de la nota, nunca palabra de Diego. **`exigir_362`, la
-cuarentena `Q`, el límite de 2 repeticiones de un disparo anulado y los nombres/formato del ZIP e
-identificador `RTVU_...` no están en `DECISIONES-Diego-2026-09-19.md`**: son diseño de este trabajo,
-marcado como tal en cada ficha.
+**r6, 21-sep-2026: cierra las condiciones C1-C5 del `arquitecto-iot` sobre la r5 (APTO CON CONDICIONES
+al incremento 1, base `39c754f`).** Cambios de fondo sobre r5: (C1, ALTO) T-USR-24(b) acotada a que la
+respuesta tardía de N llegue dentro de `[plazo, plazo+Q)`, no después: más allá de `plazo+Q` queda
+declarado como riesgo residual no detectable (SPEC RF-USR-16), a medir en T-B06, y la "prueba vista en
+rojo" se corre contra un borrador sin cuarentena; (C2) T-USR-21a corregida: la fila ya no cita
+`firmware_v` (nunca lleva `;` ni `"`), suma BOM/CRLF a lo aseverado byte a byte, y gana el caso (c) con
+una serie que lleva `;` y `"`; (C3) T-USR-01b con el límite de 2 reintentos de `#GN#`/`#GC#` y la rama
+"sin respuesta útil, no se mide" con `exigir_362 = true`; T-USR-01c(c) corregida: ya no presenta
+`#ERR,EEPROM#` como una respuesta real de un firmware 3.6.2 (el código de hoy sólo devuelve `NONE`, nunca
+`#ERR#`, para `#GN#`/`#GC#`), queda como caso defensivo hipotético; T-USR-22 con el caso (c), máscara
+`CAL` distinta de `0000` y trama con/sin el quinto campo; T-USR-24(d) doble `::` cuenta como disparo
+anulado y abre cuarentena; (C4) T-USR-19a con el caso (d), cabecera fija de `inventario.csv`, y (c)
+corregida para comparar la proyección TX en hex, no el fichero completo; (C5) T-USR-25 con el caso de
+matar el proceso **a mitad de una serie** (se descarta al reabrir) y la técnica para simular la muerte
+del proceso en la JVM; T-USR-26 suma la aserción de los 1500 ms desde el envío anterior
+(`SPEC-V3.6.md:441-442`); Bajos: T-USR-06b(a) con el valor del tercer disparo, T-USR-06(c) con `minimo`
+aseverado. Requisitos: [`SPEC-App-Usuario-V3.6.md`](SPEC-App-Usuario-V3.6.md) r6 (RF-USR-01 a RF-USR-16),
+organizada en **dos incrementos** (SPEC §0): **Incremento 1, "Medir y exportar"** — RF-USR-01 a 06, 15,
+15 bis, 16; fichas T-USR-01, 01b, 01c, 02, 03, 03b, 04, 06, 06b, 07, 19a, 20a, 21a, 22, 23, 24, 25, 26,
+27, 28. **Incremento 2, "Señal a señal"**, depende de propuestas ▸ pendientes de Diego (umbral doble,
+geometría, 15 m) — RF-USR-07 a 14; fichas T-USR-05, 08 a 18, 19b, 20b, 21b. Ninguna ficha de esta sección
+sustituye a `T-C30` (§3, "App del cliente", operador real): esa sigue `PENDIENTE sin fecha` hasta que
+exista un operador con esta app delante de un equipo (R-09). El valor esperado de cada ficha viene de una
+fuente ajena al código de esta app —protocolo, firmware, el catálogo, SPEC-REG, el Manual 2024 o una
+decisión de Diego—, nunca de la salida de código todavía por escribir; donde el valor de ejemplo es un
+cálculo de este trabajo y no una cita literal, se dice así. Receta **R-JVM** (§1): JVM contra
+`EquipoSimulado`, un simulador propio de esta sección, o un fichero CSV de prueba; nivel **A** salvo que
+se diga otra cosa. **Las precisiones de Diego del 21-sep están registradas**: caen todas bajo la **nota
+11 (USR-DETALLE)** de `DECISIONES-Diego-2026-09-19.md`, puntos (a)-(f); no existen notas 12-15
+separadas. De los puntos (a)-(f), sólo (a) y (b) llevan frases **literales** entre comillas en esa nota;
+(c), (d), (e) y (f) son el resumen del analista, sin comillas en la fuente: una cita entre comillas de
+esos puntos en esta sección es, como mucho, tan literal como el resumen de la nota, nunca palabra de
+Diego. **`exigir_362`, la cuarentena `Q`, el límite de 2 repeticiones de un disparo anulado, el límite de
+2 reintentos de `#GN#`/`#GC#`, y los nombres/formato del ZIP e identificador `RTVU_...` no están en
+`DECISIONES-Diego-2026-09-19.md`**: son diseño de este trabajo, marcado como tal en cada ficha.
 
 **T-USR-01 — Detección sólo V3.6, nunca `e`, nunca otro firmware.** RF-USR-01 · A · R-JVM ·
 **PENDIENTE**
@@ -1809,48 +1813,72 @@ marcado como tal en cada ficha.
   F-2020/V4 más que para confirmar el rechazo**: USR-ALCANCE saca esos firmwares del alcance de esta
   app.
 - Fuente del esperado: `PROTOCOLO-V3.6.md:42` (formato de `#V#`; **cita corregida, r2 decía `:24`**,
-  que es un párrafo de otro tema); SPEC r5 RF-USR-01; decisión USR-ALCANCE.
+  que es un párrafo de otro tema); SPEC r6 RF-USR-01; decisión USR-ALCANCE.
 
-**T-USR-01b — Con `exigir_362 = true` (por defecto), un silencio no es lo mismo que `#ERR,FORMATO#`
-(M-3, B-3, ▸ propuesta pendiente de Diego).** RF-USR-01 · A · R-JVM · **PENDIENTE**
+**T-USR-01b — Con `exigir_362 = true` (por defecto), un silencio no es lo mismo que `#ERR,FORMATO#`, y
+el reintento se acota a 2 (M-3, B-3, ▸ propuesta pendiente de Diego, corrige r5, C3).** RF-USR-01 · A ·
+R-JVM · **PENDIENTE**
 - Pasos: tras (a) de T-USR-01, con `exigir_362 = true`: (b) `EquipoSimulado` responde `#GN,SLV-002#` y
   `#GC,2026-09-19#` a las sondas siguientes; (c) otro `EquipoSimulado` (firmware "3.6" o "3.6.1", sin
   `#GN#`/`#GC#`) responde `#ERR,FORMATO#` a ambas; (d) un tercer `EquipoSimulado` no responde nada a
   `#GN#` ni a `#GC#` dentro del plazo de RF-USR-16 (ni `#GN,...#` ni `#ERR,...#`: silencio puro, por
-  ejemplo un corte del enlace).
+  ejemplo un corte del enlace); (e) **reintentos agotados (nuevo r6):** igual que (d), pero el operador
+  pulsa "reintentar" 2 veces y el simulador sigue sin contestar nada las 2 veces; (f) igual que (e), pero
+  con `exigir_362 = false` fijado antes de conectar.
 - Esperado: (b) la app sigue a la pantalla de modo, sin aviso de firmware; (c) "actualice el firmware
   del equipo", y no se ofrece medir; (d) la app **no** concluye "actualice el firmware": muestra "el
   equipo no respondió, reintente" y ofrece repetir la sonda, porque un silencio puede ser el enlace, no
-  la versión (§3, parser). Distinto de `#GN,NONE#` (T-USR-07(b)): eso sí mide, sin serie ni tecleo. La
-  rama `exigir_362 = false` no se prueba aquí: va en T-USR-01c.
+  la versión (§3, parser); el botón de reintentar ofrece **hasta 2** repeticiones, no más (T-USR-01b
+  verifica que no se ofrece un tercer reintento); (e) tras el segundo reintento sin respuesta, la sonda
+  se da por "sin respuesta útil": con `exigir_362 = true` la app **no mide**, muestra "el equipo no
+  respondió, sin datos de calibración/serie" (distinto del texto de (c), "actualice el firmware", que
+  sólo sale de un `#ERR,FORMATO#` explícito) y no ofrece un tercer reintento; (f) con
+  `exigir_362 = false`, la app **mide igual** tras agotar los 2 reintentos, con
+  `estado_calibracion = "sin_fecha"` y `serie_origen = "ninguna"` (RF-USR-06), sin pedir más reintentos.
+  Distinto de `#GN,NONE#` (T-USR-07(b)): eso sí mide, sin serie ni tecleo, desde la primera sonda. La
+  rama `exigir_362 = false` sin agotar reintentos no se prueba aquí: va en T-USR-01c.
 - Fuente del esperado: `PROTOCOLO-V3.6.md:51-54` (`#GN#`/`#GC#` son de firmware 3.6.2, `#ERR,FORMATO#`
   es la respuesta genérica a un campo que el firmware no reconoce) y `:70-72` (formato de `motivo`);
-  SPEC r5 RF-USR-01 (M-3, cierra C-USR-04 como propuesta) y §3 (parser, B-3, ficha (d) que fija
-  comportamiento de este trabajo, sin cita de Diego).
+  SPEC r6 RF-USR-01 (M-3, cierra C-USR-04 como propuesta; límite de 2 reintentos, nuevo r6, sin cita de
+  Diego) y §3 (parser, B-3, ficha (d)-(f) que fija comportamiento de este trabajo, sin cita de Diego).
 
-**T-USR-01c — Parámetro `exigir_362`, sus dos ramas, y `#ERR,EEPROM#` como "sin respuesta útil" (M-3,
-▸ propuesta pendiente de Diego, sin cita).** RF-USR-01 · A · R-JVM · **PENDIENTE**
+**T-USR-01c — Parámetro `exigir_362`, sus dos ramas, un `#ERR#` genérico y defensivo (no un caso real
+de hoy) como "sin respuesta útil", y `DEF` manda sobre `sin_fecha` (M-3, ▸ propuesta pendiente de Diego,
+sin cita, corrige r5, C3).** RF-USR-01 · A · R-JVM · **PENDIENTE**
 - Pasos: tras (a) de T-USR-01, con un `EquipoSimulado` de firmware "3.6.1" (sin `#GN#`/`#GC#`, responde
   `#ERR,FORMATO#` a las dos): (a) con `exigir_362 = true`, conectar y comprobar que no se ofrece medir;
   (b) con `exigir_362 = false`, conectar y medir un disparo del color rojo con tres tramas `::100`,
-  `::110`, `::120`; (c) con `exigir_362 = true`, un `EquipoSimulado` de firmware 3.6.2 que responde
-  `#ERR,EEPROM#` a `#GN#` (en vez de `#GN,<serie>#` o `#GN,NONE#`, caso no documentado por el protocolo
-  para `#GN#`, pero que el parser no debe asumir imposible) y `#GC,2026-09-19#` a `#GC#`.
+  `::110`, `::120`; (c) con `exigir_362 = true`, un `EquipoSimulado` **construido para esta ficha, no un
+  firmware 3.6.2 real** (el código de hoy sólo devuelve `#GN,<serie>#`/`#GN,NONE#`, nunca `#ERR#`,
+  `calibracion_v36.c:571-585`) que responde `#ERR,PIN#` a `#GN#` — un motivo cualquiera del protocolo
+  (`PROTOCOLO-V3.6.md:71-72`), elegido para no sugerir que `EEPROM` (u otro) es plausible ahí — y
+  `#GC,2026-09-19#` a `#GC#`; esta ficha prueba la robustez del parser ante un caso que el protocolo no
+  prohíbe explícitamente para `#GN#`, no un comportamiento del firmware actual; (d) **`DEF` manda sobre
+  `sin_fecha` (nuevo r6, C3):** con `exigir_362 = false`, un `EquipoSimulado` que responde
+  `#V,3.6,2026-09-19,DEF,0000#` a `#V#` (no `CAL` como en (a) de T-USR-01) y no contesta nada a `#GN#`
+  ni a `#GC#`; medir un disparo del color rojo con `::100`, `::105`, `::110`.
 - Esperado: (a) "actualice el firmware del equipo", no se ofrece medir (igual que T-USR-01b(c), pero
   aquí se comprueba explícitamente que es la rama `exigir_362 = true` la que produce ese resultado);
   (b) la app **mide igual**: la fila se guarda con `media = 110`, `valido = SI`,
-  `estado_calibracion = "sin_fecha"` (no hay `#GC#` que leer) y `serie_origen = "ninguna"`
-  (no hay `#GN#` que leer); en pantalla, "SIN SERIE" y "sin fecha de calibración", sin bloquear la
-  medida; (c) el `#ERR,EEPROM#` de `#GN#` no dispara "actualice el firmware" (eso es sólo para
-  `#ERR,FORMATO#`, RF-USR-01): se registra en `tramas.log` y la sonda de `#GN#` se trata como **"sin
-  respuesta útil"**, exactamente como un timeout; como `#GC#` sí contestó, la app sigue con
-  `serie_equipo` vacío/`serie_origen = "ninguna"` (por el `#GN#` fallido) pero con la fecha de
-  calibración de `#GC#` normal.
-- Fuente del esperado: SPEC r5 RF-USR-01 (parámetro `exigir_362`, dos ramas) y §3 (parser, cualquier
-  `#ERR,<motivo>#` se trata como "sin respuesta útil" salvo `FORMATO` explícito con `exigir_362 = true`);
-  `PROTOCOLO-V3.6.md:71-72` (motivo `EEPROM` es válido en el protocolo, aunque no documentado para
-  `#GN#`/`#GC#` en `:53-54`); RF-USR-06 (`estado_calibracion = sin_fecha`, `serie_origen = ninguna`).
-  El valor por defecto de `exigir_362` y su nombre son ficha de este trabajo, sin cita de Diego.
+  `estado_calibracion = "sin_fecha"` (el cuarto campo de `#V#` era `CAL`, T-USR-01(a), pero `#GC#` no
+  contestó) y `serie_origen = "ninguna"` (no hay `#GN#` que leer); en pantalla, "SIN SERIE" y "sin fecha
+  de calibración", sin bloquear la medida; (c) el `#ERR,PIN#` de `#GN#` no dispara "actualice el
+  firmware" (eso es sólo para `#ERR,FORMATO#`, RF-USR-01): se registra en `tramas.log` y la sonda de
+  `#GN#` se trata como **"sin respuesta útil"**, exactamente como un timeout; como `#GC#` sí contestó, la
+  app sigue con `serie_equipo` vacío/`serie_origen = "ninguna"` (por el `#GN#` fallido) pero con la fecha
+  de calibración de `#GC#` normal; (d) la app **mide igual**, pero con `estado_calibracion = "DEF"`, no
+  `"sin_fecha"`: el cuarto campo de `#V#` (`DEF`) manda, aunque `#GN#`/`#GC#` no hayan contestado nada;
+  `fecha_calibracion` y `vencimiento` van vacíos (RF-USR-02), igual que cualquier otra fila `DEF`.
+- Fuente del esperado: SPEC r6 RF-USR-01 (parámetro `exigir_362`, dos ramas; regla de `#ERR#` genérica y
+  defensiva, y `DEF` manda sobre `sin_fecha`, las dos corrigen r5) y §3 (parser, cualquier
+  `#ERR,<motivo>#` se trata como "sin respuesta útil" salvo `FORMATO` explícito con
+  `exigir_362 = true`); `PROTOCOLO-V3.6.md:71-72` (motivos válidos de `motivo`); `calibracion_v36.c:
+  554-585` (`responderFecha`/`responderSerie`: la única rama de error de hoy es `NONE#`, nunca `#ERR#`,
+  para `#GN#`/`#GC#`: verificado en este trabajo, el paso (c) es por eso un caso hipotético/defensivo, no
+  una medida contra un firmware real); `:635-642` (cuarto campo `CAL`/`DEF` de `#V#`); RF-USR-02 (cuatro
+  valores de `estado_calibracion`, `DEF` sin fecha ni vencimiento) y RF-USR-06
+  (`serie_origen = ninguna`). El valor por defecto de `exigir_362` y su nombre son ficha de este trabajo,
+  sin cita de Diego.
 
 **T-USR-02 — Aviso antes del primer byte, y dispara la luz en 2020.** RF-USR-01 · A · R-JVM y lectura
 de `gui.c` · **PENDIENTE**
@@ -1925,7 +1953,8 @@ r3/r4).** RF-USR-04 · A · R-JVM · **PENDIENTE**
   solo; (c) la app repite automáticamente al ver el cero; como la repetición **también** trae un cero,
   se guarda **una sola fila**, con `n = 3`, `lecturas = "105|0|115"` (**sólo la segunda serie**: la
   primera, `0|0|330`, no entra en `medidas.csv`, va a `tramas.log`, RF-USR-04), `media = 0`,
-  `valido = NO`, `motivo = "saturado_o_negativo"`; **no** se calcula una media de 330 con n = 1
+  `minimo = 0` (el mínimo de `105|0|115`, asevera la ficha, Bajos), `valido = NO`,
+  `motivo = "saturado_o_negativo"`; **no** se calcula una media de 330 con n = 1
   descartando sólo los ceros de la primera serie; **en el incremento 1 esa fila no lleva juicio de
   cumple/no cumple** (no hay columna de dictamen todavía, RF-USR-10 es del incremento 2): se exporta tal
   cual, con `valido = NO` y su `motivo`; (d) la app repite una vez al ver el cero de la primera serie; la
@@ -1942,29 +1971,32 @@ r3/r4).** RF-USR-04 · A · R-JVM · **PENDIENTE**
   (c)-(d) DECISIONES nota 8 (USR-ALCANCE), "no decir null a todo sino indicar que no cumple con una
   medida estándar" (literal); la regla de "repetir una vez y guardar con motivo si persiste" sustituye
   a la de r3 ("serie entera inválida, repetir siempre"), y sigue sin confirmar por Diego (H-A3); que la
-  fila del incremento 1 no lleve juicio de cumple/no cumple es SPEC r5 RF-USR-04/RF-USR-06 (M-6), no
-  DECISIONES; (e) SPEC r5 RF-USR-06 (redondeo estándar, mitad hacia arriba), aritmética de este trabajo.
+  fila del incremento 1 no lleve juicio de cumple/no cumple es SPEC r6 RF-USR-04/RF-USR-06 (M-6), no
+  DECISIONES; (e) SPEC r6 RF-USR-06 (redondeo estándar, mitad hacia arriba), aritmética de este trabajo.
 
 **T-USR-06b — Disparo anulado por plazo dentro de la serie: repetir hasta 2 veces, luego anular la
-serie entera (▸ propuesta pendiente de Diego, sin cita, nuevo r5).** RF-USR-04, RF-USR-16 · A · R-JVM
+serie entera (▸ propuesta pendiente de Diego, sin cita, nuevo r5, valores del Bajo corregidos en r6).**
+RF-USR-04, RF-USR-16 · A · R-JVM
 con `EquipoSimulado` y control de temporización · **PENDIENTE**
 - Pasos: (a) `lecturas_por_color = 3`; el simulador responde `::100` al primer disparo, no responde
-  nada al segundo dentro del plazo (2500 ms), y responde `::110` a la repetición de ese disparo; (b)
-  igual, pero el simulador no responde ni a la primera ni a la segunda repetición del disparo anulado
-  (2 repeticiones agotadas), y sí responde con normalidad a los disparos de la siguiente serie de otro
-  color; (c) el disparo anulado es el **primero** de la serie (no el segundo), con el mismo resultado de
-  (a) tras 1 repetición.
+  nada al segundo dentro del plazo (2500 ms), responde `::110` a la repetición de ese disparo, y responde
+  `::120` con normalidad al tercer disparo (Bajos: valor fijado, no placeholder); (b) igual, pero el
+  simulador no responde ni a la primera ni a la segunda repetición del disparo anulado (2 repeticiones
+  agotadas), y sí responde con normalidad a los disparos de la siguiente serie de otro color; (c) el
+  disparo anulado es el **primero** de la serie (no el segundo), con el mismo resultado de (a) tras 1
+  repetición (disparo 3 también `::120`).
 - Esperado: (a) el disparo 2 se anula por plazo (RF-USR-16, no cuenta como "0"); la app lo repite una
-  vez, obtiene `110`, y la serie se guarda con `n = 3`, `lecturas = "100|110|<disparo 3>"`, `valido = SI`
-  (si el disparo 3 no trae ceros ni anulaciones), `motivo` vacío; el intento anulado (el disparo 2 sin
-  repetir) va a `tramas.log`, no a `lecturas`; (b) tras 2 repeticiones también anuladas por plazo, **la
+  vez, obtiene `110`; el disparo 3 (`120`) no trae ceros ni anulaciones; la serie se guarda con `n = 3`,
+  `lecturas = "100|110|120"`, suma = 330, `media = round(330 / 3) = 110`, `minimo = 100`, `valido = SI`,
+  `motivo` vacío; el intento anulado (el disparo 2 sin repetir) va a `tramas.log`, no a `lecturas`; (b)
+  tras 2 repeticiones también anuladas por plazo, **la
   serie entera de ese color se anula**: no se guarda fila en `medidas.csv` para ese color/serie (ni
   `n`, ni `lecturas`, ni `media`, ni `valido`, que sólo existen para una serie guardada); la app lo dice
   en pantalla ("serie anulada: el equipo no respondió a 3 intentos"); los 3 intentos (original + 2
   repeticiones) van a `tramas.log`; la app sigue operativa y la serie de la siguiente medida (otro
   color) se guarda con normalidad, sin arrastrar el fallo; (c) el resultado es el mismo que (a): la
   posición del disparo anulado dentro de la serie no cambia la regla de repetir hasta 2 veces.
-- Fuente del esperado: SPEC r5 RF-USR-04 (disparo anulado por plazo, distinto del cero; límite de 2
+- Fuente del esperado: SPEC r6 RF-USR-04 (disparo anulado por plazo, distinto del cero; límite de 2
   repeticiones) y RF-USR-16 (un disparo anulado por plazo nunca cuenta como "0"); RF-USR-15 bis
   (`tramas.log` registra los intentos descartados). El límite de 2 repeticiones y el texto exacto de la
   pantalla son ficha que fija comportamiento de este trabajo: no están en
@@ -2215,17 +2247,29 @@ registro propio de `EquipoSimulado` · **PENDIENTE**
   usuario, como comprobación estática rápida; (b) **aserción en ejecución (la que cuenta, M-6)**:
   correr un ciclo completo de **"Medir y exportar" (incremento 1)** contra `EquipoSimulado`, y comprobar
   el registro que **el propio simulador** llevó de lo que recibió, no lo que la app dice haber enviado;
-  (c) exportar el ZIP del incremento 1 (RF-USR-15 bis) y comprobar que `tramas.log` coincide byte a
-  byte con el registro del simulador (esto detecta un defecto en el volcado, pero **no sustituye** a
-  (b) como prueba de la lista blanca).
+  (c) exportar el ZIP del incremento 1 (RF-USR-15 bis) y comparar `tramas.log` con el registro del
+  simulador (esto detecta un defecto en el volcado, pero **no sustituye** a (b) como prueba de la lista
+  blanca); (d) **cabecera de `inventario.csv` (nuevo r6, C4)**: leer `inventario.csv` del mismo ZIP byte
+  a byte.
 - Esperado: (a) cero coincidencias del `grep` (indicio, no prueba); (b) todo lo que `EquipoSimulado`
   registró como recibido está en `{"#V#", "#GC#", "#GN#", "1", "2", "3", "4", "5", "6"}`, cero
   apariciones de `"e"`; un `grep` en verde sin (b) **no cierra esta ficha** (CLAUDE.md §7: código nuevo
-  no se aprueba por el propio código); (c) `tramas.log` coincide con el registro del simulador; si no
-  coincide, es un defecto del volcado a fichero, reportado aparte de (b).
+  no se aprueba por el propio código); (c) **la comparación es sobre la proyección de los bytes TX, en
+  hex, no sobre el fichero `tramas.log` completo (corrige r5, C4)**: se extraen de `tramas.log` sólo las
+  líneas `TX` (columna 2) y su campo `hex` (columna 3), y esa secuencia de bytes TX en hex debe coincidir
+  con la secuencia que `EquipoSimulado` registró como recibida en (b) — comparar el fichero entero
+  fallaría por las líneas `RX`, los comentarios `#` y las anotaciones de "descartado en cuarentena"
+  (RF-USR-15 bis), que no tienen equivalente en el registro del simulador; si la proyección TX no
+  coincide, es un defecto del volcado a fichero, reportado aparte de (b); (d) la cabecera de
+  `inventario.csv` es exactamente
+  `identificador;codigo;latitud;longitud;lamina;valor_instalacion_blanco;valor_instalacion_amarillo;
+  valor_instalacion_verde;valor_instalacion_rojo;valor_instalacion_azul;valor_instalacion_anaranjado;
+  valor_instalacion_marron;anio_instalacion;serie_equipo_instalacion;estado;sustituida_por`, y **cero
+  filas de datos** (el incremento 1 no da de alta señales, RF-USR-15 bis).
 - Fuente del esperado: `PROTOCOLO-V3.6.md` §3, columna "Requiere admin" (exactamente las tramas que
-  exigen `#L`); SPEC r5 RF-USR-15, RF-USR-15 bis (M-6: aserción sobre lo que recibe el simulador, no
-  sobre el auto-registro de la app).
+  exigen `#L`); SPEC r6 RF-USR-15, RF-USR-15 bis (M-6: aserción sobre lo que recibe el simulador, no
+  sobre el auto-registro de la app; proyección TX en hex y cabecera fija de `inventario.csv`, corrige
+  r5, C4).
 
 **T-USR-19b — Lista blanca de bytes transmitidos en "Señal a señal" (incremento 2, depende de
 propuestas pendientes de Diego).** RF-USR-15, RF-USR-15 bis, RF-USR-13 · A · R-JVM · **PENDIENTE**
@@ -2235,7 +2279,7 @@ propuestas pendientes de Diego).** RF-USR-15, RF-USR-15 bis, RF-USR-13 · A · R
   (no sólo la cabecera del incremento 1, RF-USR-15 bis).
 - Esperado: mismo conjunto de bytes que T-USR-19a (nunca `e`, nunca `#L`/`#S`/etc.); `inventario.csv`
   del ZIP tiene una fila por señal del proyecto, no sólo encabezados.
-- Fuente del esperado: `PROTOCOLO-V3.6.md` §3; SPEC r5 RF-USR-15, RF-USR-15 bis, RF-USR-13.
+- Fuente del esperado: `PROTOCOLO-V3.6.md` §3; SPEC r6 RF-USR-15, RF-USR-15 bis, RF-USR-13.
 
 **T-USR-20a — Ciclo completo de "Medir y exportar" sin red (incremento 1).** RF-USR-15 · A · R-JVM (con
 toda E/S de red deshabilitada) · **PENDIENTE**
@@ -2252,26 +2296,37 @@ RF-USR-15, RF-USR-13 · A · R-JVM (con toda E/S de red deshabilitada) · **PEND
   `inventario.csv` desde disco.
 - Fuente del esperado: SPEC-REG `:588` (RF-REG-23, "todo funciona sin red").
 
-**T-USR-21a — Columnas de `medidas.csv` del incremento 1, fijas, con L-23, aseveradas byte a byte
-(M-6, corrige r4).** RF-USR-06 · A · R-JVM · **PENDIENTE**
+**T-USR-21a — Columnas de `medidas.csv` del incremento 1, fijas, con L-23, aseveradas byte a byte, BOM
+y CRLF incluidos (M-6, corrige r4/r5, C2).** RF-USR-06 · A · R-JVM · **PENDIENTE**
 - Pasos: (a) exportar una medida de "Medir y exportar" con GPS presente, `#GN,SLV-002#`,
   `#GC,2026-09-19#`, color rojo, tres tramas `::100`, `::110`, `::120`; (b) exportar otra sin GPS
-  (`gps_estado = sin_posicion`) y con `#GN,NONE#` (SIN SERIE); leer `medidas.csv` byte a byte para las
-  dos filas.
-- Esperado: la **cabecera** es exactamente, en este orden y con `;` como separador (RF-USR-06):
+  (`gps_estado = sin_posicion`) y con `#GN,NONE#` (SIN SERIE); (c) **serie con `;` y `"` (nuevo r6,
+  C2)**: exportar una tercera con `#GN,SLV;002"A#` (serie válida: el firmware sólo prohíbe `#` y `,`,
+  `calibracion_v36.c:523`); leer `medidas.csv` **en binario**, byte a byte, para las tres filas y para
+  los tres primeros bytes del fichero.
+- Esperado: los **3 primeros bytes del fichero son el BOM `EF BB BF`**; cada línea, incluida la
+  cabecera, termina en **`\r\n`** (CRLF), nunca sólo `\n`. La **cabecera** es exactamente, en este orden
+  y con `;` como separador (RF-USR-06):
   `fecha_hora;latitud;longitud;gps_estado;color;codigo_bt;n;lecturas;media;minimo;valido;motivo;
   serie_equipo;serie_origen;mac;firmware_v;fecha_calibracion;vencimiento;estado_calibracion` — ninguna
   columna de señal ni de cumple/no cumple. La fila de (a), asimétrica a propósito (latitud y longitud
-  con signos y número de decimales distintos, para no confundir el orden de las dos columnas):
-  `2026-09-21T14:32:07-05:00;4,60971;-74,08175;con_posicion;rojo;4;3;100|110|120;110;100;SI;;SLV-002;
-  leida;00:21:13:05:19:3B;"#V,3.6,2026-09-19,CAL,0003#";2026-09-19;2027-09-19;CAL` (decimal `,`,
-  comillas en `firmware_v` por las comas internas); la fila de (b) lleva `latitud`/`longitud` vacíos,
-  `gps_estado = sin_posicion`, `serie_equipo` vacío, `serie_origen = ninguna`. La fila de "Señal a
-  señal" (incremento 2, columnas adicionales) se prueba en T-USR-21b, no aquí.
+  con signo y dígitos distintos, para no confundir el orden de las dos columnas; las dos con **6
+  decimales fijos**, corrige r5):
+  `2026-09-21T14:32:07-05:00;4,609712;-74,081753;con_posicion;rojo;4;3;100|110|120;110;100;SI;;SLV-002;
+  leida;00:21:13:05:19:3B;#V,3.6,2026-09-19,CAL,0003#;2026-09-19;2027-09-19;CAL` — **`firmware_v` sin
+  comillas (corrige r5): la regla de comillas (RFC 4180) dispara con `;`, `"`, CR o LF, no con `,`, y
+  `#V,3.6,2026-09-19,CAL,0003#` no lleva ninguno de los cuatro**; la fila de (b) lleva
+  `latitud`/`longitud` vacíos, `gps_estado = sin_posicion`, `serie_equipo` vacío,
+  `serie_origen = ninguna`; la fila de (c) lleva `serie_equipo` citado como
+  `"SLV;002""A"` (comillas envolventes por el `;`, comilla interna `"` duplicada a `""`, RFC 4180), y el
+  resto de la fila con el mismo formato que (a). La fila de "Señal a señal" (incremento 2, columnas
+  adicionales) se prueba en T-USR-21b, no aquí.
 - Fuente del esperado: `CLAUDE.md` §5 (L-23, "la fecha de vencimiento va en el acta, en el informe y
-  en todo registro exportado, junto con la serie y la MAC"); SPEC r5 RF-USR-06 (M-6, lista fija del
-  incremento 1, formato `;`/`,`/BOM/ISO 8601); los valores de la fila de ejemplo (coordenadas, MAC,
-  fecha) son un caso de prueba de este trabajo, no una medida real ni una cita de Diego.
+  en todo registro exportado, junto con la serie y la MAC"); SPEC r6 RF-USR-06 (M-6, lista fija del
+  incremento 1, formato `;`/`,`/BOM `EF BB BF`/CRLF/ISO 8601/regla de comillas RFC 4180, corrige r5, C2);
+  `calibracion_v36.c:523` (`caracterSerieValido`, la serie admite `;` y `"`); los valores de la fila de
+  ejemplo (coordenadas, MAC, fecha, serie de (c)) son un caso de prueba de este trabajo, no una medida
+  real ni una cita de Diego.
 
 **T-USR-21b — Columnas de `medidas.csv` de "Señal a señal" (incremento 2, depende de propuestas
 pendientes de Diego).** RF-USR-06, RF-USR-10, RF-USR-11 · A · R-JVM · **PENDIENTE**
@@ -2281,16 +2336,27 @@ pendientes de Diego).** RF-USR-06, RF-USR-10, RF-USR-11 · A · R-JVM · **PENDI
   `lamina_origen`, `serie_equipo_instalacion`, `pct_vs_umbral` (Δ%, M-3), `proporcion_vs_umbral`
   (opcional, columna aparte), `pct_vs_anterior`, `dictamen` (`CUMPLE`/`NO_CUMPLE`/`NO_DICTAMINABLE`) y
   `bajo_referencia`.
-- Fuente del esperado: SPEC r5 RF-USR-06, RF-USR-10, RF-USR-11, RF-USR-13, RF-USR-15.
+- Fuente del esperado: SPEC r6 RF-USR-06, RF-USR-10, RF-USR-11, RF-USR-13, RF-USR-15.
 
-**T-USR-22 — `#V#`: `DEF` es "sin calibración" aunque `#GC#` tenga fecha (M-1, M-2).** RF-USR-02 · A ·
-R-JVM · **PENDIENTE**
-- Pasos: `EquipoSimulado` responde `#V,3.6,2026-09-19,DEF,0000#` a `#V#` y `#GC,2025-01-01#` a `#GC#`.
-- Esperado: la app muestra **"sin calibración"**; la fecha de `#GC#` se descarta para el estado (no se
-  usa para calcular vencimiento ni para decidir CAL/DEF): el cuarto campo de `#V#` manda.
+**T-USR-22 — `#V#`: `DEF` es "sin calibración" aunque `#GC#` tenga fecha, y el parser tolera la máscara
+(M-1, M-2, corrige r5, C3).** RF-USR-02 · A · R-JVM · **PENDIENTE**
+- Pasos: (a) `EquipoSimulado` responde `#V,3.6,2026-09-19,DEF,0000#` a `#V#` y `#GC,2025-01-01#` a
+  `#GC#`; (b) **máscara distinta de `0000` (nuevo r6):** `EquipoSimulado` responde
+  `#V,3.6,2026-09-19,CAL,0003#` a `#V#` (ejemplo real, `CAMBIOS-V3.6.md:174`, firmware 3.6.1) y
+  `#GC,2026-09-19#` a `#GC#`; (c) **`#V#` sin el quinto campo (nuevo r6):** `EquipoSimulado` responde
+  `#V,3.6,2026-09-19,CAL#` (4 campos, el formato que documenta `PROTOCOLO-V3.6.md:42`) a `#V#`.
+- Esperado: (a) la app muestra **"sin calibración"**; la fecha de `#GC#` se descarta para el estado (no
+  se usa para calcular vencimiento ni para decidir CAL/DEF): el cuarto campo de `#V#` manda; (b) la app
+  muestra **estado calibrado**, con `#GC#` leído con normalidad; el quinto campo (`0003`) no cambia nada
+  de esta ficha: el parser lo acepta y lo ignora, sin fallar por una máscara distinta de `0000`; (c) el
+  parser también acepta la trama de 4 campos, sin el quinto: mismo resultado que (b) salvo por lo que
+  aporte `#GC#`, sin que la ausencia de máscara dispare ningún error de formato.
 - Fuente del esperado: `calibracion_v36.c:635-642` (respuesta de `#V#`, campo `CAL`/`DEF` según
-  `mascaraAjustes()`); `PROTOCOLO-V3.6.md:51` ("`#F` y `#FT` no la tocan", es decir `#SC`/`#GC#` puede
-  seguir teniendo fecha aunque la calibración esté restaurada de fábrica).
+  `mascaraAjustes()`, y el quinto campo de máscara `%04X` que el firmware manda siempre, con o sin
+  calibración); `PROTOCOLO-V3.6.md:42` (documenta 4 campos) y `:51` ("`#F` y `#FT` no la tocan", es decir
+  `#SC`/`#GC#` puede seguir teniendo fecha aunque la calibración esté restaurada de fábrica);
+  `CAMBIOS-V3.6.md:174` (ejemplo real `#V,3.6,2026-09-19,...#` de la 3.6.1); SPEC r6 RF-USR-02, §3
+  (parser tolera 4 o 5 campos, corrige r5, C3).
 
 **T-USR-23 — Sin permiso o sin posición GPS, se mide igual (M-8).** RF-USR-15 · A · R-JVM (GPS
 deshabilitado o sin fix) · **PENDIENTE**
@@ -2301,45 +2367,55 @@ deshabilitado o sin fix) · **PENDIENTE**
 - Fuente del esperado: SPEC-REG `:588` (RF-REG-23, "todo funciona sin red"); ficha que fija
   comportamiento de este trabajo (M-8).
 
-**T-USR-24 — Trama partida, respuesta tardía, plazo vencido, cuarentena y doble `::` (H-A4, corrige
-citas de r3 y añade la cuarentena de la r5).** RF-USR-16 · A · R-JVM sobre `EquipoSimulado` con control
-de temporización · **PENDIENTE**
+**T-USR-24 — Trama partida, respuesta tardía acotada, plazo vencido, cuarentena y doble `::` (H-A4,
+corrige citas de r3, añade la cuarentena de la r5, y acota (b) a `[plazo, plazo+Q)` en r6, C1, ALTO).**
+RF-USR-16 · A · R-JVM sobre `EquipoSimulado` con control de temporización · **PENDIENTE**
 - Pasos: (a) trama partida: el simulador entrega `::1` y, antes del silencio, entrega `23` (sin
-  terminador en ningún momento); (b) **respuesta tardía, con un simulador realista (corrige r4)**: el
-  simulador se comporta como el firmware de `gui.c:342-346` — mientras "mide" el disparo N (no ha
-  vencido su propio ciclo interno todavía) **descarta** cualquier byte que le llegue, incluido el del
-  disparo N+1 si la app llegara a enviarlo antes de tiempo; el simulador responde tarde a N, después del
-  plazo de 2500 ms; la app, siguiendo RF-USR-16, envía N+1 sólo tras la cuarentena y la pausa de
-  RF-APP-01, y ese envío de N+1 **si llega** mientras el simulador aún no ha entregado su respuesta
-  tardía a N, se pierde en el simulador (igual que en el equipo real) — la app debe entonces reintentar
-  N+1 por su propio mecanismo de plazo, nunca asignarle la `::` tardía de N; (c) plazo vencido sin
-  respuesta: el simulador no responde nada al disparo N dentro de los 2500 ms (`SPEC-V3.6.md:453-456`);
-  (d) doble `::` en la misma ventana: el simulador entrega `::100` y `::110` completas antes de que la
-  app haya podido separar a qué disparo pertenece cada una (dos respuestas que se solapan); (e)
-  **cuarentena**: tras (c), durante los `Q` ms siguientes (2500 ms por defecto), el simulador entrega
-  una `::` (la respuesta tardía de N, u otro byte cualquiera).
+  terminador en ningún momento); (b) **respuesta tardía dentro de la cuarentena, con un simulador
+  realista (corrige r4, acota r5, C1)**: el simulador se comporta como el firmware de `gui.c:342-346` —
+  mientras "mide" el disparo N (no ha vencido su propio ciclo interno todavía) **descarta** cualquier
+  byte que le llegue; el simulador no responde a N dentro de los 2500 ms de plazo, y entrega la respuesta
+  tardía de N (`::110`) en un instante `t` fijado **dentro de la cuarentena**, con `plazo ≤ t < plazo+Q`
+  (por ejemplo `t` = plazo + Q/2); por diseño (RF-USR-16), en ese instante la app **todavía no ha enviado
+  N+1**: el envío de N+1 espera a que termine la cuarentena (`plazo+Q`) más la pausa de RF-APP-01. Esta
+  ficha **no** prueba una respuesta tardía que llegue en `plazo+Q` o después (con N+1 ya en vuelo): ese
+  caso es el riesgo residual no detectable que declara SPEC RF-USR-16, a medir en T-B06, no algo que esta
+  ficha pueda aprobar o reprobar; (c) plazo vencido sin respuesta: el simulador no responde nada al
+  disparo N dentro de los 2500 ms (`SPEC-V3.6.md:453-456`); (d) doble `::` en la misma ventana: el
+  simulador entrega `::100` y `::110` completas antes de que la app haya podido separar a qué disparo
+  pertenece cada una (dos respuestas que se solapan); tras el descarte, el simulador entrega una `::`
+  más dentro de los `Q` ms siguientes, para comprobar que también se descarta (nuevo r6, C3: el doble
+  `::` abre cuarentena igual que un plazo vencido); (e) **cuarentena**: tras (c), durante los `Q` ms
+  siguientes (2500 ms por defecto), el simulador entrega una `::` (la respuesta tardía de N, u otro byte
+  cualquiera).
 - Esperado: (a) la app no da la trama por completa tras `::1` sola (no hay silencio; el patrón
-  `::(\d+)` casa al final del búfer, `Tramas.java:294-298`); tras `23`, con silencio, lee **123**; (b)
-  la respuesta tardía de N, cuando llega, se descarta por fuera de plazo y **no** se suma a la media ni
-  al resultado de N+1; si el envío de N+1 se perdió en el simulador (porque llegó mientras "medía" N,
-  como el firmware real), la app lo detecta por su propio plazo agotado sin respuesta y sigue la regla
-  de (c)/(e) para N+1, sin confundir la `::` tardía de N con una respuesta de N+1; (c) al vencer el
-  plazo, esa lectura se anula (no cuenta como "0"), se marca "sin respuesta" en el registro, y empieza
+  `::(\d+)` casa al final del búfer, `Tramas.java:294-298`); tras `23`, con silencio, lee **123**; (b) la
+  respuesta tardía de N, recibida en `t ∈ [plazo, plazo+Q)`, se descarta por la cuarentena (igual que
+  cualquier otro byte recibido en ese intervalo, ficha (e)): **no** se asigna a N (ya anulado) ni a N+1
+  (que aún no se envió), y queda anotada en `tramas.log` como "descartado en cuarentena"; (c) al vencer
+  el plazo, esa lectura se anula (no cuenta como "0"), se marca "sin respuesta" en el registro, y empieza
   la cuarentena de (e); (d) las dos secuencias `::100`/`::110` se **descartan las dos**: ninguna se
-  asigna al disparo pendiente; (e) todo lo recibido durante la cuarentena (incluida una `::` que
-  llegara) se **descarta sin asignarlo a ningún disparo** y se anota en `tramas.log` como "descartado
-  en cuarentena"; la app **no envía ninguna otra trama** hasta que la cuarentena termina; sólo entonces
-  aplica la pausa de RF-APP-01 (600 ms desde el último byte) antes de la trama siguiente.
-- **Prueba vista en rojo, con `EquipoSimulado` (CLAUDE.md §7).** Al escribir el código de esta app
-  (todavía no existe, B-3), el paso (b) se corre primero contra un borrador que asigna cualquier
-  `::<n>` recibido al disparo pendiente en ese momento, sin comprobar el plazo: con `EquipoSimulado`
-  configurado para entregar la respuesta de N después de que la app ya envió N+1, ese borrador falla
-  (la respuesta tardía se suma a N+1, en rojo frente al esperado de (b)); al implementar la regla de
-  descarte por plazo de RF-USR-16, la misma ficha pasa (verde). El mismo método se aplica a (d): un
-  borrador que se queda con la primera `::` que casa falla frente al esperado "se descartan las dos"; y
-  a (e): un borrador sin cuarentena (que envía la trama siguiente en cuanto pasa la pausa de RF-APP-01,
-  sin esperar `Q` ms) deja que la `::` tardía de (e) se asigne al disparo siguiente — en rojo frente al
-  esperado "se descarta, no se asigna"; con la cuarentena implementada, pasa.
+  asigna al disparo pendiente; el disparo cuenta como **anulado** (RF-USR-04: entra en el límite de 2
+  repeticiones) y **abre la misma cuarentena de `Q` ms**, así que la `::` adicional que llega dentro de
+  esos `Q` ms también se descarta, sin asignarse a nada; (e) todo lo recibido durante la cuarentena
+  (incluida una `::` que llegara) se **descarta sin asignarlo a ningún disparo** y se anota en
+  `tramas.log` como "descartado en cuarentena"; la app **no envía ninguna otra trama** hasta que la
+  cuarentena termina; sólo entonces aplica la pausa de RF-APP-01 (600 ms desde el último byte) antes de
+  la trama siguiente.
+- **Prueba vista en rojo, contra un borrador sin cuarentena (CLAUDE.md §7).** Al escribir el código de
+  esta app (todavía no existe, B-3), el paso (b) se corre primero contra un borrador que no implementa
+  la cuarentena: aplica sólo la pausa normal de RF-APP-01 tras vencer el plazo de N, sin bloquear el
+  envío de N+1 durante `Q` ms. Con `EquipoSimulado` configurado para entregar la respuesta tardía de N en
+  el mismo instante `t ∈ [plazo, plazo+Q)` de (b), ese borrador ya envió N+1 antes de que llegue esa
+  respuesta (le basta la pausa de 600 ms/1500 ms de RF-APP-01, mucho más corta que `Q`), así que la
+  respuesta tardía de N llega con N+1 en vuelo y se le asigna por error: la ficha **falla** (rojo) frente
+  al esperado "se descarta". Con la cuarentena implementada (nada se envía hasta `plazo+Q`), la misma
+  ficha **pasa** (verde): la respuesta cae dentro de la ventana de descarte y no se asigna a nada. El
+  mismo método se aplica a (d): un borrador que se queda con la primera `::` que casa falla frente al
+  esperado "se descartan las dos", y uno sin cuarentena tras el doble `::` deja pasar la `::` adicional
+  al disparo siguiente, en rojo frente al esperado "se descarta"; y a (e): un borrador sin cuarentena
+  deja que la `::` tardía de (e) se asigne al disparo siguiente — en rojo frente al esperado "se
+  descarta, no se asigna"; con la cuarentena implementada, las tres pasan.
 - Fuente del esperado:
   `rtv-1.0:03_App_Movil/RetroV36/app/src/main/java/com/dpi/retrov36/Tramas.java:266,286-298`
   (`P_MEDIDA = Pattern.compile("::(\\d+)")` en `:266`; `!silencio && m.end() == rx.length()` → sigue
@@ -2347,34 +2423,57 @@ de temporización · **PENDIENTE**
   `Tipo`, no el patrón**); `ecuacionesCalibracion.c:60-63` (`sprintf`/`strcpy`/`strcat`/`sendUartStr`:
   el firmware arma y manda `::<entero>` sin terminador; **cita corregida, r3 decía `:55-58`, que es el
   inicio de la función y la llamada a `arreglar_dato`, no el envío**); `SPEC-V3.6.md:441-457` (Ritmo:
-  silencio, plazo y pausa mínima, `[MOD r1.1]`); V3.6 `gui.c:342-346` (limpieza de búfer y descarte de
-  bytes mientras mide, base del simulador de (b); el `delayTimeout` de 500 ms de `:346` motiva, sin
-  fijar, `Q ≥` 2500 ms de la cuarentena, SPEC r5 RF-USR-16).
+  silencio, plazo y pausa mínima, `[MOD r1.1]`) y `:455` ("máximo observado de 50 medidas + 50 % de
+  margen", T-B06, base de la hipótesis "latencia < `plazo+Q`" de SPEC RF-USR-16); V3.6 `gui.c:342-346`
+  (limpieza de búfer y descarte de bytes mientras mide, base del simulador de (b); el `delayTimeout` de
+  500 ms de `:346` motiva, sin fijar, `Q ≥` 2500 ms de la cuarentena, SPEC r6 RF-USR-16).
 
-**T-USR-25 — Persistencia entre reinicios del proceso (nuevo r5).** RF-USR-06 · A · R-JVM, matando y
-relanzando el proceso de la app entre pasos · **PENDIENTE**
-- Pasos: medir y guardar 3 series de colores distintos contra `EquipoSimulado`; **matar el proceso**
-  de la app (no cerrar limpiamente: terminar el proceso, para no depender de un guardado al cierre);
-  relanzar la app; exportar.
-- Esperado: el `medidas.csv` exportado tras relanzar tiene **exactamente 3 filas**, una por cada serie
-  guardada antes de matar el proceso, con los mismos valores; ninguna se pierde ni se duplica.
-- Fuente del esperado: ficha que fija comportamiento de este trabajo (una medida guardada debe
-  sobrevivir a un cierre no controlado del proceso, condición implícita en "cada disparo se guarda
-  solo", RF-USR-06); no está en `DECISIONES-Diego-2026-09-19.md`.
+**T-USR-25 — Persistencia entre reinicios del proceso, cada disparo al diario, y serie incompleta
+descartada (nuevo r5, caso (b) y simulación de la muerte del proceso nuevos en r6, C5).** RF-USR-06 · A ·
+R-JVM, matando y relanzando el proceso de la app entre pasos · **PENDIENTE**
+- **Cómo se simula la muerte del proceso en la JVM (nuevo r6, C5):** no basta con dejar de usar el
+  objeto en memoria — Java no libera nada que obligue a releer disco. La ficha simula el proceso muerto
+  **reabriendo el diario desde una instancia nueva de la clase de persistencia sobre el mismo fichero en
+  disco**, sin pasarle ningún estado del objeto anterior (ni referencia, ni campo, ni caché): la única
+  fuente de verdad para la instancia nueva es lo que hay escrito en el fichero en ese instante. Esto es
+  comparable a matar el proceso real porque en los dos casos la memoria del proceso anterior desaparece y
+  sólo sobrevive lo que llegó a disco.
+- Pasos: (a) medir y guardar 3 series **completas** de colores distintos contra `EquipoSimulado`;
+  simular la muerte del proceso (arriba); reabrir; exportar; (b) **serie incompleta al morir el proceso
+  (nuevo r6, C5):** medir 2 series completas y, en una tercera, recibir sólo 2 de los 3 disparos de
+  `lecturas_por_color` (el color no llegó a completar su serie); simular la muerte del proceso a mitad de
+  esa tercera serie; reabrir; exportar.
+- Esperado: (a) el `medidas.csv` exportado tras reabrir tiene **exactamente 3 filas**, una por cada
+  serie guardada antes de la muerte del proceso, con los mismos valores; ninguna se pierde ni se
+  duplica — cada disparo se escribió al diario al recibirlo (SPEC RF-USR-06, C5), no sólo al cerrar la
+  serie, así que no depende de un cierre limpio; (b) el `medidas.csv` exportado tiene **exactamente 2
+  filas** (las 2 series completas): **la tercera serie, incompleta, se descarta al reabrir** — no
+  aparece como fila a medias ni se completa sola; los 2 disparos que sí llegó a recibir esa tercera serie
+  quedan sólo en `tramas.log`, igual que un disparo anulado (RF-USR-04), nunca en `medidas.csv`.
+- Fuente del esperado: SPEC r6 RF-USR-06 (persistencia por disparo y descarte de serie incompleta,
+  nuevo r6, C5, ▸ propuesta pendiente de Diego, sin cita: no está en
+  `DECISIONES-Diego-2026-09-19.md`); ficha que fija comportamiento de este trabajo (una medida guardada
+  debe sobrevivir a un cierre no controlado del proceso, condición implícita en "cada disparo se guarda
+  solo", RF-USR-06).
 
 **T-USR-26 — Ritmo: el simulador borra lo recibido durante 80 ms tras `::`, el disparo siguiente no
-sale antes de la pausa (nuevo r5).** RF-USR-16 · A · R-JVM sobre `EquipoSimulado` con control de
-temporización · **PENDIENTE**
+sale antes de la pausa, y se asevera también el mínimo de 1500 ms desde el envío anterior (nuevo r5,
+1500 ms nuevo r6, C5).** RF-USR-16 · A · R-JVM sobre `EquipoSimulado` con control de temporización ·
+**PENDIENTE**
 - Pasos: `EquipoSimulado` se configura para, tras emitir `::<n>`, **descartar todo lo que reciba
   durante los 80 ms siguientes** (`SPEC-V3.6.md:441-446`, RF-APP-01: el firmware borra lo recibido
   80 ms después de emitir `::<n>`); medir una serie completa contra ese simulador y registrar, para
-  cada disparo, el instante en que la app envía el siguiente byte tras el último byte recibido.
-- Esperado: para cada disparo de la serie, el siguiente envío sale **no antes de 600 ms** desde el
-  último byte recibido (RF-APP-01, `SPEC-V3.6.md:441-446`); la ficha **falla** si algún envío sale
-  dentro de los 80 ms que el simulador descarta (eso perdería el byte, como en el equipo real) o en
-  cualquier punto antes de los 600 ms de pausa.
-- Fuente del esperado: `SPEC-V3.6.md:441-446` (80 ms de borrado tras `::<n>`, 600 ms de pausa desde el
-  último byte, RF-APP-01 `[MOD r1.1]`); SPEC r5 RF-USR-16 (un solo valor de pausa, 600 ms).
+  cada disparo, el instante del envío anterior, el instante del último byte recibido, y el instante en
+  que la app envía el siguiente byte.
+- Esperado: para cada disparo de la serie, el siguiente envío sale **no antes de 600 ms desde el último
+  byte recibido Y no antes de 1500 ms desde el envío anterior** — la mayor de las dos pausas, "lo que se
+  cumpla más tarde" (RF-APP-01, `SPEC-V3.6.md:441-442`, nuevo r6: la r5 sólo aseveraba los 600 ms, no
+  los 1500 ms); la ficha **falla** si algún envío sale dentro de los 80 ms que el simulador descarta
+  (eso perdería el byte, como en el equipo real), antes de los 600 ms de pausa desde el último byte, o
+  antes de los 1500 ms desde el envío anterior.
+- Fuente del esperado: `SPEC-V3.6.md:441-446` (80 ms de borrado tras `::<n>`; "1500 ms desde el envío
+  anterior y 600 ms desde el último byte recibido, lo que se cumpla más tarde", RF-APP-01
+  `[MOD r1.1]`, `:441-442`); SPEC r6 RF-USR-16 (un solo valor de pausa por tipo, 1500 ms/600 ms).
 
 **T-USR-27 — Exportar no borra los datos; se puede exportar dos veces (nuevo r5).** RF-USR-06,
 RF-USR-15 bis · A · R-JVM · **PENDIENTE**
@@ -2397,7 +2496,7 @@ RF-USR-04 · A · R-JVM · **PENDIENTE**
 - Esperado: (a) la pantalla de medir **no tiene ningún control** de `lecturas_por_color` (ni selector,
   ni campo, ni botón "+"/"−" de disparos); (b) Ajustes sí lo tiene, y el cambio a 5 se aplica a la
   siguiente serie medida, sin volver a pedirlo en la pantalla de medir.
-- Fuente del esperado: SPEC r5 RF-USR-04 (`lecturas_por_color` se fija en Ajustes, no en la pantalla
+- Fuente del esperado: SPEC r6 RF-USR-04 (`lecturas_por_color` se fija en Ajustes, no en la pantalla
   de medir) y §1 (pantalla 5); ficha que fija comportamiento de este trabajo, sin cita de Diego.
 
 ### 8.1 Requisito → pruebas
