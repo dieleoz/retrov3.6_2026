@@ -1,6 +1,13 @@
-923f605c2f348444b243d7d113c1aab7 *app/build.gradle
+88a19a006f454d929152a39d095d5c52 *app/build.gradle
+37893f7e5796f16e8e285846f2a370b6 *app/proguard-rules.pro
 a51ab6b8fd4b0c7bd0584bf5ef4de69e *app/src/main/AndroidManifest.xml
 ef3078f83d84f8adef93a1b54f07258c *app/src/main/java/com/dpi/retrousuario/AjustesActivity.java
+9c1e778dea1930badcf4dd558ee977f5 *app/src/main/java/com/dpi/retrousuario/EnlaceBluetooth.java
+77d69a11a10b7f15d03539e6b8de4ffa *app/src/main/java/com/dpi/retrousuario/ExportadorAndroid.java
+ee851c0b1ee2b88f11fdd6d77e789513 *app/src/main/java/com/dpi/retrousuario/MainActivity.java
+3012a6df3f1910c91454a99484398d8d *app/src/main/java/com/dpi/retrousuario/MedirActivity.java
+7698057da7e7059dd398a619ef2cc770 *app/src/main/java/com/dpi/retrousuario/SesionHolder.java
+3d966aa5d9d1e62d10147f512f23ce7c *app/src/main/java/com/dpi/retrousuario/UbicacionGps.java
 898172622a77c77cbe36049c9ce19981 *app/src/main/java/com/dpi/retrousuario/dominio/Canal.java
 bcfda115ba23a1a8b2a77767bf396e31 *app/src/main/java/com/dpi/retrousuario/dominio/CanalRegistrado.java
 61d22fb923f3f89f36cf01943dfeb4a5 *app/src/main/java/com/dpi/retrousuario/dominio/CsvMedidas.java
@@ -9,6 +16,7 @@ bcfda115ba23a1a8b2a77767bf396e31 *app/src/main/java/com/dpi/retrousuario/dominio
 f14e2c0c3c8820b2a6281dcb01377829 *app/src/main/java/com/dpi/retrousuario/dominio/Diario.java
 e6ae42b10fd7e005b65349008668f0d4 *app/src/main/java/com/dpi/retrousuario/dominio/EmisorRitmo.java
 250d26eb2c9537ea37890063d3f952dd *app/src/main/java/com/dpi/retrousuario/dominio/EstadoCalibracion.java
+30da2d4482247ce70efced7305367eda *app/src/main/java/com/dpi/retrousuario/dominio/EstadoDeteccion.java
 e449a08bf5f0f1be0e26e159a5fa923a *app/src/main/java/com/dpi/retrousuario/dominio/EstadoEnlace.java
 602e2189a88da3c7808a7dc7479e34e1 *app/src/main/java/com/dpi/retrousuario/dominio/EstadoGps.java
 1c9bf578700e066bc00e7420ecc2f5f9 *app/src/main/java/com/dpi/retrousuario/dominio/EstrategiaExportacion.java
@@ -18,6 +26,7 @@ fdb4378f8d49a129bd88ed17bd87ea79 *app/src/main/java/com/dpi/retrousuario/dominio
 e1f4f71e1f4a2a6ed2f4dfd76c52e125 *app/src/main/java/com/dpi/retrousuario/dominio/FuenteBytes.java
 2b86a6aee64256e75ec58674907907eb *app/src/main/java/com/dpi/retrousuario/dominio/GestorEnlace.java
 18eee67e9f6a3231d2bd69ff247436ba *app/src/main/java/com/dpi/retrousuario/dominio/InventarioCsv.java
+0fa9ad7649dc0b3fee7aa500dc8d3b8c *app/src/main/java/com/dpi/retrousuario/dominio/LectorDeFlujo.java
 6122a9b2cde91f8726c2b31f9c5b33ce *app/src/main/java/com/dpi/retrousuario/dominio/LectorDisparo.java
 734fd2822a3066f23a0cdf6e3d5e5967 *app/src/main/java/com/dpi/retrousuario/dominio/MapaColor.java
 ecf228e222bfb36a2f4910dfa7120671 *app/src/main/java/com/dpi/retrousuario/dominio/MediaEntera.java
@@ -32,12 +41,6 @@ bb09012edc50bb3b10c6071a8b8fefa6 *app/src/main/java/com/dpi/retrousuario/dominio
 eb82e602f5c3741ffe300350f5336a39 *app/src/main/java/com/dpi/retrousuario/dominio/SesionMedicion.java
 d9cebe65d401433226445cd988c41a71 *app/src/main/java/com/dpi/retrousuario/dominio/Sonda362.java
 494dd8e7893378944cb5c26341a92a6b *app/src/main/java/com/dpi/retrousuario/dominio/SondaReintentable.java
-c003c542c87582e571f2393c28e6f584 *app/src/main/java/com/dpi/retrousuario/EnlaceBluetooth.java
-77d69a11a10b7f15d03539e6b8de4ffa *app/src/main/java/com/dpi/retrousuario/ExportadorAndroid.java
-45d1b39ee343725d12eff7316ae5fabc *app/src/main/java/com/dpi/retrousuario/MainActivity.java
-3012a6df3f1910c91454a99484398d8d *app/src/main/java/com/dpi/retrousuario/MedirActivity.java
-569f04aed53073fe9c84f2bc813d71da *app/src/main/java/com/dpi/retrousuario/SesionHolder.java
-3d966aa5d9d1e62d10147f512f23ce7c *app/src/main/java/com/dpi/retrousuario/UbicacionGps.java
 10dbd79bb72a0eae81fc5d341f94ae4c *app/src/main/res/drawable/ic_launcher_background.xml
 cf275913e761e2019392f92ce50a1aae *app/src/main/res/layout/activity_ajustes.xml
 5d2774aeacf59d43c4197e56bd3a1da7 *app/src/main/res/layout/activity_main.xml
