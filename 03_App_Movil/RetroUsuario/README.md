@@ -149,9 +149,14 @@ mismo `classes.dex`, los mismos recursos y el mismo `AndroidManifest.xml` compil
 
 ## Reproducibilidad de la fuente
 
-`fuente.md5` (raíz de este proyecto) declara el md5 de cada fichero de `app/src/main` **y de
-`app/build.gradle`** (arq B-5: `applicationId`, `versionCode`/`versionName`, `compileSdk`... afectan
-la reproducibilidad del build igual que cualquier fuente). `.gitattributes` (raíz del repositorio)
+`fuente.md5` (raíz de este proyecto) declara el md5 de cada fichero de `app/src/main`, de
+`app/build.gradle` (arq B-5: `applicationId`, `versionCode`/`versionName`, `compileSdk`... afectan
+la reproducibilidad del build igual que cualquier fuente) y, desde esta entrega, de
+**`build.gradle`, `settings.gradle` y `gradle.properties` de la raíz de este proyecto** (arq B-1
+sobre 0.3.2: `classpath 'com.android.tools.build:gradle:4.1.1'` del `build.gradle` raíz, el
+`rootProject.name` de `settings.gradle` y `android.useAndroidX`/`android.enableJetifier` de
+`gradle.properties` condicionan el build exactamente igual que `app/build.gradle` — quedaban fuera
+sin ninguna razón para excluirlos). `.gitattributes` (raíz del repositorio)
 fuerza `03_App_Movil/RetroUsuario/** text eol=lf`, y desde esta entrega también
 `08_Senales/senales.csv text eol=lf` (QA Medio), para que el md5 no cambie con el fin de línea de
 quien clona en Windows (`core.autocrlf`); los binarios (`*.png`, `*.jar`, `*.apk`, `*.zip`, `*.jks`,
@@ -164,7 +169,8 @@ que `.gitattributes` ya declara `eol=lf` pero que ese checkout nunca renormaliz�
 entradas de la 0.3.1). Receta, sobre el commit ya hecho:
 
 ```bash
-git ls-files app/src/main app/build.gradle | sort | while IFS= read -r f; do
+git ls-files app/src/main app/build.gradle build.gradle settings.gradle gradle.properties \
+    | sort | while IFS= read -r f; do
   h=$(git cat-file -p "HEAD:03_App_Movil/RetroUsuario/$f" | md5sum | cut -d' ' -f1)
   printf '%s *%s\n' "$h" "$f"
 done > fuente.md5
