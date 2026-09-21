@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RTV Usuario</string>
+    <string name="aviso_previo">El equipo puede encender la luz y sonar</string>
+    <string name="entendido">Entendido</string>
+    <string name="titulo_lista">Toque un equipo emparejado para conectar</string>
+    <string name="conectando">Conectando…</string>
+    <string name="equipo_no_compatible">Equipo no compatible</string>
+    <string name="actualice_firmware">Actualice el firmware del equipo</string>
+    <string name="sin_respuesta_reintente">El equipo no respondió. Reintente.</string>
+    <string name="reintentar">Reintentar</string>
+</resources>

@@ -1,0 +1,40 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Misma cadena que 03_App_Movil/RetroV36 (CLAUDE.md §8): Gradle 6.5 + AGP 4.1.1 + JDK 11.
+android {
+    compileSdkVersion 30
+    buildToolsVersion '30.0.3'
+
+    defaultConfig {
+        applicationId "com.dpi.retrousuario.coviandina"
+        minSdkVersion 24
+        targetSdkVersion 30
+        versionCode 1
+        versionName "0.1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+}
+
+dependencies {
+    // appcompat trae androidx.core (FileProvider no se usa todavia en este incremento).
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    // Tests JVM del dominio (dominio.*): sin dependencias de Android.
+    testImplementation 'junit:junit:4.13.2'
+}

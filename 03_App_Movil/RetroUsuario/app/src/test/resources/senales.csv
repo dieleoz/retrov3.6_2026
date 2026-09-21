@@ -1,0 +1,377 @@
+codigo,nombre,familia,forma,color_fondo,color_orla,color_simbolo,lamina_minima,pagina,icono
+SR-01,PARE,SR,octogono,rojo,blanco,blanco,superior a IV; XI,63,iconos/SR-01.svg
+SR-02,CEDA EL PASO,SR,triangulo_invertido,blanco,rojo,negro,XI,66,iconos/SR-02.svg
+SR-49,PRIORIDAD AL SENTIDO CONTRARIO,SR,rectangulo_vertical,blanco,negro,negro+rojo,IV,66,iconos/SR-49.svg
+SR-04,NO PASE,SR,circulo,rojo,rojo,blanco,IV,68,iconos/SR-04.svg
+SR-06,PROHIBIDO GIRAR A LA IZQUIERDA,SR,circulo,blanco,rojo,negro,IV,69,iconos/SR-06.svg
+SR-08,PROHIBIDO GIRAR A LA DERECHA,SR,circulo,blanco,rojo,negro,IV,70,iconos/SR-08.svg
+SR-10,PROHIBIDO GIRAR EN “U”,SR,circulo,blanco,rojo,negro,IV,70,iconos/SR-10.svg
+SR-14,PROHIBIDO CAMBIO DE CALZADA IZQUIERDA A DERECHA,SR,circulo,blanco,rojo,negro,IV,70,iconos/SR-14.svg
+SR-14A,PROHIBIDO CAMBIO DE CALZADA DERECHA A IZQUIERDA,SR,circulo,blanco,rojo,negro,IV,71,iconos/SR-14A.svg
+SR-26,NO ADELANTAR,SR,circulo,blanco,rojo,negro,IV,71,iconos/SR-26.svg
+SR-50,PROHIBIDO GIRAR A LA DERECHA CON LUZ ROJA,SR,rectangulo_vertical,blanco,negro,negro+rojo,IV,72,iconos/SR-50.svg
+SR-56,ZONA PEATONAL (rotulada «Prioridad peatonal» en la Figura 2-13),SR,rectangulo_vertical,blanco,negro,negro+rojo,IV,73,iconos/SR-56.svg
+SR-16,PROHIBIDO CIRCULACIÓN DE VEHÍCULOS AUTOMOTORES,SR,circulo,blanco,rojo,negro,IV,74,iconos/SR-16.svg
+SR-18,PROHIBIDO CIRCULACIÓN DE VEHÍCULOS DE CARGA,SR,circulo,blanco,rojo,negro,IV,74,iconos/SR-18.svg
+SR-18A,PROHIBIDO CIRCULACIÓN DE VEHÍCULOS CON EJE ADICIONAL,SR,circulo,blanco,rojo,negro,IV,78,iconos/SR-18A.svg
+SR-18B,PROHIBIDO CIRCULACIÓN DE VEHÍCULOS DESTINADOS AL TRANSPORTE DE MERCANCÍAS PELIGROSAS,SR,circulo,blanco,rojo,negro,IV,78,iconos/SR-18B.svg
+SR-21,PROHIBIDA CIRCULACIÓN DE CABALGADURAS,SR,circulo,blanco,rojo,negro,IV,75,iconos/SR-21.svg
+SR-22,PROHIBIDA CIRCULACIÓN DE BICICLETAS Y MOTOCICLOS,SR,circulo,blanco,rojo,negro,IV,75,iconos/SR-22.svg
+SR-23,PROHIBIDA CIRCULACIÓN DE MOTOCICLETAS,SR,circulo,blanco,rojo,negro,IV,75,iconos/SR-23.svg
+SR-24,PROHIBIDA CIRCULACIÓN DE MAQUINARIA AGRÍCOLA,SR,circulo,blanco,rojo,negro,IV,76,iconos/SR-24.svg
+SR-25,PROHIBIDA CIRCULACIÓN DE VEHÍCULOS DE TRACCIÓN ANIMAL,SR,circulo,blanco,rojo,negro,IV,76,iconos/SR-25.svg
+SR-51,PROHIBIDA CIRCULACIÓN DE CARROS DE MANO,SR,circulo,blanco,rojo,negro,IV,76,iconos/SR-51.svg
+SR-52,PROHIBIDA CIRCULACIÓN DE BUSES,SR,circulo,blanco,rojo,negro,IV,77,iconos/SR-52.svg
+SR-53,PROHIBIDA CIRCULACIÓN DE MOTOCARROS,SR,circulo,blanco,rojo,negro,IV,77,iconos/SR-53.svg
+SR-54,PROHIBIDA CIRCULACIÓN DE CUATRIMOTOS,SR,circulo,blanco,rojo,negro,IV,77,iconos/SR-54.svg
+SR-20,PROHIBIDO CIRCULACIÓN DE PEATONES,SR,circulo,blanco,rojo,negro,IV,78,iconos/SR-20.svg
+SR-28,PROHIBIDO PARQUEAR,SR,circulo,blanco,rojo,negro,IV,79,iconos/SR-28.svg
+SR-28A,PROHIBIDO PARQUEAR O DETENERSE,SR,circulo,blanco,rojo,negro,IV,79,iconos/SR-28A.svg
+SR-29,PROHIBIDO PITAR,SR,circulo,blanco,rojo,negro,IV,79,iconos/SR-29.svg
+SR-41,PROHIBIDO EL ASCENSO Y DESCENSO DE PASAJEROS,SR,circulo,blanco,rojo,negro,IV,80,iconos/SR-41.svg
+SR-43,PROHIBIDO EL CARGUE Y DESCARGUE,SR,circulo,blanco,rojo,negro,IV,80,iconos/SR-43.svg
+SR-47,NO BLOQUEAR INTERSECCIÓN,SR,circulo,blanco,rojo,negro,IV,81,iconos/SR-47.svg
+SR-11,CIRCULACIÓN EN AMBOS SENTIDOS,SR,circulo,blanco,rojo,negro,IV,81,iconos/SR-11.svg
+SR-12,CIRCULACIÓN EN TRES CARRILES (UNO EN CONTRAFLUJO),SR,circulo,blanco,rojo,negro,IV,82,iconos/SR-12.svg
+SR-13,CIRCULACIÓN EN TRES CARRILES (DOS EN CONTRAFLUJO),SR,circulo,blanco,rojo,negro,IV,82,iconos/SR-13.svg
+SR-30,VELOCIDAD MÁXIMA PERMITIDA,SR,circulo,blanco,rojo,negro,IV,82,iconos/SR-30.svg
+SR-30A,VELOCIDAD MÍNIMA PERMITIDA,SR,circulo,blanco,rojo,negro,IV,84,iconos/SR-30A.svg
+SR-30B,VELOCIDAD MÁXIMA PERMITIDA SALIDA,SR,circulo,blanco,rojo,negro,IV,85,iconos/SR-30B.svg
+SR-31,PESO MÁXIMO BRUTO PERMITIDO,SR,circulo,blanco,rojo,negro,IV,85,iconos/SR-31.svg
+SR-32,ALTURA MÁXIMA PERMITIDA,SR,circulo,blanco,rojo,negro,IV,86,iconos/SR-32.svg
+SR-33,ANCHO MÁXIMO PERMITIDO,SR,circulo,blanco,rojo,negro,IV,86,iconos/SR-33.svg
+SR-55,LONGITUD MÁXIMA PERMITIDA,SR,circulo,blanco,rojo,negro,IV,87,iconos/SR-55.svg
+SR-48,FIN PROHIBICIÓN,SR,rectangulo_vertical,blanco,negro,gris+negro,IV,87,iconos/SR-48.svg
+SR-03,DIRECCIÓN OBLIGADA O SIGA DE FRENTE,SR,circulo,blanco,rojo,negro,IV,88,iconos/SR-03.svg
+SR-05,GIRO A LA IZQUIERDA SOLAMENTE,SR,circulo,blanco,rojo,negro,IV,88,iconos/SR-05.svg
+SR-07,GIRO A LA DERECHA SOLAMENTE,SR,circulo,blanco,rojo,negro,IV,89,iconos/SR-07.svg
+SR-09,GIRO EN “U” SOLAMENTE,SR,circulo,blanco,rojo,negro,IV,89,iconos/SR-09.svg
+SR-17,VEHÍCULOS PESADOS A LA DERECHA,SR,circulo,blanco,rojo,negro,IV,89,iconos/SR-17.svg
+SR-19,PEATONES A LA IZQUIERDA,SR,circulo,blanco,rojo,negro,IV,90,iconos/SR-19.svg
+SR-35,CIRCULACIÓN CON LUCES BAJAS,SR,circulo,blanco,rojo,negro,IV,90,iconos/SR-35.svg
+SR-36,RETÉN,SR,circulo,blanco,rojo,negro,IV,90,iconos/SR-36.svg
+SR-38,SENTIDO ÚNICO DE CIRCULACIÓN,SR,rectangulo_horizontal,negro,blanco,blanco,IV,91,iconos/SR-38.svg
+SR-39,CIRCULACIÓN EN AMBOS SENTIDOS,SR,rectangulo_horizontal,negro,blanco,blanco,IV,91,iconos/SR-39.svg
+SR-44,CONSERVAR ESPACIAMIENTO,SR,circulo,blanco,rojo,negro,IV,92,iconos/SR-44.svg
+SR-45,INDICACIÓN DE SEPARADOR DE TRÁNSITO A LA IZQUIERDA,SR,circulo,blanco,rojo,negro,IV,92,iconos/SR-45.svg
+SR-46,INDICACIÓN DE SEPARADOR DE TRÁNSITO A LA DERECHA,SR,circulo,blanco,rojo,negro,IV,93,iconos/SR-46.svg
+SR-58,CARRIL EXCLUSIVO,SR,circulo,blanco,rojo,negro,IV,93,iconos/SR-58.svg
+SR-59,DISTANCIA LATERAL DE SEGURIDAD CON CICLISTAS,SR,circulo,blanco,rojo,negro,IV,94,iconos/SR-59.svg
+SR-34,ZONA DE ESTACIONAMIENTO DE TAXI,SR,circulo,blanco,rojo,negro,IV,94,iconos/SR-34.svg
+SR-40,ZONA EXCLUSIVA DE PARADERO,SR,circulo,blanco,rojo,negro,IV,95,iconos/SR-40.svg
+SR-42,ZONA DE CARGUE Y DESCARGUE,SR,circulo,blanco,rojo,negro,IV,95,iconos/SR-42.svg
+SP-01,CURVA CERRADA A LA IZQUIERDA,SP,rombo,amarillo,negro,negro,IV,109,iconos/SP-01.svg
+SP-02,CURVA CERRADA A LA DERECHA,SP,rombo,amarillo,negro,negro,IV,109,iconos/SP-02.svg
+SP-03,CURVA PRONUNCIADA A LA IZQUIERDA,SP,rombo,amarillo,negro,negro,IV,109,iconos/SP-03.svg
+SP-04,CURVA PRONUNCIADA A LA DERECHA,SP,rombo,amarillo,negro,negro,IV,110,iconos/SP-04.svg
+SP-05,CURVA Y CONTRA-CURVA CERRADA PRIMERA A LA IZQUIERDA,SP,rombo,amarillo,negro,negro,IV,110,iconos/SP-05.svg
+SP-06,CURVA Y CONTRA-CURVA CERRADA PRIMERA A LA DERECHA,SP,rombo,amarillo,negro,negro,IV,111,iconos/SP-06.svg
+SP-07,ZONA DE CURVAS SUCESIVAS LA PRIMERA A LA IZQUIERDA,SP,rombo,amarillo,negro,negro,IV,111,iconos/SP-07.svg
+SP-08,ZONA DE CURVAS SUCESIVAS LA PRIMERA A LA DERECHA,SP,rombo,amarillo,negro,negro,IV,112,iconos/SP-08.svg
+SP-09,CURVA Y CONTRA-CURVA PRONUNCIADA PRIMERA A LA IZQUIERDA,SP,rombo,amarillo,negro,negro,IV,112,iconos/SP-09.svg
+SP-10,CURVA Y CONTRA-CURVA PRONUNCIADA PRIMERA A LA DERECHA,SP,rombo,amarillo,negro,negro,IV,113,iconos/SP-10.svg
+SP-11,INTERSECCIÓN DE VÍAS,SP,rombo,amarillo,negro,negro,IV,123,iconos/SP-11.svg
+SP-12,VÍA LATERAL IZQUIERDA,SP,rombo,amarillo,negro,negro,IV,123,iconos/SP-12.svg
+SP-13,VÍA LATERAL DERECHA,SP,rombo,amarillo,negro,negro,IV,123,iconos/SP-13.svg
+SP-14,INTERSECCIÓN EN “T”,SP,rombo,amarillo,negro,negro,IV,124,iconos/SP-14.svg
+SP-15,BIFURCACIÓN EN “Y”,SP,rombo,amarillo,negro,negro,IV,124,iconos/SP-15.svg
+SP-16,BIFURCACIÓN A LA IZQUIERDA,SP,rombo,amarillo,negro,negro,IV,124,iconos/SP-16.svg
+SP-17,BIFURCACIÓN A LA DERECHA,SP,rombo,amarillo,negro,negro,IV,125,iconos/SP-17.svg
+SP-18,INTERSECCIÓN ESCALONADA PRIMERA IZQUIERDA,SP,rombo,amarillo,negro,negro,IV,125,iconos/SP-18.svg
+SP-19,INTERSECCIÓN ESCALONADA PRIMERA DERECHA,SP,rombo,amarillo,negro,negro,IV,125,iconos/SP-19.svg
+SP-20,GLORIETA,SP,rombo,amarillo,negro,negro,IV,126,iconos/SP-20.svg
+SP-21,INCORPORACIÓN DE TRÁNSITO DESDE LA IZQUIERDA,SP,rombo,amarillo,negro,negro,IV,126,iconos/SP-21.svg
+SP-22,INCORPORACIÓN DE TRÁNSITO DESDE LA DERECHA,SP,rombo,amarillo,negro,negro,IV,126,iconos/SP-22.svg
+SP-23,PROXIMIDAD DE SEMÁFORO,SP,rombo,amarillo,negro,negro+rojo+amarillo+verde,IV,130,iconos/SP-23.svg
+SP-24,SUPERFICIE RIZADA,SP,rombo,amarillo,negro,negro,IV,115,iconos/SP-24.svg
+SP-25,PROXIMIDAD A RESALTO,SP,rombo,amarillo,negro,negro,IV,116,iconos/SP-25.svg
+SP-25A,UBICACIÓN DE RESALTO,SP,rombo,amarillo,negro,negro,IV,116,iconos/SP-25A.svg
+SP-25B,PROXIMIDAD A REDUCTOR TRAPEZOIDAL/POMPEYANO,SP,rombo,amarillo,negro,negro,IV,117,iconos/SP-25B.svg
+SP-25C,UBICACIÓN DE REDUCTOR TRAPEZOIDAL O POMPEYANO,SP,rombo,amarillo,negro,negro,IV,117,iconos/SP-25C.svg
+SP-26,DEPRESIÓN,SP,rombo,amarillo,negro,negro,IV,118,iconos/SP-26.svg
+SP-27,PENDIENTE FUERTE DE DESCENSO,SP,rombo,amarillo,negro,negro,IV,114,iconos/SP-27.svg
+SP-27A,PENDIENTE FUERTE DE ASCENSO,SP,rombo,amarillo,negro,negro,IV,115,iconos/SP-27A.svg
+SP-28,REDUCCIÓN DE CALZADA A AMBOS LADOS,SP,rombo,amarillo,negro,negro,IV,119,iconos/SP-28.svg
+SP-29,PROXIMIDAD A SEÑAL DE “PARE”,SP,rombo,amarillo,negro,negro+rojo+blanco,IV,130,iconos/SP-29.svg
+SP-30,REDUCCIÓN DE LA CALZADA A LA IZQUIERDA,SP,rombo,amarillo,negro,negro,IV,119,iconos/SP-30.svg
+SP-31,REDUCCIÓN DE LA CALZADA A LA DERECHA,SP,rombo,amarillo,negro,negro,IV,119,iconos/SP-31.svg
+SP-32,ENSANCHAMIENTO SIMÉTRICO DE LA CALZADA,SP,rombo,amarillo,negro,negro,IV,120,iconos/SP-32.svg
+SP-33,PROXIMIDAD DE SEÑAL “CEDA EL PASO”,SP,rombo,amarillo,negro,negro+rojo+blanco,IV,131,iconos/SP-33.svg
+SP-34,ENSANCHAMIENTO DE LA CALZADA A LA IZQUIERDA,SP,rombo,amarillo,negro,negro,IV,120,iconos/SP-34.svg
+SP-35,ENSANCHAMIENTO DE LA CALZADA A LA DERECHA,SP,rombo,amarillo,negro,negro,IV,120,iconos/SP-35.svg
+SP-36,PUENTE ANGOSTO,SP,rombo,amarillo,negro,negro,IV,121,iconos/SP-36.svg
+SP-37,TÚNEL,SP,rombo,amarillo,negro,negro,IV,140,iconos/SP-37.svg
+SP-38,PESO MÁXIMO BRUTO VEHICULAR PERMITIDO,SP,rombo,amarillo,negro,negro,IV,121,iconos/SP-38.svg
+SP-39,DOS SENTIDOS DE TRÁNSITO,SP,rombo,amarillo,negro,negro,IV,131,iconos/SP-39.svg
+SP-41,TRES CARRILES DE TRÁNSITO (UNO EN CONTRAFLUJO),SP,rombo,amarillo,negro,negro,IV,131,iconos/SP-41.svg
+SP-42,ZONA DE DESPRENDIMIENTO DE ROCAS,SP,rombo,amarillo,negro,negro,IV,141,iconos/SP-42.svg
+SP-43,TRES CARRILES DE TRÁNSITO (DOS EN CONTRAFLUJO),SP,rombo,amarillo,negro,negro,IV,132,iconos/SP-43.svg
+SP-44,SUPERFICIE DESLIZANTE,SP,rombo,amarillo,negro,negro,IV,141,iconos/SP-44.svg
+SP-45,MAQUINARIA AGRÍCOLA EN LA VÍA,SP,rombo,amarillo,negro,negro,IV,132,iconos/SP-45.svg
+SP-46,ZONA DE PEATONES,SP,rombo,amarillo_verde_fluorescente,negro,negro,IV,133,iconos/SP-46.svg
+SP-46A,PROXIMIDAD DE CRUCE PEATONAL,SP,rombo,amarillo_verde_fluorescente,negro,negro,IV,133,iconos/SP-46A.svg
+SP-46B,UBICACIÓN DE CRUCE PEATONAL,SP,rombo,amarillo_verde_fluorescente,negro,negro,IV,134,iconos/SP-46B.svg
+SP-46C,ZONA CON PRIORIDAD PEATONAL,SP,rectangulo_vertical,amarillo_verde_fluorescente,negro,negro,IV,134,iconos/SP-46C.svg
+SP-47,ZONA ESCOLAR,SP,pentagono,amarillo_verde_fluorescente,negro,negro,IV,134,iconos/SP-47.svg
+SP-47A,PROXIMIDAD A CRUCE ESCOLAR,SP,pentagono,amarillo_verde_fluorescente,negro,negro,IV,135,iconos/SP-47A.svg
+SP-47B,UBICACIÓN DE CRUCE ESCOLAR,SP,pentagono,amarillo_verde_fluorescente,negro,negro,IV,136,iconos/SP-47B.svg
+SP-48,NIÑOS JUGANDO,SP,rombo,amarillo_verde_fluorescente,negro,negro,IV,136,iconos/SP-48.svg
+SP-49,PRESENCIA DE ANIMALES EN LA VÍA,SP,rombo,amarillo,negro,negro,IV,137,iconos/SP-49.svg
+SP-49A,CRUCE DE ANIMALES EN LA VÍA,SP,rombo,amarillo_verde_fluorescente,negro,negro,IV,137,iconos/SP-49A.svg
+SP-50,ALTURA LIBRE,SP,rombo,amarillo,negro,negro,IV,122,iconos/SP-50.svg
+SP-51,ANCHO LIBRE,SP,rombo,amarillo,negro,negro,IV,122,iconos/SP-51.svg
+SP-52,CRUCE FERROVIARIO A NIVEL SIN BARRERA,SP,rombo,amarillo,negro,negro,IV,127,iconos/SP-52.svg
+SP-52A,CRUCE FERROVIARIO A NIVEL CON BARRERAS,SP,rombo,amarillo,negro,negro,IV,127,iconos/SP-52A.svg
+SP-53,BARRERA,SP,rombo,amarillo,negro,negro,IV,127,iconos/SP-53.svg
+SP-54,CRUZ DE SAN ANDRÉS,SP,cruz_san_andres,blanco,negro,negro,IV,128,iconos/SP-54.svg
+SP-55,INICIACIÓN DE SEPARADOR (DOS SENTIDOS),SP,rombo,amarillo,negro,negro,IV,138,iconos/SP-55.svg
+SP-55A,INICIACIÓN DE SEPARADOR (UN SENTIDO),SP,rombo,amarillo,negro,negro,IV,138,iconos/SP-55A.svg
+SP-56,TERMINACIÓN DE VÍA CON SEPARADOR (DOS SENTIDOS),SP,rombo,amarillo,negro,negro,IV,138,iconos/SP-56.svg
+SP-56A,TERMINACIÓN DE VÍA CON SEPARADOR (UN SENTIDO),SP,rombo,amarillo,negro,negro,IV,139,iconos/SP-56A.svg
+SP-57,FINAL DEL PAVIMENTO,SP,rombo,amarillo,negro,negro,IV,118,iconos/SP-57.svg
+SP-57A,CAMBIO DE TEXTURA EN SUPERFICIE DE RODADURA,SP,rombo,amarillo,negro,negro+rojo,IV,118,iconos/SP-57A.svg
+SP-59,CICLISTAS EN LA VÍA,SP,rombo,amarillo_verde_fluorescente,negro,negro,IV,139,iconos/SP-59.svg
+SP-59A,PROXIMIDAD A CRUCE DE CICLISTAS,SP,rombo,amarillo_verde_fluorescente,negro,negro,IV,139,iconos/SP-59A.svg
+SP-59B,UBICACIÓN DE CRUCE DE CICLISTAS,SP,rombo,amarillo_verde_fluorescente,negro,negro,IV,140,iconos/SP-59B.svg
+SP-67,RIESGO DE SINIESTRO,SP,rombo,amarillo,negro,negro,IV,141,iconos/SP-67.svg
+SP-69,CURVA MUY CERRADA A LA IZQUIERDA,SP,rombo,amarillo,negro,negro,IV,113,iconos/SP-69.svg
+SP-70,CURVA MUY CERRADA A LA DERECHA,SP,rombo,amarillo,negro,negro,IV,113,iconos/SP-70.svg
+SP-71,PROYECCIÓN DE GRAVILLA,SP,rombo,amarillo,negro,negro,IV,142,iconos/SP-71.svg
+SP-72,SALIDA DE VEHÍCULOS DE BOMBEROS,SP,rombo,amarillo,negro,negro,IV,142,iconos/SP-72.svg
+SP-73,RÁFAGAS DE VIENTO LATERAL,SP,rombo,amarillo,negro,negro,IV,142,iconos/SP-73.svg
+SP-74,DESNIVEL SEVERO,SP,rombo,amarillo,negro,negro,IV,143,iconos/SP-74.svg
+SP-75,DELINEADOR DE CURVA HORIZONTAL,SP,rectangulo_vertical,amarillo|amarillo_verde_fluorescente,negro,negro,IV,108,iconos/SP-75.svg
+SP-76,LONGITUD MÁXIMA PERMITIDA,SP,rombo,amarillo,negro,negro,IV,122,iconos/SP-76.svg
+SP-77,ZONA DE NIEBLA,SP,rombo,amarillo,negro,negro,IV,143,iconos/SP-77.svg
+SP-78,PUENTE LEVADIZO,SP,rombo,amarillo,negro,negro,IV,143,iconos/SP-78.svg
+SP-79,VEHÍCULOS DE CARGA O EXTRA-DIMENSIONADOS,SP,rombo,amarillo,negro,negro,IV,132,iconos/SP-79.svg
+SP-80,TRICIMÓVILES EN LA VÍA,SP,rombo,amarillo_verde_fluorescente,negro,negro,IV,140,iconos/SP-80.svg
+SP-81,CRUCE FERROVIARIO CON DESNIVEL DE RASANTES,SP,rombo,amarillo,negro,negro,IV,128,iconos/SP-81.svg
+SI-01,RUTA NACIONAL,SI,escudo,blanco,negro,negro,IV,175,iconos/SI-01.svg
+SI-01A,RUTA DEPARTAMENTAL,SI,escudo,blanco,negro,negro,IV,175,iconos/SI-01A.svg
+SI-02,RUTA PANAMERICANA,SI,escudo,blanco,negro,negro,IV,175,iconos/SI-02.svg
+SI-03,RUTA MARGINAL DE LA SELVA,SI,escudo,blanco,negro,negro,IV,175,iconos/SI-03.svg
+SI-04,POSTES DE REFERENCIA,SI,rectangulo_vertical,verde,blanco,blanco,IV,177,iconos/SI-04.svg
+SI-05,SEÑALES DE DIRECCIÓN,SI,rectangulo_horizontal,verde,blanco,blanco,IV,171,iconos/SI-05.svg
+SI-05A,SEÑALES DE DIRECCIÓN / SALIDA INMEDIATA,SI,rectangulo_horizontal,verde,blanco,blanco,IV,173,iconos/SI-05A.svg
+SI-05B,DESTINOS EN GLORIETA,SI,rectangulo_horizontal,verde,blanco,blanco,IV,157,iconos/SI-05B.svg
+SI-05C,RUTA ALTERNATIVA,SI,rectangulo_horizontal,verde,blanco,blanco,IV,170,iconos/SI-05C.svg
+SI-05D,SEÑALES DE PRESEÑALIZACIÓN,SI,rectangulo_horizontal,verde,blanco,blanco,IV,169,iconos/SI-05D.svg
+SI-06,SEÑALES DE CONFIRMACIÓN,SI,rectangulo_horizontal,verde,blanco,blanco,IV,174,iconos/SI-06.svg
+SI-26,NOMBRE DE CALLES Y NOMENCLATURA URBANA,SI,rectangulo_horizontal,verde,blanco,blanco,IV,175,iconos/SI-26.svg
+SI-07,SITIO DE PARQUEO,SI,rectangulo_vertical,azul,blanco,negro,IV,186,iconos/SI-07.svg
+SI-07A,ZONAS ESPECIALES DE PARQUEO,SI,rectangulo_vertical,azul,blanco,negro,IV,186,iconos/SI-07A.svg
+SI-07B,ZONAS ESPECIALES DE PARQUEO DE BICICLETAS,SI,rectangulo_vertical,azul,blanco,negro,IV,187,iconos/SI-07B.svg
+SI-07C,ZONAS ESPECIALES DE PARQUEO DE VEHÍCULOS ELÉCTRICOS,SI,rectangulo_vertical,azul,blanco,negro,IV,187,iconos/SI-07C.svg
+SI-08,PARADERO DE BUSES,SI,rectangulo_vertical,azul,blanco,negro,IV,187,iconos/SI-08.svg
+SI-09,ESTACIONAMIENTO DE TAXIS,SI,rectangulo_vertical,azul,blanco,negro,IV,187,iconos/SI-09.svg
+SI-09A,ESTACIONAMIENTO DE TRICIMÓVILES,SI,rectangulo_vertical,azul,blanco,negro,IV,188,iconos/SI-09A.svg
+SI-10,SERVICIO DE TRANSBORDADOR,SI,rectangulo_vertical,azul,blanco,negro,IV,188,iconos/SI-10.svg
+SI-11,VÍA PARA CICLISTAS,SI,rectangulo_vertical,azul,blanco,negro,IV,189,iconos/SI-11.svg
+SI-11A,PRIORIDAD VÍA PARA CICLISTAS,SI,rectangulo_vertical,azul,blanco,negro,IV,189,iconos/SI-11A.svg
+SI-13,ZONA MILITAR,SI,rectangulo_vertical,azul,blanco,negro,IV,189,iconos/SI-13.svg
+SI-14,AEROPUERTO,SI,rectangulo_vertical,azul,blanco,negro,IV,190,iconos/SI-14.svg
+SI-15,HOSPEDAJE,SI,rectangulo_vertical,azul,blanco,negro,IV,190,iconos/SI-15.svg
+SI-16,PRIMEROS AUXILIOS,SI,rectangulo_vertical,azul,blanco,negro,IV,190,iconos/SI-16.svg
+SI-16A,HOSPITAL,SI,rectangulo_vertical,azul,blanco,negro,IV,191,iconos/SI-16A.svg
+SI-17,SERVICIOS SANITARIOS,SI,rectangulo_vertical,azul,blanco,negro,IV,191,iconos/SI-17.svg
+SI-18,RESTAURANTE,SI,rectangulo_vertical,azul,blanco,negro,IV,191,iconos/SI-18.svg
+SI-19,TELÉFONO,SI,rectangulo_vertical,azul,blanco,negro,IV,192,iconos/SI-19.svg
+SI-20,IGLESIA,SI,rectangulo_vertical,azul,blanco,negro,IV,192,iconos/SI-20.svg
+SI-21,TALLER,SI,rectangulo_vertical,azul,blanco,negro,IV,192,iconos/SI-21.svg
+SI-22,ESTACIÓN DE SERVICIO,SI,rectangulo_vertical,azul,blanco,negro,IV,193,iconos/SI-22.svg
+SI-22A,ESTACIÓN DE CARGA DE VEHÍCULOS ELÉCTRICOS,SI,rectangulo_vertical,azul,blanco,negro,IV,193,iconos/SI-22A.svg
+SI-23,MONTALLANTAS,SI,rectangulo_vertical,azul,blanco,negro,IV,193,iconos/SI-23.svg
+SI-25,PASO O INSTALACIÓN ACCESIBLE,SI,rectangulo_vertical,azul,blanco,negro,IV,194,iconos/SI-25.svg
+SI-25A,CRUCE DE PERSONAS CON Y/O EN SITUACIÓN DE DISCAPACIDAD VISUAL,SI,rectangulo_vertical,azul,blanco,negro,IV,194,iconos/SI-25A.svg
+SI-27,SEGURIDAD VIAL,SI,rectangulo_vertical,blanco,negro,negro,IV,194,iconos/SI-27.svg
+SI-27A,SEGURIDAD VIAL EN INTERSECCIONES SEMAFORIZADAS,SI,rectangulo_vertical,blanco,negro,negro,IV,195,iconos/SI-27A.svg
+SI-27B,RADAR PEDAGÓGICO,SI,rectangulo_vertical,azul,blanco,negro,IV,195,iconos/SI-27B.svg
+SI-29,TRANSPORTE FERROVIARIO,SI,rectangulo_vertical,azul,blanco,negro,IV,195,iconos/SI-29.svg
+SI-30,TRANSPORTE MASIVO,SI,rectangulo_vertical,azul,blanco,negro,IV,196,iconos/SI-30.svg
+SI-30A,TRANSPORTE POR CABLE,SI,rectangulo_vertical,azul,blanco,negro,IV,196,iconos/SI-30A.svg
+SI-31,ZONA RECREATIVA,SI,rectangulo_vertical,azul,blanco,negro,IV,196,iconos/SI-31.svg
+SI-32,TSUNAMI RUTA DE EVACUACIÓN,SI,rectangulo_vertical,azul,blanco,negro,IV,197,iconos/SI-32.svg
+SI-33,ZONA DE RIESGO POR TSUNAMI,SI,rectangulo_vertical,azul,blanco,negro,IV,197,iconos/SI-33.svg
+SI-34,PUNTO DE ENCUENTRO POR TSUNAMI,SI,rectangulo_vertical,azul,blanco,negro,IV,197,iconos/SI-34.svg
+SI-35,SISTEMA PARA DETECCIÓN ELECTRÓNICA DE INFRACCIONES,SI,rectangulo_vertical,azul,blanco,negro,IV,198,iconos/SI-35.svg
+SI-35A,ZONA DE CONTROL CON SISTEMA TECNOLÓGICO DE DETECCIÓN,SI,rectangulo_vertical,azul,blanco,negro,IV,199,iconos/SI-35A.svg
+ST-01,ZONA DE CAMPING,ST,cuadrado,marron,blanco,blanco,IV,205,iconos/ST-01.svg
+ST-02,PLAYA,ST,cuadrado,marron,blanco,blanco,IV,205,iconos/ST-02.svg
+ST-03,MUSEO,ST,cuadrado,marron,blanco,blanco,IV,206,iconos/ST-03.svg
+ST-04,MUELLE,ST,cuadrado,marron,blanco,blanco,IV,206,iconos/ST-04.svg
+ST-05,ZOOLÓGICO,ST,cuadrado,marron,blanco,blanco,IV,206,iconos/ST-05.svg
+ST-06,PUNTO DE INFORMACIÓN TURÍSTICA,ST,cuadrado,marron,blanco,blanco,IV,207,iconos/ST-06.svg
+ST-07,ARTESANÍAS,ST,cuadrado,marron,blanco,blanco,IV,207,iconos/ST-07.svg
+ST-08,BIENES ARQUEOLÓGICOS,ST,cuadrado,marron,blanco,blanco,IV,207,iconos/ST-08.svg
+ST-09,CUERPO DE AGUA,ST,cuadrado,marron,blanco,blanco,IV,208,iconos/ST-09.svg
+ST-10,POLIDEPORTIVO,ST,cuadrado,marron,blanco,blanco,IV,208,iconos/ST-10.svg
+ST-11,MIRADOR,ST,cuadrado,marron,blanco,blanco,IV,208,iconos/ST-11.svg
+ST-12,ALQUILER DE AUTOS,ST,cuadrado,marron,blanco,blanco,IV,209,iconos/ST-12.svg
+ST-12A,ALQUILER DE BICICLETAS O PATINETAS,ST,cuadrado,marron,blanco,blanco,IV,209,iconos/ST-12A.svg
+ST-13,ATRACTIVO NATURAL,ST,cuadrado,marron,blanco,blanco,IV,209,iconos/ST-13.svg
+ST-14,VOLCÁN,ST,cuadrado,marron,blanco,blanco,IV,210,iconos/ST-14.svg
+ST-15,NEVADO,ST,cuadrado,marron,blanco,blanco,IV,210,iconos/ST-15.svg
+ST-16,TERMAL,ST,cuadrado,marron,blanco,blanco,IV,210,iconos/ST-16.svg
+ST-17,CASCADA,ST,cuadrado,marron,blanco,blanco,IV,211,iconos/ST-17.svg
+ST-18,PESCA,ST,cuadrado,marron,blanco,blanco,IV,211,iconos/ST-18.svg
+ST-19,ARRECIFE CORALINO,ST,cuadrado,marron,blanco,blanco,IV,211,iconos/ST-19.svg
+ST-20,CAVERNA,ST,cuadrado,marron,blanco,blanco,IV,212,iconos/ST-20.svg
+ST-21,PÁRAMO,ST,cuadrado,marron,blanco,blanco,IV,212,iconos/ST-21.svg
+ST-22,RÍO,ST,cuadrado,marron,blanco,blanco,IV,212,iconos/ST-22.svg
+ST-23,PARQUE NACIONAL NATURAL,ST,cuadrado,marron,blanco,blanco,IV,213,iconos/ST-23.svg
+ST-24,OBSERVATORIO DE FLORA Y FAUNA,ST,cuadrado,marron,blanco,blanco,IV,213,iconos/ST-24.svg
+ST-25,SENDERO PARA EXCURSIONISTAS,ST,cuadrado,marron,blanco,blanco,IV,213,iconos/ST-25.svg
+ST-26,PARAPENTE,ST,cuadrado,marron,blanco,blanco,IV,214,iconos/ST-26.svg
+ST-27,ESCALADA,ST,cuadrado,marron,blanco,blanco,IV,214,iconos/ST-27.svg
+ST-28,RAFTING,ST,cuadrado,marron,blanco,blanco,IV,214,iconos/ST-28.svg
+ST-29,COMUNIDAD INDÍGENA,ST,cuadrado,marron,blanco,blanco,IV,215,iconos/ST-29.svg
+ST-30,MONUMENTO NACIONAL,ST,cuadrado,marron,blanco,blanco,IV,215,iconos/ST-30.svg
+ST-31,PATRIMONIO DE LA HUMANIDAD,ST,cuadrado,marron,blanco,blanco,IV,215,iconos/ST-31.svg
+ST-32,CENTRO HISTÓRICO,ST,cuadrado,marron,blanco,blanco,IV,216,iconos/ST-32.svg
+SIT-01,SALIDA DE EMERGENCIA A LA IZQUIERDA,SIT,cuadrado,verde,blanco,blanco,no aplica: fotoluminiscente,258,iconos/SIT-01.svg
+SIT-02,SALIDA DE EMERGENCIA A LA DERECHA,SIT,cuadrado,verde,blanco,blanco,no aplica: fotoluminiscente,258,iconos/SIT-02.svg
+SIT-03,RUTA DE ESCAPE A SALIDA DE EMERGENCIA A LA IZQUIERDA,SIT,rectangulo_horizontal,verde,blanco,blanco,no aplica: fotoluminiscente,259,iconos/SIT-03.svg
+SIT-04,RUTA DE ESCAPE A SALIDA DE EMERGENCIA A LA DERECHA,SIT,rectangulo_horizontal,verde,blanco,blanco,no aplica: fotoluminiscente,259,iconos/SIT-04.svg
+SIT-05,TELÉFONO DE EMERGENCIA,SIT,cuadrado,azul,blanco,negro,no definida: fotoluminiscente recomendado,260,iconos/SIT-05.svg
+SIT-06,EXTINTOR DE INCENDIOS,SIT,cuadrado,azul,blanco,negro+rojo,no definida: fotoluminiscente recomendado,260,iconos/SIT-06.svg
+SIT-07,HIDRANTE Y MANGUERA PARA APAGAR INCENDIOS,SIT,cuadrado,azul,blanco,negro+rojo,no definida: fotoluminiscente recomendado,260,iconos/SIT-07.svg
+SIT-08,BAHÍA DE ESTACIONAMIENTO PARA EMERGENCIAS,SIT,cuadrado,azul,blanco,negro,no definida: fotoluminiscente recomendado,260,iconos/SIT-08.svg
+SIT-09,SISTEMA DE RADIO DEDICADO,SIT,cuadrado,azul,blanco,negro,no definida: fotoluminiscente recomendado,261,iconos/SIT-09.svg
+SIP-01,PASO PEATONAL,SIP,rectangulo_horizontal,verde,blanco,blanco,no aplica,513,iconos/SIP-01.svg
+SIP-02,PASO DE VÍA FÉRREA,SIP,rectangulo_vertical,blanco,negro,negro+rojo,no especificada,522,iconos/SIP-02.svg
+SIP-03,OBSERVE ANTES DE CRUZAR,SIP,rectangulo_horizontal,blanco,negro,negro,no especificada,522,iconos/SIP-03.svg
+SIP-04,CALLE CÍVICA,SIP,rectangulo_horizontal,blanco,negro,negro+rojo,no especificada,513,iconos/SIP-04.svg
+SRC-01,CONSERVE LA DERECHA,SRC,circulo,blanco,rojo,negro,IV,545,iconos/SRC-01.svg
+SRC-02,OBLIGATORIO DESCENDER DE LA BICICLETA,SRC,circulo,blanco,rojo,negro,IV,545,iconos/SRC-02.svg
+SRC-03,CIRCULACIÓN NO COMPARTIDA,SRC,circulo,blanco,rojo,negro,IV,546,iconos/SRC-03.svg
+SRC-04,CIRCULACIÓN PROHIBIDA DE MASCOTAS,SRC,circulo,blanco,rojo,negro,IV,546,iconos/SRC-04.svg
+SRC-05,CIRCULACIÓN COMPARTIDA,SRC,circulo,blanco,rojo,negro,IV,546,iconos/SRC-05.svg
+SRC-06,CICLO-INFRAESTRUCTURA,SRC,circulo,blanco,rojo,negro,IV,547,iconos/SRC-06.svg
+SRC-07,CARRIL BUS-BICI,SRC,circulo,blanco,rojo,negro,IV,547,iconos/SRC-07.svg
+SRC-08,CARRIL CICLOPREFERENTE,SRC,circulo,blanco,rojo,negro,IV,548,iconos/SRC-08.svg
+SRC-09,BANDA CICLOPREFERENTE,SRC,circulo,blanco,rojo,negro,IV,548,iconos/SRC-09.svg
+SPC-01,VEHÍCULOS EN LA CICLO-INFRAESTRUCTURA,SPC,rombo,amarillo,negro,negro,IV,550,iconos/SPC-01.svg
+SPC-02,DESCENSO FUERTE,SPC,rombo,amarillo,negro,negro,IV,550,iconos/SPC-02.svg
+SPC-03,ASCENSO FUERTE,SPC,rombo,amarillo,negro,negro,IV,550,iconos/SPC-03.svg
+SPC-04,CIRCULACIÓN DE BICICLETAS A CONTRAFLUJO,SPC,rombo,amarillo,negro,negro,IV,551,iconos/SPC-04.svg
+SIC-01,NOMBRE O CÓDIGO DE LA CICLO-INFRAESTRUCTURA,SIC,rectangulo_vertical,verde,blanco,blanco,IV,554,iconos/SIC-01.svg
+SIC-02,DIRECCIÓN INMEDIATA DE LA CICLO-INFRAESTRUCTURA,SIC,rectangulo_horizontal,verde,blanco,blanco,IV,554,iconos/SIC-02.svg
+SIC-02A,UBICACIÓN Y DIRECCIÓN ANTICIPADA,SIC,rectangulo_horizontal,verde,blanco,blanco,IV,555,iconos/SIC-02A.svg
+SIC-02B,DIRECCIÓN ESQUEMÁTICA,SIC,cuadrado,verde,blanco,blanco,IV,555,iconos/SIC-02B.svg
+SIC-04,FIN DE CICLORRUTA,SIC,cuadrado,verde,blanco,blanco+rojo,IV,556,iconos/SIC-04.svg
+SIC-05,INICIO DE CICLORRUTA,SIC,cuadrado,verde,blanco,blanco,IV,556,iconos/SIC-05.svg
+SIC-06,ZONA COMPARTIDA CICLISTAS – PEATONES,SIC,cuadrado,verde,blanco,blanco,IV,556,iconos/SIC-06.svg
+SIC-09,VÍA EXCLUSIVA,SIC,cuadrado,verde,blanco,blanco+rojo,IV,557,iconos/SIC-09.svg
+SIC-11,PARADERO EN LA CICLO-INFRAESTRUCTURA,SIC,rectangulo_vertical,blanco,negro,negro+rojo,IV,557,iconos/SIC-11.svg
+SIC-12,CONFIRMACIÓN DE DESTINO,SIC,rectangulo_horizontal,verde,blanco,blanco,IV,558,iconos/SIC-12.svg
+SIC-12A,CONFIRMACIÓN DE UBICACIÓN,SIC,rectangulo_horizontal,verde,blanco,blanco,IV,558,iconos/SIC-12A.svg
+SRM-01,SOLO MOTOCICLETAS,SRM,circulo,blanco,rojo,negro,IV,586,iconos/SRM-01.svg
+SIM-01,INICIO MOTOVÍA,SIM,cuadrado,verde,blanco,blanco,IV,587,iconos/SIM-01.svg
+SIM-02,FIN MOTOVÍA,SIM,cuadrado,verde,blanco,blanco+rojo,IV,588,iconos/SIM-02.svg
+SIM-03,ZONA DE ESPERA ADELANTADA DE MOTOS EN INTERSECCIÓN,SIM,cuadrado,verde,blanco,blanco,IV,588,iconos/SIM-03.svg
+SIM-04,ZONA DE ESPERA ADELANTADA DE MOTOS EN INTERSECCIÓN – CON CARRIL EXCLUSIVO,SIM,cuadrado,verde,blanco,blanco,IV,588,iconos/SIM-04.svg
+SIM-05,ZONA DE ESPERA ADELANTADA DE MOTOS EN INTERSECCIÓN – CON CARRIL EXCLUSIVO Y GIRO PERMITIDO,SIM,cuadrado,verde,blanco,blanco,IV,589,iconos/SIM-05.svg
+SIM-06,PARQUEADERO PARA MOTOS,SIM,cuadrado,azul,blanco,blanco,IV,587,iconos/SIM-06.svg
+SRO-01,VÍA CERRADA,SRO,circulo,blanco,rojo,negro,IV (VI si enrollable),609,iconos/SRO-01.svg
+SRO-02,DESVÍO,SRO,circulo,blanco,rojo,negro,IV (VI si enrollable),609,iconos/SRO-02.svg
+SRO-03,UNO A UNO,SRO,circulo,blanco,rojo,negro,IV (VI si enrollable),609,iconos/SRO-03.svg
+SRO-04,PARE/SIGA (paleta),SRO,octogono|circulo,rojo|verde,blanco,blanco,IV (VI si enrollable),662,iconos/SRO-04.svg
+SPO-01,TRABAJO EN LA VÍA,SPO,rombo,anaranjado_fluorescente,negro,negro,IV (VI si enrollable),618,iconos/SPO-01.svg
+SPO-02,MAQUINARIA EN LA VÍA,SPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),619,iconos/SPO-02.svg
+SPO-03,AUXILIAR DE TRÁNSITO,SPO,rombo,anaranjado_fluorescente,negro,negro,IV (VI si enrollable),620,iconos/SPO-03.svg
+SPO-04,ANGOSTAMIENTO A AMBOS LADOS,SPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),620,iconos/SPO-04.svg
+SPO-05,ANGOSTAMIENTO A LA DERECHA,SPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),620,iconos/SPO-05.svg
+SPO-06,ANGOSTAMIENTO A LA IZQUIERDA,SPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),621,iconos/SPO-06.svg
+SPPO-01,CURVA CERRADA A LA IZQUIERDA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),610,iconos/SPPO-01.svg
+SPPO-02,CURVA CERRADA A LA DERECHA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),610,iconos/SPPO-02.svg
+SPPO-03,CURVA PRONUNCIADA A LA IZQUIERDA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),610,iconos/SPPO-03.svg
+SPPO-04,CURVA PRONUNCIADA A LA DERECHA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),610,iconos/SPPO-04.svg
+SPPO-05,CURVA Y CONTRA-CURVA CERRADA PRIMERA A LA IZQUIERDA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),611,iconos/SPPO-05.svg
+SPPO-06,CURVA Y CONTRA-CURVA CERRADA PRIMERA A LA DERECHA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),611,iconos/SPPO-06.svg
+SPPO-09,CURVA Y CONTRA-CURVA PRONUNCIADA PRIMERA A LA IZQUIERDA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),611,iconos/SPPO-09.svg
+SPPO-10,CURVA Y CONTRA-CURVA PRONUNCIADA PRIMERA A LA DERECHA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),611,iconos/SPPO-10.svg
+SPPO-11,INTERSECCIÓN DE VÍAS,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),611,iconos/SPPO-11.svg
+SPPO-12,VÍA LATERAL IZQUIERDA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),611,iconos/SPPO-12.svg
+SPPO-13,VÍA LATERAL DERECHA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),611,iconos/SPPO-13.svg
+SPPO-14,INTERSECCIÓN EN “T”,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),611,iconos/SPPO-14.svg
+SPPO-15,BIFURCACIÓN EN “Y”,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),611,iconos/SPPO-15.svg
+SPPO-16,BIFURCACIÓN A LA IZQUIERDA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),611,iconos/SPPO-16.svg
+SPPO-17,BIFURCACIÓN A LA DERECHA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),611,iconos/SPPO-17.svg
+SPPO-21,INCORPORACIÓN DE TRÁNSITO DESDE LA IZQUIERDA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),611,iconos/SPPO-21.svg
+SPPO-22,INCORPORACIÓN DE TRÁNSITO DESDE LA DERECHA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),611,iconos/SPPO-22.svg
+SPPO-23,PROXIMIDAD DE SEMÁFORO,SPPO,rombo,anaranjado,negro,negro+rojo+amarillo+verde,IV (VI si enrollable),611,iconos/SPPO-23.svg
+SPPO-24,SUPERFICIE RIZADA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),611,iconos/SPPO-24.svg
+SPPO-25,PROXIMIDAD A RESALTO,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),611,iconos/SPPO-25.svg
+SPPO-25A,UBICACIÓN DE RESALTO,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),612,iconos/SPPO-25A.svg
+SPPO-25B,PROXIMIDAD A REDUCTOR TRAPEZOIDAL/POMPEYANO,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),612,iconos/SPPO-25B.svg
+SPPO-25C,UBICACIÓN DE REDUCTOR TRAPEZOIDAL O POMPEYANO,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),612,iconos/SPPO-25C.svg
+SPPO-26,DEPRESIÓN,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),612,iconos/SPPO-26.svg
+SPPO-27,PENDIENTE FUERTE DE DESCENSO,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),612,iconos/SPPO-27.svg
+SPPO-27A,PENDIENTE FUERTE DE ASCENSO,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),612,iconos/SPPO-27A.svg
+SPPO-29,PROXIMIDAD A SEÑAL DE “PARE”,SPPO,rombo,anaranjado,negro,negro+rojo+blanco,IV (VI si enrollable),612,iconos/SPPO-29.svg
+SPPO-32,ENSANCHAMIENTO SIMÉTRICO DE LA CALZADA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),612,iconos/SPPO-32.svg
+SPPO-33,PROXIMIDAD DE SEÑAL “CEDA EL PASO”,SPPO,rombo,anaranjado,negro,negro+rojo+blanco,IV (VI si enrollable),612,iconos/SPPO-33.svg
+SPPO-34,ENSANCHAMIENTO DE LA CALZADA A LA IZQUIERDA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),612,iconos/SPPO-34.svg
+SPPO-35,ENSANCHAMIENTO DE LA CALZADA A LA DERECHA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),612,iconos/SPPO-35.svg
+SPPO-36,PUENTE ANGOSTO,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),612,iconos/SPPO-36.svg
+SPPO-37,TÚNEL,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),612,iconos/SPPO-37.svg
+SPPO-38,PESO MÁXIMO BRUTO VEHICULAR PERMITIDO,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),612,iconos/SPPO-38.svg
+SPPO-39,DOS SENTIDOS DE TRÁNSITO,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),612,iconos/SPPO-39.svg
+SPPO-41,TRES CARRILES DE TRÁNSITO (UNO EN CONTRAFLUJO),SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),612,iconos/SPPO-41.svg
+SPPO-42,ZONA DE DESPRENDIMIENTO DE ROCAS,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),613,iconos/SPPO-42.svg
+SPPO-43,TRES CARRILES DE TRÁNSITO (DOS EN CONTRAFLUJO),SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),613,iconos/SPPO-43.svg
+SPPO-44,SUPERFICIE DESLIZANTE,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),613,iconos/SPPO-44.svg
+SPPO-45,MAQUINARIA AGRÍCOLA EN LA VÍA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),613,iconos/SPPO-45.svg
+SPPO-46,ZONA DE PEATONES,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),613,iconos/SPPO-46.svg
+SPPO-46A,PROXIMIDAD DE CRUCE PEATONAL,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),613,iconos/SPPO-46A.svg
+SPPO-46B,UBICACIÓN DE CRUCE PEATONAL,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),613,iconos/SPPO-46B.svg
+SPPO-46C,ZONA CON PRIORIDAD PEATONAL,SPPO,rectangulo_vertical,anaranjado,negro,negro,IV (VI si enrollable),613,iconos/SPPO-46C.svg
+SPPO-47,ZONA ESCOLAR,SPPO,pentagono,anaranjado,negro,negro,IV (VI si enrollable),613,iconos/SPPO-47.svg
+SPPO-47A,PROXIMIDAD A CRUCE ESCOLAR,SPPO,pentagono,anaranjado,negro,negro,IV (VI si enrollable),613,iconos/SPPO-47A.svg
+SPPO-47B,UBICACIÓN DE CRUCE ESCOLAR,SPPO,pentagono,anaranjado,negro,negro,IV (VI si enrollable),613,iconos/SPPO-47B.svg
+SPPO-50,ALTURA LIBRE,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),613,iconos/SPPO-50.svg
+SPPO-51,ANCHO LIBRE,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),613,iconos/SPPO-51.svg
+SPPO-52,CRUCE FERROVIARIO A NIVEL SIN BARRERA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),613,iconos/SPPO-52.svg
+SPPO-52A,CRUCE FERROVIARIO A NIVEL CON BARRERAS,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),613,iconos/SPPO-52A.svg
+SPPO-53,BARRERA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),613,iconos/SPPO-53.svg
+SPPO-55,INICIACIÓN DE SEPARADOR (DOS SENTIDOS),SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),614,iconos/SPPO-55.svg
+SPPO-55A,INICIACIÓN DE SEPARADOR (UN SENTIDO),SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),614,iconos/SPPO-55A.svg
+SPPO-56,TERMINACIÓN DE VÍA CON SEPARADOR (DOS SENTIDOS),SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),614,iconos/SPPO-56.svg
+SPPO-56A,TERMINACIÓN DE VÍA CON SEPARADOR (UN SENTIDO),SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),614,iconos/SPPO-56A.svg
+SPPO-57,FINAL DEL PAVIMENTO,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),614,iconos/SPPO-57.svg
+SPPO-57A,CAMBIO DE TEXTURA EN SUPERFICIE DE RODADURA,SPPO,rombo,anaranjado,negro,negro+rojo,IV (VI si enrollable),614,iconos/SPPO-57A.svg
+SPPO-59,CICLISTAS EN LA VÍA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),614,iconos/SPPO-59.svg
+SPPO-59A,PROXIMIDAD A CRUCE DE CICLISTAS,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),614,iconos/SPPO-59A.svg
+SPPO-59B,UBICACIÓN DE CRUCE DE CICLISTAS,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),614,iconos/SPPO-59B.svg
+SPPO-67,RIESGO DE SINIESTRO,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),614,iconos/SPPO-67.svg
+SPPO-69,CURVA MUY CERRADA A LA IZQUIERDA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),614,iconos/SPPO-69.svg
+SPPO-70,CURVA MUY CERRADA A LA DERECHA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),614,iconos/SPPO-70.svg
+SPPO-71,PROYECCIÓN DE GRAVILLA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),614,iconos/SPPO-71.svg
+SPPO-74,DESNIVEL SEVERO,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),614,iconos/SPPO-74.svg
+SPPO-75,DELINEADOR DE CURVA HORIZONTAL,SPPO,rectangulo_vertical,anaranjado,negro,negro,IV (VI si enrollable),614,iconos/SPPO-75.svg
+SPPO-76,LONGITUD MÁXIMA PERMITIDA,SPPO,rombo,anaranjado,negro,negro,IV (VI si enrollable),614,iconos/SPPO-76.svg
+SIO-02,INICIO DE OBRA,SIO,rectangulo_horizontal,anaranjado,negro,negro,IV (VI si enrollable),626,iconos/SIO-02.svg
+SIO-03,FIN DE OBRA,SIO,rectangulo_horizontal,anaranjado,negro,negro,IV (VI si enrollable),627,iconos/SIO-03.svg
+SIO-05,DESVÍO A XXX m,SIO,rectangulo_horizontal,anaranjado,negro,negro,IV (VI si enrollable),627,iconos/SIO-05.svg
+SIO-07,DESVÍO,SIO,flecha,anaranjado,negro,negro,IV (VI si enrollable),627,iconos/SIO-07.svg
+SIO-08,FIN DE DESVÍO,SIO,rectangulo_horizontal,anaranjado,negro,negro,IV (VI si enrollable),628,iconos/SIO-08.svg
+SIO-09,FINAL O CIERRE DE CARRIL DERECHO EN UNA CALZADA UNIDIRECCIONAL DE DOS CARRILES,SIO,rectangulo_vertical,anaranjado,negro,negro,IV (VI si enrollable),629,iconos/SIO-09.svg
+SIO-10,FINAL O CIERRE DE CARRIL DERECHO EN UNA CALZADA UNIDIRECCIONAL DE TRES CARRILES,SIO,rectangulo_vertical,anaranjado,negro,negro,IV (VI si enrollable),629,iconos/SIO-10.svg
+SIO-11,FINAL O CIERRE DE CARRIL IZQUIERDO EN UNA CALZADA UNIDIRECCIONAL DE DOS CARRILES,SIO,rectangulo_vertical,anaranjado,negro,negro,IV (VI si enrollable),629,iconos/SIO-11.svg
+SIO-12,FINAL O CIERRE DE CARRIL IZQUIERDO EN UNA CALZADA UNIDIRECCIONAL DE TRES CARRILES,SIO,rectangulo_vertical,anaranjado,negro,negro,IV (VI si enrollable),630,iconos/SIO-12.svg
+SIO-13,GENERACIÓN DE CARRIL DERECHO EN UNA CALZADA UNIDIRECCIONAL DE UN CARRIL,SIO,rectangulo_vertical,anaranjado,negro,negro,IV (VI si enrollable),630,iconos/SIO-13.svg
+SIO-14,GENERACIÓN DE CARRIL DERECHO EN UNA CALZADA UNIDIRECCIONAL DE DOS CARRILES,SIO,rectangulo_vertical,anaranjado,negro,negro,IV (VI si enrollable),630,iconos/SIO-14.svg
+SIO-15,GENERACIÓN DE CARRIL IZQUIERDO EN UNA CALZADA UNIDIRECCIONAL DE UN CARRIL,SIO,rectangulo_vertical,anaranjado,negro,negro,IV (VI si enrollable),631,iconos/SIO-15.svg
+SIO-16,GENERACIÓN DE CARRIL IZQUIERDO EN UNA CALZADA UNIDIRECCIONAL DE DOS CARRILES,SIO,rectangulo_vertical,anaranjado,negro,negro,IV (VI si enrollable),631,iconos/SIO-16.svg
+SIO-17,CAMBIO DE ALINEAMIENTO AL LADO DERECHO EN UNA CALZADA UNIDIRECCIONAL DE DOS CARRILES,SIO,rectangulo_vertical,anaranjado,negro,negro,IV (VI si enrollable),631,iconos/SIO-17.svg
+SIO-18,CAMBIO DE ALINEAMIENTO AL LADO DERECHO EN UNA CALZADA UNIDIRECCIONAL DE TRES CARRILES,SIO,rectangulo_vertical,anaranjado,negro,negro,IV (VI si enrollable),632,iconos/SIO-18.svg
+SIO-19,CAMBIO DE ALINEAMIENTO AL LADO IZQUIERDO EN UNA CALZADA UNIDIRECCIONAL DE DOS CARRILES,SIO,rectangulo_vertical,anaranjado,negro,negro,IV (VI si enrollable),632,iconos/SIO-19.svg
+SIO-20,CAMBIO DE ALINEAMIENTO AL LADO IZQUIERDO EN UNA CALZADA UNIDIRECCIONAL DE TRES CARRILES,SIO,rectangulo_vertical,anaranjado,negro,negro,IV (VI si enrollable),632,iconos/SIO-20.svg
+SIO-21,CAMBIO DE ALINEAMIENTO AL LADO DERECHO EN UNA CALZADA BIDIRECCIONAL DE DOS CARRILES,SIO,rectangulo_vertical,anaranjado,negro,negro,IV (VI si enrollable),633,iconos/SIO-21.svg
+SIO-22,CAMBIO DE ALINEAMIENTO AL LADO IZQUIERDO EN UNA CALZADA BIDIRECCIONAL DE DOS CARRILES,SIO,rectangulo_vertical,anaranjado,negro,negro,IV (VI si enrollable),633,iconos/SIO-22.svg
+SIO-23,PARADERO TEMPORAL DE BUSES,SIO,rectangulo_horizontal,anaranjado,negro,negro,IV (VI si enrollable),633,iconos/SIO-23.svg
+SIO-24,SENDERO PEATONAL,SIO,rectangulo_horizontal,anaranjado,negro,negro,IV (VI si enrollable),634,iconos/SIO-24.svg
+SIO-25,SEMÁFORO APAGADO,SIO,rectangulo_horizontal,anaranjado,negro,negro,IV (VI si enrollable),634,iconos/SIO-25.svg
+SIO-26,CRUCE PEATONAL NO HABILITADO,SIO,rectangulo_horizontal,anaranjado,negro,negro,IV (VI si enrollable),634,iconos/SIO-26.svg
+SIO-27,SEÑAL RELACIONADA CON SITUACIONES DE OBRA,SIO,rectangulo_horizontal,anaranjado,negro,negro,IV (VI si enrollable),635,iconos/SIO-27.svg

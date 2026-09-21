@@ -1,0 +1,4 @@
+// App de USUARIO del retrorreflectometro vertical V3.6 (va con el equipo, la usa el operador de campo).
+// No confundir con 03_App_Movil/RetroV36, la app de EMPRESA (DPI, calibra por USB/Bluetooth con PIN).
+include ':app'
+rootProject.name = "RetroUsuario"
