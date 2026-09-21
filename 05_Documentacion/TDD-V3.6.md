@@ -1762,129 +1762,292 @@ APK, tramas en crudo). **AT-U05 y AT-U06 son encargos de medida**: su resultado 
 
 ## 8. App de usuario
 
-**Añadido 21-sep-2026. Ninguna de estas pruebas existe todavía.** Requisitos:
-[`SPEC-App-Usuario-V3.6.md`](SPEC-App-Usuario-V3.6.md) (RF-USR-01 a RF-USR-12). Ninguna ficha de esta
-sección sustituye a `T-C30` (§3, "App del cliente", operador real): esa sigue `PENDIENTE sin fecha`
-hasta que exista un operador con esta app delante de un equipo (R-09). El valor esperado de cada ficha
-viene de una fuente ajena al código de esta app —protocolo, firmware, la app legacy, SPEC-REG o una
-decisión escrita—, nunca de la salida de código todavía por escribir. Receta **R-JVM** (§1): JVM contra
-`EquipoSimulado` o un simulador F-2020 propio de esta sección; nivel **A** salvo que se diga otra cosa.
+**r2, 21-sep-2026: reescrita completa junto con la SPEC.** Cierra el NO APTO del `arquitecto-iot` sobre
+la r1 (T-USR-01 probado sólo contra V3.6, no contra F-2020/V4, fuera de USR-ALCANCE; T-USR-11 de aviso
+F-2020 y T-USR-12 de batería, retiradas: no hay F-2020 ni batería en el alcance de r2; T-USR-05
+corregida a "0 (saturado o negativo)"; T-USR-06 con la serie tecleada marcada "declarada"; fichas
+nuevas de filtro/búsqueda, columnas del CSV con L-23, lista blanca de bytes TX y mapa color→byte sobre
+las 376 filas del catálogo, verificado con `python3`). Requisitos:
+[`SPEC-App-Usuario-V3.6.md`](SPEC-App-Usuario-V3.6.md) r2 (RF-USR-01 a RF-USR-15). Ninguna ficha de
+esta sección sustituye a `T-C30` (§3, "App del cliente", operador real): esa sigue `PENDIENTE sin
+fecha` hasta que exista un operador con esta app delante de un equipo (R-09). El valor esperado de
+cada ficha viene de una fuente ajena al código de esta app —protocolo, firmware, el catálogo, SPEC-REG,
+el Manual 2024 o una decisión de Diego—, nunca de la salida de código todavía por escribir. Receta
+**R-JVM** (§1): JVM contra `EquipoSimulado`, un simulador propio de esta sección, o un fichero CSV de
+prueba; nivel **A** salvo que se diga otra cosa. Las precisiones de Diego del 21-sep (nota 11 a 15,
+§8.2) están **sin registrar** en `DECISIONES-Diego-2026-09-19.md`: los valores de ejemplo que citan
+vienen de esas palabras, transcritas en §8.2, y no de código.
 
-**T-USR-01 — Detección sin `e`.** RF-USR-01 · A · R-JVM · **PENDIENTE**
-- Pasos: conectar contra `EquipoSimulado` (F-36); conectar por separado contra un simulador F-2020
-  (sin `e`, construido para esta ficha con el patrón de `EquipoSimuladoV4`).
-- Esperado: contra F-36, la secuencia enviada es exactamente `#V#` (responde en el primer paso);
-  contra F-2020, `#V#` (sin respuesta), `9`, `6` (responde), nunca `e`.
-- Fuente del esperado: `SPEC-V3.6.md:464` (RF-APP-03, tabla de pasos 1-4) y la regla "nunca se envía
-  `e` a un equipo no identificado" de `SPEC-V3.6.md:461-462`, `CLAUDE.md` §4.
+**T-USR-01 — Detección sólo V3.6, nunca `e`, nunca otro firmware.** RF-USR-01 · A · R-JVM ·
+**PENDIENTE**
+- Pasos: (a) conectar contra `EquipoSimulado` respondiendo `#V,3.6,2026-09-21,CAL#` a `#V#`; (b)
+  conectar contra un simulador que no reconoce `#V#` (ni F-2020 ni V4, construido para esta ficha); (c)
+  conectar contra un simulador que responde a `#V#` con `#V,4.0,...#` (V4, no V3.6).
+- Esperado: (a) la app queda conectada, y la secuencia enviada es **exactamente** `#V#`, nada más; (b)
+  y (c) "equipo no compatible", y la secuencia enviada es **exactamente** `#V#`: 0 apariciones de `9`,
+  `6`, `e` o `@LEERV` en el registro. A diferencia de la r1 (T-USR-01 contra un F-2020 con sondas `9`,
+  `6`), **esta ficha no prueba contra F-2020/V4 más que para confirmar el rechazo**: USR-ALCANCE saca
+  esos firmwares del alcance de esta app.
+- Fuente del esperado: `PROTOCOLO-V3.6.md:24` (formato de `#V#`); SPEC r2 RF-USR-01; decisión
+  USR-ALCANCE.
 
-**T-USR-02 — Estado de calibración: vencida, sin registrar, vigente.** RF-USR-02 · A · R-JVM ·
+**T-USR-02 — Aviso antes del primer byte, y dispara la luz en 2020.** RF-USR-01 · A · R-JVM y lectura
+de `gui.c` · **PENDIENTE**
+- Pasos: (a) abrir la pantalla de conectar sin haber enviado ningún byte, comprobar que el aviso está
+  visible antes de que exista conexión; (b) leer `01_Firmware/base_2020_d089f962/RetroVertical1.X/
+  gui.c:294-296` (`if (activador || bufferIndex > 0)`, entra en el bucle de medida con el primer byte
+  recibido, sea `#`, `V` o cualquier otro).
+- Esperado: (a) el aviso aparece antes de cualquier trama; (b) confirmado por lectura: el primer byte
+  de `#V#` (`'#'`, 0x23) ya cumple `bufferIndex > 0` y dispara la adquisición.
+- Fuente del esperado: `gui.c:294-296` (verificado en este trabajo, ver §2); `CLAUDE.md` §4.
+
+**T-USR-03 — Estado de calibración: vencida, sin registrar, vigente.** RF-USR-02 · A · R-JVM ·
 **PENDIENTE**
 - Pasos: (a) `#GC,2025-09-18#` con reloj de prueba en 2026-09-19; (b) `#GC,NONE#`; (c) `#GC#` de hace
   30 días.
 - Esperado: (a) "EQUIPO CON CALIBRACIÓN VENCIDA" visible, medida no bloqueada; (b) "SIN CALIBRACIÓN";
   (c) sin aviso. Las tres siguen dejando medir.
-- Fuente del esperado: `PROTOCOLO-V3.6.md:51-52` (`#GC#`); `SPEC-Registro-Indicador-Interventoria.md`
-  (SPEC-REG) `:370-382` (RF-REG-02 a RF-REG-04, avisa-no-bloquea, PA-01 de Diego).
+- Fuente del esperado: `PROTOCOLO-V3.6.md:34,42` (`#GC#`/`#GN#`); SPEC-REG `:567-569` (RF-REG-02 a 04,
+  PA-01).
 
-**T-USR-03 — Señal del catálogo propone color y pide confirmar tipo.** RF-USR-03 · A · R-JVM ·
+**T-USR-04 — Mapa color → byte, ASCII, sobre las 376 filas del catálogo.** RF-USR-03 · A · R-JVM y
+`python3 -c` sobre `08_Senales/senales.csv` · **PENDIENTE**
+- Pasos: (a) con `python3` y `csv.DictReader`, para cada una de las 376 filas, resolver el byte que
+  esta app enviaría según `color_fondo` (mapa de RF-USR-03: `blanco→'1'`, `amarillo→'2'`, `verde→'3'`,
+  `rojo→'4'`, `azul→'5'`, `anaranjado→'6'`, `marron→'4'`); comprobar que el byte es el **carácter
+  ASCII** (`ord('4') == 0x34`), no el valor numérico ni el hex de la STONE (`0x0B` para `'b'`); (b)
+  filtrar las filas con `color_fondo` en {`negro`, `amarillo_verde_fluorescente`,
+  `anaranjado_fluorescente`} o compuestas (`SP-75`, `SRO-04`) y comprobar que ninguna resuelve byte.
+- Esperado: (a) 363 filas resuelven un byte en `{'1','2','3','4','5','6'}` (`ord` entre 0x31 y 0x36);
+  cero filas resuelven `0x0B` o cualquier valor fuera de ese rango; (b) 13 filas (2 `negro`, 14
+  `amarillo_verde_fluorescente`, 2 `anaranjado_fluorescente`, `SP-75`, `SRO-04`) no resuelven byte,
+  "no medible con este equipo".
+- Fuente del esperado: `ecuacionesCalibracion.c:141-164` (`strncmp(bufferData, "4", 1)`, literal
+  ASCII, no `bufferPantalla[8] == 0x04` de `ecuacionesCalibracion.c:73-130`, que es el protocolo de la
+  STONE, ajeno a esta app); `08_Senales/senales.csv`, recuento verificado en este trabajo con
+  `python3 -c` (§8.2).
+
+**T-USR-05 — Filtro por familia y búsqueda, verificado con `python3`.** RF-USR-07 · A · `python3 -c`
+sobre `08_Senales/senales.csv` y R-JVM · **PENDIENTE**
+- Pasos: (a) `python3 -c` con `csv.DictReader`: contar filas totales y familias distintas; (b) contar
+  filas cuyo `codigo` contiene `"SI"` (case-insensitive); (c) en la app, elegir el código `SR-01`.
+- Esperado: (a) 376 filas, 15 familias (`SI`, `SIC`, `SIM`, `SIO`, `SIP`, `SIT`, `SP`, `SPC`, `SPO`,
+  `SPPO`, `SR`, `SRC`, `SRM`, `SRO`, `ST`); (b) **103** filas, coincide con "familia empieza por `SI`";
+  (c) la app propone `color_fondo = rojo`, sin preguntar tipo de lámina.
+- Fuente del esperado: `08_Senales/senales.csv`, recuento exacto verificado en este trabajo con
+  `python3 -c 'import csv; ...'` (comando y salida completa en §8.2); SENAL-FILTRO.
+
+**T-USR-06 — Disparos, 3 por defecto, y cero mostrado.** RF-USR-04 · A · R-JVM · **PENDIENTE**
+- Pasos: (a) fijar tres respuestas `::100`, `::110`, `::120` para el mismo código, medir con el valor
+  por defecto de `lecturas_por_color`; (b) fijar `::0` y medir una vez.
+- Esperado: (a) `lecturas_por_color` por defecto es **3** (no 4); media 110, mínimo 100, n = 3; (b)
+  "0 (saturado o negativo)", nunca el dígito `0` solo, y **no entra en la media** de una serie que lo
+  incluya.
+- Fuente del esperado: (a) precisión de Diego, nota 11, "leído 3 veces promedio" (§8.2); (b)
+  `ecuacionesCalibracion.c:49-54` (`arreglar_dato`, `>4000 → 0`) y `SPEC-V3.6.md:501-503` (texto
+  exacto).
+
+**T-USR-07 — "Medir y exportar": cero tecleo, y serie declarada.** RF-USR-05, RF-USR-06 · A · R-JVM ·
 **PENDIENTE**
-- Pasos: cargar `08_Senales/senales.csv`; elegir el código `SR-01`.
-- Esperado: la app propone `color_fondo = rojo`; con `lamina_minima = "superior a IV; XI"` (columna
-  de esa fila), pide confirmar tipo I / no-I en vez de decidirlo sola.
-- Fuente del esperado: `08_Senales/senales.csv` (fila `SR-01`, columnas `color_fondo` y
-  `lamina_minima`, leídas directamente del fichero, no de código de esta app).
+- Pasos: (a) abrir el modo "Medir y exportar" (comprobar que es el que abre por defecto); recorrer
+  todas sus pantallas y comprobar que ninguna tiene un campo de texto, casilla ni selector salvo el de
+  color; medir y exportar; (b) con `EquipoSimulado` respondiendo `#GN,NONE#`, medir y exportar.
+- Esperado: (a) "Medir y exportar" es el modo inicial; 0 campos de texto en sus pantallas; el CSV
+  exportado no tiene columna de señal ni de cumple/no cumple; (b) la fila exportada lleva
+  `serie_declarada = SI` y `serie_equipo` vacío o "declarada", nunca un valor inventado.
+- Fuente del esperado: nota 10 (USR-MODOS, "no necesito... escribiendo en la app"); SERIE-USR;
+  `PROTOCOLO-V3.6.md:54` (`#GN,NONE#`).
 
-**T-USR-04 — Mapa color × tipo, las 12 combinaciones.** RF-USR-04 · A · R-JVM · **PENDIENTE**
-- Pasos: para cada color (blanco, amarillo, verde, rojo, azul, naranja) × tipo (I, no-I), con color y
-  tipo ya confirmados, pulsar Medir.
-- Esperado: tipo I envía `7`,`8`,`a`,`b`,`c`,`d` en ese orden de color; no-I envía `1`-`6` en el mismo
-  orden.
-- Fuente del esperado: `SPEC-V3.6.md:496-497` (RF-APP-04) y la tabla de `:109-116` ("tipo de lámina
-  I → opaco (`7`,`8`,`a`-`d`); tipos II a XI → intenso (`1`-`6`)").
+**T-USR-08 — Estado de la señal no cambia el resultado.** RF-USR-08 · A · R-JVM · **PENDIENTE**
+- Pasos: medir el mismo color y valor dos veces en la misma señal: una vez marcando "limpia = sí,
+  bien instalada = sí", otra "limpia = no, mal instalada"; comparar el resultado de RF-USR-10.
+- Esperado: `cumple`, `pct_vs_umbral` y `valor_umbral` son **idénticos** en las dos medidas; sólo
+  cambian las columnas de mantenimiento (`limpia`, `bien_instalada`, `en_condiciones`, `observacion`).
+- Fuente del esperado: precisión de Diego, nota 11, punto 4 (§8.2: "el estado... no es parte del
+  indicador ni del cumple/no cumple ni da multa").
 
-**T-USR-05 — Repetición, estadístico y cero mostrado.** RF-USR-05 · A · R-JVM · **PENDIENTE**
-- Pasos: (a) fijar tres respuestas `::100`, `::110`, `::120` para el mismo código; medir tres veces;
-  (b) fijar `::0` y medir una vez.
-- Esperado: (a) media 110, mínimo 100, n = 3; (b) "0 (saturado o sin señal)", nunca el dígito `0`
-  solo.
-- Fuente del esperado: (a) aritmética elemental sobre los valores fijados por la prueba, y el conteo
-  de 4 disparos por defecto de SPEC-REG `:573` (RF-REG-08; la app legacy Ionic usaba 3,
-  `medir.page.ts:54`, `medidasRealizar = 3`, citado como antecedente, no como cifra vigente); (b)
-  `ecuacionesCalibracion.c:49-54` y `SPEC-V3.6.md:501-503` (RF-APP-05, el texto exacto).
+**T-USR-09 — Referencia por defecto = mínimo del Manual, o instalación con año.** RF-USR-09 · A ·
+R-JVM · **PENDIENTE**
+- Pasos: (a) medir una señal sin teclear valor de instalación; (b) medir la misma señal tecleando
+  "Instalación 2024: 310".
+- Esperado: (a) la referencia mostrada es el mínimo del Manual 2024 para ese color y lámina, marcada
+  "no verificado contra el original" (C-06 abierta); sin 80 % ANI; (b) la referencia pasa a "Instalación
+  2024: 310" y aparece además el umbral 80 % = 248.
+- Fuente del esperado: precisión de Diego, nota 11, punto 3 (§8.2); nota 9 (UMBRAL-LEY); SPEC-REG
+  `:128-160` (C-01, C-06).
 
-**T-USR-06 — Identidad de equipo y guardado inmutable.** RF-USR-06 · A · R-JVM · **PENDIENTE**
-- Pasos: (a) guardar una visita con `EquipoSimulado` respondiendo `#GN,NONE#`; (b) guardar una medida
-  con retrorreflectividad 150 y otra con 200 en la misma visita.
-- Esperado: (a) el campo serie de la fila dice "SIN SERIE", nunca vacío; (b) dos filas distintas, con
-  150 y 200, ninguna en 0.
-- Fuente del esperado: `PROTOCOLO-V3.6.md:54` (`#GN#` → `#GN,<serie>#` o `#GN,NONE#`); SPEC-REG `:566`
-  (RF-REG-01, ningún campo vacío) y `:490` (defecto de `medicion.java:1563,1565`, "tras guardar el
-  campo queda en 0", que no se repite).
+**T-USR-10 — Resultado con números, los dos casos de Diego.** RF-USR-10 · A · R-JVM (aritmética pura,
+sin equipo) · **PENDIENTE**
+- Pasos: (a) umbral = mínimo del Manual = 325, leído = 160 (promedio de 3); (b) instalación 2024 = 310,
+  umbral 80 % = 248, leído = 160.
+- Esperado: (a) `160 / 325 = 0,49230...` → **49 %**, `% = 49 − 100 = −51 %`, `NO CUMPLE`; texto exacto
+  `"Mínimo Manual 2024: 325 · Leído (promedio de 3): 160 · 160/325 = 49 % → −51 % · NO CUMPLE"`; (b)
+  `160 / 248 = 0,64516...` → **65 %**, `% = 65 − 100 = −35 %`, `NO CUMPLE`; texto exacto `"Instalación
+  2024: 310 · umbral 80 % = 248 · Leído 160 → 65 % → −35 % · NO CUMPLE"`.
+- Fuente del esperado: precisión de Diego con estos números exactos, calculados a mano en este trabajo
+  con `% = round((leído / umbral) × 100)` y `Δ% = % − 100` (§8.2); redondeo estándar (0,5 sube:
+  64,516 → 65).
 
-**T-USR-07 — Exportación sin credenciales, con el código real.** RF-USR-07 · A · Bash/grep sobre el
-código fuente de la app · **PENDIENTE**
-- Pasos: (a) `grep -ri "password\|smtp\|contraseñ"` sobre el árbol fuente de la app de usuario; (b)
-  medir con color rojo, tipo I; exportar; leer la fila del CSV de `lecturas.csv`.
-- Esperado: (a) cero coincidencias; (b) la fila lleva `b` (el byte enviado, RF-USR-04), no "Rojo".
-- Fuente del esperado: `ROADMAP-MEJORAS-App.md` M-12 (defecto de `Enviarcorreo.java:54-55`,
-  credencial en claro) y SPEC-REG `:592` (RF-REG-27); SPEC-REG `:498-499` (defecto: se guardaba el
-  nombre, no el código).
+**T-USR-11 — Historial: curva de degradación por señal y color.** RF-USR-11 · A · R-JVM · **PENDIENTE**
+- Pasos: instalación 2024 = 310; medir sucesivamente 240, luego 200, luego 160 (misma señal y color).
+- Esperado: fila de instalación (310, 2024); medida 240 → `pct_vs_referencia = 240/310 = 77 %`,
+  `pct_vs_anterior = 240/310 − 1 = −23 %` (la "anterior" de la primera medida es la instalación); medida
+  200 → `pct_vs_referencia = 200/310 = 65 %`, `pct_vs_anterior = 200/240 − 1 = −17 %`; medida 160 →
+  `pct_vs_referencia = 160/310 = 52 %`, `pct_vs_anterior = 160/200 − 1 = −20 %`. Ninguna carga borra ni
+  reordena filas anteriores.
+- Fuente del esperado: precisión de Diego con estos números exactos, calculados a mano en este trabajo
+  (§8.2): `310→240: 77 % / −23 %`; `240→200: 65 % / −17 %`; `200→160: 52 % / −20 %`.
 
-**T-USR-08 — Sin tramas de administración.** RF-USR-08 · A · Bash/grep sobre el código fuente de la
-app · **PENDIENTE**
-- Pasos: `grep -E "#L,|#S,|#F,|#ST,|#FT,|#SC,|#SN,|#P,|#KC#|#K#"` sobre el árbol fuente de la app de
-  usuario.
-- Esperado: cero coincidencias.
-- Fuente del esperado: `PROTOCOLO-V3.6.md` §3, columna "Requiere admin": exactamente las tramas que
-  exigen sesión abierta con `#L`.
+**T-USR-12 — Inventario: sustitución, ACTIVA/RETIRADA.** RF-USR-12 · A · R-JVM · **PENDIENTE**
+- Pasos: dar de alta una señal `SR-01` en `lat,lon = 4.60971,-74.08175`, estado ACTIVA; dar de alta
+  otra `SR-01` con GPS a menos de 15 m (umbral a fijar por el desarrollo) y confirmar "sí" a
+  "¿sustituye a `<id>` anterior?".
+- Esperado: la señal nueva queda ACTIVA con su propio identificador; la anterior pasa a RETIRADA con
+  `sustituida_por = <id nuevo>` y la fecha; la anterior no aparece en la lista de trabajo pero sí en el
+  histórico y en la exportación.
+- Fuente del esperado: precisión de Diego, nota 12 (§8.2): "si la tumban y reponen otra... es OTRA
+  señal... pero la vieja no puede desaparecer del inventario".
 
-**T-USR-09 — Colores sin ecuación, fuera de la medida.** RF-USR-09 · A · R-JVM · **PENDIENTE**
-- Pasos: cargar `08_Senales/senales.csv`; filtrar filas con `color_fondo` o `color_simbolo` en
-  {café, lila, fluorescente}.
-- Esperado: ninguna de esas filas ofrece el botón "Medir" para ese color; se muestra "no medible con
-  este equipo".
-- Fuente del esperado: `SPEC-Registro-Indicador-Interventoria.md:157` (C-10: el protocolo del equipo
-  admite seis colores) y `SPEC-V3.6.md:109-116` (la tabla no tiene fila para esos colores).
+**T-USR-13 — Carga de `inventario.csv`, tolerante al formato de Excel.** RF-USR-13 · A · R-JVM sobre
+ficheros de prueba · **PENDIENTE**
+- Pasos: cargar cuatro variantes del mismo inventario válido: (a) separador `;`, decimales con coma
+  ("4,60971"); (b) separador `,`, decimales con punto; (c) UTF-8 con BOM; (d) Windows-1252 (ANSI) sin
+  BOM, con tildes.
+- Esperado: las cuatro cargan el mismo inventario, con los mismos valores numéricos y de texto
+  (comparado campo a campo entre las cuatro cargas).
+- Fuente del esperado: precisión de Diego (§8.2): "tolerante con lo que produce Excel... separador
+  ';' o ','... decimales con coma o punto... UTF-8 con o sin BOM y ANSI/Windows-1252".
 
-**T-USR-10 — Ciclo completo sin red.** RF-USR-10 · A · R-JVM (simulando el teléfono en modo avión, sin
-E/S de red) · **PENDIENTE**
-- Pasos: con toda E/S de red deshabilitada en el entorno de prueba, medir, guardar y exportar una
-  visita completa contra `EquipoSimulado`.
-- Esperado: el ciclo completo produce el ZIP sin ninguna llamada de red intentada.
-- Fuente del esperado: `SPEC-Registro-Indicador-Interventoria.md:588` (RF-REG-23, "todo funciona sin
-  red").
-
-**T-USR-11 — Aviso antes de medir en V3 2020.** RF-USR-11 · A · R-JVM contra un simulador F-2020 ·
+**T-USR-14 — Carga con una fila mala: carga las demás y nombra el motivo.** RF-USR-13 · A · R-JVM ·
 **PENDIENTE**
-- Pasos: detectar F-2020 (T-USR-01); observar si el aviso aparece antes o después de la primera
-  sonda distinta de `#V#`.
-- Esperado: el aviso ("el equipo va a disparar la luz y a pitar") aparece **antes** de la sonda `9`,
-  no después.
-- Fuente del esperado: `SPEC-V3.6.md:484-486` ("En un V3 de 2020, `#V#`, `e` y `6` disparan una
-  medida… Se avisa al usuario antes de empezar") y `PROTOCOLO-V3.6.md:22`.
+- Pasos: cargar un `inventario.csv` de 10 filas donde la fila 5 tiene `latitud = "4,65.3"` (dos
+  separadores decimales) y la fila 8 tiene `codigo = "SR-1"` (no existe en el catálogo, existe
+  `SR-01`).
+- Esperado: cargan las 8 filas buenas; la lista de errores dice, en español, **"Fila 5, latitud:
+  '4,65.3' no es un número"** y **"Fila 8, codigo: 'SR-1' no está en el Manual, ¿quiso decir
+  'SR-01'?"**; la lista de errores se puede exportar.
+- Fuente del esperado: precisión de Diego, con estos dos ejemplos de mensaje literales (§8.2).
 
-**T-USR-12 — Aviso de batería baja.** RF-USR-12 · A · R-JVM contra `EquipoSimulado` forzado a `n = 5`
-· **PENDIENTE**
-- Pasos: abrir la pantalla de medir; el simulador responde `:5:` a `9`.
-- Esperado: aviso de batería baja visible; la medida sigue disponible.
-- Fuente del esperado: `git show rtv-1.0:03_App_Movil/RetroV36/app/src/main/java/com/dpi/retrov36/`
-  `Bateria.java:8-16` (`AVISO_N = 19`, "aviso con n < 19"), que a su vez cita
-  `SPEC-Calibracion-V3.6.md` §12.8.
+**T-USR-15 — Ida y vuelta de `inventario.csv`, y plantilla vacía.** RF-USR-13 · A · R-JVM ·
+**PENDIENTE**
+- Pasos: (a) con un proyecto vacío, exportar y leer `inventario.csv`; (b) exportar un inventario con
+  20 señales, importarlo de vuelta sin tocarlo, comparar campo a campo con el original.
+- Esperado: (a) el fichero tiene sólo la fila de encabezados, sin datos; (b) el inventario tras
+  importar es **idéntico** al exportado, campo a campo, para las 20 filas.
+- Fuente del esperado: precisión de Diego (§8.2): "inventario.csv es exactamente el formato que se
+  carga de vuelta... con el proyecto vacío sale sólo con la fila de encabezados: esa es la plantilla".
+
+**T-USR-16 — Una carga nunca borra medidas, ni señales ausentes del fichero.** RF-USR-14 · A · R-JVM ·
+**PENDIENTE**
+- Pasos: con un inventario de 50 señales y 200 medidas guardadas, cargar un `inventario.csv` con sólo
+  10 de esas 50 señales (las otras 40 no aparecen en el fichero).
+- Esperado: las 200 medidas siguen existiendo, sin cambios; las 40 señales ausentes del fichero **no
+  se retiran ni se borran**, siguen ACTIVA como antes; sólo las 10 del fichero se corrigen o confirman.
+- Fuente del esperado: precisión de Diego (§8.2): "las medidas son de sólo añadir... una señal ausente
+  del fichero no se borra".
+
+**T-USR-17 — Retiro en bloque por CSV, y deshacer.** RF-USR-13, RF-USR-14 · A · R-JVM · **PENDIENTE**
+- Pasos: con un inventario de 1500 señales ACTIVA, cargar un `inventario.csv` que marca `estado = R`
+  en 100 de ellas; comprobar la vista previa; confirmar; exportar el inventario resultante; pulsar
+  "deshacer la última carga"; exportar de nuevo y comparar byte a byte con el inventario previo a la
+  carga.
+- Esperado: la vista previa dice "se retiran 100"; tras confirmar, exactamente 100 señales quedan
+  RETIRADA y 0 medidas quedan tocadas; tras deshacer, las 100 vuelven a ACTIVA y el CSV exportado es
+  **idéntico byte a byte** al de antes de la carga.
+- Fuente del esperado: precisión de Diego, notas 14-15 (§8.2): "100 de 1500... deshacer la última
+  carga: vuelve exactamente al inventario anterior".
+
+**T-USR-18 — Colisión de identificador con otro código: fila rechazada.** RF-USR-14 · A · R-JVM ·
+**PENDIENTE**
+- Pasos: con una señal `id-042` de código `SR-01` en el inventario, cargar un `inventario.csv` con una
+  fila `id-042, SP-26, ...` (mismo identificador, código distinto).
+- Esperado: esa fila se rechaza como error de fila ("identificador ya existe con otro código"); la
+  señal `id-042` sigue con código `SR-01`, sin sobrescribir.
+- Fuente del esperado: precisión de Diego (§8.2): "identificador existente con otro código de señal →
+  error de esa fila, no se sobrescribe".
+
+**T-USR-19 — Lista blanca de bytes transmitidos.** RF-USR-15 · A · Bash/grep sobre el código fuente de
+la app · **PENDIENTE**
+- Pasos: `grep -E "#L,|#S,|#F,|#ST,|#FT,|#SC,|#SN,|#P,|#K#|#KC#"` sobre el árbol fuente de la app de
+  usuario; por separado, listar todo literal de trama enviado y comprobar que está en
+  `{"#V#", "#GC#", "#GN#", "1", "2", "3", "4", "5", "6"}`.
+- Esperado: cero coincidencias del primer `grep`; el segundo listado no tiene ningún elemento fuera del
+  conjunto, y cero apariciones de `"e"`.
+- Fuente del esperado: `PROTOCOLO-V3.6.md` §3, columna "Requiere admin" (exactamente las tramas que
+  exigen `#L`); SPEC r2 RF-USR-15.
+
+**T-USR-20 — Ciclo completo sin red.** RF-USR-15 · A · R-JVM (con toda E/S de red deshabilitada) ·
+**PENDIENTE**
+- Pasos: con el entorno de prueba sin red, completar los dos modos (medir, guardar, exportar,
+  importar inventario) contra `EquipoSimulado` y ficheros locales.
+- Esperado: los dos ciclos completos, sin ninguna llamada de red intentada.
+- Fuente del esperado: SPEC-REG `:588` (RF-REG-23, "todo funciona sin red").
+
+**T-USR-21 — Columnas del CSV exportado, con L-23 en cada fila.** RF-USR-06, RF-USR-11 · A · R-JVM ·
+**PENDIENTE**
+- Pasos: exportar una medida de "Medir y exportar" y otra de "Señal a señal"; leer las columnas de
+  cada fila de `medidas.csv`.
+- Esperado: **cada fila**, de los dos modos, lleva `serie_equipo`, `serie_declarada`, `mac_equipo`,
+  `fecha_calibracion` y `vencimiento_calibracion` (L-23: la calibración vence al año, y la fecha y la
+  serie van en todo registro exportado); las de "Señal a señal" llevan además `valor_umbral`,
+  `origen_umbral`, `pct_vs_umbral`, `pct_vs_anterior`, `cumple`.
+- Fuente del esperado: `CLAUDE.md` §5 (L-23, "la fecha de vencimiento va en el acta, en el informe y
+  en todo registro exportado, junto con la serie y la MAC"); SPEC r2 RF-USR-11, RF-USR-13.
 
 ### 8.1 Requisito → pruebas
 
 | Requisito | Pruebas |
 | :--- | :--- |
-| RF-USR-01 | T-USR-01 |
-| RF-USR-02 | T-USR-02 |
-| RF-USR-03 | T-USR-03 |
-| RF-USR-04 | T-USR-04 |
-| RF-USR-05 | T-USR-05 |
-| RF-USR-06 | T-USR-06 |
-| RF-USR-07 | T-USR-07 |
+| RF-USR-01 | T-USR-01, T-USR-02 |
+| RF-USR-02 | T-USR-03 |
+| RF-USR-03 | T-USR-04 |
+| RF-USR-04 | T-USR-06 |
+| RF-USR-05 | T-USR-07 |
+| RF-USR-06 | T-USR-07, T-USR-21 |
+| RF-USR-07 | T-USR-05 |
 | RF-USR-08 | T-USR-08 |
 | RF-USR-09 | T-USR-09 |
 | RF-USR-10 | T-USR-10 |
-| RF-USR-11 | T-USR-11 |
+| RF-USR-11 | T-USR-11, T-USR-21 |
 | RF-USR-12 | T-USR-12 |
+| RF-USR-13 | T-USR-13, T-USR-14, T-USR-15, T-USR-17, T-USR-21 |
+| RF-USR-14 | T-USR-16, T-USR-17, T-USR-18 |
+| RF-USR-15 | T-USR-19, T-USR-20 |
+
+### 8.2 Precisiones de Diego, 21-sep-2026, sin registrar en `DECISIONES-Diego-2026-09-19.md`
+
+Transcritas aquí para que los valores esperados de §8 tengan fuente citable mientras no se registran
+formalmente (pendiente para el agente principal, notas 11 a 15):
+
+- **Nota 11** (disparos, números, estado): "leído 3 veces promedio"; formato de NO CUMPLE con números,
+  ejemplo `Mínimo Manual 2024: 325 · Leído: 160 · 49 % → −51 %` y con instalación
+  `Instalación 2024: 310 · umbral 80 % = 248 · Leído 160 → 65 % → −35 %`; "el ESTADO... no es parte del
+  indicador ni del cumple/no cumple ni da multa"; histórico con instalación 310, medidas 240 (77 %,
+  −23 %), 200 (65 %, −17 %), 160 (52 %, −20 %).
+- **Nota 12** (inventario): "una señal tiene identificador único; si la tumban y reponen otra... es
+  OTRA señal con otras medidas, pero la vieja no puede desaparecer del inventario, y el inventario no
+  debe crecer sin fin".
+- **Nota 13** (carga CSV): "tolerante con lo que produce Excel"; formato único `inventario.csv` para
+  exportar e importar; "con el proyecto vacío... sale sólo con la fila de encabezados: esa es la
+  plantilla"; mensajes de error con fila, columna, valor y motivo en español.
+- **Nota 14** (append-only): "las medidas son de sólo añadir... una señal ausente del fichero NO se
+  borra"; vista previa "se añaden N, se corrigen M, K con error" → Confirmar/Cancelar; "deshacer la
+  última carga: vuelve exactamente al inventario anterior"; identificador con otro código = error de
+  fila, no sobrescribe.
+- **Nota 15** (retiro en bloque): columna `estado` admite `A`/`R`; "R" retira en bloque (100 de 1500);
+  "retirar = marcar RETIRADA, nunca borrar señal ni medidas"; vista previa cuenta también "se retiran
+  N"; deshacer revierte también los retiros; ausente del fichero sigue igual.
+
+Comando de verificación de §8, ejecutado en este trabajo (21-sep-2026):
+
+```
+python3 -c "
+import csv
+with open('08_Senales/senales.csv', encoding='utf-8') as f:
+    rows = list(csv.DictReader(f))
+print('filas', len(rows))
+print('familias', len(set(r['familia'] for r in rows)))
+print('codigo contiene SI', sum(1 for r in rows if 'si' in r['codigo'].lower()))
+"
+```
+Salida: `filas 376`, `familias 15`, `codigo contiene SI 103`.

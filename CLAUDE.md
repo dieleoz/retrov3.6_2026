@@ -47,7 +47,8 @@ En un V3 de 2020 `#V#`, `e` y `6` miden: se avisa antes. Se identifica por micro
 ## 5. Calibración por equipo
 
 L-23: campaña, ajuste, coeficientes, fecha y acta son de **cada equipo**, atados a serie y MAC
-(`05_Documentacion/SPEC-Calibracion-V3.6.md:237`). La serie se lee con `#GN#`. `#SC` sólo tras aceptar
+(`05_Documentacion/SPEC-Calibracion-V3.6.md:237`). La serie se lee con `#GN#` (en la app de usuario,
+si falta, la teclea el operador: SERIE-USR). `#SC` sólo tras aceptar
 el acta; vence al año. El contrato `05_Documentacion/PROTOCOLO-V3.6.md` manda sobre firmware y app
 (`:7-8`). Una dispensa que no esté en `06_Calibracion/<equipo>/DECISIONES-Diego-*.md` no existe.
 
@@ -84,6 +85,7 @@ El principal orquesta; los subagentes ejecutan con encargos acotados y datos par
 desmentir**. Arquitecto y QA, adversarios y con alcances disjuntos. Todo hallazgo Alto se reabre en el
 código. **Dos subagentes nunca escriben en el mismo árbol a la vez** (en paralelo, cada uno en su
 worktree y con rama propia). El principal también se equivoca: gana el código, no el contexto.
+Modelos: opus sólo para `arquitecto-iot`; el resto sonnet o haiku; Fable, sólo si Diego lo autoriza.
 
 ## 10. Documentos
 

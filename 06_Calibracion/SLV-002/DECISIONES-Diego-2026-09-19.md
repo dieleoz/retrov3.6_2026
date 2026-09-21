@@ -38,6 +38,7 @@ registrada, y no en una casilla del operador (P11 §3, QA-3612).
 | **USR-ALCANCE** | App de usuario: sólo firmware V3.6; informe por señal (nota 8) | 21-sep-2026 | nota 8 |
 | **UMBRAL-LEY** | Umbral de cumplimiento: el que fije la norma (nota 9). Cierra D-9 | 21-sep-2026 | nota 9 |
 | **USR-MODOS** | App de usuario: medir y exportar; señal a señal, opcional (nota 10) | 21-sep-2026 | nota 10 |
+| **USR-DETALLE** | App de usuario: indicador, estado e inventario (nota 11) | 21-sep-2026 | nota 11 |
 
 Notas de las filas del 21-sep-2026:
 
@@ -95,3 +96,12 @@ Notas de las filas del 21-sep-2026:
     "como no se tiene la medida inicial, la carga por defecto con la que indique la norma [...] ya sería
     si quiere modificar la medida inicial"; "debe tener dos funciones [...] quiero medir y exportar, ya
     miro yo en Excel [...] no necesito que señal por señal y son 1000 me tengas escribiendo en la app".
+11. **USR-DETALLE.** (a) El "no cumple" con números: "valor mínimo del manual 325, valor leído 160 =
+    −50 %"; "valor inicial de instalación 2024: 310, valor leído 3 veces promedio 160 = −35 % no cumple"
+    (% = leído / umbral − 1; umbral = mínimo del Manual o 80 % de instalación). (b) El estado (mal
+    instalada, sucia, hay que pintar) "es para mantenimiento y no es tema de indicador y no multa".
+    (c) Una señal repuesta es otra señal en el mismo punto; la vieja no desaparece del inventario:
+    queda RETIRADA; retiro en bloque con R en el CSV. (d) Inventario por CSV: el mismo fichero se
+    exporta, se edita y se carga; si el operador se equivoca en un ";" o "," la app lo acepta o dice
+    dónde y por qué. (e) Cargar un inventario nunca toca las medidas; vista previa y deshacer.
+    (f) El histórico es la curva: instalación, medida, siguiente medida.
