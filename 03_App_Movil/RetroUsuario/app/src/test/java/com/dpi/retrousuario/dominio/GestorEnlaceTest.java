@@ -71,8 +71,9 @@ public class GestorEnlaceTest {
         assertEquals(GestorEnlace.Decision.CONECTAR_NUEVO, GestorEnlace.decidir(null, false, MAC_A));
     }
 
-    // --- Arq ALTO, segunda parte (sobre 0.3.2): GestorEnlace.debeReintentarConexionNueva. Las 4
-    // combinaciones de la tabla de verdad, cada una una entrada distinta (sin B-2 en éstas).
+    // --- Arq ALTO (05_Documentacion/REVISIONES-Apps-V3.6.md:34-35), segunda parte: se reutiliza un
+    // socket muerto -> GestorEnlace.debeReintentarConexionNueva. Las 4 combinaciones de la tabla de
+    // verdad, cada una una entrada distinta (sin B-2 en éstas).
     // debeReintentarConexionNueva no existe en 385fc92 ("cannot find symbol" si se copiara este
     // fichero solo contra ese commit; la condición pide explícitamente no usar eso como "rojo").
     // Demostración real: reutilizadoYSinRespuestaReintenta() se corrió primero invertida

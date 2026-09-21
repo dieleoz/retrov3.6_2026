@@ -12,7 +12,8 @@ import static org.junit.Assert.assertTrue;
 /**
  * T-USR-01 (TDD-V3.6.md:1794-1805): detección sólo V3.6, nunca 'e', nunca otro firmware.
  * Fuente del esperado: PROTOCOLO-V3.6.md:42 (formato de "#V#"); SPEC-App-Usuario-V3.6.md r4,
- * RF-USR-01; decisión USR-ALCANCE.
+ * RF-USR-01; decisión USR-ALCANCE. Las aserciones de {@code sinRespuesta()} son arq ALTO
+ * (`05_Documentacion/REVISIONES-Apps-V3.6.md:34-35`).
  */
 public class DetectorEquipoTest {
 

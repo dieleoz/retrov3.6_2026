@@ -6,7 +6,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Arq ALTO (sobre 0.3.2): antes, {@code EnlaceBluetooth.vivo()} delegaba entero en
+ * Arq ALTO (`05_Documentacion/REVISIONES-Apps-V3.6.md:34-35`: "`vivo()` = `socket.isConnected()`
+ * no detecta un equipo caído; se reutiliza un socket muerto y un V3.6 sale 'no compatible' en
+ * bucle"): antes, {@code EnlaceBluetooth.vivo()} delegaba entero en
  * {@code socket.isConnected()} (`EnlaceBluetooth.java:69-71` de 385fc92), que Android sólo pone a
  * {@code false} cuando la app llama {@code close()} — si el equipo se cae, el hilo lector traga la
  * {@code IOException} (`EnlaceBluetooth.java:82-84` de 385fc92) y el socket sigue "conectado" para
