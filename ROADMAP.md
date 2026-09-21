@@ -1,10 +1,12 @@
 # ROADMAP — V3.6: qué se hace y en qué orden
 
-**Actualizado:** 19-sep-2026, ~17:15 (hora de Diego; ver "Contradicciones abiertas" sobre el reloj).
+**Actualizado:** 21-sep-2026, por la mañana. Entre la noche del 19 y hoy no se hizo nada (Diego).
 Lo que no está aquí no está en ejecución. **SLV-002 está calibrado sólo en los códigos 1 y 2**, con
-acta aceptada a las 12:23:26 y vencimiento el 2027-09-19. **El banco de patrones está a medias** (15:10:
-tipo I completo, blanco 5/16, amarillo 1/24) y los códigos 8, b y 5 siguen con la curva de fábrica.
-**No hay APK entregable hoy:** la 3.6.15 no se entregó y la 3.6.16 está en desarrollo.
+acta aceptada a las 12:23:26 y vencimiento el 2027-09-19. **El banco representativo está completo**
+(ZIP de soporte de las 18:11, md5 `79b23590…`, en `06_Calibracion/SLV-002/campanas/`) y la curva del 8
+y la b está calculada (`INFORME-Ajuste-SLV-002-20260919-1811.md`); **los dos siguen sin escribir**.
+**No hay APK entregable:** la 3.6.17 está rechazada y de la rc3 a la rc6 nada tiene revisión. **El
+HONOR de Coviandina lleva la rc3, no la 3.6.17** (ver `RETOMAR.md`).
 Procedimiento paso a paso: [`RUNBOOK.md`](RUNBOOK.md). Reglas permanentes del repositorio:
 [`CLAUDE.md`](CLAUDE.md), escrito el 19-sep-2026 por la noche. **Hasta entonces no existía**, y toda
 sesión abierta aquí trabajaba con las reglas globales de la línea V5, que es otro equipo y otra línea.
@@ -19,7 +21,7 @@ interventoría.
 **Por equipo, nunca por modelo (L-23).** Campaña, ajuste, coeficientes, fecha y acta son de **cada
 equipo físico**. Entre equipos se reutilizan el catálogo de patrones, el método, el firmware y la app.
 
-## DÓNDE QUEDAMOS — 19-sep-2026, ~17:15
+## DÓNDE QUEDAMOS — 19-sep-2026, ~17:15 (histórico; el estado vigente está en `RETOMAR.md`)
 
 ### SLV-002 (Coviandina, Concesionaria Vial Andina; MAC 00:21:13:05:19:3B)
 
@@ -89,23 +91,22 @@ Todas en [`06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md`](06_Calibracio
 | [`05_Documentacion/SPEC-Registro-Indicador-Interventoria.md`](05_Documentacion/SPEC-Registro-Indicador-Interventoria.md) | Registro de medidas periódicas e indicador E11 |
 | [`08_Senales/CATALOGO-Senales-Manual-2024.md`](08_Senales/CATALOGO-Senales-Manual-2024.md) | 376 señales verticales del Manual 2024 |
 
-## AHORA — en este orden
+## AHORA — en este orden (21-sep-2026)
 
 Ningún paso empieza sin cerrar el anterior. Mientras tanto **no se escribe nada en SLV-002**.
 
 | # | Paso | Quién | Sale | Estado |
 | :---: | :--- | :--- | :--- | :--- |
-| 1 | **App 3.6.16** | Subagente de desarrollo | APK atado a un commit, md5, tests en verde | **En curso** |
-| 2 | **Arquitecto y QA** de la 3.6.16 | Subagentes, modelo capaz | Veredictos escritos; cierre de QA-3615-01 a 03 y de las condiciones de P14 | Tras 1 |
-| 3 | **Entrega a Diego** | Principal | APK con los dos vistos buenos | Tras 2 |
-| 4 | **Grabar la serie `SLV-002-2026`** con la 3.6.16 ("Cambiar serie": `#SN`, `#GN`, `RENOMBRA`) | Diego | Tramas en el ZIP | Tras 3 |
-| 5 | **Diego mide lo que queda del banco**: 8, b y 5 (y 3, 4, 6 si procede); repite en "preciso" los siete tipo I de TIPO-I-REPETIR; controles al inicio y al final | Diego | ZIP en `06_Calibracion/SLV-002/campanas/` con su huella | Tras 4 |
-| 6 | **"Calibrar todo"**: 8 → b → 5 (y 3, 4, 6 si procede), un acta aceptada por código; re-medidas en "preciso" | Diego con la app | Códigos escritos, relectura, `#E` y re-medida | Tras 5 |
-| 7 | **Actas** aceptadas; `#SC` sólo tras aceptar | Diego | Actas en `06_Calibracion/SLV-002/` | Tras 6. Cierra P8 |
-| 8 | **ZIP de soporte** (completo, con tramas) al repositorio con su huella | Diego y principal | ZIP + `HUELLAS.txt` | Tras 7 |
+| 1 | **Análisis rc6 sobre rc3 en el HONOR**: conserva o no la campaña, cambios en el camino del 8 y la b, código sin revisar, campaña de la mañana que la rc3 no ve, cola COMPLETO | Subagente, sólo lectura | Informe con cambios al procedimiento | **En curso** |
+| 2 | **Cerrar la app corta** "RTV Calibra": recompilar sobre árbol limpio, pruebas en rojo, RF-COV-09 | Subagente, worktree en `rtv-1.0` | Commits, APK con md5 y `aapt` | **En curso** |
+| 3 | Elegir teléfono y versión; corregir `PROCEDIMIENTO-Escribir-8-y-b.md` | Principal y Diego | Procedimiento al día | Tras 1 |
+| 4 | **Arquitecto y QA** de la versión elegida | Subagentes, modelo capaz | Dos veredictos escritos | Tras 3 |
+| 5 | **Calibrar el 8** y aceptar su acta; **después la b**. Recta anclada en oscuro; sin ICSP | Diego con la app | Códigos escritos, relectura, re-medida | Tras 4 |
+| 6 | **Grabar la serie `SLV-002-2026`** | Diego | Tramas en el ZIP | Tras 5 |
+| 7 | **ZIP de soporte** al repositorio con su huella | Diego y principal | ZIP + `HUELLAS.txt` | Tras 6. Cierra P8 para 8 y b |
 
-Los códigos 1 y 2 no se reescriben (la app no lo permite: `NO_REESCRIBIR`). Se revisan con el banco,
-y un acta nueva sólo sustituye a la de las 12:23 si Diego la acepta.
+Los códigos 1 y 2 no se reescriben (`NO_REESCRIBIR`). Los códigos 3 y 5 no se arreglan midiendo:
+su dato está invertido (informe de las 18:11).
 
 ## Puertas P1-P12
 

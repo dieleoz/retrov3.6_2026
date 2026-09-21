@@ -19,3 +19,13 @@ Estado intermedio: codigo 1 escrito sin re-medida; serie SLV-02 por error. Copia
 campana_SLV-002_20260919_151045.zip
 md5    f04fc0145aeafe951b4898607f4082da
 App 3.6.11. Banco en curso: tipo I 20/20, blanco 5/16, amarillo 1/24; resto pendiente. #V# = CAL mascara 0003 y #GC 2026-09-19: primera confirmacion en campo de que los codigos 1 y 2 persisten (T-C41).
+
+soporte_SLV-002_20260919_181120.zip
+md5    79b23590c3a6b1877d55b5c4818b93ce
+sha256 e941c47d122e63c97dfdfca23a178c2be39c55e45f732ccc03e734b51b08d08c
+ZIP de soporte del banco representativo (80 pasos HECHO), base del INFORME-Ajuste-SLV-002-20260919-1811.md. Medido en el Samsung SM-S918B: tramas con 3.6.11, 3.6.16 y 3.6.17. Copiado de 07 pruebas/190920261812/ el 21-sep-2026 (hasta entonces solo estaba fuera del repositorio).
+
+../tramas/rtv36_20260919_191255_HONOR.txt
+md5    fce014de4528fc9be88f1e0c1e6b4035
+sha256 15fa6ca4e483a31a553c79d0bc639c8362ed5580b9bfac4d3e72c43d905d2f7d
+Registro del HONOR ABR-LX3 con la app 1.0.0-rc3 (10002), NO la 3.6.17. Campana abierta con 0 series; importa el ZIP de las 18:11 en una campana de cola COMPLETO (129 series, 69 pasos hechos, quedan 64). Pruebas del equipo NO APTO (coherencia y repetibilidad). Bateria n = 0 bloquea escrituras; #L enviado, previsualizacion del 8 con recta anclada, #Q al final. No se envio #S: nada escrito. Copiado de Descargas el 21-sep-2026.

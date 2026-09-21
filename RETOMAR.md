@@ -1,57 +1,86 @@
 # RETOMAR — dónde se quedó el trabajo
 
-**Puesto al día:** 19-sep-2026, ~17:15 (hora de Diego; el reloj de la máquina y los commits van ~1 h
-30 min por detrás, ver `ROADMAP.md` → "Contradicciones abiertas"). Repositorio
-`D:\IT\P_RetroVertical_V3.6` (remoto `github.com/dieleoz/retrov3.6_2026`). Detalle en `ROADMAP.md` →
-"DÓNDE QUEDAMOS" y "AHORA"; procedimiento en `RUNBOOK.md`; **reglas permanentes en `CLAUDE.md`**
-(escrito la noche del 19-sep-2026: antes no existía y regían las reglas globales del V5).
+**Puesto al día:** 21-sep-2026, por la mañana. Entre la noche del 19-sep y hoy **no se hizo nada**
+(Diego): no se midió, no se grabó y no hay ZIP fuera del repositorio. Repositorio
+`D:\IT\P_RetroVertical_V3.6` (remoto `github.com/dieleoz/retrov3.6_2026`). Reglas en `CLAUDE.md`;
+orden de trabajo en `ROADMAP.md`; procedimiento del 8 y la b en
+`06_Calibracion/SLV-002/PROCEDIMIENTO-Escribir-8-y-b.md`.
 
-## Estado
+**Alcance de este repositorio:** sólo Coviandina (SLV-002) y la app. Nordeste es de la V4.6
+(`D:\IT\P_RetroVertical_V4.6`); Ruta al Mar (SLV-028) tiene proyecto propio
+(`D:\IT\P_RetroVertical_RutaAlMar`). No se tocan desde aquí.
 
-- **SLV-002 (Coviandina)** lleva el firmware **3.6.2** (`.hex` md5 `9d5d5e39…`, `6a32ca3`), grabado a
-  las 10:37 (`78924ae`).
-- **Códigos 1 y 2 calibrados**, acta ACEPTADA a las 12:23:26 (ZIP de las 12:27, `afdd700`), vence el
-  2027-09-19. **`#V#` = CAL 0003 confirmado en campo a las 15:10** (T-C41; `8c8c7de`).
-- **Banco parcial de las 15:10** (app 3.6.11): tipo I 20/20, blanco 5/16, amarillo 1/24. Faltan los
-  patrones de 8, b y 5 (y de 3, 4, 6 si procede) y repetir en "preciso" P34, P37, P43, P44, P38, P39 y
-  P49 (TIPO-I-REPETIR).
-- **Serie decidida `SLV-002-2026`** (SERIE-2), **sin grabar**: se hará con la 3.6.16. El nombre
-  Bluetooth `COVIANDINA_SLV-002` no se cambia.
-- **Apps, al cierre de la noche del 19-sep:** 3.6.13 a 3.6.16 revisadas (arquitecto P12-P15; QA
-  correspondientes). La 3.6.15 y la 3.6.16 no se entregaron. **Se construyó la 3.6.17** (`f5145ed`,
-  APK md5 `fc016afa…`, 267 pruebas) y **las dos revisiones la han rechazado**: `REVISION-Arquitectura-P16-V3.6.md`
-  (NO APTA, ocho Altos) y `QA-App-3.6.17.md` (NO APTO, dos Altos nuevos). **La 3.6.17 no se entrega.**
-- **La 3.6.17 la sustituye la rama `rtv-1.0`**, que es la app única para V3.6, V4 original y V4.6:
-  `RTV-V1.0.0-rc2.apk`, md5 `fd44bd55…`, `versionCode` 10001, commit `a1fbc63`, 299 pruebas. Su
-  revisión (`REVISION-QA-RTV-1.0.0-rc2.md`, en el árbol de esa rama) la da **APTA CON CONDICIONES**,
-  con 15 condiciones de campo. Pendiente una **rc3** con la firma del acta y la columna de temperatura.
-- **Dato que conviene no olvidar:** de las 299 pruebas, **sólo 274 aseveran**; los 25 mudos son los
-  recorridos de extremo a extremo heredados de la 3.6.17. Un recuento en verde no es cobertura.
-- **Decisiones del día:** todas en `06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md`.
-- **Segundo equipo:** es un V4 (Autopistas del Nordeste, **SLV-003-2026**); va a la V4.6.
+## Estado (verificado con `git log` y los registros, 21-sep)
+
+- `main` en `fbfa43e`; rama `rtv-1.0` en `72d00cd`. Local y remoto coinciden.
+- **SLV-002** lleva el firmware **3.6.2**. **Códigos 1 y 2 calibrados**, acta ACEPTADA 12:23:26 del
+  19-sep (ZIP de las 12:27, hecha en el HONOR con la 3.6.9), vence 2027-09-19. Serie en EEPROM
+  `SLV-002`; `SLV-002-2026` decidida y **sin grabar** (se graba **después** de calibrar el 8 y la b).
+- **Banco representativo completo** (80 pasos HECHO), ZIP de soporte de las 18:11, md5 `79b23590…`,
+  **medido en el Samsung SM-S918B** (3.6.11 → 3.6.16 → 3.6.17). Desde hoy está en
+  `06_Calibracion/SLV-002/campanas/` con su huella. De él sale la curva:
+  `INFORME-Ajuste-SLV-002-20260919-1811.md`. La b ya no necesita la dispensa PA-24.
+- **Códigos 8 y b: sin escribir.** Nada se escribió en SLV-002 después del acta de las 12:23.
+
+### Dato que cambia el procedimiento: qué app lleva cada teléfono
+
+| Teléfono | Última app vista | Evidencia |
+| :--- | :--- | :--- |
+| **HONOR ABR-LX3** (el de Coviandina) | **`1.0.0-rc3` (10002)**, **no** la 3.6.17 | `06_Calibracion/SLV-002/tramas/rtv36_20260919_191255_HONOR.txt`, md5 `fce014de…` |
+| Samsung SM-S918B | 3.6.17 a las 16:40; `1.0.0-rc3` a las 18:32 (con otro equipo); rc5 después, según Diego | ZIP de las 18:11; `Descargas/rtv36_20260919_183221.txt` |
+
+Lo que dice el registro del HONOR de las 19:12, con la rc3:
+
+- abrió la campaña de SLV-002 **con 0 series**: la campaña de la mañana, la del acta, **no la ve**;
+- importó el ZIP de las 18:11 en una campaña de cola **COMPLETO** (129 series, 69 pasos hechos,
+  "quedan 64 patrones"): la trampa del ZIP representativo dentro de una campaña completa;
+- pruebas del equipo **NO APTO** (coherencia de fórmulas y repetibilidad de `e`), sin explicar aún;
+- batería con n = 0: escrituras bloqueadas. Se envió `#L`, se previsualizó el 8 con recta anclada y
+  se cerró con `#Q`. **No se envió `#S`.**
+
+Consecuencias: el HONOR ya no puede volver a la 3.6.17 sin desinstalar, y desinstalar borra la
+campaña. La rc3 escribe en el acta `firmado por Firmado por "…"` (arreglado en la rc4, `23c5fef`).
+**De la rc3 a la rc6 ninguna tiene revisión de arquitecto ni de QA**; la última revisada es la rc2
+(`REVISION-QA-RTV-1.0.0-rc2.md`, en la rama). La recomendación del procedimiento, "quédese con la
+3.6.17", **ya no aplica a ese teléfono**: está en revisión qué hacer.
+
+### Apps
+
+- **RTV 1.0.0-rc6** (`fd37cc7`, 10005, 345 pruebas): ZIP de otro banco, guarda por familia y ZIP de
+  soporte al terminar el banco. Sin arquitecto ni QA.
+- **App corta "RTV Calibra"** (`72d00cd`), interrumpida al apagar: 358 pruebas, 9 aseveran un
+  requisito. APK aparte (`applicationId` propio). **No entregable**: sus APK se compilaron sobre
+  código sin guardar, dos pruebas nunca se han visto en rojo, le faltan arquitecto y QA.
+- La 3.6.17 fue rechazada por arquitecto (P16) y QA; no se entrega.
+
+## En curso (21-sep)
+
+1. **Análisis rc6 sobre rc3 en el HONOR** (subagente, sólo lectura): si la rc6 conserva la campaña
+   al instalarse encima, qué cambia en el camino del 8 y la b, qué código sin revisar lo toca, por
+   qué la rc3 no ve la campaña de la mañana y qué hacer con la cola COMPLETO. **Diego no calibra
+   hasta tener esto.**
+2. **Cerrar la app corta** (subagente, worktree sobre `rtv-1.0`): recompilar sobre árbol limpio, ver
+   en rojo las dos pruebas pendientes, prueba propia de RF-COV-09.
 
 ## Lo siguiente
 
-1. **Arreglar los diez Altos** de `REVISION-Arquitectura-P16-V3.6.md` y `QA-App-3.6.17.md` sobre la rama `rtv-1.0`, no sobre `main`.
-2. **rc3**: firma del acta (`Firmado por "nombre", ITVIAL SAS, fecha`) y columna de temperatura por disparo. Arquitecto y QA otra vez: sin los dos vistos buenos no se entrega.
-3. Entregar a Diego; **grabar `SLV-002-2026`** con "Cambiar serie".
-4. **Diego mide lo que queda del banco** (8, b, 5; 3, 4, 6 si procede; tipo I en "preciso").
-5. **"Calibrar todo"**: 8 → b → 5, un acta aceptada por código; `#SC` sólo tras aceptar.
-6. **ZIP de soporte** al repositorio con su huella en `HUELLAS.txt`.
+1. Con el análisis: decidir teléfono y versión (rc4, rc6 o app corta) y corregir el procedimiento.
+2. Arquitecto y QA de la versión elegida. Sin los dos vistos buenos no se entrega.
+3. Diego calibra: **el 8 y su acta; la b después**, con recta anclada en oscuro. Cambiar batería si
+   la orden 9 da n = 0. Si la re-medida falla con x a 0,5-3 % y la R sale bien, es el umbral
+   (procedimiento §5.1), no la curva.
+4. Grabar la serie `SLV-002-2026`, después de calibrar.
+5. ZIP de soporte al repositorio con su huella.
 
-Después: informe PDF y registros (P12), app de producción (P10, P11) y la V4.6.
+Los códigos 3 y 5 no se arreglan midiendo: su dato está invertido (ver informe de las 18:11).
 
 ## Prompt para retomar
 
 ```
-Retomamos la V3.6 del Retrorreflectómetro Vertical. Lee D:\IT\P_RetroVertical_V3.6\CLAUDE.md (reglas),
-RETOMAR.md y ROADMAP.md ("DÓNDE QUEDAMOS", "AHORA", "Contradicciones abiertas") y
-06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md. SLV-002 (Coviandina) lleva el firmware 3.6.2;
-códigos 1 y 2 calibrados (acta 12:23, afdd700, vence 2027-09-19; CAL 0003 visto a las 15:10, 8c8c7de).
-Banco parcial de las 15:10: tipo I 20/20, blanco 5/16, amarillo 1/24. Serie decidida SLV-002-2026,
-sin grabar; el nombre Bluetooth no cambia. La 3.6.15 no se entregó; la 3.6.16 está en desarrollo en
-03_App_Movil/. Orden: 3.6.16 -> arquitecto y QA -> entregar -> grabar serie -> Diego mide lo que queda
-(8, b, 5) -> "Calibrar todo" -> actas -> ZIP de soporte. A Diego sólo se le entrega una APK con el visto
-bueno del arquitecto y de QA. Compruébalo todo con git log antes de citarlo. Tú orquestas con
-subagentes; los repos V3.6 y V4.6 son independientes del V5, y la calibración es por equipo.
+Retomamos la V3.6 del Retrorreflectómetro Vertical. Repositorio D:\IT\P_RetroVertical_V3.6
+(github.com/dieleoz/retrov3.6_2026). Lee CLAUDE.md, RETOMAR.md y ROADMAP.md, y comprueba con git log
+antes de citar. Alcance: sólo Coviandina (SLV-002) y la app. SLV-002: firmware 3.6.2, códigos 1 y 2
+con acta aceptada (vence 2027-09-19); 8 y b sin escribir; banco completo en el ZIP de las 18:11
+(md5 79b23590…). El HONOR de Coviandina lleva la rc3 (10002), no la 3.6.17: ver la tabla de
+teléfonos de RETOMAR. A Diego sólo se le entrega una APK con arquitecto y QA escritos.
 ```

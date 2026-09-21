@@ -3,3 +3,4 @@
 *.md5 -text
 *.zip binary
 06_Calibracion/cola_banco_*.csv -text
+06_Calibracion/*/tramas/*.txt -text
