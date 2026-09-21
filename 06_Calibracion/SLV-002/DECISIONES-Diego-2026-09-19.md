@@ -31,6 +31,7 @@ registrada, y no en una casilla del operador (P11 §3, QA-3612).
 | **TOMA-50** | La toma de un equipo no pasa de 50 tomas (nota 2) | 21-sep-2026 | nota 2 |
 | **VERIF-5-10** | Verificación final: 10 patrones re-medidos y su desviación (nota 3) | 21-sep-2026 | nota 3 |
 | **CERT-TITULO** | "Certificado de calibración", firmado por ITVIAL SAS (nota 4) | 21-sep-2026 | nota 4 |
+| **FECHA-EQUIPO** | Una sola fecha en el equipo: la del día en que se calibra (nota 5) | 21-sep-2026 | nota 5 |
 
 Notas de las filas del 21-sep-2026:
 
@@ -53,3 +54,10 @@ Notas de las filas del 21-sep-2026:
 4. **CERT-TITULO.** "Certificado de calibración", tal cual; firma ITVIAL SAS. Diego: "Certificado de
    calibración tal cual sí", "ITVIAL SAS firma". Sustituye la propuesta de RF-CAL-30 (P-CAL-02) y
    cierra D-15; la SPEC se corrige al escribir la de Calibra.
+5. **FECHA-EQUIPO.** `#SC` graba la fecha de la última calibración en la EEPROM (`PROTOCOLO-V3.6.md:51-52`);
+   el historial de año en año son los ZIP de cada calibración, que se archivan, y cargarlos es opcional.
+   Diego: "la fecha se guarda en el firmware, no? el equipo la captura así como el nombre"; "sería
+   sacar un .zip de calibración [...] y la cargo o no, optativo"; "a la fecha de hoy o de cuando se le
+   dé al botón calibrar, ese día se genera el acta y sale". Opción (b) de la revisión app-firmware.
+   ▸ Propuesta, sin confirmar: la re-medida tras escribir cada código se juzga como la verificación
+   (VERIF-5-10): error frente al certificado dentro de ±10 %, en lugar del criterio de s_rep.

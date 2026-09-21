@@ -1757,3 +1757,136 @@ APK, tramas en crudo). **AT-U05 y AT-U06 son encargos de medida**: su resultado 
 | RF-APP-U12 | T-U19, AT-U09 |
 | RF-APP-U13 | T-U20, AT-U10 |
 | RF-APP-U14 | Decisión de Diego; sin prueba |
+
+---
+
+## 8. App de usuario
+
+**Añadido 21-sep-2026. Ninguna de estas pruebas existe todavía.** Requisitos:
+[`SPEC-App-Usuario-V3.6.md`](SPEC-App-Usuario-V3.6.md) (RF-USR-01 a RF-USR-15). Ninguna ficha de esta
+sección sustituye a `T-C30` (§3, "App del cliente", operador real): esa sigue `PENDIENTE sin fecha`
+hasta que exista un operador con esta app delante de un equipo (R-09). El valor esperado de cada ficha
+viene de una fuente ajena al código de esta app —protocolo, firmware, la app legacy o una decisión
+escrita—, nunca de la salida de código todavía por escribir.
+
+**T-USR-01 — Detección sin `e`.** RF-USR-01 · JVM contra `EquipoSimulado` (F-36) y un simulador F-2020
+- Pasos: conectar contra F-36; conectar por separado contra un simulador F-2020 (sin `e`).
+- Esperado: contra F-36, la secuencia enviada es exactamente `#V#`, y nada más (responde en el primer
+  paso); contra F-2020, `#V#` (sin respuesta), `9`, `6` (responde), nunca `e`.
+- Fuente del esperado: orden vigente de `SPEC-V3.6.md:464` (RF-APP-03, tabla de pasos 1-4) y la regla
+  "nunca se envía `e` a un equipo no identificado" de `SPEC-V3.6.md:461-462`.
+
+**T-USR-02 — Mapa color × tipo, las 12 combinaciones.** RF-USR-02 · JVM contra `EquipoSimulado`
+- Pasos: para cada color (blanco, amarillo, verde, rojo, azul, naranja) × tipo (opaco, intenso),
+  seleccionar y pulsar Medir.
+- Esperado: opaco envía `7`,`8`,`a`,`b`,`c`,`d` en ese orden de color; intenso envía `1`-`6` en el
+  mismo orden.
+- Fuente del esperado: `SPEC-V3.6.md:496-500` (RF-APP-04, "tipo de lámina I → opaco (`7`,`8`,`a`-`d`);
+  tipos II a XI → intenso (`1`-`6`)").
+
+**T-USR-03 — Cero mostrado con leyenda.** RF-USR-03 · JVM contra `EquipoSimulado` forzado a `::0`
+- Pasos: medir un código cualquiera con el simulador devolviendo `::0`.
+- Esperado: la pantalla muestra "0 (saturado o sin señal)", no el dígito `0` solo.
+- Fuente del esperado: `ecuacionesCalibracion.c:49-54` (2020, el `0` no distingue saturación de "sin
+  señal") y `SPEC-V3.6.md:502-503` (RF-APP-05, el texto exacto de la leyenda).
+
+**T-USR-04 — Repetición y estadístico.** RF-USR-04 · JVM contra `EquipoSimulado` con lecturas fijadas
+- Pasos: fijar tres respuestas `::100`, `::110`, `::120` para el mismo código; medir tres veces.
+- Esperado: media 110, mínimo 100, máximo 120, n = 3, guardar habilitado sólo tras la tercera.
+- Fuente del esperado: aritmética elemental sobre los tres valores fijados por la prueba (no depende
+  del código de la app); el conteo de 3 disparos viene de la app legacy Ionic,
+  `medir.page.ts:54` (`medidasRealizar = 3`).
+
+**T-USR-05 — Calibración vencida.** RF-USR-05 · JVM contra `EquipoSimulado` con `#GC#` y reloj fijados
+- Pasos: `EquipoSimulado` responde `#GC,2025-09-18#`; reloj de la prueba en 2026-09-19.
+- Esperado: aviso "CALIBRACIÓN VENCIDA" visible; la medida no se bloquea.
+- Fuente del esperado: `SPEC-Calibracion-V3.6.md:863` (RF-CAL-42, vencimiento a un año de `#SC`/`#GC`)
+  y `SPEC-Registro-Indicador-Interventoria.md:568` (RF-REG-03, "avisa, no bloquea", PA-01 de Diego).
+
+**T-USR-06 — Sin calibración registrada.** RF-USR-05 · JVM contra `EquipoSimulado` con `#GC,NONE#`
+- Pasos: `EquipoSimulado` responde `#GC,NONE#`.
+- Esperado: aviso "SIN CALIBRACIÓN REGISTRADA"; la medida no se bloquea.
+- Fuente del esperado: `PROTOCOLO-V3.6.md:52` ("`#GC#` → `#GC,<fecha>#` o `#GC,NONE#`").
+
+**T-USR-07 — Serie ausente en la fila guardada.** RF-USR-06 · JVM contra `EquipoSimulado` con
+`#GN,NONE#`
+- Pasos: conectar, medir y guardar una fila con el simulador respondiendo `#GN,NONE#`.
+- Esperado: la fila guardada lleva el texto "SIN SERIE" en el campo de serie, no un campo vacío.
+- Fuente del esperado: `PROTOCOLO-V3.6.md:54` (`#GN#` → `#GN,<serie>#` o `#GN,NONE#`) y
+  `SPEC-Registro-Indicador-Interventoria.md:566` (RF-REG-01, ninguna visita exportada con el campo
+  vacío).
+
+**T-USR-08 — Guardado sin ubicación, rechazado.** RF-USR-07 · JVM (analizador puro, sin equipo)
+- Pasos: construir una medida sin campo de ubicación y llamar al guardado.
+- Esperado: el guardado se rechaza y señala el campo "ubicación" como causa.
+- Fuente del esperado: decisión de esta SPEC (`SPEC-App-Usuario-V3.6.md`, RF-USR-07); no hay fuente
+  externa adicional, se anota como decisión propia de este documento, no del código.
+
+**T-USR-09 — Fecha estable frente al idioma.** RF-USR-08 · JVM (analizador puro)
+- Pasos: formatear la misma medida con el `Locale` de la JVM en `es-CO` y en `en-US`.
+- Esperado: la cadena de fecha exportada es idéntica en los dos casos (ISO 8601 con zona).
+- Fuente del esperado: `ROADMAP-MEJORAS-App.md`, M-07 (defecto de `medicion.java:1562`,
+  `Date.toString()` "dependiente del idioma").
+
+**T-USR-10 — Guardar dos medidas no pisa la primera.** RF-USR-09 · JVM (analizador puro)
+- Pasos: guardar una medida con retrorreflectividad 150; guardar una segunda con 200.
+- Esperado: dos filas en el almacenamiento, con 150 y 200 respectivamente; ninguna en `0`.
+- Fuente del esperado: `SPEC-Registro-Indicador-Interventoria.md:490`, citando el defecto de
+  `medicion.java:1563,1565` ("tras guardar el campo queda en 0 y un segundo toque guarda un cero").
+
+**T-USR-11 — Exportación sin credenciales.** RF-USR-10 · Bash/grep sobre el código fuente de la app
+- Pasos: `grep -ri "password\|smtp\|contraseñ"` sobre el árbol fuente de la app de usuario.
+- Esperado: cero coincidencias.
+- Fuente del esperado: `ROADMAP-MEJORAS-App.md`, M-12 (defecto de `Enviarcorreo.java:54-55`,
+  "credencial SMTP en el fuente").
+
+**T-USR-12 — CSV con el código real, no el nombre.** RF-USR-10 · JVM (analizador puro)
+- Pasos: medir con color rojo, tipo intenso; exportar; leer la fila del CSV.
+- Esperado: la fila lleva `4` (el código enviado, RF-APP-04), no la palabra "Rojo".
+- Fuente del esperado: `SPEC-V3.6.md:496-500` (RF-APP-04) cruzado con el defecto ya documentado en
+  `SPEC-Registro-Indicador-Interventoria.md:498-499` ("se guarda el nombre, no el código").
+
+**T-USR-13 — Sin tramas de administración.** RF-USR-11 · Bash/grep sobre el código fuente de la app
+- Pasos: `grep -E "#L,|#S,|#F,|#ST,|#FT,|#P,|#KC#|#K#"` sobre el árbol fuente de la app de usuario.
+- Esperado: cero coincidencias.
+- Fuente del esperado: `PROTOCOLO-V3.6.md` §3, columna "Requiere admin" (líneas 29-45): son
+  exactamente las tramas que exigen sesión abierta con `#L`.
+
+**T-USR-14 — Nunca `e`.** RF-USR-12 · Bash/grep sobre el código fuente de la app
+- Pasos: revisar cada literal de trama de un byte enviado por la app de usuario.
+- Esperado: ninguno es `e` ni `E` como carácter suelto.
+- Fuente del esperado: `CLAUDE.md` §4 de este repositorio ("nunca se envía un byte cuyo efecto no se
+  conozca"; regla vigente sobre `e` con SLV-002).
+
+**T-USR-15 — Aviso de batería baja.** RF-USR-13 · JVM contra `EquipoSimulado` forzado a `n = 5`
+- Pasos: abrir la pantalla de medir; el simulador responde `:5:` a `9`.
+- Esperado: aviso de batería baja visible; la medida sigue disponible.
+- Fuente del esperado: `Bateria.java` de `rtv-1.0` (`git show rtv-1.0:.../Bateria.java:8-16`,
+  `AVISO_N = 19`, comentario "aviso con n < 19"), que a su vez cita `SPEC-Calibracion-V3.6.md` §12.8.
+
+**T-USR-16 — Aviso antes de medir en V3 2020.** RF-USR-14 · JVM contra un simulador F-2020
+- Pasos: detectar F-2020 (T-USR-01); observar si el aviso aparece antes o después de la primera sonda.
+- Esperado: el aviso ("el equipo va a disparar la luz y a pitar") aparece **antes** de la sonda `9`,
+  no después.
+- Fuente del esperado: `SPEC-V3.6.md:484-486` ("En un V3 de 2020, `#V#`, `e` y `6` disparan una
+  medida… Se avisa al usuario antes de empezar").
+
+### 8.1 Requisito → pruebas
+
+| Requisito | Pruebas |
+| :--- | :--- |
+| RF-USR-01 | T-USR-01 |
+| RF-USR-02 | T-USR-02 |
+| RF-USR-03 | T-USR-03 |
+| RF-USR-04 | T-USR-04 |
+| RF-USR-05 | T-USR-05, T-USR-06 |
+| RF-USR-06 | T-USR-07 |
+| RF-USR-07 | T-USR-08 |
+| RF-USR-08 | T-USR-09 |
+| RF-USR-09 | T-USR-10 |
+| RF-USR-10 | T-USR-11, T-USR-12 |
+| RF-USR-11 | T-USR-13 |
+| RF-USR-12 | T-USR-14 |
+| RF-USR-13 | T-USR-15 |
+| RF-USR-14 | T-USR-16 |
+| RF-USR-15 | Sin prueba propia: se cierra con `T-C30` (operador real), no antes |
