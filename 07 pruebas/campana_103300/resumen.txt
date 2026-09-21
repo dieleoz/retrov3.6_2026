@@ -1,0 +1,120 @@
+Campaña de calibración
+Equipo: serie SLV-002, MAC 00:21:13:05:19:3B
+Firmware: V3.6 2026-09-19 (3.6.1) DEF mascara 0000
+Fecha de exportación: 2026-09-19T10:33:00-0500
+
+Este ZIP es el único envío: lleva las series (campana.csv), las pruebas del equipo (pruebas.txt), todos los registros de tramas de la campaña (tramas/) y el diario.
+
+Equipo: serie SLV-002, MAC 00:21:13:05:19:3B
+Avance: blanco 8/8, amarillo 14/14, rojo 2/2, verde 4/4, azul 3/3, tipo I 20/20
+
+patron  cert  tipo color     estado     series  elegida  n   media x    s
+P1       762 XI   blanco    MEDIDO       1    S025     9   2960.9   6.74
+        S025 2026-09-19T10:15:54-0500 orient 0: n=9 (descartados 0) media 2960.9 s 6.74 -> OK, aceptada
+P2       414 IV   blanco    MEDIDO       1    S026     9   2058.6   6.67
+        S026 2026-09-19T10:16:35-0500 orient 0: n=9 (descartados 0) media 2058.6 s 6.67 -> OK, aceptada
+P3       378 IV   blanco    MEDIDO       1    S029     9   1674.0   4.06
+        S029 2026-09-19T10:18:12-0500 orient 0: n=9 (descartados 0) media 1674.0 s 4.06 -> OK, aceptada
+P4       828 XI   blanco    MEDIDO       1    S030     9   3315.8   7.53
+        S030 2026-09-19T10:18:41-0500 orient 0: n=9 (descartados 0) media 3315.8 s 7.53 -> OK, aceptada
+P5       740 XI   amarillo  MEDIDO       2    S024     9   2459.3   6.18
+        S023 2026-09-19T10:14:43-0500 orient 0: n=9 (descartados 0) media 2456.8 s 6.85 -> OK, aceptada
+        S024 2026-09-19T10:15:09-0500 orient 90: n=9 (descartados 0) media 2459.3 s 6.18 -> OK, aceptada
+P6       772 XI   blanco    MEDIDO       1    S031     9   3168.4   5.17
+        S031 2026-09-19T10:19:08-0500 orient 0: n=9 (descartados 0) media 3168.4 s 5.17 -> OK, aceptada
+P7       768 XI   blanco    MEDIDO       1    S032     9   3122.4   5.32
+        S032 2026-09-19T10:19:34-0500 orient 0: n=9 (descartados 0) media 3122.4 s 5.32 -> OK, aceptada
+P8       721 XI   amarillo  MEDIDO       1    S033     9   2532.9   5.80
+        S033 2026-09-19T10:20:19-0500 orient 0: n=9 (descartados 0) media 2532.9 s 5.80 -> OK, aceptada
+P9       705 XI   amarillo  MEDIDO       1    S034     9   2483.9   3.44
+        S034 2026-09-19T10:20:49-0500 orient 0: n=9 (descartados 0) media 2483.9 s 3.44 -> DUDOSO, aceptada; nota: Ok
+P10      680 XI   amarillo  MEDIDO       1    S035     9   2504.3   9.79
+        S035 2026-09-19T10:21:32-0500 orient 0: n=9 (descartados 0) media 2504.3 s 9.79 -> DUDOSO, aceptada; nota: Ok
+P11      194 IV   rojo      MEDIDO       1    S036     9   1722.9   4.62
+        S036 2026-09-19T10:22:39-0500 orient 0: n=9 (descartados 0) media 1722.9 s 4.62 -> OK, aceptada
+P12      227 IV   rojo      MEDIDO       1    S037     9   1761.9   8.13
+        S037 2026-09-19T10:23:05-0500 orient 0: n=9 (descartados 0) media 1761.9 s 8.13 -> OK, aceptada
+P13      168 XI   verde     MEDIDO       1    S038     9    830.9   1.69
+        S038 2026-09-19T10:23:30-0500 orient 0: n=9 (descartados 0) media 830.9 s 1.69 -> OK, aceptada
+P14      173 XI   verde     MEDIDO       1    S039     9    849.1   4.04
+        S039 2026-09-19T10:23:57-0500 orient 0: n=9 (descartados 0) media 849.1 s 4.04 -> OK, aceptada
+P15      164 XI   verde     MEDIDO       1    S040     9    843.2   5.45
+        S040 2026-09-19T10:24:22-0500 orient 0: n=9 (descartados 0) media 843.2 s 5.45 -> DUDOSO, aceptada; nota: Ok
+P16      170 XI   verde     MEDIDO       1    S041     9    846.7   3.67
+        S041 2026-09-19T10:24:54-0500 orient 0: n=9 (descartados 0) media 846.7 s 3.67 -> DUDOSO, aceptada; nota: Ok
+P17       83 XI   azul      MEDIDO       1    S042     9    828.4   5.13
+        S042 2026-09-19T10:25:24-0500 orient 0: n=9 (descartados 0) media 828.4 s 5.13 -> OK, aceptada
+P18       84 XI   azul      MEDIDO       1    S043     9    813.4   6.98
+        S043 2026-09-19T10:25:48-0500 orient 0: n=9 (descartados 0) media 813.4 s 6.98 -> OK, aceptada
+P19       85 XI   azul      MEDIDO       1    S044     9    823.6   3.71
+        S044 2026-09-19T10:26:11-0500 orient 0: n=9 (descartados 0) media 823.6 s 3.71 -> OK, aceptada
+P20      782 XI   amarillo  MEDIDO       1    S045     9   2787.7   8.03
+        S045 2026-09-19T10:26:36-0500 orient 0: n=9 (descartados 0) media 2787.7 s 8.03 -> OK, aceptada
+P21      375 IV   amarillo  MEDIDO       1    S046     9   1562.4   6.58
+        S046 2026-09-19T10:27:00-0500 orient 0: n=9 (descartados 0) media 1562.4 s 6.58 -> OK, aceptada
+P22      334 IV   amarillo  MEDIDO       1    S048     9   1497.0   6.20
+        S048 2026-09-19T10:28:39-0500 orient 0: n=9 (descartados 0) media 1497.0 s 6.20 -> OK, aceptada
+P23      714 XI   amarillo  MEDIDO       2    S050     9   2735.4   5.96
+        S049 2026-09-19T10:29:40-0500 orient 0: n=9 (descartados 0) media 2733.3 s 6.78 -> DUDOSO, no aceptada; nota: repetida
+        S050 2026-09-19T10:29:57-0500 orient 0: n=9 (descartados 0) media 2735.4 s 5.96 -> DUDOSO, aceptada; nota: Ok
+P24      593 IV   amarillo  MEDIDO       1    S047     9   1982.7   5.68
+        S047 2026-09-19T10:27:33-0500 orient 0: n=9 (descartados 0) media 1982.7 s 5.68 -> OK, aceptada
+P25      576 IX   amarillo  MEDIDO       1    S051     9   2157.4   5.41
+        S051 2026-09-19T10:30:31-0500 orient 0: n=9 (descartados 0) media 2157.4 s 5.41 -> OK, aceptada
+P26      583 IX   amarillo  MEDIDO       1    S052     9   2208.8   5.29
+        S052 2026-09-19T10:30:57-0500 orient 0: n=9 (descartados 0) media 2208.8 s 5.29 -> OK, aceptada
+P27      471 IX   blanco    MEDIDO       1    S027     9   2111.1   5.95
+        S027 2026-09-19T10:17:08-0500 orient 0: n=9 (descartados 0) media 2111.1 s 5.95 -> OK, aceptada
+P28      484 IX   blanco    MEDIDO       1    S028     9   2277.9   7.20
+        S028 2026-09-19T10:17:42-0500 orient 0: n=9 (descartados 0) media 2277.9 s 7.20 -> OK, aceptada
+P29      442 IV   amarillo  MEDIDO       1    S053     9   1677.0   4.77
+        S053 2026-09-19T10:31:21-0500 orient 0: n=9 (descartados 0) media 1677.0 s 4.77 -> OK, aceptada
+P30      448 IV   amarillo  MEDIDO       1    S054     9   1654.2   5.76
+        S054 2026-09-19T10:31:45-0500 orient 0: n=9 (descartados 0) media 1654.2 s 5.76 -> OK, aceptada
+P31      573 IX   amarillo  MEDIDO       1    S055     9   2085.8   3.53
+        S055 2026-09-19T10:32:08-0500 orient 0: n=9 (descartados 0) media 2085.8 s 3.53 -> OK, aceptada
+P32a       9 I    azul      MEDIDO       1    S009     9    630.9   4.48
+        S009 2026-09-19T10:05:10-0500 orient 0: n=9 (descartados 0) media 630.9 s 4.48 -> OK, aceptada
+P32b      68 I    naranja   MEDIDO       2    S056     9    802.8   6.92
+        S010 2026-09-19T10:05:53-0500 orient 0: n=0 (descartados 0) media NaN s NaN -> SIN_DATOS, no aceptada; nota: ninguna lectura válida
+        S056 2026-09-19T10:32:39-0500 orient 0: n=9 (descartados 0) media 802.8 s 6.92 -> OK, aceptada
+P33       72 I    naranja   MEDIDO       1    S011     9    849.8   6.12
+        S011 2026-09-19T10:07:43-0500 orient 0: n=9 (descartados 0) media 849.8 s 6.12 -> OK, aceptada
+P34       86 I    amarillo  MEDIDO       1    S001     9    958.3   8.05
+        S001 2026-09-19T09:57:03-0500 orient 0: n=9 (descartados 0) media 958.3 s 8.05 -> OK, aceptada
+P35       96 I    blanco    MEDIDO       1    S012     9   1114.7   4.92
+        S012 2026-09-19T10:08:20-0500 orient 0: n=9 (descartados 0) media 1114.7 s 4.92 -> OK, aceptada
+P36       10 I    azul      MEDIDO       1    S013     9    638.8   5.67
+        S013 2026-09-19T10:08:53-0500 orient 0: n=9 (descartados 0) media 638.8 s 5.67 -> OK, aceptada
+P37       82 I    amarillo  MEDIDO       2    S003     9    992.4   5.41
+        S002 2026-09-19T09:58:13-0500 orient 0: n=8 (descartados 1) media 991.9 s 3.76 -> DUDOSO, no aceptada; nota: repetida
+        S003 2026-09-19T09:58:49-0500 orient 0: n=9 (descartados 0) media 992.4 s 5.41 -> DUDOSO, aceptada; nota: Es papel de baja calidad
+P38       52 I    rojo      MEDIDO       1    S004     9    743.9   4.94
+        S004 2026-09-19T09:59:54-0500 orient 0: n=9 (descartados 0) media 743.9 s 4.94 -> OK, aceptada
+P39       46 I    rojo      MEDIDO       1    S005     9    734.3   4.09
+        S005 2026-09-19T10:00:31-0500 orient 0: n=9 (descartados 0) media 734.3 s 4.09 -> OK, aceptada
+P40        6 I    verde     MEDIDO       1    S014     9    624.7   4.06
+        S014 2026-09-19T10:09:27-0500 orient 0: n=9 (descartados 0) media 624.7 s 4.06 -> OK, aceptada
+P41       73 I    naranja   MEDIDO       1    S015     9    898.7   5.05
+        S015 2026-09-19T10:09:52-0500 orient 0: n=9 (descartados 0) media 898.7 s 5.05 -> OK, aceptada
+P42        7 I    azul      MEDIDO       1    S016     9    592.6   3.00
+        S016 2026-09-19T10:10:22-0500 orient 0: n=9 (descartados 0) media 592.6 s 3.00 -> OK, aceptada
+P43      122 I    amarillo  MEDIDO       1    S006     9   1151.3   4.66
+        S006 2026-09-19T10:01:46-0500 orient 0: n=9 (descartados 0) media 1151.3 s 4.66 -> OK, aceptada
+P44       64 I    amarillo  MEDIDO       1    S007     9    898.6   5.29
+        S007 2026-09-19T10:02:27-0500 orient 0: n=9 (descartados 0) media 898.6 s 5.29 -> OK, aceptada
+P45        7 I    verde     MEDIDO       1    S017     9    615.6   5.13
+        S017 2026-09-19T10:10:54-0500 orient 0: n=9 (descartados 0) media 615.6 s 5.13 -> OK, aceptada
+P46        9 I    azul      MEDIDO       1    S018     9    644.3   5.50
+        S018 2026-09-19T10:11:20-0500 orient 0: n=9 (descartados 0) media 644.3 s 5.50 -> DUDOSO, aceptada; nota: Son papeles de mala calidad
+P47        9 I    azul      MEDIDO       1    S019     9    606.3   2.60
+        S019 2026-09-19T10:12:08-0500 orient 0: n=9 (descartados 0) media 606.3 s 2.60 -> OK, aceptada
+P48        9 I    azul      MEDIDO       1    S020     9    605.4   5.15
+        S020 2026-09-19T10:12:35-0500 orient 0: n=9 (descartados 0) media 605.4 s 5.15 -> OK, aceptada
+P49       81 I    rojo      MEDIDO       1    S008     9    797.2   6.51
+        S008 2026-09-19T10:03:52-0500 orient 0: n=9 (descartados 0) media 797.2 s 6.51 -> OK, aceptada
+P50       71 I    naranja   MEDIDO       2    S022     9    907.1   4.88
+        S021 2026-09-19T10:13:02-0500 orient 0: n=9 (descartados 0) media 898.7 s 7.84 -> DUDOSO, no aceptada; nota: repetida
+        S022 2026-09-19T10:13:20-0500 orient 0: n=9 (descartados 0) media 907.1 s 4.88 -> DUDOSO, aceptada; nota: Pap3 de vinilo reflectiva de mala calidad
+
+Falta medir: nada

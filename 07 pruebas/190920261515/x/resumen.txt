@@ -1,0 +1,239 @@
+Campaña de calibración - app RTV 3.6.11 (3611)
+Equipo: serie SLV-002, MAC 00:21:13:05:19:3B
+Firmware: V3.6 2026-09-19 (3.6.2) CAL mascara 0003
+Serie en el equipo (#GN#): SLV-002; fecha de calibración (#GC#): 2026-09-19; vencimiento: 2027-09-19; estado: Calibrado 2026-09-19, vence 2027-09-19
+Fecha de exportación: 2026-09-19T15:10:45-0500
+
+Este ZIP es el único envío: lleva las series (campana.csv), las pruebas del equipo (pruebas.txt), todos los registros de tramas de la campaña (tramas/) y el diario.
+
+Equipo: serie SLV-002, MAC 00:21:13:05:19:3B
+Estado: abierta
+Avance: blanco 5/16, amarillo 1/24, rojo 0/16, verde 0/19, azul 0/13, cafe 0/5, lila 0/5, naranja 0/15, tipo I 20/20
+
+patron  cert  tipo color     estado     series  elegida  n   media x    s
+P1       762 XI   blanco    MEDIDO       1    S034    45   2961.9   7.03
+        S034 2026-09-19T14:58:18-0500 orient 0: n=45 (descartados 0) media 2961.9 s 7.03 [5 colocaciones: s entre 7.0 (0.2 %), s dentro 7.0] -> OK, aceptada
+P2       414 IV   blanco    MEDIDO       1    S035    45   2056.2   3.12
+        S035 2026-09-19T15:00:52-0500 orient 0: n=45 (descartados 0) media 2056.2 s 3.12 [5 colocaciones: s entre 3.1 (0.2 %), s dentro 5.1] -> OK, aceptada
+P3       378 IV   blanco    POR_HACER    0    -     
+P4       828 XI   blanco    POR_HACER    0    -     
+P5       740 XI   amarillo  MEDIDO       2    S033    45   2407.3   6.37
+        S032 2026-09-19T14:54:01-0500 orient 0: n=45 (descartados 0) media 2398.8 s 4.12 [5 colocaciones: s entre 4.1 (0.2 %), s dentro 5.7] -> OK, aceptada
+        S033 2026-09-19T14:55:57-0500 orient 90: n=45 (descartados 0) media 2407.3 s 6.37 [5 colocaciones: s entre 6.4 (0.3 %), s dentro 5.7] -> OK, aceptada
+P6       772 XI   blanco    POR_HACER    0    -     
+P7       768 XI   blanco    POR_HACER    0    -     
+P8       721 XI   amarillo  POR_HACER    0    -     
+P9       705 XI   amarillo  POR_HACER    0    -     
+P10      680 XI   amarillo  POR_HACER    0    -     
+P11      194 IV   rojo      POR_HACER    0    -     
+P12      227 IV   rojo      POR_HACER    0    -     
+P13      168 XI   verde     POR_HACER    0    -     
+P14      173 XI   verde     POR_HACER    0    -     
+P15      164 XI   verde     POR_HACER    0    -     
+P16      170 XI   verde     POR_HACER    0    -     
+P17       83 XI   azul      POR_HACER    0    -     
+P18       84 XI   azul      POR_HACER    0    -     
+P19       85 XI   azul      POR_HACER    0    -     
+P20      782 XI   amarillo  POR_HACER    0    -     
+P21      375 IV   amarillo  POR_HACER    0    -     
+P22      334 IV   amarillo  POR_HACER    0    -     
+P23      714 XI   amarillo  POR_HACER    0    -     
+P24      593 IV   amarillo  POR_HACER    0    -     
+P25      576 IX   amarillo  POR_HACER    0    -     
+P26      583 IX   amarillo  POR_HACER    0    -     
+P27      471 IX   blanco    MEDIDO       1    S036    45   1976.3  43.30
+        S036 2026-09-19T15:02:29-0500 orient 0: n=45 (descartados 0) media 1976.3 s 43.30 [5 colocaciones: s entre 43.3 (2.2 %), s dentro 5.0] -> OK, aceptada
+P28      484 IX   blanco    MEDIDO       2    S038    45   2138.8  67.64
+        S037 2026-09-19T15:05:16-0500 orient 0: n=45 (descartados 0) media 2065.7 s 2.44 [5 colocaciones: s entre 2.4 (0.1 %), s dentro 5.1] -> DUDOSO, no aceptada; nota: repetida
+        S038 2026-09-19T15:06:50-0500 orient 0: n=45 (descartados 0) media 2138.8 s 67.64 [5 colocaciones: s entre 67.6 (3.2 %), s dentro 4.7] -> REPETIR, aceptada; nota: Ok
+P29      442 IV   amarillo  POR_HACER    0    -     
+P30      448 IV   amarillo  POR_HACER    0    -     
+P31      573 IX   amarillo  POR_HACER    0    -     
+P32a       9 I    azul      MEDIDO       1    S014     9    640.6   1.84
+        S014 2026-09-19T14:31:58-0500 orient 0: n=9 (descartados 0) media 640.6 s 1.84 [3 colocaciones: s entre 1.8 (0.3 %), s dentro 6.7] -> OK, aceptada
+P32b      68 I    naranja   MEDIDO       1    S015     9    798.8   3.10
+        S015 2026-09-19T14:32:50-0500 orient 0: n=9 (descartados 0) media 798.8 s 3.10 [3 colocaciones: s entre 3.1 (0.4 %), s dentro 5.6] -> OK, aceptada
+P33       72 I    naranja   MEDIDO       1    S016     9    843.1   2.34
+        S016 2026-09-19T14:34:14-0500 orient 0: n=9 (descartados 0) media 843.1 s 2.34 [3 colocaciones: s entre 2.3 (0.3 %), s dentro 6.4] -> OK, aceptada
+P34       86 I    amarillo  MEDIDO       2    S007     9    956.8  16.71
+        S006 2026-09-19T14:20:52-0500 orient 0: n=9 (descartados 0) media 1189.0 s 408.48 [3 colocaciones: s entre 408.5 (34.4 %), s dentro 2.6] -> REPETIR, no aceptada; nota: repetida
+        S007 2026-09-19T14:23:47-0500 orient 0: n=9 (descartados 0) media 956.8 s 16.71 [3 colocaciones: s entre 16.7 (1.7 %), s dentro 6.0] -> OK, aceptada
+P35       96 I    blanco    MEDIDO       1    S017     9   1092.9   1.02
+        S017 2026-09-19T14:35:50-0500 orient 0: n=9 (descartados 0) media 1092.9 s 1.02 [3 colocaciones: s entre 1.0 (0.1 %), s dentro 5.9] -> OK, aceptada
+P36       10 I    azul      MEDIDO       4    S021     9    640.6   1.68
+        S018 2026-09-19T14:36:33-0500 orient 0: n=9 (descartados 0) media 636.7 s 2.03 [3 colocaciones: s entre 2.0 (0.3 %), s dentro 6.7] -> DUDOSO, no aceptada; nota: repetida
+        S019 2026-09-19T14:37:07-0500 orient 0: n=9 (descartados 0) media 636.9 s 3.47 [3 colocaciones: s entre 3.5 (0.5 %), s dentro 5.4] -> DUDOSO, no aceptada; nota: repetida
+        S020 2026-09-19T14:37:41-0500 orient 0: n=9 (descartados 0) media 634.2 s 8.34 [3 colocaciones: s entre 8.3 (1.3 %), s dentro 6.2] -> DUDOSO, no aceptada; nota: repetida
+        S021 2026-09-19T14:38:27-0500 orient 0: n=9 (descartados 0) media 640.6 s 1.68 [3 colocaciones: s entre 1.7 (0.3 %), s dentro 3.4] -> DUDOSO, aceptada; nota: Ok
+P37       82 I    amarillo  MEDIDO       1    S008     9    971.4  16.28
+        S008 2026-09-19T14:25:54-0500 orient 0: n=9 (descartados 0) media 971.4 s 16.28 [3 colocaciones: s entre 16.3 (1.7 %), s dentro 8.4] -> OK, aceptada
+P38       52 I    rojo      MEDIDO       1    S009     9    743.6   0.84
+        S009 2026-09-19T14:27:04-0500 orient 0: n=9 (descartados 0) media 743.6 s 0.84 [3 colocaciones: s entre 0.8 (0.1 %), s dentro 4.9] -> OK, aceptada
+P39       46 I    rojo      MEDIDO       1    S010     9    716.8   2.22
+        S010 2026-09-19T14:27:52-0500 orient 0: n=9 (descartados 0) media 716.8 s 2.22 [3 colocaciones: s entre 2.2 (0.3 %), s dentro 4.3] -> OK, aceptada
+P40        6 I    verde     MEDIDO       1    S022     9    632.6   3.66
+        S022 2026-09-19T14:39:31-0500 orient 0: n=9 (descartados 0) media 632.6 s 3.66 [3 colocaciones: s entre 3.7 (0.6 %), s dentro 6.4] -> OK, aceptada
+P41       73 I    naranja   MEDIDO       1    S023     9    907.4   3.79
+        S023 2026-09-19T14:40:10-0500 orient 0: n=9 (descartados 0) media 907.4 s 3.79 [3 colocaciones: s entre 3.8 (0.4 %), s dentro 4.7] -> OK, aceptada
+P42        7 I    azul      MEDIDO       1    S024     9    614.3   3.21
+        S024 2026-09-19T14:41:33-0500 orient 0: n=9 (descartados 0) media 614.3 s 3.21 [3 colocaciones: s entre 3.2 (0.5 %), s dentro 8.0] -> OK, aceptada
+P43      122 I    amarillo  MEDIDO       1    S011     9   1145.0   3.48
+        S011 2026-09-19T14:29:16-0500 orient 0: n=9 (descartados 0) media 1145.0 s 3.48 [3 colocaciones: s entre 3.5 (0.3 %), s dentro 6.5] -> OK, aceptada
+P44       64 I    amarillo  MEDIDO       1    S012     9    890.6   8.34
+        S012 2026-09-19T14:30:06-0500 orient 0: n=9 (descartados 0) media 890.6 s 8.34 [3 colocaciones: s entre 8.3 (0.9 %), s dentro 6.7] -> OK, aceptada
+P45        7 I    verde     MEDIDO       1    S025     9    619.3   2.08
+        S025 2026-09-19T14:42:46-0500 orient 0: n=9 (descartados 0) media 619.3 s 2.08 [3 colocaciones: s entre 2.1 (0.3 %), s dentro 5.8] -> OK, aceptada
+P46        9 I    azul      MEDIDO       1    S026     9    646.4   1.84
+        S026 2026-09-19T14:43:44-0500 orient 0: n=9 (descartados 0) media 646.4 s 1.84 [3 colocaciones: s entre 1.8 (0.3 %), s dentro 3.5] -> DUDOSO, aceptada; nota: Ok
+P47        9 I    azul      MEDIDO       1    S027     9    614.7   6.98
+        S027 2026-09-19T14:44:37-0500 orient 0: n=9 (descartados 0) media 614.7 s 6.98 [3 colocaciones: s entre 7.0 (1.1 %), s dentro 5.3] -> DUDOSO, aceptada; nota: Ok
+P48        9 I    azul      MEDIDO       1    S029    45    618.5   0.61
+        S029 2026-09-19T14:47:33-0500 orient 0: n=45 (descartados 0) media 618.5 s 0.61 [5 colocaciones: s entre 0.6 (0.1 %), s dentro 5.0] -> DUDOSO, aceptada; nota: Ok
+P49       81 I    rojo      MEDIDO       1    S013     9    812.0   1.86
+        S013 2026-09-19T14:31:02-0500 orient 0: n=9 (descartados 0) media 812.0 s 1.86 [3 colocaciones: s entre 1.9 (0.2 %), s dentro 7.4] -> OK, aceptada
+P50       71 I    naranja   MEDIDO       2    S031    45    905.7   4.88
+        S030 2026-09-19T14:49:31-0500 orient 0: n=45 (descartados 0) media 899.5 s 1.83 [5 colocaciones: s entre 1.8 (0.2 %), s dentro 5.0] -> DUDOSO, no aceptada; nota: repetida
+        S031 2026-09-19T14:51:18-0500 orient 0: n=45 (descartados 0) media 905.7 s 4.88 [5 colocaciones: s entre 4.9 (0.5 %), s dentro 6.4] -> DUDOSO, aceptada; nota: Es papel de mala calidad, ok
+P51      439 IV   blanco    POR_HACER    0    -     
+P52      421 IV   blanco    POR_HACER    0    -     
+P53      279 XI   rojo      POR_HACER    0    -     
+P54      121 IV   rojo      POR_HACER    0    -     
+P55      146 XI   rojo      POR_HACER    0    -     
+P56      347 IV   blanco    MEDIDO       1    S005    12   1653.3   4.06
+        S005 2026-09-19T14:19:44-0500 orient 0: n=12 (descartados 0) media 1653.3 s 4.06 [3 colocaciones: s entre 4.1 (0.2 %), s dentro 5.3] -> OK, aceptada; nota: banco paso 7, código 1, uso AJUSTE
+P57      218 IV   rojo      POR_HACER    0    -     
+P58      432 IV   blanco    POR_HACER    0    -     
+P59      122 IV   rojo      POR_HACER    0    -     
+P60       68 IV   rojo      POR_HACER    0    -     
+P61      207 IV   amarillo  POR_HACER    0    -     
+P62      280 IV   amarillo  POR_HACER    0    -     
+P63      121 IV   verde     POR_HACER    0    -     
+P64       54 IV   verde     POR_HACER    0    -     
+P65       51 IV   verde     POR_HACER    0    -     
+P66       89 IV   azul      POR_HACER    0    -     
+P67       95 IV   azul      POR_HACER    0    -     
+P68       36 IV   cafe      POR_HACER    0    -     
+P69      139 IV   lila      POR_HACER    0    -     
+P70       80 IV   naranja   POR_HACER    0    -     
+P71       84 IV   naranja   POR_HACER    0    -     
+P72       93 IV   naranja   POR_HACER    0    -     
+P73      614 IX   blanco    POR_HACER    0    -     
+P74      169 IX   rojo      POR_HACER    0    -     
+P75      138 IX   rojo      POR_HACER    0    -     
+P76      433 IX   amarillo  POR_HACER    0    -     
+P77      391 IX   amarillo  POR_HACER    0    -     
+P78       97 IX   verde     POR_HACER    0    -     
+P79       51 IX   verde     POR_HACER    0    -     
+P80       51 IX   verde     POR_HACER    0    -     
+P81       92 IX   azul      POR_HACER    0    -     
+P82       98 IX   azul      POR_HACER    0    -     
+P83       55 IX   cafe      POR_HACER    0    -     
+P84      177 IX   lila      POR_HACER    0    -     
+P85      118 IX   naranja   POR_HACER    0    -     
+P86      124 IX   naranja   POR_HACER    0    -     
+P87      131 IX   naranja   POR_HACER    0    -     
+P88      773 XI   blanco    POR_HACER    0    -     
+P89      183 XI   rojo      POR_HACER    0    -     
+P90      162 XI   rojo      POR_HACER    0    -     
+P91      516 XI   amarillo  POR_HACER    0    -     
+P92      522 XI   amarillo  POR_HACER    0    -     
+P93       85 XI   verde     POR_HACER    0    -     
+P94       51 XI   verde     POR_HACER    0    -     
+P95       51 XI   verde     POR_HACER    0    -     
+P96       95 XI   azul      POR_HACER    0    -     
+P97      102 XI   azul      POR_HACER    0    -     
+P98       68 XI   cafe      POR_HACER    0    -     
+P99      188 XI   lila      POR_HACER    0    -     
+P100     143 XI   naranja   POR_HACER    0    -     
+P101     146 XI   naranja   POR_HACER    0    -     
+P102     173 XI   naranja   POR_HACER    0    -     
+P103     763 XI   blanco    POR_HACER    0    -     
+P104     173 XI   rojo      POR_HACER    0    -     
+P105     164 XI   rojo      POR_HACER    0    -     
+P106     493 XI   amarillo  POR_HACER    0    -     
+P107     478 XI   amarillo  POR_HACER    0    -     
+P108      96 XI   verde     POR_HACER    0    -     
+P109      51 XI   verde     POR_HACER    0    -     
+P110      51 XI   verde     POR_HACER    0    -     
+P111      93 XI   azul      POR_HACER    0    -     
+P112     101 XI   azul      POR_HACER    0    -     
+P113      60 XI   cafe      POR_HACER    0    -     
+P114     202 XI   lila      POR_HACER    0    -     
+P115     147 XI   naranja   POR_HACER    0    -     
+P116     158 XI   naranja   POR_HACER    0    -     
+P117     154 XI   naranja   POR_HACER    0    -     
+P118     508 IX   blanco    POR_HACER    0    -     
+P119     138 IX   rojo      POR_HACER    0    -     
+P120     110 IX   rojo      POR_HACER    0    -     
+P121     320 IX   amarillo  POR_HACER    0    -     
+P122     352 IX   amarillo  POR_HACER    0    -     
+P123     115 IX   verde     POR_HACER    0    -     
+P124      51 IX   verde     POR_HACER    0    -     
+P125      51 IX   verde     POR_HACER    0    -     
+P126      91 IX   azul      POR_HACER    0    -     
+P127      97 IX   azul      POR_HACER    0    -     
+P128      38 IX   cafe      POR_HACER    0    -     
+P129     157 IX   lila      POR_HACER    0    -     
+P130      98 IX   naranja   POR_HACER    0    -     
+P131     102 IX   naranja   POR_HACER    0    -     
+P132     117 IX   naranja   POR_HACER    0    -     
+
+Oscuro: serie S001, x = 566.1 (s entre colocaciones 2.1, 5 colocaciones).
+
+Desvío por posición de disparo respecto a la mediana de su serie (T-C38):
+  S001 OSCURO: 1:-6 2:-3 3:+2 4:-2 5:+5 6:+2 7:-1 8:+5 9:+4 10:-1 11:-7 12:-2 13:+7 14:-4 15:+1 16:-1 17:+2 18:+9 19:-2 20:+3
+  S002 P22: 1:-21 2:-4 3:-27 4:-13 5:+0 6:-1 7:-2 8:+0 9:-9 10:+2 11:-11 12:-4 13:+46 14:+52 15:+45 16:+47 17:+7 18:+13 19:+17 20:+11
+  S003 P28: 1:-7 2:+3 3:+4 4:-3 5:+12 6:+22 7:+17 8:+23 9:-36 10:-21 11:-26 12:-19 13:-16 14:-9 15:-7 16:-8 17:+42 18:+44 19:+51 20:+58
+  S004 P4: 1:-11 2:-15 3:-21 4:-7 5:-14 6:-2 7:-18 8:-8 9:+17 10:+7 11:+16 12:+21 13:+15 14:+15 15:+21 16:+30 17:-4 18:+2 19:+10 20:-9
+  S005 P56: 1:-6 2:-2 3:+5 4:+6 5:-12 6:-2 7:-9 8:+2 9:+1 10:+6 11:-1 12:+4
+  S006 P34: 1:+711 2:+708 3:+704 4:+0 5:-1 6:+4 7:-1 8:-1 9:+0
+  S007 P34: 1:-4 2:-3 3:+0 4:+20 5:+25 6:+30 7:-11 8:-10 9:+5
+  S008 P37: 1:+0 2:+2 3:+15 4:-30 5:-21 6:-19 7:+0 8:+16 9:-4
+  S009 P38: 1:-7 2:+0 3:+3 4:+1 5:+0 6:+0 7:-2 8:-6 9:+7
+  S010 P39: 1:+6 2:-1 3:-7 4:+2 5:-1 6:-2 7:+5 8:+0 9:+5
+  S011 P43: 1:-8 2:-5 3:+11 4:+10 5:+2 6:+3 7:-1 8:+0 9:-3
+  S012 P44: 1:-1 2:+4 3:+13 4:-5 5:-10 6:-9 7:+17 8:+5 9:+0
+  S013 P49: 1:-10 2:+3 3:+2 4:-5 5:+13 6:-2 7:-5 8:+4 9:+0
+  S014 P32a: 1:-10 2:-5 3:+2 4:+4 5:+0 6:-6 7:+1 8:-12 9:+4
+  S015 P32b: 1:-8 2:+0 3:+4 4:-10 5:+0 6:-7 7:-5 8:+6 9:+0
+  S016 P33: 1:+3 2:-6 3:+10 4:-2 5:+5 6:-10 7:-1 8:+2 9:+0
+  S017 P35: 1:+11 2:-1 3:-1 4:+0 5:-2 6:+5 7:+9 8:+0 9:-4
+  S018 P36: 1:+8 2:+5 3:-7 4:+0 5:-8 6:+4 7:-8 8:-1 9:+4
+  S019 P36: 1:-5 2:+2 3:+0 4:-6 5:-14 6:+2 7:-3 8:+3 9:+2
+  S020 P36: 1:+2 2:+0 3:+1 4:+16 5:+13 6:+0 7:-14 8:-1 9:-6
+  S021 P36: 1:-3 2:+1 3:+0 4:-5 5:-4 6:+3 7:+1 8:-2 9:+5
+  S022 P40: 1:-2 2:+7 3:+9 4:-1 5:-1 6:+0 7:+2 8:+4 9:-13
+  S023 P41: 1:+3 2:-12 3:-2 4:+0 5:-4 6:-1 7:+6 8:+2 9:+3
+  S024 P42: 1:+0 2:-13 3:+7 4:-4 5:-4 6:+5 7:+7 8:-5 9:+10
+  S025 P45: 1:+6 2:+10 3:-5 4:+4 5:-1 6:-4 7:+0 8:+6 9:-4
+  S026 P46: 1:-6 2:+2 3:-1 4:+5 5:-2 6:+1 7:+0 8:+0 9:+5
+  S027 P47: 1:+10 2:+5 3:+5 4:+0 5:+0 6:+7 7:-16 8:-2 9:-3
+  S028 OSCURO: 1:+0 2:-2 3:-7 4:+4 5:-1 6:+12 7:+3 8:+4 9:-6 10:+6 11:+10 12:+3 13:-3 14:+7 15:-1 16:+3 17:-2 18:+0 19:-3 20:+2 21:-2 22:+7 23:+0 24:+1 25:+7 26:+10 27:+5 28:+6 29:+9 30:-3 31:-5 32:-5 33:-4 34:-4 35:-4 36:+5 37:-5 38:-4 39:+10 40:+0 41:-1 42:+5 43:-1 44:+3 45:+8
+  S029 P48: 1:-6 2:-1 3:+0 4:+2 5:+6 6:+3 7:-1 8:+5 9:-2 10:-1 11:-2 12:+0 13:+4 14:+4 15:+2 16:+2 17:+0 18:-5 19:-10 20:-4 21:+13 22:+0 23:+6 24:-8 25:+1 26:+3 27:+11 28:+5 29:-2 30:-4 31:-5 32:-5 33:-2 34:+4 35:+7 36:+4 37:+0 38:+6 39:-3 40:-6 41:-5 42:+0 43:+5 44:+1 45:-1
+  S030 P50: 1:-5 2:-9 3:+4 4:+4 5:-8 6:-3 7:-2 8:-4 9:-1 10:+3 11:+0 12:-4 13:-5 14:+3 15:+8 16:-3 17:+4 18:+6 19:+0 20:+4 21:+7 22:-10 23:+8 24:+3 25:+0 26:+8 27:-5 28:-2 29:+0 30:-5 31:+8 32:+7 33:-2 34:-2 35:-1 36:+3 37:-6 38:+11 39:+0 40:+3 41:+2 42:+0 43:-4 44:+1 45:+8
+  S031 P50: 1:+2 2:-9 3:+1 4:-4 5:-2 6:-4 7:-7 8:-5 9:+5 10:+2 11:+15 12:+11 13:-6 14:+18 15:+9 16:+2 17:-3 18:+16 19:-6 20:+3 21:+6 22:+6 23:-1 24:+0 25:-8 26:+5 27:+11 28:-5 29:-11 30:+6 31:-2 32:+3 33:-8 34:+2 35:-7 36:+0 37:-10 38:-6 39:-9 40:+4 41:+0 42:-13 43:-5 44:+2 45:-12
+  S032 P5: 1:-18 2:-3 3:+5 4:-1 5:-1 6:+13 7:+8 8:+4 9:+3 10:-3 11:+9 12:+0 13:-7 14:+5 15:+2 16:-3 17:+9 18:-1 19:+0 20:-4 21:+4 22:-1 23:-1 24:+5 25:+5 26:+1 27:+5 28:-5 29:-8 30:-5 31:-2 32:-7 33:-2 34:-7 35:-9 36:-7 37:+6 38:-3 39:+2 40:+12 41:+15 42:+5 43:-2 44:+7 45:+9
+  S033 P5: 1:-9 2:-5 3:+0 4:+5 5:+2 6:+14 7:-5 8:+17 9:+0 10:+11 11:+3 12:+13 13:+9 14:+4 15:+11 16:+4 17:+9 18:+4 19:+0 20:+8 21:+0 22:+0 23:-1 24:-1 25:-1 26:+4 27:+1 28:-12 29:-8 30:-19 31:-6 32:-16 33:-5 34:+0 35:+1 36:-5 37:-11 38:-8 39:-6 40:-4 41:+0 42:-10 43:-6 44:-1 45:-12
+  S034 P1: 1:-5 2:+18 3:+5 4:+18 5:+15 6:+6 7:+17 8:+11 9:+14 10:-7 11:+1 12:-1 13:+2 14:+4 15:+1 16:+13 17:+1 18:+10 19:-24 20:-10 21:-5 22:+1 23:-8 24:-6 25:-8 26:-1 27:+9 28:-3 29:-7 30:+4 31:-7 32:-16 33:+1 34:+3 35:+2 36:-4 37:+0 38:-6 39:-6 40:+6 41:-6 42:-4 43:-14 44:-9 45:-8
+  S035 P2: 1:-5 2:+2 3:-7 4:+0 5:-2 6:+6 7:-5 8:-5 9:+6 10:-3 11:+9 12:+5 13:+3 14:+4 15:+2 16:+8 17:+0 18:+8 19:-1 20:-6 21:-8 22:+3 23:+1 24:+1 25:+2 26:-4 27:+13 28:-9 29:-7 30:-6 31:-9 32:+3 33:-3 34:+0 35:+4 36:-1 37:-2 38:+0 39:-7 40:-6 41:-9 42:-13 43:+0 44:+5 45:-3
+  S036 P27: 1:+99 2:+94 3:+95 4:+98 5:+96 6:+94 7:+89 8:+93 9:+95 10:-1 11:-5 12:-10 13:-2 14:+9 15:-4 16:+0 17:-2 18:-2 19:-6 20:+5 21:-2 22:-2 23:+2 24:+0 25:+4 26:-4 27:-7 28:-7 29:+0 30:+2 31:+1 32:-5 33:-7 34:-7 35:+5 36:+2 37:-6 38:-17 39:+4 40:-6 41:-9 42:+2 43:-3 44:+6 45:-1
+  S037 P28: 1:+4 2:-1 3:+9 4:+12 5:-5 6:-1 7:+3 8:+7 9:-2 10:-9 11:-13 12:-9 13:+4 14:-11 15:-4 16:+4 17:+0 18:+3 19:+0 20:+0 21:-6 22:-6 23:+7 24:+1 25:-5 26:+2 27:+1 28:+3 29:-1 30:+0 31:+8 32:-1 33:+5 34:+0 35:-7 36:-3 37:-7 38:+5 39:-3 40:+3 41:+3 42:-2 43:-2 44:+0 45:+0
+  S038 P28: 1:-122 2:-116 3:-108 4:-120 5:-114 6:-116 7:-120 8:-117 9:-115 10:-121 11:-116 12:-118 13:-119 14:-111 15:-119 16:-111 17:-121 18:-108 19:+14 20:+5 21:+13 22:+16 23:+11 24:+21 25:+11 26:+10 27:+18 28:+12 29:+6 30:+8 31:+6 32:+13 33:+3 34:+3 35:+1 36:-3 37:+0 38:+0 39:-2 40:+1 41:+10 42:+4 43:+8 44:-4 45:+6
+  Media por posición (n series): 1:+15.3(38) 2:+17.1(38) 3:+19.0(38) 4:-0.2(38) 5:-1.0(38) 6:+1.2(38) 7:-1.3(38) 8:+1.1(38) 9:-0.4(38) 10:-8.1(16) 11:-7.4(16) 12:-6.9(16) 13:-4.6(15) 14:-0.7(15) 15:-2.3(15) 16:-0.9(15) 17:-3.9(15) 18:-0.1(15) 19:+2.7(15) 20:+4.4(15) 21:+1.8(11) 22:+1.3(11) 23:+2.2(11) 24:+1.5(11) 25:+0.7(11) 26:+3.1(11) 27:+5.6(11) 28:-1.5(11) 29:-2.6(11) 30:-2.0(11) 31:-1.2(11) 32:-2.6(11) 33:-2.2(11) 34:-0.7(11) 35:-0.7(11) 36:-0.8(11) 37:-3.7(11) 38:-2.0(11) 39:-1.8(11) 40:+0.6(11) 41:+0.0(11) 42:-2.4(11) 43:-2.2(11) 44:+1.0(11) 45:-0.5(11)
+
+Medida puente P9-A5 (P22, P28, P4; 5 colocaciones):
+  P22: media 1415.4, s_rep 24.6 (1.74 %) entre 5 colocaciones; sin serie de campaña con la que comparar
+  P28: media 2115.2 (5 colocaciones), s_rep 28.6 (1.35 %); campaña 2138.8 (S038); diferencia -23.6 (-1.10 %), margen máx(2·s_rep ; 4 %) = 85.6 -> dentro
+  P4: media 3304.8, s_rep 14.6 (0.44 %) entre 5 colocaciones; sin serie de campaña con la que comparar
+Veredicto: pendiente (faltan patrones o su serie de campaña).
+s_rep media: 1.18 % (para los criterios P9-B5).
+Protocolo: 5 colocaciones × 9 disparos, más el asentamiento por colocación.
+
+Batería (orden 9):
+  2026-09-19T14:13:18-0500  Batería 11,29 V (n = 87)
+
+Banco: 7 pasos hechos, 0 saltados
+
+Falta medir: P3 P4 P6 P7 P8 P9 P10 P11 P12 P13 P14 P15 P16 P17 P18 P19 P20 P21 P22 P23 P24 P25 P26 P29 P30 P31 P51 P52 P53 P54 P55 P57 P58 P59 P60 P61 P62 P63 P64 P65 P66 P67 P68 P69 P70 P71 P72 P73* P74 P75 P76 P77 P78 P79 P80 P81 P82 P83 P84 P85 P86 P87 P88 P89 P90 P91 P92 P93 P94 P95 P96 P97 P98 P99 P100 P101 P102 P103 P104 P105 P106 P107 P108 P109 P110 P111 P112 P113 P114 P115 P116 P117 P118* P119 P120 P121 P122 P123 P124 P125 P126 P127 P128 P129 P130 P131 P132 
+* imprescindible P73: zona sin puntos entre P28 (x=2139) y P1 (x=2962)
+* imprescindible P118: zona sin puntos entre P28 (x=2139) y P1 (x=2962)

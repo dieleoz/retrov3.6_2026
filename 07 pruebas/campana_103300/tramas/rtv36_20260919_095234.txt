@@ -1,0 +1,36 @@
+# RTV V3.6 - registro de tramas Bluetooth
+# fecha: 2026-09-19 09:52:34 -0500
+# movil: HONOR ABR-LX3 (Android 15, API 35)
+# dispositivo: COVIANDINA_SLV-002 00:21:13:05:19:3B
+# app: com.dpi.retrov36 3.6.5 (365)
+# formato: t_ms;TX|RX;hex;ascii  (t_ms desde la apertura; en ascii, '.' = no imprimible o ';')
+# 1 conectado con COVIANDINA_SLV-002 00:21:13:05:19:3B (socket inseguro)
+# 3 sesion nueva: equipo COVIANDINA_SLV-002 (serie SLV-002, MAC 00:21:13:05:19:3B), firmware sin detectar
+# 6 campana abierta: campana_SLV-002_00211305193B.csv, 0 series
+# 1396 === pruebas del equipo: inicio ===
+# 1397 prueba 1 (Enlace SPP abierto, nombre y MAC): OK
+# 1397   COVIANDINA_SLV-002  00:21:13:05:19:3B  (serie SLV-002)
+1398;TX;23 56 23;#V#
+# 4080 peticion #V# -> sin respuesta (timeout)
+4080;TX;39;9
+# 6761 peticion 9 -> sin respuesta (timeout)
+6762;TX;36;6
+# 9443 peticion 6 -> sin respuesta (timeout)
+# 9444 AVISO: 3 timeouts seguidos. El equipo no responde a nada (3 o más peticiones seguidas sin respuesta). Apáguelo y enciéndalo, espere unos segundos y vuelva a conectar.
+9444;TX;40 4C 45 45 52 56 2C 42 4C 41 2C 31 40;@LEERV,BLA,1@
+# 12626 peticion @LEERV,BLA,1@ -> sin respuesta (timeout)
+# 12628 prueba 2 (Detección de versión (#V#, 9, 6, @LEERV,BLA,1@; nunca e)): FALLO
+# 12628   #V# -> sin respuesta (timeout)
+# 12628   9 -> sin respuesta (timeout)
+# 12628   6 -> sin respuesta (timeout)
+# 12628   @LEERV,BLA,1@ -> sin respuesta (timeout)
+# 12628   Ninguna de las tres sondas respondió como espera el contrato.
+# 12631 prueba 3 (Cada código de medida responde en menos de 2,5 s): FALLO
+# 12631   No ejecutada: versión desconocida.
+# 12633 prueba 4 (Coherencia de fórmulas: las 12 dan la misma x): FALLO
+# 12633   No ejecutada: versión desconocida.
+# 12635 prueba 5 (Solo V3.6: #GT#, #G,k# de los 12 juegos, marca y máscara, #E en 5 puntos): FALLO
+# 12635   No ejecutada: versión desconocida.
+# 12637 prueba 6 (Repetibilidad: 5 lecturas del mismo código): FALLO
+# 12637   No ejecutada: versión desconocida.
+# 12638 === pruebas del equipo: NO APTO: versión de firmware no reconocida. equipo COVIANDINA_SLV-002 (serie SLV-002, MAC 00:21:13:05:19:3B), firmware desconocida ===

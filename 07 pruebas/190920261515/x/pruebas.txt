@@ -1,0 +1,66 @@
+=== Pruebas del equipo, 2026-09-19T14:12:20-0500 - equipo COVIANDINA_SLV-002 (serie SLV-002, MAC 00:21:13:05:19:3B), firmware V3.6 2026-09-19 (3.6.2) CAL mascara 0003
+Resultado: APTO para calibrar.
+1. Enlace SPP abierto, nombre y MAC: OK
+   COVIANDINA_SLV-002  00:21:13:05:19:3B  (serie SLV-002)
+2. Detección de versión (#V#, 9, 6, @LEERV,BLA,1@; nunca e): OK
+   #V# -> #V,3.6,2026-09-19,CAL,0003# en 161 ms
+   Versión V3.6, fecha 2026-09-19, marca CAL, máscara 0003: ajustados 1 2; temperatura de fábrica
+   #GC# -> #GC,2026-09-19# en 135 ms: firmware 3.6.2
+   #GN# -> #GN,SLV-002# en 121 ms
+   Serie en el equipo (#GN#): SLV-002; fecha de calibración (#GC#): 2026-09-19; vencimiento: 2027-09-19; estado: Calibrado 2026-09-19, vence 2027-09-19
+3. Cada código de medida responde en menos de 2,5 s: OK
+   asentamiento: 1 disparo(s) descartado(s)
+   e (antes): ::2405 en 990 ms
+   1 (blanco intenso): ::555 en 990 ms
+   2 (amarillo intenso): ::673 en 1110 ms
+   3 (verde intenso): ::371 en 1023 ms
+   4 (rojo intenso): ::391 en 1012 ms
+   5 (azul intenso): ::454 en 1120 ms
+   6 (naranja intenso): ::505 en 1001 ms
+   7 (blanco opaco): ::516 en 1004 ms
+   8 (amarillo opaco): ::386 en 986 ms
+   a (verde opaco): ::369 en 1057 ms
+   b (rojo opaco): ::484 en 944 ms
+   c (azul opaco): ::460 en 1006 ms
+   d (naranja opaco): ::508 en 980 ms
+   e (después): ::2416 en 1008 ms
+4. Coherencia de fórmulas: las 12 dan la misma x: OK
+   Referencia: recta entre e=2405 y e=2416; tolerancia = 10 + resolucion local + deriva (11); 12 evaluables, 0 fuera, 0 excluidos por zona, 0 sin respuesta
+   1: R=555 -> x=2405.0, ref 2405.8, desvio -0.8, tol +/-24.4 OK
+   2: R=673 -> x=2408.0, ref 2406.7, desvio +1.3, tol +/-23.7 OK
+   3: R=371 -> x=2418.0, ref 2407.5, desvio +10.5, tol +/-23.5 OK
+   4: R=391 -> x=2414.0, ref 2408.4, desvio +5.6, tol +/-23.4 OK
+   5: R=454 -> x=2410.5, ref 2409.2, desvio +1.3, tol +/-23.1 OK
+   6: R=505 -> x=2403.0, ref 2410.1, desvio -7.1, tol +/-23.3 OK
+   7: R=516 -> x=2417.0, ref 2410.9, desvio +6.1, tol +/-23.3 OK
+   8: R=386 -> x=2418.5, ref 2411.8, desvio +6.7, tol +/-23.0 OK
+   a: R=369 -> x=2413.0, ref 2412.6, desvio +0.4, tol +/-23.4 OK
+   b: R=484 -> x=2412.5, ref 2413.5, desvio -1.0, tol +/-23.1 OK
+   c: R=460 -> x=2423.5, ref 2414.3, desvio +9.2, tol +/-23.1 OK
+   d: R=508 -> x=2410.0, ref 2415.2, desvio -5.2, tol +/-23.3 OK
+   Coeficientes: los leídos con #G
+5. Solo V3.6: #GT#, #G,k# de los 12 juegos, marca y máscara, #E en 5 puntos: OK
+   #GT# -> x2=0.00000000E+00 x1=4.32120039E-04 x0=9.01486480E-01
+   1: distinta de fábrica, máscara: ajustado
+   2: distinta de fábrica, máscara: ajustado
+   3: = fábrica, máscara: fábrica
+   4: = fábrica, máscara: fábrica
+   5: = fábrica, máscara: fábrica
+   6: = fábrica, máscara: fábrica
+   7: = fábrica, máscara: fábrica
+   8: = fábrica, máscara: fábrica
+   a: = fábrica, máscara: fábrica
+   b: = fábrica, máscara: fábrica
+   c: = fábrica, máscara: fábrica
+   d: = fábrica, máscara: fábrica
+   Marca CAL: hay calibración válida en EEPROM (CRC comprobado por el firmware).
+   #E: 60 coincidencias exactas, 0 discrepancias, en x = 500, 1000, 2000, 3000, 4000.
+6. Repetibilidad: 5 lecturas del mismo código: OK
+   1: ::2424 -> x=2424.0
+   2: ::2416 -> x=2416.0
+   3: ::2425 -> x=2425.0
+   4: ::2415 -> x=2415.0
+   5: ::2421 -> x=2421.0
+   Código e. 5 lecturas validas, 0 fallidas; media 2420.2, desviacion 4.55 cuentas (umbral provisional 10)
+
+
