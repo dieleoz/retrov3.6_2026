@@ -25,16 +25,26 @@ nueva (usuario). Modelos: **opus sólo para `arquitecto-iot`; el resto sonnet o 
 autorización de Diego.** Cada paso empieza cuando llega el informe del anterior; un Alto se reabre en el
 código antes de darlo por bueno.
 
+**Primero, la certificación de SLV-002.** Lo que la bloquea es A4, en el banco y en manos de Diego; la
+app de usuario no certifica nada y va como segundo carril, sin quitarle turno a A4.
+
 **Carril A — app de calibrar.** `Cov_3.6.5_calibrar` (rama `rtv-1.0-cierre`, `316a6bc`, md5 en `RETOMAR.md`):
 QA APTO y arquitecto APTO CON CONDICIONES; entregable a Diego para calibrar el 8 y la b.
 
-1. **A4.** Diego instala por USB, carga el ZIP de las 18:11 y calibra; actas y ZIP al repositorio.
+1. **A4 (bloquea la certificación).** Diego instala por USB, carga el ZIP del banco archivado en
+   `06_Calibracion/SLV-002/campanas/` y calibra el 8 y la b; actas y ZIP resultante al repositorio.
 2. **A4b (en curso, `Cov_3.6.6_calibrar`).** Condición del arquitecto, antes de darla a un operador: ningún mensaje de
    fallo con número de código (`FlujoCalibracion.java:1190,1230,1452-1456,1499-1502`); prueba en rojo.
 3. **A5.** Certificado PDF, verificación de 10 patrones y toma corta: SPEC, arquitecto, código y QA.
 
-**Carril B — app de usuario.** `RetroUsuario` 0.3.3: incremento 1 "Medir y exportar"; arquitecto y QA
-APTO CON CONDICIONES (`REVISIONES-Apps-V3.6.md`).
+**Carril B — app de usuario (segundo carril).** `RetroUsuario` 0.3.3: incremento 1 "Medir y exportar";
+arquitecto y QA APTO CON CONDICIONES (`REVISIONES-Apps-V3.6.md`).
+
+**Presupuesto del incremento 1.** Acabado = arquitecto y QA sin ningún hallazgo que rompa un requisito
+escrito de `SPEC-App-Usuario-V3.6.md` (r6 y §4 bis) y la prueba de Diego en dos teléfonos sin fallo.
+Vueltas permitidas: la 0.3.4 y una más (0.3.5). Los revisores sólo bloquean con lo que rompe un requisito
+escrito; el resto se anota en `REVISIONES-Apps-V3.6.md` y no bloquea. Si la 0.3.5 no cierra, es un
+bucle: revisor Fable (con autorización de Diego) y sesión limpia.
 
 1. **B5.** 0.3.4: `detectando` al salir, resultado tras giro, prueba del lector con equipo caído.
 2. **B6.** Revisión corta de la 0.3.4; prueba de Diego en dos teléfonos (Android ≤9 y ≥10).

@@ -10,3 +10,6 @@
 local.properties
 .idea/
 .claude/worktrees/
+# Registro de MPLAB X y cachés de Python
+MPLABXLog.xml
+__pycache__/
