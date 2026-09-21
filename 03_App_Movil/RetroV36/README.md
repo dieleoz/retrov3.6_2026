@@ -57,12 +57,42 @@ cd app && "$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;bui
   com.dpi.retrov36.TS00Test com.dpi.retrov36.BancoRehacerTest com.dpi.retrov36.Version3615Test com.dpi.retrov36.Version3616Test com.dpi.retrov36.Version3617Test \
   com.dpi.retrov36.RupturaSerieTest com.dpi.retrov36.RupturaFlujoTest com.dpi.retrov36.RupturaE2ETest \
   com.dpi.retrov36.RupturaEquivTest com.dpi.retrov36.RupturaBancoTest \
-  com.dpi.retrov36.RtvUnicaTest com.dpi.retrov36.RupturaRtv10Test \n  com.dpi.retrov36.RitmoTest com.dpi.retrov36.TemperaturaRtv10Test com.dpi.retrov36.FirmaActaTest com.dpi.retrov36.SerieYAdminV46Test
+  com.dpi.retrov36.RtvUnicaTest com.dpi.retrov36.RupturaRtv10Test \
+  com.dpi.retrov36.RitmoTest com.dpi.retrov36.TemperaturaRtv10Test com.dpi.retrov36.FirmaActaTest com.dpi.retrov36.SerieYAdminV46Test \
+  com.dpi.retrov36.Rc6DefectosTest com.dpi.retrov36.AppCortaTest
 ```
+
+Más seguro que copiar la lista: pasar todas las `*Test.java` de `app/src/test/java/com/dpi/retrov36/` (31 clases,
+**360 tests** con la app corta, 21-sep-2026: 358 de `72d00cd` + `AppCortaTest.k_` y `k2_`).
 
 `FabricaTest` compara las 12 ecuaciones de la app con el **texto** de
 `01_Firmware/base_2020_d089f962/RetroVertical1.X/ecuacionesCalibracion.c`: si alguien cambia una
 cifra en la app, falla (comprobado alterando una a propósito).
+
+## APK corto "RTV Calibra" — compilado, SIN ENTREGAR
+
+**Sin arquitecto ni QA: no es entregable.** Nada probado en un teléfono ni contra un equipo; las dos apps no
+se han visto instaladas a la vez. SPEC: `05_Documentacion/SPEC-App-Calibracion-Coviandina.md` (en `main`,
+`2c8563d`).
+
+```bash
+./gradlew clean assembleDebug assembleCoviandina --offline
+```
+
+Compilado el 21-sep-2026 sobre el árbol limpio de `0a849fe` (`aapt dump badging`, build-tools 30.0.3):
+
+| APK | md5 | package | versionCode | versionName | application-label |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `app-debug.apk` | `037d4543c83f3c22d843398e03fda2b7` | `com.dpi.retrov36` | 10005 | `1.0.0-rc6` | RTV |
+| `app-coviandina.apk` | `101d95535250748d6096bfd5fd8637f9` | `com.dpi.retrov36.calibra` | 10005 | `1.0.0-rc6-calibra` | RTV Calibra |
+
+**Aviso: el `app-debug.apk` de aquí NO es la rc6 entregada** y lleva su mismo par `10005`/`1.0.0-rc6`. El
+`RTV-V1.0.0-rc6.apk` que hay en `D:\IT\wt_rtv10\03_App_Movil\` (19-sep 20:10) tiene md5
+`28354751b1f4c93aadef03d427478df4`; ningún registro del repositorio declara el md5 de la rc6, así que su
+atadura a `fd37cc7` (20:04) es por la hora, no por registro. Esta trae además los cambios de
+`72d00cd` que también tocan la app de campo (la línea `serie:` del acta, `CalibrarActivity.refrescarContexto`
+y el reenvío de `ConexionActivity`, inerte con `CORTO = false`). Contra RF-APP-41, antes de entregar hay que
+darle un par propio; eso es decisión de Diego (VERSION), no se toca aquí.
 
 ## Uso por el operador
 
