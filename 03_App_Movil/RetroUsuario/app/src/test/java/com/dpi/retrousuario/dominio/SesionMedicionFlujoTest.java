@@ -172,6 +172,168 @@ public class SesionMedicionFlujoTest {
         assertFalse(zip1.getName().endsWith("_2.zip"));
     }
 
+    /** T-USR-01c(d) (SPEC r6, condición QA-2): con exigir_362 = false, un equipo que responde DEF a
+     *  "#V#" y no contesta nada a #GN#/#GC# (mudo, no ERR,FORMATO) mide igual, con
+     *  estadoCalibracion = "DEF" — el cuarto campo de #V# manda sobre "sin_fecha" aunque
+     *  #GN#/#GC# no hayan contestado nada, no sólo cuando #GC# da una fecha (eso ya lo prueba
+     *  defEsSinCalibracionAunqueGcTengaFecha, arriba, con gcRespondioAlgo = true). */
+    @Test
+    public void tUsr01cD_exigir362FalsoConDefYGnGcMudosMideConDef() {
+        EquipoSimuladoDisparos sim = new EquipoSimuladoDisparos()
+                .responde("#V#", "#V,3.6,2026-09-19,DEF,0000#"); // #GN#/#GC# sin configurar: mudos.
+        ParametrosRitmo params = new ParametrosRitmo();
+        params.exigir362(false);
+
+        DeteccionYSonda.Resultado deteccion = DeteccionYSonda.ejecutar(sim, params, ms -> { });
+        assertEquals(DetectorEquipo.Resultado.COMPATIBLE, deteccion.deteccion().resultado());
+        Sonda362.ResultadoSonda sonda = deteccion.sonda();
+        assertEquals(Sonda362.Resultado.OK, sonda.resultado()); // exigir_362 = false: mide igual.
+        assertFalse(sonda.serieLeida());
+        assertFalse(sonda.fechaRegistrada());
+
+        SesionMedicion sesion = new SesionMedicion(sim, params, new RegistroTramas(), new Diario(ficheroDiario));
+        String fechaGC = sonda.fechaRegistrada() ? sonda.fechaCalibracion() : "NONE";
+        sesion.registrarEquipo("MAC", deteccion.deteccion().respuestaV().crudo(), sonda.serie(), sonda.serieLeida(),
+                deteccion.deteccion().respuestaV().estadoAjuste(), fechaGC, sonda.fechaRegistrada(),
+                FechaISO.de(2026, 9, 21));
+        sim.programarValor(10, 100);
+        sim.programarValor(10, 105);
+        sim.programarValor(10, 110);
+        FilaMedida fila = sesion.medir("rojo", "x", "", "", "sin_posicion");
+
+        assertEquals("DEF", fila.estadoCalibracion);
+        assertEquals("", fila.fechaCalibracion);
+        assertEquals("", fila.vencimiento);
+        assertEquals("", fila.serieEquipo);
+        assertEquals("ninguna", fila.serieOrigen);
+    }
+
+    /** QA-9: firmware_v con máscara "1A7F" viaja de extremo a extremo, sin reconstruir ni truncar, por
+     *  DetectorEquipo → Sonda362 (vía DeteccionYSonda) → SesionMedicion → CsvMedidas (D-1/M1: el texto
+     *  crudo de "#V#" tal cual, RespuestaV#crudo). */
+    @Test
+    public void mascara1A7FViajaSinCambiosDeExtremoAExtremo() {
+        String crudoV = "#V,3.6,2026-09-19,CAL,1A7F#";
+        EquipoSimuladoDisparos sim = new EquipoSimuladoDisparos()
+                .responde("#V#", crudoV)
+                .responde("#GN#", "#GN,SLV-002#")
+                .responde("#GC#", "#GC,2026-09-19#");
+        ParametrosRitmo params = new ParametrosRitmo();
+
+        DeteccionYSonda.Resultado deteccion = DeteccionYSonda.ejecutar(sim, params, ms -> { });
+        assertEquals(DetectorEquipo.Resultado.COMPATIBLE, deteccion.deteccion().resultado());
+        assertEquals("1A7F", deteccion.deteccion().respuestaV().mascaraHex());
+        assertEquals(crudoV, deteccion.deteccion().respuestaV().crudo());
+        Sonda362.ResultadoSonda sonda = deteccion.sonda();
+        assertEquals(Sonda362.Resultado.OK, sonda.resultado());
+
+        SesionMedicion sesion = new SesionMedicion(sim, params, new RegistroTramas(), new Diario(ficheroDiario));
+        sesion.registrarEquipo("00:21:13:05:19:3B", deteccion.deteccion().respuestaV().crudo(), sonda.serie(),
+                sonda.serieLeida(), deteccion.deteccion().respuestaV().estadoAjuste(), sonda.fechaCalibracion(),
+                sonda.fechaRegistrada(), FechaISO.de(2026, 9, 21));
+        sim.programarValor(10, 100);
+        sim.programarValor(10, 100);
+        sim.programarValor(10, 100);
+        FilaMedida fila = sesion.medir("rojo", "x", "", "", "sin_posicion");
+
+        assertEquals(crudoV, fila.firmwareV); // el mismo texto crudo, con la mascara 1A7F intacta.
+        byte[] csv = CsvMedidas.generar(sesion.filas());
+        String texto = new String(csv, java.nio.charset.StandardCharsets.UTF_8);
+        assertTrue("firmware_v con 1A7F no aparece en medidas.csv:\n" + texto, texto.contains(crudoV));
+    }
+
+    /** QA-6 (M-2): sin haber conectado ningún equipo en la sesión (SesionMedicion recién construida,
+     *  registrarEquipo nunca llamado), el segmento de nombre del ZIP es "VARIOS" (SPEC :281-283) —
+     *  hoy sin prueba (segmentoSerieParaNombre nunca se ejercitaba con conectado = false). */
+    @Test
+    public void exportarSinHaberConectadoNingunEquipoUsaVarios() throws IOException {
+        EquipoSimuladoDisparos sim = new EquipoSimuladoDisparos();
+        SesionMedicion sesion = nuevaSesion(sim); // sin registrarEquipo: "conectado" sigue en false.
+
+        File zip = sesion.exportar(carpeta, new Date(1000), TimeZone.getTimeZone("UTC"));
+        assertTrue(zip.getName().startsWith("RTVU_VARIOS_"));
+        assertEquals("RTVU_VARIOS_19700101-000001.zip", sesion.nombreZipSugerido(new Date(1000), TimeZone.getTimeZone("UTC")));
+    }
+
+    /** QA-6: con filas de más de un equipo (series distintas) en el mismo medidas.csv, también "VARIOS". */
+    @Test
+    public void exportarConFilasDeMasDeUnEquipoUsaVarios() {
+        EquipoSimuladoDisparos sim = new EquipoSimuladoDisparos();
+        SesionMedicion sesion = nuevaSesion(sim);
+        sesion.registrarEquipo("MAC1", "#V,3.6,2026-09-19,CAL,0000#", "SLV-001", true,
+                RespuestaV.EstadoAjuste.CAL, "2026-09-19", true, FechaISO.de(2026, 9, 21));
+        sim.programarValor(10, 100);
+        sim.programarValor(10, 100);
+        sim.programarValor(10, 100);
+        sesion.medir("rojo", "x1", "", "", "sin_posicion");
+
+        // "cambia de equipo": otra sesion sobre el MISMO diario, otra serie (el diario es la fuente de verdad).
+        SesionMedicion sesion2 = new SesionMedicion(sim, new ParametrosRitmo(), new RegistroTramas(), new Diario(ficheroDiario));
+        sesion2.registrarEquipo("MAC2", "#V,3.6,2026-09-19,CAL,0000#", "SLV-002", true,
+                RespuestaV.EstadoAjuste.CAL, "2026-09-19", true, FechaISO.de(2026, 9, 21));
+        sim.programarValor(10, 100);
+        sim.programarValor(10, 100);
+        sim.programarValor(10, 100);
+        sesion2.medir("rojo", "x2", "", "", "sin_posicion");
+
+        assertEquals("RTVU_VARIOS_19700101-000001.zip",
+                sesion2.nombreZipSugerido(new Date(1000), TimeZone.getTimeZone("UTC")));
+    }
+
+    /** B-4 (condición QA-8): tras exportar, filasCortadasIgnoradas() refleja lo que el Diario descartó
+     *  (B-1), para que el exportador pueda avisar de las filas cortadas en vez de callarlas. */
+    @Test
+    public void filasCortadasIgnoradasSeReflejanTrasExportar() throws IOException {
+        EquipoSimuladoDisparos sim = new EquipoSimuladoDisparos();
+        SesionMedicion sesion = nuevaSesion(sim);
+        sesion.registrarEquipo("MAC", "#V,3.6,2026-09-19,CAL,0000#", "SLV-002", true,
+                RespuestaV.EstadoAjuste.CAL, "2026-09-19", true, FechaISO.de(2026, 9, 21));
+        assertTrue(sesion.filasCortadasIgnoradas().isEmpty()); // nada exportado/leido todavia.
+
+        String lineaCortada = "FILA\u00012026-09-21T10:00:00-05:00\u00014,609712\u0001-74,081753"
+                + "\u0001con_posicion\u0001azul\u00014\u00013\u0001100|110|120\u000111";
+        try (java.io.FileWriter w = new java.io.FileWriter(ficheroDiario, true)) {
+            w.write(lineaCortada);
+            w.write('\n');
+        }
+        sim.programarValor(10, 100);
+        sim.programarValor(10, 100);
+        sim.programarValor(10, 100);
+        sesion.medir("rojo", "x", "", "", "sin_posicion");
+
+        sesion.exportar(carpeta, new Date(1000), TimeZone.getTimeZone("UTC"));
+        assertEquals(1, sesion.filasCortadasIgnoradas().size());
+        assertTrue(sesion.filasCortadasIgnoradas().get(0).startsWith("FILA"));
+    }
+
+    /** QA-9: tres exportaciones con el MISMO Date exacto dan base, "_2" y "_3", no tres nombres iguales
+     *  ni el "(1)"/"(2)" que MediaStore añadiría solo (extiende D-4, exportarDosVecesConElMismoDateProduceElSufijoDeColision). */
+    @Test
+    public void tresExportacionesMismoInstanteDanBaseGuion2Guion3() {
+        EquipoSimuladoDisparos sim = new EquipoSimuladoDisparos();
+        SesionMedicion sesion = nuevaSesion(sim);
+        sesion.registrarEquipo("MAC", "#V,3.6,2026-09-19,CAL,0000#", "SLV-002", true,
+                RespuestaV.EstadoAjuste.CAL, "2026-09-19", true, FechaISO.de(2026, 9, 21));
+        sim.programarValor(10, 100);
+        sim.programarValor(10, 100);
+        sim.programarValor(10, 100);
+        sesion.medir("rojo", "x1", "", "", "sin_posicion");
+
+        Date mismoInstante = new Date(1758470400000L);
+        TimeZone utc = TimeZone.getTimeZone("UTC");
+        File zip1 = sesion.exportar(carpeta, mismoInstante, utc);
+        File zip2 = sesion.exportar(carpeta, mismoInstante, utc);
+        File zip3 = sesion.exportar(carpeta, mismoInstante, utc);
+
+        assertTrue(zip1.exists());
+        assertTrue(zip2.exists());
+        assertTrue(zip3.exists());
+        assertFalse(zip1.getName().endsWith("_2.zip"));
+        assertFalse(zip1.getName().endsWith("_3.zip"));
+        assertTrue(zip2.getName().endsWith("_2.zip"));
+        assertTrue(zip3.getName().endsWith("_3.zip"));
+    }
+
     /** T-USR-28: la API de medir no recibe lecturasPorColor; sólo Ajustes (ParametrosRitmo) lo cambia. */
     @Test
     public void lecturasPorColorSoloSeFijaEnParametrosNuncaEnMedir() {

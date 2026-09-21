@@ -119,6 +119,16 @@ public final class SesionMedicion {
     }
 
     /**
+     * B-4 (condición QA-8): líneas {@code FILA} cortadas que el {@link Diario} descartó al leer
+     * (B-1), para que quien exporte pueda avisar. Sólo fiable **después** de llamar a {@link #filas()}
+     * (o a {@link #exportar}/{@link #exportarBytes}, que lo llaman por dentro): {@link Diario} las
+     * recalcula en cada {@code filasGuardadas()}.
+     */
+    public List<String> filasCortadasIgnoradas() {
+        return diario.lineasCortadasIgnoradas();
+    }
+
+    /**
      * Exporta el ZIP a {@code carpeta} (RF-USR-15 bis); no borra nada. Nombre saneado con colisión
      * resuelta en la misma carpeta (nuevo r6, C4).
      */
@@ -142,10 +152,26 @@ public final class SesionMedicion {
         return ExportadorZip.generarBytes(filas(), log);
     }
 
-    /** A4: nombre sugerido para la vía MediaStore.Downloads (mismo esquema RTVU_&lt;serie&gt;_&lt;fecha&gt;.zip). */
+    /**
+     * A4: nombre sugerido para la vía MediaStore.Downloads (mismo esquema RTVU_&lt;serie&gt;_&lt;fecha&gt;.zip),
+     * SIN resolver colisión: sólo sirve si el llamante ya sabe que ese nombre no existe. Para el caso
+     * general, usar {@link #nombreZipResuelto}.
+     */
     public String nombreZipSugerido(Date instante, TimeZone zona) {
         String segmento = segmentoSerieParaNombre(filas());
         return NombreZip.base(segmento, instante, zona) + ".zip";
+    }
+
+    /**
+     * QA-4: nombre para la vía MediaStore.Downloads con la colisión YA resuelta (sufijo {@code _2},
+     * {@code _3}..., SPEC :279-280), contra el conjunto de {@code DISPLAY_NAME} que el llamante
+     * (capa Android) consultó de antemano en el {@code ContentResolver} — {@code SesionMedicion} no
+     * toca {@code ContentResolver} (dominio Java puro).
+     */
+    public String nombreZipResuelto(Date instante, TimeZone zona, java.util.Set<String> nombresExistentes) {
+        String segmento = segmentoSerieParaNombre(filas());
+        String base = NombreZip.base(segmento, instante, zona);
+        return NombreZip.resolverColisionEntreNombres(base, nombresExistentes);
     }
 
     private String segmentoSerieParaNombre(List<FilaMedida> filas) {

@@ -4,6 +4,7 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Set;
 import java.util.TimeZone;
 
 /**
@@ -56,6 +57,26 @@ final class NombreZip {
         }
         int n = 2;
         while (new File(carpeta, baseSinExtension + "_" + n + ".zip").exists()) {
+            n++;
+        }
+        return baseSinExtension + "_" + n + ".zip";
+    }
+
+    /**
+     * QA-4: igual que {@link #resolverColision}, pero contra un conjunto de {@code DISPLAY_NAME} ya
+     * existentes en vez del sistema de ficheros — la vía {@code MediaStore.Downloads} (A4, API 29+)
+     * no expone un {@link File} que se pueda mirar con {@code exists()}; el llamante (capa Android)
+     * consulta el {@code ContentResolver} ANTES de insertar y le pasa lo que encontró, para que un
+     * nombre repetido dé {@code _2}, {@code _3}... (SPEC-App-Usuario-V3.6.md :279-280), no el "(1)"
+     * que el propio MediaStore añadiría si se le dejara resolver la colisión solo.
+     */
+    static String resolverColisionEntreNombres(String baseSinExtension, Set<String> nombresExistentes) {
+        String candidato = baseSinExtension + ".zip";
+        if (!nombresExistentes.contains(candidato)) {
+            return candidato;
+        }
+        int n = 2;
+        while (nombresExistentes.contains(baseSinExtension + "_" + n + ".zip")) {
             n++;
         }
         return baseSinExtension + "_" + n + ".zip";

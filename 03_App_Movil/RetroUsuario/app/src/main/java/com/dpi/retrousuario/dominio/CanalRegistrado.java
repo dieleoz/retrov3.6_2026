@@ -30,7 +30,21 @@ public final class CanalRegistrado implements Canal {
         String respuesta = delegado.enviar(trama, plazoMs);
         if (respuesta != null) {
             log.rx(reloj.ahoraMs(), respuesta);
+        } else {
+            // B-3 (condición QA-8): deja constancia de que esta trama "#...#" no llegó (silencio o
+            // timeout), en vez de dejar un hueco mudo entre el TX y la trama siguiente.
+            log.comentario(reloj.ahoraMs(), "SIN_RESPUESTA " + trama);
         }
         return respuesta;
+    }
+
+    /**
+     * B-3 (condición QA-8): marca en {@code tramas.log} el arranque de una sesión nueva (una conexión
+     * Bluetooth nueva, no una reutilizada tras un giro de pantalla — M-1) con la MAC del equipo, para
+     * poder separar unas sesiones de otras dentro de un registro que "abarca todas las sesiones
+     * hasta el momento de exportar" (RF-USR-15 bis).
+     */
+    public void sesionNueva(String mac) {
+        log.comentario(reloj.ahoraMs(), "SESION_NUEVA MAC=" + mac);
     }
 }
