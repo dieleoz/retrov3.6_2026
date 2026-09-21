@@ -37,6 +37,7 @@ registrada, y no en una casilla del operador (P11 §3, QA-3612).
 | **SENAL-FILTRO** | App de usuario: filtro por familia y búsqueda al escribir (nota 7) | 21-sep-2026 | nota 7 |
 | **USR-ALCANCE** | App de usuario: sólo firmware V3.6; informe por señal (nota 8) | 21-sep-2026 | nota 8 |
 | **UMBRAL-LEY** | Umbral de cumplimiento: el que fije la norma (nota 9). Cierra D-9 | 21-sep-2026 | nota 9 |
+| **USR-MODOS** | App de usuario: medir y exportar; señal a señal, opcional (nota 10) | 21-sep-2026 | nota 10 |
 
 Notas de las filas del 21-sep-2026:
 
@@ -86,3 +87,8 @@ Notas de las filas del 21-sep-2026:
    Señalización Vial 2024 (Res. 20243040045005, Tablas 2-5 y 2-6) o del 80 % del valor de instalación
    (ANI, Apéndice Técnico 4, E11); el 70 % de SFT no es norma y no se usa. Fuentes:
    `05_Documentacion/SPEC-Registro-Indicador-Interventoria.md` §1.4 y §1.5 (C-01).
+10. **USR-MODOS.** Diego: "debe indicar por qué no cumple, puede ser barro en la señal"; el usuario
+    necesita "la ubicación, el estado, si está bien instalada, si está limpia, en condiciones y la medida";
+    "como no se tiene la medida inicial, la carga por defecto con la que indique la norma [...] ya sería
+    si quiere modificar la medida inicial"; "debe tener dos funciones [...] quiero medir y exportar, ya
+    miro yo en Excel [...] no necesito que señal por señal y son 1000 me tengas escribiendo en la app".
