@@ -252,6 +252,38 @@ public final class FlujoCalibracion {
         return acta;
     }
 
+    // ------------------------------------------- de paquete: para CalibracionAutomatica (modularidad)
+
+    /**
+     * MODULARIDAD (21-sep-2026, rules/modularidad.md, 500 líneas): {@code calibrarAutomatico} y sus
+     * colaboradores viven en {@link CalibracionAutomatica}, que orquesta el flujo llamando a las acciones
+     * PUBLICAS de esta clase (calibrar, persistencia, aceptar) y a estos métodos de paquete, que exponen
+     * SOLO lo que esa orquestación necesita de los campos de sesión; el acta, el canal y el resto de campos
+     * privados siguen siendo dueños de esta clase.
+     */
+    Operador operador() {
+        return operador;
+    }
+
+    /** Como el try/finally de {@code calibrarTodo} (P14-01): el atajo de T-C41 solo vale dentro de la sesión. */
+    void iniciarSesionAutomatica() {
+        sesionTodo = true;
+        encendidoReciente = false;
+    }
+
+    void terminarSesionAutomatica() {
+        sesionTodo = false;
+        encendidoReciente = false;
+        escribiendoAhora.clear();
+    }
+
+    /** Lo que hacía {@code persistirYAceptarAuto} tras un "Acta ACEPTADA": el siguiente T-C41 puede usar
+     * este apagado, salvo que después se escribiera #SC (F-04). */
+    void marcarAceptadoReciente(char k) {
+        encendidoReciente = sesionTodo && !scEnUltimoAceptar;
+        encendidoPor = k;
+    }
+
     /** QA-3613-02: tras cualquier fallo de #L el flujo olvida el PIN; la pantalla lo vuelve a pedir. */
     public boolean necesitaPin() {
         return pin == null || pin.isEmpty();
@@ -268,7 +300,7 @@ public final class FlujoCalibracion {
         return TablaCalibracion.tabla(decisiones, equipo());
     }
 
-    private TablaCalibracion.Fila fila(char k) {
+    TablaCalibracion.Fila fila(char k) {
         return tabla().get(k);
     }
 
@@ -362,7 +394,7 @@ public final class FlujoCalibracion {
     }
 
     /** true si k tiene un acta ACEPTADA que sigue valiendo (ninguna serie suya anulada). */
-    private boolean aceptadoVigente(char k) {
+    boolean aceptadoVigente(char k) {
         Acta a = aceptadaVigente(k);
         return a != null && serieAnuladaDe(a, k) == null;
     }
@@ -957,7 +989,7 @@ public final class FlujoCalibracion {
      * 3.6.17 (F-01): un acta abierta en la que no se escribio ningun codigo (bateria a 0, T-C41 que falla, apagado
      * cancelado) no bloquea: se cierra sola como RECHAZADA "acta vacia" y se dice. "" si no habia.
      */
-    private String descartarActaVacia(String por) throws IOException {
+    String descartarActaVacia(String por) throws IOException {
         if (acta == null || acta.cerrada() || !acta.codigos().isEmpty() || acta.escribiendo() != 0
                 || acta.rechazoPendiente() != null) {
             return "";
@@ -1837,9 +1869,6 @@ public final class FlujoCalibracion {
                 + saltados.toString().trim() + ".");
     }
 
-    /** RF-COV-17: nota fija de la conformidad en el camino automático (la app de calibrar no pide nota). */
-    private static final String NOTA_AUTOMATICA = "Calibración automática (RTV Calibra, un solo botón, RF-COV-17)";
-
     /**
      * RF-COV-17 — SOLO camino CORTO. Sustituye a la casilla por código y a la aceptación código a código de
      * RF-COV-04: el operador teclea su nombre una vez y pulsa "Calibrar"; la app calibra sola todo lo que el
@@ -1849,114 +1878,14 @@ public final class FlujoCalibracion {
      * conforme, la propia {@link #remedida} ya lo restaura (dos intentos y restaurar, sin cambios); aquí se seleccionan
      * SOLO los que no dependan de un código que no haya quedado aceptado, y se sigue con esos.
      *
+     * MODULARIDAD (21-sep-2026): la orquestación vive en {@link CalibracionAutomatica} (rules/modularidad.md,
+     * 500 líneas); este método es la fachada pública, sin cambio de comportamiento ni de firma.
+     *
      * @return un resumen: qué quedó calibrado y qué no, con el motivo (nombres de {@link Fabrica#nombre}, no
      *      códigos, salvo en el acta en disco, que es el documento técnico y sigue citando el código).
      */
     public String calibrarAutomatico(String nombre) throws IOException, InterruptedException {
-        sesionTodo = true;
-        encendidoReciente = false;
-        try {
-            return calibrarAutomaticoInterno(nombre);
-        } finally {
-            sesionTodo = false;
-            encendidoReciente = false;
-            escribiendoAhora.clear();
-        }
-    }
-
-    private String calibrarAutomaticoInterno(String nombre) throws IOException, InterruptedException {
-        if (nombre == null || nombre.trim().isEmpty()) {
-            return "Escriba su nombre antes de pulsar Calibrar.";
-        }
-        String pv = motivoPrevias();
-        if (pv != null) {
-            return "No se calibra: " + pv;
-        }
-        String vacia = descartarActaVacia("al retomar");
-        if (!vacia.isEmpty()) {
-            operador.progreso(vacia.trim());
-        }
-        StringBuilder ok = new StringBuilder();
-        StringBuilder no = new StringBuilder();
-        if (acta != null) {
-            if (acta.rechazoPendiente() != null) {
-                return "Hay un rechazo pendiente (" + acta.rechazoPendiente() + "): vuelva a pulsar Calibrar para "
-                        + "reintentar, o resuélvalo con el PIN de administrador. No se calibra.";
-            }
-            // Termina primero lo que hubiera a medias de una sesión anterior (igual que "Calibrar todo").
-            char k0 = acta.codigos().isEmpty() ? acta.escribiendo() : acta.codigos().get(0).k;
-            String r = calibrar(new HashSet<Character>(), "", "");
-            if (acta != null && acta.motivoNoAceptable(false) == null) {
-                String a = persistirYAceptarAuto(k0);
-                if (a == null) {
-                    ok.append(Fabrica.nombre(k0)).append("; ");
-                } else {
-                    no.append(Fabrica.nombre(k0)).append(": ").append(a).append("; ");
-                }
-            } else if (acta != null) {
-                no.append(Fabrica.nombre(k0)).append(": ").append(r).append("; ");
-            }
-        }
-        Set<Character> aceptados = new HashSet<>();
-        for (char k : ORDEN_SESION) {
-            if (aceptadoVigente(k)) {
-                aceptados.add(k);
-            }
-        }
-        for (char k : ORDEN_SESION) {
-            if (aceptados.contains(k)) {
-                continue;
-            }
-            TablaCalibracion.Fila f = fila(k);
-            Plan p = plan(k, null, true);
-            if (!p.escribible()) {
-                no.append(Fabrica.nombre(k)).append(": ").append(p.motivoNo).append("; ");
-                continue;
-            }
-            if (f.requiereAceptado != 0 && !aceptados.contains(f.requiereAceptado)) {
-                no.append(Fabrica.nombre(k)).append(": depende de que quede aceptado el código ")
-                        .append(Fabrica.nombre(f.requiereAceptado)).append("; ");
-                continue;
-            }
-            operador.progreso("Calibrando " + Fabrica.nombre(k) + "...");
-            Set<Character> uno = new HashSet<>();
-            uno.add(k);
-            String r = calibrar(uno, nombre, NOTA_AUTOMATICA);
-            if (acta == null || acta.motivoNoAceptable(false) != null) {
-                no.append(Fabrica.nombre(k)).append(": ").append(r).append("; ");
-                continue;
-            }
-            String a = persistirYAceptarAuto(k);
-            if (a != null) {
-                no.append(Fabrica.nombre(k)).append(": ").append(a).append("; ");
-                continue;
-            }
-            aceptados.add(k);
-            ok.append(Fabrica.nombre(k)).append("; ");
-        }
-        if (ok.length() == 0 && no.length() == 0) {
-            return "Nada que calibrar: todos los códigos ya tienen acta ACEPTADA vigente.";
-        }
-        return "Calibrado: " + (ok.length() == 0 ? "ninguno" : ok.toString().trim()) + ". No calibrado: "
-                + (no.length() == 0 ? "ninguno" : no.toString().trim());
-    }
-
-    /**
-     * Como {@link #persistirConfirmarYAceptar}, pero SIN preguntar "¿Acepta esta acta?" (RF-COV-17: el camino
-     * automático no para a confirmar cada acta una por una; si la re-medida es conforme, se acepta sola).
-     */
-    private String persistirYAceptarAuto(char k) throws IOException, InterruptedException {
-        String p = persistencia();
-        if (!p.startsWith("Persistencia OK")) {
-            return p;
-        }
-        String a = aceptar();
-        if (a.startsWith("Acta ACEPTADA")) {
-            encendidoReciente = sesionTodo && !scEnUltimoAceptar;
-            encendidoPor = k;
-            return null;
-        }
-        return a;
+        return new CalibracionAutomatica(this).calibrarAutomatico(nombre);
     }
 
     /**
