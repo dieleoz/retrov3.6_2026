@@ -145,6 +145,14 @@ public final class TablaCalibracion {
                     + (remedida.isEmpty() ? "" : ", re-medida " + remedida)
                     + (dispensa.isEmpty() ? "" : ", dispensa " + dispensa) + " [" + origen + "]";
         }
+
+        /** RF-COV-20 (H-2, Cov364): como {@link #texto()}, pero en el camino corto (RF-COV-12/VERIF-5-10
+         *  para todos los códigos, la b incluida): nunca cita RF-CAL-18 ni s_rep, a diferencia de origen/
+         *  aviso de la b (PA-24, :193-198 más abajo). */
+        public String textoCorto() {
+            return codigo + " (" + Fabrica.nombreCorto(codigo) + "): RF-COV-12 (VERIF-5-10), conforme dentro "
+                    + "de ±10 % del certificado" + (remedida.isEmpty() ? "" : ", re-medida " + remedida) + ".";
+        }
     }
 
     private TablaCalibracion() { }

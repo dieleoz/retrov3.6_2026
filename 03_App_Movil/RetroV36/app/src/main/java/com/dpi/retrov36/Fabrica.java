@@ -59,6 +59,18 @@ public final class Fabrica {
         return esIntensa(k) ? nombre(k) : color(k) + ", lámina tipo I";
     }
 
+    /** H-3 (Cov364, RF-COV-17/21): en corto (RTV Calibra) el operador nunca ve el número de código, solo
+     *  {@link #nombreCorto}; la app de campo sigue diciendo "código k". Minúscula, medio de frase. */
+    public static String elCodigo(char k, boolean corto) {
+        return corto ? nombreCorto(k) : "código " + k;
+    }
+
+    /** Como {@link #elCodigo}, con mayúscula inicial para el principio de una frase. */
+    public static String elCodigoCap(char k, boolean corto) {
+        String t = elCodigo(k, corto);
+        return Character.toUpperCase(t.charAt(0)) + t.substring(1);
+    }
+
     /** Codigo intenso de un color del CSV, o 0 si no hay. */
     public static char codigoIntenso(String color) {
         for (char k : CODIGOS) {
