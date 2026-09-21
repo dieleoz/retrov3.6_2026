@@ -5,11 +5,13 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * T-USR-25 — persistencia entre reinicios del proceso, cada disparo al diario, y serie incompleta
@@ -83,5 +85,42 @@ public class DiarioTest {
         assertEquals(2, filas.size());
         assertEquals("rojo", filas.get(0).color);
         assertEquals("azul", filas.get(1).color);
+    }
+
+    /** B1: una línea FILA cortada a mitad de escritura (el proceso murió mientras la escribía, la
+     *  serie propia de este caso ya cerró la parte "buena" antes) no revienta la lectura del resto
+     *  del fichero: se ignora y queda en lineasCortadasIgnoradas(), sin contar como fila guardada. */
+    @Test
+    public void unaFilaCortadaSeIgnoraYQuedaAnotadaSinReventarElResto() throws IOException {
+        Diario diario = new Diario(fichero);
+        long id1 = diario.nuevoIntento();
+        diario.registrarDisparo(id1, 0, 100);
+        diario.registrarDisparo(id1, 1, 110);
+        diario.registrarDisparo(id1, 2, 120);
+        diario.registrarFila(filaDePrueba("rojo")); // fila completa, antes de la que se corta.
+
+        // Simula el proceso muriendo a mitad de escribir la linea FILA de "azul": sólo llegaron a
+        // disco los primeros campos, cortados en medio de "media" (c[9]), sin los que siguen.
+        String lineaCortada = "FILA\u00012026-09-21T10:00:00-05:00\u00014,609712\u0001-74,081753"
+                + "\u0001con_posicion\u0001azul\u00014\u00013\u0001100|110|120\u000111";
+        try (FileWriter w = new FileWriter(fichero, true)) {
+            w.write(lineaCortada);
+            w.write('\n');
+        }
+
+        long id3 = diario.nuevoIntento();
+        diario.registrarDisparo(id3, 0, 200);
+        diario.registrarDisparo(id3, 1, 210);
+        diario.registrarDisparo(id3, 2, 220);
+        diario.registrarFila(filaDePrueba("verde")); // fila completa, después de la cortada.
+
+        Diario diarioReabierto = new Diario(fichero);
+        List<FilaMedida> filas = diarioReabierto.filasGuardadas();
+        assertEquals(2, filas.size()); // "azul" (cortada) no cuenta; "rojo" y "verde" sí.
+        assertEquals("rojo", filas.get(0).color);
+        assertEquals("verde", filas.get(1).color);
+        List<String> ignoradas = diarioReabierto.lineasCortadasIgnoradas();
+        assertEquals(1, ignoradas.size());
+        assertTrue(ignoradas.get(0).startsWith("FILA"));
     }
 }

@@ -29,6 +29,7 @@ public final class Diario {
 
     private final File fichero;
     private long contadorIntento = 0;
+    private final List<String> lineasCortadasIgnoradas = new ArrayList<>();
 
     public Diario(File fichero) {
         this.fichero = fichero;
@@ -57,19 +58,55 @@ public final class Diario {
         escribir(sb.toString());
     }
 
-    /** Sólo las series que llegaron a cerrar (línea FILA), en el orden en que se guardaron. */
+    /** Número de campos que espera una línea {@code FILA} completa: el prefijo + los 19 de {@link FilaMedida}. */
+    private static final int CAMPOS_FILA_COMPLETA = 20;
+
+    /**
+     * Sólo las series que llegaron a cerrar (línea FILA), en el orden en que se guardaron.
+     *
+     * <p><b>B1 (revisión P16 de RetroUsuario 0.2.0):</b> una línea {@code FILA} puede quedar
+     * CORTADA si el proceso muere a mitad de {@code escribir} (la propia línea DISPARO/FILA, no la
+     * serie completa: eso ya lo cubre T-USR-25). Esa línea no es un evento válido ni descartable en
+     * silencio: se ignora (no se cuenta como fila guardada, no revienta la lectura del resto del
+     * fichero) y se anota en {@link #lineasCortadasIgnoradas()}, para que quien exporte pueda
+     * decirlo, en vez de fallar entero o fingir que esa medida nunca existió sin dejar rastro.</p>
+     */
     public List<FilaMedida> filasGuardadas() {
         List<FilaMedida> filas = new ArrayList<>();
+        lineasCortadasIgnoradas.clear();
         for (String linea : leerLineas()) {
             if (linea.startsWith(PREFIJO_FILA + SEP)) {
-                filas.add(decodificarFila(linea));
+                FilaMedida f = decodificarFilaOIgnorarSiCortada(linea);
+                if (f != null) {
+                    filas.add(f);
+                }
             }
         }
         return filas;
     }
 
-    private static FilaMedida decodificarFila(String linea) {
+    /** B1: líneas {@code FILA} descartadas por venir cortadas, en el orden en que aparecieron. */
+    public List<String> lineasCortadasIgnoradas() {
+        return new ArrayList<>(lineasCortadasIgnoradas);
+    }
+
+    private FilaMedida decodificarFilaOIgnorarSiCortada(String linea) {
         String[] c = linea.split(String.valueOf(SEP), -1);
+        if (c.length < CAMPOS_FILA_COMPLETA) {
+            lineasCortadasIgnoradas.add(linea);
+            return null;
+        }
+        try {
+            return decodificarFila(c);
+        } catch (RuntimeException numeroOCaracterMalFormado) {
+            // B1: cortada a mitad de un campo numérico ("101" truncado a "10") o del código de color
+            // (c[6] vacío): mismo tratamiento, se ignora y se anota, no se propaga la excepción.
+            lineasCortadasIgnoradas.add(linea);
+            return null;
+        }
+    }
+
+    private static FilaMedida decodificarFila(String[] c) {
         // c[0] = "FILA"; c[1..19] = campos.
         List<Integer> lecturas = new ArrayList<>();
         for (String v : c[8].split("\\|")) {
