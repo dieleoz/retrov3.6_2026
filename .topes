@@ -1,0 +1,13 @@
+# Topes propios de la V3.6. Los lee .githooks/pre-commit; lo que no se fija aquí, lo pone el Orquestador.
+# Cambiar un tope es una decisión de Diego: el motivo va en el mensaje del commit.
+# README y ROADMAP a 100 líneas: decisión de Diego (CLAUDE.md §10).
+TOPE_LINEAS[README.md]=100
+TOPE_LINEAS[ROADMAP.md]=100
+TOPE_LINEAS[CLAUDE.md]=200
+# Código que no se parte (rules/modularidad.md, excepción): generado por MCC, la base de 2020 intacta
+# y el firmware V3.6 grabado en SLV-002. Se corta sólo en el primer cambio que obligue a regrabar.
+CODIGO_EXCEPTO='(^|/)mcc_generated_files/|^01_Firmware/base_2020_[^/]*/|^01_Firmware/RetroVertical_V3\.6\.X/'
+# Mapa del sistema (CLAUDE.md §10).
+TOPE_LINEAS[ARQUITECTURA.map]=1000
+# Herramientas de calibración: citan ficheros con fecha en el nombre (DECISIONES-Diego-2026-09-19.md).
+FECHA_EXCEPTO='(^|/)(pruebas|tests?|tools)/'

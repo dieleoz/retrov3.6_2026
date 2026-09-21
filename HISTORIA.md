@@ -52,6 +52,7 @@ indicio sin cruzarlo con una segunda prueba.**
 | "La 3.6.17 no tiene el candado 5 × 4" | **Sí lo tiene** | `FlujoCalibracion.java:699-721` en `f5145ed` |
 | El ZIP que sostiene la curva "está en el repositorio" | Estaba sólo en `07 pruebas/` hasta el 21-sep | `git ls-files` |
 | `#K#` "especificado, no implementado" (skill STONE) | **Implementado** | `calibracion_v36.c:797` |
+| `targetSdk` "urgente" (encargo) o "sólo si se publica" | **No se publica**: no obliga | APPS-DPI |
 
 ## Pruebas que no demostraban nada (19-sep, noche)
 

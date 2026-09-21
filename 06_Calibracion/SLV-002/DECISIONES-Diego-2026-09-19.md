@@ -27,3 +27,28 @@ registrada, y no en una casilla del operador (P11 §3, QA-3612).
 | **PRECISO-5x9** | Las series con K ≥ 5 y M ≥ 4 (por ejemplo, las de 5 × 9 de la mañana) cuentan como "preciso" (`Protocolo.java:102`; efecto en la media ≤ 0,19 %, REVISION-P15) | 19-sep-2026, tarde | "sí, cuentan como preciso" |
 | **FIRMA-ACTA** | **Con el PIN de admin basta para firmar**: no se anade ninguna fila `FRASE-DIEGO` a `decisiones.csv` ni ninguna barrera adicional. Lo que cambia es el texto: el acta deja de decir "firmado por Diego" y pasa a decir **Firmado por "<nombre>", ITVIAL SAS, <fecha de ese dia>**. El nombre es el del operador que calibra, no un literal cableado. Afecta a `FlujoCalibracion.java:1588,1593,1611`. Se aplica en la siguiente APK, para no invalidar la revision de la rc2 en curso | 19-sep-2026, noche | "si tienen pass de admin firman, ya no lo compliques" / "Firmado por \" nombre\" ITVIAl SAS + fecha de ese dia" |
 | **APP-SIMPLE** | **La app de calibracion se reduce a: cargar el ZIP, calibrar, nombre y nota, y como mucho cambiar la serie. Poco mas.** No es una mejora de lo que hay: es otra version, mas corta. Motivo medido: la noche del 19-sep hicieron falta cuatro pantallas y una hora para escribir un codigo, porque el ZIP venia de un banco REPRESENTATIVO y la campana se abrio en COMPLETO, y la app avisa del desajuste pero deja al operador adivinar que hay que ir a "Tomar muestras" a cambiar la cola. Lo que Diego pide es que importar un ZIP deje la campana lista para calibrar, sin pasos intermedios | 19-sep-2026, noche | "no mejora, cambia esa a una version que sea cargar, y calibrar, nombre, nota y si algo si desea cambiar el nombre, poco mas" |
+| **APPS-DPI** | Apps de calibración sólo de DPI; USB por proyecto; cierra D-10 (nota 1) | 21-sep-2026 | nota 1 |
+| **TOMA-50** | La toma de un equipo no pasa de 50 tomas (nota 2) | 21-sep-2026 | nota 2 |
+| **VERIF-5-10** | Verificación final: 5 a 10 referencias re-medidas y su desviación (nota 3) | 21-sep-2026 | nota 3 |
+| **CERT-TITULO** | "Certificado de calibración", firmado por ITVIAL SAS (nota 4) | 21-sep-2026 | nota 4 |
+
+Notas de las filas del 21-sep-2026:
+
+1. **APPS-DPI.** Las apps de calibración son sólo de DPI: no se publican en ningún sitio y el APK
+   se pasa por USB, uno por proyecto. El cliente recibe el equipo calibrado y el PDF. Diego: "calibrar
+   es fecha, operador o nombre y exportar el pdf de calibración"; "como son apps propias de
+   calibración, sólo las tiene la empresa"; "la app no se publica en ningún lugar"; "se pasa en una
+   usb por proyecto".
+2. **TOMA-50.** Diego: "no es necesario el banco completo, muchos colores están en el mismo margen y
+   no aportan, te sirven para la curva o fórmula"; "nuestro firmware puede mejorar esa fórmula, desde
+   que te cuadre en las medidas"; y "el .zip construir no más de 50 tomas,
+   112 es exagerado, demora más de 1 hora tomando medidas".
+   ▸ Propuesta, sin confirmar: 1 colocación por referencia. Si anula PROTOCOLO-AJUSTE y TIPO-I-REPETIR
+   está pendiente (D-16).
+3. **VERIF-5-10.** Tras calibrar se re-miden 5 a 10 referencias; el certificado da el valor medido y
+   el error % de cada una. Margen: Diego acepta los dos de 2018 (±5 % y ±10 %): "pues ambos, al final
+   da igual, es sacar el valor". Cierra D-14.
+   ▸ Propuesta, sin confirmar: se imprime el error; conforme hasta ±10 %, con marca por encima de ±5 %.
+4. **CERT-TITULO.** "Certificado de calibración", tal cual; firma ITVIAL SAS. Diego: "Certificado de
+   calibración tal cual sí", "ITVIAL SAS firma". Sustituye la propuesta de RF-CAL-30 (P-CAL-02) y
+   cierra D-15; la SPEC se corrige al escribir la de Calibra.

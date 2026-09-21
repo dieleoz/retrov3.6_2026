@@ -1,82 +1,87 @@
-# ROADMAP — V3.6: qué falta para acabar y en qué orden
+# ROADMAP — V3.6: qué falta hasta certificar SLV-002, y en qué orden
 
-**Los códigos 8 y b siguen sin escribir en el equipo; ninguna APK tiene hoy arquitecto y QA para
-hacerlo.** Este fichero dice qué falta, en qué orden y en qué sesión; no es una bitácora. Las cifras del día (versiones, md5, recuentos) van en
-[`RETOMAR.md`](RETOMAR.md); lo que pasó, en `git log` y [`HISTORIA.md`](HISTORIA.md). Reglas en
-[`CLAUDE.md`](CLAUDE.md); mapa en `ARQUITECTURA.map` §M2-§M3. Lo que no está aquí no está en ejecución.
+**Los códigos 8 y b siguen sin escribir en el equipo, y la app que los calibra aún no emite el PDF.**
+Este fichero dice qué falta, en qué orden y en qué sesión; no es una bitácora. Las cifras del día van
+en [`RETOMAR.md`](RETOMAR.md); lo que pasó, en `git log` y [`HISTORIA.md`](HISTORIA.md). Reglas en
+[`CLAUDE.md`](CLAUDE.md); mapa en `ARQUITECTURA.map` §M2-§M3.
 
 ## Objetivo y cuándo está acabado
 
-Dejar **SLV-002 (Coviandina)** con firmware V3.6, **calibrado por códigos con acta aceptada**, serie
-grabada, ZIP de soporte archivado e **informe PDF y registros** para la interventoría. Después, una
-**app de producción** revisada. El proyecto se cierra con las puertas P8, P11 y P12 cerradas.
+**SLV-002 (Coviandina) certificado:** firmware V3.6, códigos calibrados con acta aceptada, serie
+grabada, ZIP archivado y **PDF de calibración** entregado. Cierra con P8 y P12. Después, las apps de
+DPI para los siguientes equipos. Nordeste es de la V4.6 y Ruta al Mar tiene su propio proyecto.
 
-La calibración es **por equipo** (L-23). Nordeste es de la V4.6 y Ruta al Mar (SLV-028) tiene su
-propio proyecto: no se trabajan desde aquí.
+**Las apps de calibración son sólo de DPI** (decisión APPS-DPI): no se publican; van por USB, una por
+proyecto. El cliente recibe el equipo y el PDF. **Calibrar = fecha, operador y exportar el PDF.**
 
-## Orden para acabar (prioridad de arriba abajo)
+## Las tres piezas que se buscan
 
-| # | Tarea | Quién | Sale | Depende de |
-| :---: | :--- | :--- | :--- | :--- |
-| 1 | **Decidir versión de la app para el HONOR** (recomendada rc4; ver `RETOMAR.md`) | Diego | Decisión escrita en `DECISIONES-Diego-*.md` | — |
-| 2 | **Arquitecto y QA** del salto rc2 → versión elegida; confirmar que su APK es la del commit | Subagentes adversarios, alcances disjuntos | Dos veredictos escritos | 1 |
-| 3 | **Procedimiento del 8 y la b al día** (once cambios del análisis del 21-sep) | Principal | `PROCEDIMIENTO-Escribir-8-y-b.md` | 1 |
-| 4 | **Calibrar el 8** y aceptar su acta; **después la b**. Batería nueva, campaña nueva con el ZIP de las 18:11, sin ICSP | Diego con la app | Códigos escritos, relectura, re-medida, actas | 2, 3 |
-| 5 | **Grabar la serie `SLV-002-2026`** | Diego | Tramas en el ZIP | 4 |
-| 6 | **ZIP de soporte** al repositorio con su huella | Diego y principal | ZIP + `HUELLAS.txt` | 5. **Cierra P8** para 8 y b |
-| 7 | **Informe PDF y registros** para la interventoría (serie, fecha, vencimiento) | Subagente + revisión | PDF y registros | 6. **Cierra P12** |
-| 8 | **App corta "RTV Calibra"**: versión propia, arquitecto y QA, prueba en teléfono | Subagentes; Diego | APK entregable | Tras 4 (no bloquea) |
-| 9 | **App de producción** (P10, P11) sobre la app única RTV | Subagentes | Propuesta y APK revisada | 6 |
-| 10 | Banco representativo y verificación anual para recalibrar | Diego | Colas medidas | 6 |
+| Pieza | Qué hace, y nada más |
+| :--- | :--- |
+| **Toma** | Conectar, test, "Iniciar", **hasta 50 tomas** de 3-4 disparos (negro incluido), repetir, ZIP |
+| **Calibra** | Cargar el ZIP, "Calibrar" con fecha y operador, escribir y releer, PDF |
+| **PDF** | Lo único que sale hacia el cliente (contenido: `SPEC-Calibracion-V3.6.md` RF-CAL-30 a 34) |
 
-Los códigos 1 y 2 no se reescriben. **Los códigos 3 y 5 no se arreglan midiendo**: su dato está
-invertido (informe de las 18:11). Los 3, 4 y 6 esperan la decisión D-3.
+Las garantías (PIN del equipo, relectura, no mezclar equipos ni firmwares, ancla en negro) siguen
+por dentro y sólo se muestran cuando bloquean.
+
+## Orden hasta certificar (prioridad de arriba abajo)
+
+| # | Tarea | Quién | Depende de |
+| :---: | :--- | :--- | :--- |
+| 1 | **SPEC de Calibra con PDF y sus pruebas** (valor esperado de fuera del código) | Subagente | — |
+| 2 | **`arquitecto-iot` sobre la SPEC y las pruebas**, antes del código | Subagente (opus) | 1 |
+| 3 | **Desarrollo de Calibra** en worktree, versión propia, con `.githooks/` en su rama | Subagente | 2 |
+| 4 | **`qa-istqb` y `arquitecto-iot` sobre el APK y su md5** que se entregan | Subagentes | 3 |
+| 5 | **Calibrar el 8** con el ZIP archivado y aceptar su acta; **después la b**. Sin ICSP | Diego | 4 |
+| 6 | Grabar la serie `SLV-002-2026`; ZIP y PDF al repositorio con su huella. **Cierra P8** | Diego y principal | 5 |
+| 7 | Certificados de los códigos 3 y 5 (dato invertido), contra el otro patrón; luego el 5 | Subagente | En paralelo |
+| 8 | Registros para la interventoría. **Cierra P12** | Subagente | 6 |
+| 9 | **App de Toma** para los siguientes equipos: SPEC, arquitecto, código, QA | Subagentes | Tras 6 |
+
+Los códigos 1 y 2 no se reescriben. Los 3, 4 y 6 esperan D-3.
 
 ## Sesiones
 
-Sólo la sesión en curso y la siguiente. Lo hecho se borra de aquí: está en `git log`.
+Sólo la en curso y la siguiente; lo hecho se borra (está en `git log`).
 
 | Sesión | Tareas |
 | :--- | :--- |
-| En curso (21-sep) | Skills del repositorio, `ARQUITECTURA.map` y referencias cruzadas; tareas 1 a 3 si Diego decide |
-| Siguiente | Tareas 2 a 6: revisiones, procedimiento, calibrar 8 y b, serie, ZIP |
+| En curso | Acople del Orquestador; SPEC de Calibra con PDF (tarea 1) y su revisión (tarea 2) |
+| Siguiente | Tareas 3 a 5: desarrollo, QA y calibrar el 8 y la b |
 
 ## Puertas P1-P12
 
 | Puerta | Estado |
 | :--- | :--- |
-| P1 Especificación · P2 Arquitectura · P3 Compilación reproducible · P6 Autorización | Cerradas (18-sep) |
+| P1 Especificación · P2 Arquitectura · P3 Compilación reproducible · P6 Autorización | Cerradas |
 | P4 Firmware · P7 Grabación | Cerradas para la 3.6.2 |
-| P5 App · P9 Validación del arquitecto | **Abiertas**: ninguna APK con arquitecto y QA para calibrar el 8 y la b |
+| P5 App · P9 Validación del arquitecto | **Abiertas**: ninguna APK con arquitecto y QA para el 8 y la b |
 | P8 Calibración de SLV-002 | Cerrada para 1 y 2; **abierta** para 8 y b (y 3, 4, 5, 6) |
-| P10 Propuesta de producción · P11 APK de producción · P12 Informe y registros | Pendientes, tras P8 |
-
-Las revisiones de arquitectura de la app (P9 a P16) y las QA están en `05_Documentacion/`; en la rama
-`rtv-1.0`, `REVISION-QA-RTV-1.0.0-rc2.md`.
+| P10-P11 Producción · P12 Informe y registros | Pendientes |
 
 ## Decisiones pendientes (Diego)
 
 | ID | Qué hay que decidir |
 | :--- | :--- |
+| D-13 | Qué referencias entran en la Toma (tope de 50, TOMA-50); propuesta tras cruzar `old` y firmware |
+| D-16 | ¿TOMA-50 anula PROTOCOLO-AJUSTE (5 × 4) y TIPO-I-REPETIR? ¿Curva propia para a, c y d? |
 | D-3 | Qué códigos intensos 3, 4 y 6 se ajustan y con qué grado |
 | D-4 | Café y lila: dentro del ajuste del rojo o sólo verificar (recomendación: sólo verificar) |
 | D-5 | P32a/P32b: identidad del P32 duplicado |
-| D-8 | Clave de firma propia del APK (una desinstalación borra la campaña) |
+| D-8 | Clave de firma propia del APK, interna de DPI |
 | D-9 | Umbral de la interventoría (C-01): bloquea el indicador E11 |
-| D-10 | Cuándo subir `targetSdk` (hoy 30) |
-| D-11 | Versión de la app para calibrar el 8 y la b en el HONOR (tarea 1) |
-| D-12 | Versión propia de la app corta (hoy repite la de la rc6 con otro binario) |
 
-Las decididas están en `06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md`.
+Las decididas están en `06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md`. D-11 y D-12 (versión
+para el HONOR y de la app corta) las absorbe la tarea 3: Calibra lleva versión propia.
 
 ## Contradicciones abiertas
 
 No se eligen: se cierran midiendo o con registro. Las cerradas están en `HISTORIA.md`.
 
-- **Reloj:** la hora de Diego y la de los commits difirieron ~1 h 30 min el 19-sep.
+- **Reloj:** la hora de Diego y la de los commits difirieron hora y media en una sesión.
 - **Numeración:** "P10-P14" nombra puertas del proceso y revisiones de arquitectura de la app.
-- **`targetSdk`:** urgente según el encargo del 19-sep; sólo obligatorio en Play según el estudio.
 - **Serie en la V4.6:** su `CERTIFICADO-ANTERIOR.md` dice que Coviandina "conserva `SLV-002`";
   SERIE-2 lo cambia a `SLV-002-2026`.
 - **Modelo de pantalla:** STA035WT-01 frente a STVA035WT(-01) (`HISTORIA.md`). Se mira la etiqueta.
-- **Borrado de datos del HONOR** entre las 12:27 y las 19:12 del 19-sep: hipótesis sin registro.
+- **Borrado de datos del HONOR** antes del registro de la rc3: hipótesis sin registro.

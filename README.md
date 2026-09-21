@@ -58,7 +58,7 @@ acta son de cada equipo físico. Entre equipos se reutilizan catálogo, método,
 | `06_Calibracion/` | Catálogo y colas de patrones; una carpeta por equipo |
 | `07 pruebas/` | Material en bruto del teléfono, **sin versionar**; lo que vale pasa a `06_Calibracion/<equipo>/` |
 | `08_Senales/` | Catálogo de señales del Manual 2024 |
-| `.claude/skills/` | Skills del repositorio: `entregar`, `verificar`, `verificar-pantalla-stone`, `leer-planos-pcb` |
+| `.claude/particularidades/` | Lo propio de cada skill `orquestador:*` (entregar, verificar, STONE, planos PCB) |
 
 ## Procedencia y proyectos vecinos
 

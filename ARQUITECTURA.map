@@ -20,7 +20,7 @@ graph TD
     %%   M1 Sistema: equipo, firmware, EEPROM, pantalla, app, proyectos vecinos
     %%   M2 Calibracion: banco, campana, ajuste, escritura, acta, ZIP, decisiones, informe
     %%   M3 Documentos: SPEC -> TDD -> MATRIZ -> codigo -> REVISION/QA -> entrega; puertas P1-P12
-    %%   M4 Compilacion y pruebas: XC8 2.10 + MPLAB SIM; JDK 11 / Gradle 6.5 + JUnitCore; skills
+    %%   M4 Compilacion y pruebas: XC8 2.10 + MPLAB SIM; JDK 11 / Gradle 6.5 + JUnitCore; particularidades de skills
     %%   M5 Indice de referencias cruzadas (documento -> seccion -> relacionados)
     %%   M6 Linea base: firmware 2020 leido en el fuente (detalle que la V3.6 conserva)
     %%   M7 Contradicciones abiertas (CA1-CA17) y errores corregidos (ER1-ER15)
@@ -262,7 +262,8 @@ graph TD
         end
 
         subgraph M3_ENT [ENTREGA Y ESTADO]
-            DE_ENT["Entrega - skill entregar (§M4): APK con arquitecto Y QA escritos;<br>.hex con las cuatro cosas de CLAUDE.md §3; registro con su huella."]
+            %% Entrega: APK con arquitecto Y QA por escrito; .hex con las cuatro de CLAUDE.md §3; registro con huella.
+            DE_ENT["Entrega - orquestador:entregar + .claude/particularidades/entregar.md (§M4)"]
             DE_ROAD["ROADMAP.md - orden, puertas P1-P12, decisiones pendientes, contradicciones abiertas"]
             DE_RET["RETOMAR.md - estado del dia y cifras vigentes"]
             DE_RUN["RUNBOOK.md - procedimiento por fases 0-12 (fase 0 :67 ... fase 12 :282)"]
@@ -332,11 +333,18 @@ graph TD
             CA_GRA --> CA_JU --> CA_SIM
         end
 
-        subgraph M4_SK [SKILLS - .claude/skills/]
-            SK_ENT["entregar/SKILL.md - lo que sale del repositorio: .hex, APK, acta,<br>informe, procedimiento. Cubre §M3 (entrega, puertas) y §M2 (ZIP y huellas)."]
-            SK_VER["verificar/SKILL.md - arneses XC8 + MPLAB SIM, JUnit a mano, tramas y ZIP.<br>Cubre §M4 entero y el contraste con registros de §M2."]
-            SK_STO["verificar-pantalla-stone/SKILL.md (scripts validar_stone.py, decodificar_k.py)<br>.vt contra firmware y lectura de #K#. Cubre §M1 PANTALLA y §M6 STONE."]
-            SK_PCB["leer-planos-pcb/SKILL.md (scripts eagle_netlist.py, ipc356_netlist.py,<br>pin_manager_pic.py) - pin -> red -> componente contra FW mcc_generated_files/pin_manager.c.<br>Cubre §M1 EQUIPO y §M6 HARDWARE. Papel contra papel."]
+        subgraph M4_SK [SKILLS - orquestador:* + .claude/particularidades/]
+            %% Las skills y sus scripts viven en el plugin orquestador (clon D:\IT\Arquitec_Orquestador\skills\);
+            %% aqui solo queda lo propio de la V3.6, en un .md por skill que la comun manda leer.
+            %% entregar: lo que sale del repositorio (.hex, APK, acta, informe, procedimiento). Cubre §M3 y §M2.
+            SK_ENT["orquestador:entregar + particularidades/entregar.md"]
+            %% verificar: arneses XC8 + MPLAB SIM, JUnit a mano, tramas y ZIP. Cubre §M4 y los registros de §M2.
+            SK_VER["orquestador:verificar + particularidades/verificar.md"]
+            %% verificar-pantalla-stone (validar_stone.py, decodificar_k.py): .vt contra firmware, #K#. §M1, §M6.
+            SK_STO["orquestador:verificar-pantalla-stone + particularidades/verificar-pantalla-stone.md"]
+            %% leer-planos-pcb (eagle_netlist.py, ipc356_netlist.py, pin_manager_pic.py): pin -> red -> componente
+            %% contra FW mcc_generated_files/pin_manager.c. Cubre §M1 EQUIPO y §M6 HARDWARE. Papel contra papel.
+            SK_PCB["orquestador:leer-planos-pcb + particularidades/leer-planos-pcb.md"]
         end
 
     end
@@ -371,24 +379,25 @@ graph TD
     %% | 05_Documentacion/SPEC-App-Calibracion-Coviandina.md | M1 (app corta) | rtv-1.0: AppCorta.java, CortoActivity.java |
     %% | 05_Documentacion/SPEC-Registro-Indicador-Interventoria.md | M2 (salidas) | SPEC-Calibracion-V3.6.md §8 |
     %% | 05_Documentacion/PROTOCOLO-V3.6.md | M1 (contrato) | FW calibracion_v36.c, uart_module.c; ProtocoloV36.java (rtv-1.0) |
-    %% | 05_Documentacion/TDD-V3.6.md | M4, M3 | FW pruebas/, app/src/test/, verificar/SKILL.md |
+    %% | 05_Documentacion/TDD-V3.6.md | M4, M3 | FW pruebas/, app/src/test/, particularidades/verificar.md |
     %% | 05_Documentacion/MATRIZ-SPEC-codigo-V3.6.md | M3 | SPEC-V3.6.md, FW, APP (main) |
     %% | 05_Documentacion/MATRIZ-SPEC-codigo-App.md | M3 | SPEC-App-Unica-V36-V46.md, APP (rtv-1.0) |
-    %% | 05_Documentacion/REVISION-*.md, QA-*.md | M3 | entregar/SKILL.md, 03_App_Movil/RTV-V*.apk |
+    %% | 05_Documentacion/REVISION-*.md, QA-*.md | M3 | particularidades/entregar.md, 03_App_Movil/RTV-V*.apk |
     %% | 05_Documentacion/PROCEDIMIENTO-Calibracion-V3-K42.md | M6 | BASE ecuacionesCalibracion.c (ver ER4) |
     %% | 06_Calibracion/SLV-002/PROCEDIMIENTO-Escribir-8-y-b.md | M2 | INFORME-Ajuste-SLV-002-20260919-1811.md, TablaCalibracion.java, DECISIONES |
     %% | 06_Calibracion/SLV-002/INFORME-Ajuste-SLV-002-20260919-1811.md | M2 | soporte_SLV-002_20260919_181120.zip, HUELLAS.txt |
     %% | 06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md | M2 | assets/decisiones.csv, Decisiones.java, ROADMAP.md (pendientes) |
-    %% | 06_Calibracion/SLV-002/campanas/HUELLAS.txt | M2 | campanas/*.zip, tramas/*.txt, entregar/SKILL.md §9 |
+    %% | 06_Calibracion/SLV-002/campanas/HUELLAS.txt | M2 | campanas/*.zip, tramas/*.txt, particularidades/entregar §5 |
     %% | 06_Calibracion/ (catalogo, colas, planes) | M2 | assets/*.csv, BancoPrevio.java, Asistente.java |
     %% | 01_Firmware/RetroVertical_V3.6.X/CAMBIOS-V3.6.md | M1, M4 | FW, pruebas/, TDD-V3.6.md |
     %% | 01_Firmware/lecturas_equipos/*/ | M1 | HISTORIA.md, RUNBOOK.md fases 0-5 |
-    %% | 04_Pantalla_STONE/SOFTWARE-STONE.md | M1, M6 | verificar-pantalla-stone/SKILL.md |
+    %% | 04_Pantalla_STONE/SOFTWARE-STONE.md | M1, M6 | particularidades/verificar-pantalla-stone.md |
     %% | 03_App_Movil/RetroV36/README.md | M4, M1 | CLAUDE.md §8, app/build.gradle |
-    %% | .claude/skills/entregar/SKILL.md | M3 (entrega), M2 (ZIP) | CLAUDE.md §3 y §6, HUELLAS.txt |
-    %% | .claude/skills/verificar/SKILL.md | M4, M2 (registros) | TDD-V3.6.md, FW pruebas/, README de la app |
-    %% | .claude/skills/verificar-pantalla-stone/SKILL.md | M1 (pantalla), M6 (STONE) | 04_Pantalla_STONE/, FW calibracion_v36.c #K# |
-    %% | .claude/skills/leer-planos-pcb/SKILL.md | M1 (equipo), M6 (hardware) | 02_Hardware/, FW mcc_generated_files/pin_manager.c |
+    %% Cada particularidad acompana a la skill orquestador:<mismo nombre>; la comun la manda leer.
+    %% | .claude/particularidades/entregar.md | M3 (entrega), M2 (ZIP) | CLAUDE.md §3 y §6, HUELLAS.txt |
+    %% | .claude/particularidades/verificar.md | M4, M2 (registros) | TDD-V3.6.md, FW pruebas/, README de la app |
+    %% | .claude/particularidades/verificar-pantalla-stone.md | M1, M6 | 04_Pantalla_STONE/, FW calibracion_v36.c #K# |
+    %% | .claude/particularidades/leer-planos-pcb.md | M1, M6 | 02_Hardware/, FW mcc_generated_files/pin_manager.c |
     %% =========================================================================
 
     %% =========================================================================

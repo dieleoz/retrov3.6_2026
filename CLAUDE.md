@@ -1,3 +1,5 @@
+Orquestador: a13dd24
+
 # CLAUDE.md — Reglas permanentes del repositorio V3.6
 
 Retrorreflectómetro **Vertical**, línea **V3.6** (2026), de DPI Ingeniería & Consultoría. **Nada está
@@ -69,7 +71,7 @@ se entrega **vista en rojo**. Los casos que lo enseñaron están en `HISTORIA.md
 ## 8. Compilar y ejecutar
 
 - App: la de desarrollo en la rama **`rtv-1.0`**. JDK 11, Gradle 6.5, AGP 4.1.1; receta en
-  `03_App_Movil/RetroV36/README.md` y en la skill `verificar` (no en `compilar-apk`, que es del V5).
+  `03_App_Movil/RetroV36/README.md` y en `.claude/particularidades/entregar.md` §7 (no en `compilar-apk`, del V5).
 - `testDebugUnitTest` no arranca por la `ñ` de `C:\Users\Diego.Zuñiga`: se compila y se ejecuta con
   **JUnitCore a mano**. La lista de clases es manual: la que no se añade no se ejecuta.
 - Firmware: XC8 2.10 y MPLAB SIM (`05_Documentacion/TDD-V3.6.md`).
@@ -88,10 +90,10 @@ worktree y con rama propia). El principal también se equivoca: gana el código,
 | `README.md` | Qué es y dónde está cada cosa | 100 líneas; sin estado del día |
 | `ROADMAP.md` | Qué falta, en qué orden, sesión en curso y siguiente; puertas, decisiones, contradicciones | 100 líneas; lo hecho se borra |
 | `RETOMAR.md` | Estado vigente y prompt para retomar. Manda sobre las cifras | Se reescribe, no se acumula |
-| `CLAUDE.md` | Estas reglas | 100 líneas |
+| `CLAUDE.md` | Estas reglas; la primera línea, el commit del Orquestador | 200 líneas |
 | `HISTORIA.md` | Cómo se llegó aquí y **qué se concluyó mal**, con la errónea junto a la buena | — |
 | `ARQUITECTURA.map` | Mapa del sistema (§M1-§M4, §M6) e índice de referencias cruzadas (§M5) | 1000 líneas |
-| `.claude/skills/` | `entregar`, `verificar`, `verificar-pantalla-stone`, `leer-planos-pcb` | Sin cifras vigentes |
+| `.claude/particularidades/` | Lo propio de cada skill `orquestador:*`, con su mismo nombre | Sin cifras vigentes |
 
 Ninguno es una bitácora. Si `ROADMAP.md` y `RETOMAR.md` discrepan, gana el registro (`git log`, md5,
 trama). Español técnico y sobrio, sin emojis; si algo está sin medir, se dice en la primera línea.
