@@ -25,24 +25,22 @@ nueva (usuario). Modelos: **opus sólo para `arquitecto-iot`; el resto sonnet o 
 autorización de Diego.** Cada paso empieza cuando llega el informe del anterior; un Alto se reabre en el
 código antes de darlo por bueno.
 
-**Carril A — app de calibrar.** En curso: arquitecto NO APTO a `Cov_3.6.2_calibrar`; QA pendiente.
+**Carril A — app de calibrar.** `Cov_3.6.5_calibrar` (rama `rtv-1.0-cierre`, `316a6bc`, md5 en `RETOMAR.md`):
+QA APTO y arquitecto APTO CON CONDICIONES; entregable a Diego para calibrar el 8 y la b.
 
-1. **A1.** Esperar el informe de `qa-istqb` (sonnet) sobre `Cov_3.6.2_calibrar`.
-2. **A2.** Ronda de arreglos, general (sonnet) en el worktree: la b con ±10 % (RF-COV-12); fecha devuelta
-   y anotada si se rechaza (RF-COV-13, A-06); resumen que dice qué pulsar; nombres de color; corte de
-   `FlujoCalibracion` a clase propia; lo que diga QA. Pruebas vistas en rojo por rotura real.
-   Sale `Cov_3.6.3_calibrar`.
-3. **A3.** `arquitecto-iot` (opus) y `qa-istqb` (sonnet) sobre el APK nuevo. APTO o vuelta a A2.
-4. **A4.** Entrega a Diego por USB; calibra 8 y b con el ZIP de las 18:11; actas y ZIP al repositorio.
-5. **A5.** Certificado PDF y toma corta: SPEC, arquitecto, código y QA.
+1. **A4.** Diego instala por USB, carga el ZIP de las 18:11 y calibra; actas y ZIP al repositorio.
+2. **A4b.** Condición del arquitecto, antes de dar la app a un operador de Coviandina: ningún mensaje de
+   fallo con número de código (`FlujoCalibracion.java:1190,1230,1452-1456,1499-1502`); prueba en rojo.
+3. **A5.** Certificado PDF, verificación de 10 patrones y toma corta: SPEC, arquitecto, código y QA.
 
-**Carril B — app de usuario.** En curso: SPEC r2 tras NO APTO del arquitecto.
+**Carril B — app de usuario.** `RetroUsuario` 0.3.0: incremento 1 "Medir y exportar"; arquitecto y QA
+APTO CON CONDICIONES.
 
-1. **B1.** SPEC r2 y TDD §8, general (sonnet): USR-MODOS, UMBRAL-LEY, inventario por CSV tolerante e
-   histórico por señal.
-2. **B2.** `arquitecto-iot` (opus) sobre SPEC y TDD, antes del código. APTO o vuelta a B1.
-3. **B3.** Proyecto nuevo `03_App_Movil/RetroUsuario/`, desde cero y con sus pruebas, en rama propia.
-4. **B4.** `arquitecto-iot` (opus) y `qa-istqb` (sonnet) sobre el APK. APTO o vuelta a B3.
+1. **B5.** 0.3.1 con las condiciones (sonda con reintentos ofrecidos, caso mixto, pausa #V#→#GN#, nombres
+   en MediaStore, giro de pantalla, exportar sin equipo, GPS reciente, reproducibilidad por contenido).
+2. **B6.** Arquitecto y QA sobre la 0.3.1; prueba de Diego en dos teléfonos (Android ≤9 y ≥10).
+3. **B7.** Incremento 2 "señal a señal" (indicador por norma, histórico, inventario por CSV): tras las
+   propuestas ▸ pendientes de Diego (geometría, umbral doble, cero, 3.6.2 obligatoria).
 
 ## Puertas P1-P12
 

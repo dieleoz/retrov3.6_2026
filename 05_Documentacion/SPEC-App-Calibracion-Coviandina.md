@@ -51,7 +51,7 @@ ZIP se adopta sola (`:129-131`). El desajuste de bancos no puede darse aquí.
 ## 2. El flujo, seis pasos y ni uno más
 
 ```
-cargar el ZIP  →  calibrar  →  nombre  →  nota  →  serie  →  acta  →  fin
+cargar el ZIP  →  calibrar  →  nombre  →  serie  →  acta  →  fin
 ```
 
 Antes del paso 1: conectar el equipo. Al conectar, **las pruebas del equipo arrancan solas**
@@ -73,9 +73,10 @@ exactamente lo que esa noche no se veía en ninguna pantalla. Un código que la 
 a, c, d en la completa) no dice "faltan patrones": dice **"esta cola sólo lo verifica"**.
 
 **RF-COV-04 — Paso 2: "Calibrar".** *(Modificado en r2: RF-COV-11 a 13 y 17.)*
-Abre `CalibrarActivity`, **sin cambios**: previas, una tarjeta por
-código con su motivo, **nombre del superadministrador** (paso 3), **nota de la conformidad** (paso 4),
-casilla por código, PIN una vez por conexión, escritura, re-medida, persistencia y **acta** (paso 6).
+Abre `CalibrarActivity` con sus ramas `BuildConfig.CORTO`: sin tarjetas ni casillas por código, sin nota
+de conformidad; el nombre de quien calibra se pide una vez y firma el acta (FIRMA-ACTA). Un solo botón
+"Calibrar" hace el ciclo completo (PIN una vez por conexión, escritura, re-medida, persistencia, acta) en el
+orden de la tabla, sin preguntar código a código (RF-COV-17). "Persistencia" y "Aceptar" quedan ocultos.
 
 **RF-COV-05 — Paso 5: la serie, una vez y en un solo sitio.** Un botón que muestra la serie vigente y
 permite teclearla cuando el equipo responde `#GN,NONE#`, cuando le cambiaron el módulo y se anuncia
@@ -91,8 +92,9 @@ acta se arma aquí, al final. **Riesgo que cierra: R-U18**, un acta con serie de
 acta con serie leída.
 
 **RF-COV-07 — Al terminar: "Guardar / Compartir".** El ZIP ligero y el de soporte, con su copia en
-`Download/RTV/`, en un solo selector (`ConexionActivity.java:173-189`). El informe de calibración
-sigue saliendo solo al aceptar el acta (`CalibrarActivity.java:520-546`).
+`Download/RTV/`, en un solo selector (`CortoActivity.java:285-302`). El informe de calibración (texto;
+el PDF está pendiente) se genera y se comparte solo al cerrar cualquier acción que deje actas aceptadas,
+incluido el ciclo de un botón (`CalibrarActivity.java:544-609`, `ExportadorFinal.java`).
 
 **RF-COV-08 — No hay nada más.** Lo que no está en esta lista, no está en esta app.
 
@@ -176,7 +178,7 @@ Comprobado **abriendo el código**, no razonando:
 | APK | Paquete | Etiqueta | versionName |
 | :--- | :--- | :--- | :--- |
 | `app-debug.apk` | `com.dpi.retrov36` | RTV | `1.0.0-rc6` |
-| `app-coviandina.apk` | `com.dpi.retrov36.calibra` | RTV Calibra | `1.0.0-rc6-calibra` |
+| `app-coviandina.apk` | `com.dpi.retrov36.calibra` | RTV Calibra | `Cov_<versión>_calibrar` (RF-COV-16) |
 
 **Lo que hay que vigilar, y queda dicho:** las dos escriben en el **mismo** `Download/RTV/`
 (`Campanas.java:245`). Los nombres llevan serie y fecha, así que no se pisan, pero la carpeta mezcla
@@ -272,6 +274,10 @@ Ningún texto que vea el operador lleva el número de código (RF-COV-17).
 devolución de la fecha, en una clase propia. Ningún arreglo hace crecer `FlujoCalibracion.java` ni
 `CalibrarActivity.java` (rules/modularidad.md); ningún método pasa de 100 líneas.
 
+**RF-COV-23 — Salvavidas visibles.** En esta app quedan visibles "Leer batería (9)", "Rechazar",
+"Cerrar sin restaurar" y "Liberar" (estos dos con PIN de administrador), para salir de una sesión a medias
+(`CalibrarActivity.java:86,104-107`). Es la excepción escrita a RF-COV-08.
+
 **Nota:** RF-COV-18, 19 y 21 (restauración y contador) corrigen código compartido con la app de campo, que
 hereda el cambio y necesita su propia revisión antes de entregarse.
 
@@ -284,6 +290,6 @@ muestras (TOMA-50). Van en la app de empresa completa (`ROADMAP.md`, tareas 1 a 
 - Nada se ha probado **en un teléfono** ni **contra un equipo**.
 - Las dos apps **no se han visto instaladas a la vez**: que convivan sale de leer el manifiesto y el
   `build.gradle` y de mirar los dos APK con `aapt`, no de haberlas instalado.
-- `RF-COV-06` (la marca de serie declarada en el acta) y `RF-COV-09` (el rechazo por familia)
-  **están especificados y no implementados**: dependen de trabajo que hoy es de otro agente.
+- `RF-COV-06` (la marca de serie declarada en el acta) y `RF-COV-09` (el rechazo por familia) están
+  implementados y probados en la JVM (`AppCortaTest`); como el resto, sin probar en un teléfono.
 - El camino corto se ha ejercitado **sólo en la JVM**, con el ZIP archivado de las 15:10.

@@ -592,6 +592,26 @@ de USR-ALCANCE. Sin `Protocolo.java` desaparece la colisión de nombre de la r1.
 coviandina`). `versionCode` empieza en 1, independiente de las apps de calibración. Firma del APK:
 **pendiente, D-8** (sin decisión de Diego registrada todavía).
 
+## 4 bis. Lo que fija la implementación (RetroUsuario 0.3.x), sin cita de Diego
+
+Cruce SPEC contra código de la 0.3.0 (rama de la app de usuario, `32c785d`). Se escribe aquí para que
+la SPEC no vaya por detrás del código; todo es ▸ propuesta de este trabajo, no decisión de Diego.
+
+- **Una sola medida en vuelo:** botones de color, Exportar y Ajustes deshabilitados mientras se mide;
+  `SesionMedicion.medir` con cerrojo; `lecturas_por_color` se fija al empezar la serie.
+- **Cambio de equipo:** elegir otro desconecta el enlace anterior y limpia la sesión; la MAC es la del
+  socket conectado. Tras recrearse la pantalla se reutiliza el enlace vivo (0.3.1).
+- **Exportación por versión de Android:** API ≤28, fichero en `Download/RetroUsuario/` con permiso pedido
+  en tiempo de ejecución; API ≥29, `MediaStore.Downloads`. Nombre repetido → `_2`, `_3` en las dos vías.
+- **Exportar sin equipo conectado** desde la pantalla principal (nombre `VARIOS` o la serie de la última
+  medida, RF-USR-15 bis) (0.3.1).
+- **GPS:** se pide permiso; una posición de más de 2 min o con precisión peor que 50 m se exporta como
+  `posicion_antigua` o `sin_posicion`, nunca como `con_posicion` (0.3.1).
+- **Ajustes persistentes:** `lecturas_por_color` sobrevive a reiniciar la app (preferencias del sistema).
+- **Verificación del APK por contenido:** el md5 del ZIP del APK no se reproduce entre compilaciones
+  (el empaquetador reordena entradas); se compara `classes*.dex`, recursos y certificado, y los fuentes
+  con `fuente.md5` en fin de línea LF (`.gitattributes`).
+
 ## 5. Contradicciones, puntos abiertos y qué no se toca
 
 - **C-06.** El mínimo de RF-USR-09/10 depende de la geometría del equipo y de una tabla transcrita sin
