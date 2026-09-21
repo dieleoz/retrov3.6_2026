@@ -176,7 +176,12 @@ public class SesionMedicionFlujoTest {
      *  "#V#" y no contesta nada a #GN#/#GC# (mudo, no ERR,FORMATO) mide igual, con
      *  estadoCalibracion = "DEF" — el cuarto campo de #V# manda sobre "sin_fecha" aunque
      *  #GN#/#GC# no hayan contestado nada, no sólo cuando #GC# da una fecha (eso ya lo prueba
-     *  defEsSinCalibracionAunqueGcTengaFecha, arriba, con gcRespondioAlgo = true). */
+     *  defEsSinCalibracionAunqueGcTengaFecha, arriba, con gcRespondioAlgo = true).
+     *
+     *  <p>arq B-4 (condición sobre 0.3.1, corrige lo que hacía 766e6f2 aquí): el silencio de #GN#/#GC#
+     *  ofrece reintentar SIEMPRE, con cualquier valor de exigir_362 (SPEC :115-122) — este flujo no es
+     *  MainActivity, así que simula "reintentos agotados" con {@link Sonda362#vacio()} directamente,
+     *  igual que haría MainActivity#mostrarSinRespuesta tras agotarlos con exigir_362 = false.</p> */
     @Test
     public void tUsr01cD_exigir362FalsoConDefYGnGcMudosMideConDef() {
         EquipoSimuladoDisparos sim = new EquipoSimuladoDisparos()
@@ -186,8 +191,9 @@ public class SesionMedicionFlujoTest {
 
         DeteccionYSonda.Resultado deteccion = DeteccionYSonda.ejecutar(sim, params, ms -> { });
         assertEquals(DetectorEquipo.Resultado.COMPATIBLE, deteccion.deteccion().resultado());
-        Sonda362.ResultadoSonda sonda = deteccion.sonda();
-        assertEquals(Sonda362.Resultado.OK, sonda.resultado()); // exigir_362 = false: mide igual.
+        // arq B-4: silencio total ofrece reintentar primero, incluso con exigir_362 = false.
+        assertEquals(Sonda362.Resultado.SIN_RESPUESTA_REINTENTAR, deteccion.sonda().resultado());
+        Sonda362.ResultadoSonda sonda = Sonda362.vacio(); // reintentos agotados, exigir_362 = false: mide igual.
         assertFalse(sonda.serieLeida());
         assertFalse(sonda.fechaRegistrada());
 

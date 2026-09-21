@@ -130,10 +130,24 @@ public final class Sonda362 {
         if (cGN == Clasificacion.OK || cGC == Clasificacion.OK) {
             return resultadoOkDegradado(cGN, tGN, cGC, tGC);
         }
-        if (!params.exigir362()) {
-            return resultadoOkDegradado(cGN, tGN, cGC, tGC);
-        }
+        // arq B-4 (SPEC-App-Usuario-V3.6.md :115-122, condición sobre 0.3.1): silencio total en las
+        // dos SIEMPRE ofrece reintentar primero, con CUALQUIER valor de exigir_362 — antes de esta
+        // condición, exigir_362 = false medía degradado de inmediato aquí, sin pasar nunca por
+        // SIN_RESPUESTA_REINTENTAR, así que el operador nunca veía "reintente" en ese caso. Sólo tras
+        // agotar los reintentos operador-driven (SondaReintentable) decide exigir_362 si se mide
+        // degradado (false, ver {@link #vacio()}) o se queda sin medir (true).
         return new ResultadoSonda(Resultado.SIN_RESPUESTA_REINTENTAR, "", false, "", false);
+    }
+
+    /**
+     * arq B-4: tras agotar los reintentos operador-driven en silencio total (ni #GN# ni #GC#
+     * contestaron nada útil), con {@code exigir_362 = false} la app mide igual — sin serie ni fecha,
+     * equivalente al resultado de {@link #resultadoOkDegradado} cuando ninguna de las dos clasificó
+     * OK. Con {@code exigir_362 = true} esto no se llama: la app se queda en "sin datos de
+     * calibración/serie" (MainActivity#mostrarSinRespuesta).
+     */
+    public static ResultadoSonda vacio() {
+        return new ResultadoSonda(Resultado.OK, "", false, "", false);
     }
 
     private static ResultadoSonda resultadoOk(RespuestaTrama tGN, RespuestaTrama tGC) {

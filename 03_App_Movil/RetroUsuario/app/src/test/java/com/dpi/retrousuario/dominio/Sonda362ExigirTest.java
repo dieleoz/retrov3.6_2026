@@ -56,17 +56,35 @@ public class Sonda362ExigirTest {
         assertFalse(r.fechaRegistrada());
     }
 
-    /** exigir_362 = false con silencio puro en las dos: también mide igual (no sólo con ERR,FORMATO explícito). */
+    /** arq B-4 (SPEC :115-122, condición sobre 0.3.1, corrige lo que hacía 766e6f2 aquí): exigir_362
+     *  = false con silencio puro en las dos NO se salta a medir de inmediato — ofrece reintentar
+     *  igual que exigir_362 = true, porque el silencio puede ser el enlace, no la versión del
+     *  firmware (mismo razonamiento que el silencio con exigir_362 = true, arriba). Sólo tras agotar
+     *  los reintentos operador-driven (fuera de {@link Sonda362}, en {@link SondaReintentable}/
+     *  MainActivity) se mide degradado, con {@link Sonda362#vacio()} (prueba siguiente). Vista en
+     *  rojo contra 766e6f2: esa versión devolvía aquí {@code Resultado.OK} de inmediato. */
     @Test
-    public void exigir362FalsoConSilencioTambienMideIgual() {
+    public void exigir362FalsoConSilencioTambienOfreceReintentarAntesDeMedirDegradado() {
         EquipoSimulado equipo = new EquipoSimulado(); // #GN#/#GC# sin configurar: silencio.
         ParametrosRitmo params = new ParametrosRitmo();
         params.exigir362(false);
 
         Sonda362.ResultadoSonda r = sondear(equipo, params);
 
+        assertEquals(Sonda362.Resultado.SIN_RESPUESTA_REINTENTAR, r.resultado());
+    }
+
+    /** arq B-4: el resultado degradado que se usa tras agotar los reintentos con exigir_362 = false
+     *  no lleva serie ni fecha (igual que antes de esta condición, sólo que ahora se llega aquí
+     *  después de ofrecer los reintentos, no en vez de ofrecerlos). */
+    @Test
+    public void vacioNoLlevaSerieNiFecha() {
+        Sonda362.ResultadoSonda r = Sonda362.vacio();
+
         assertEquals(Sonda362.Resultado.OK, r.resultado());
         assertFalse(r.serieLeida());
+        assertEquals("", r.serie());
+        assertEquals("ninguna", r.origenSerie());
         assertFalse(r.fechaRegistrada());
     }
 
