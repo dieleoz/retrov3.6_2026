@@ -29,7 +29,7 @@ código antes de darlo por bueno.
 QA APTO y arquitecto APTO CON CONDICIONES; entregable a Diego para calibrar el 8 y la b.
 
 1. **A4.** Diego instala por USB, carga el ZIP de las 18:11 y calibra; actas y ZIP al repositorio.
-2. **A4b.** Condición del arquitecto, antes de dar la app a un operador de Coviandina: ningún mensaje de
+2. **A4b (en curso, `Cov_3.6.6_calibrar`).** Condición del arquitecto, antes de darla a un operador: ningún mensaje de
    fallo con número de código (`FlujoCalibracion.java:1190,1230,1452-1456,1499-1502`); prueba en rojo.
 3. **A5.** Certificado PDF, verificación de 10 patrones y toma corta: SPEC, arquitecto, código y QA.
 
