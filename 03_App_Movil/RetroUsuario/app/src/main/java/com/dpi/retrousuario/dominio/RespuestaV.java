@@ -26,12 +26,15 @@ public final class RespuestaV {
     private final String fechaCompilacion;
     private final EstadoAjuste estadoAjuste;
     private final String mascaraHex;
+    private final String crudo;
 
-    private RespuestaV(String version, String fechaCompilacion, EstadoAjuste estadoAjuste, String mascaraHex) {
+    private RespuestaV(String version, String fechaCompilacion, EstadoAjuste estadoAjuste, String mascaraHex,
+            String crudo) {
         this.version = version;
         this.fechaCompilacion = fechaCompilacion;
         this.estadoAjuste = estadoAjuste;
         this.mascaraHex = mascaraHex;
+        this.crudo = crudo;
     }
 
     /**
@@ -56,7 +59,18 @@ public final class RespuestaV {
         } else {
             return null;
         }
-        return new RespuestaV(version, fecha, estado, mascara);
+        return new RespuestaV(version, fecha, estado, mascara, respuesta);
+    }
+
+    /**
+     * D-1/M1 (ALTO QA): el texto EXACTO de la trama "#V#" tal como llegó del equipo, con 4 o 5
+     * campos, sin reconstruir. El campo {@code firmware_v} de {@code medidas.csv} (RF-USR-06) usa
+     * este valor tal cual; nada fuera de esta clase vuelve a componer "#V,"+version+","+fecha+...
+     * (eso era el defecto D-1: MainActivity lo hacía a mano, y una reconstrucción manual puede
+     * divergir del original si el firmware cambia el orden o el redondeo de algún campo).
+     */
+    public String crudo() {
+        return crudo;
     }
 
     /** "3.6" siempre en esta linea (3.6, 3.6.1 y 3.6.2 responden el mismo texto de version, PROTOCOLO-V3.6.md §4 ter). */
