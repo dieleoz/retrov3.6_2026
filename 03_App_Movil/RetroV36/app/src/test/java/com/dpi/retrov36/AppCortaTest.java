@@ -214,7 +214,11 @@ public class AppCortaTest {
         AppCorta.Codigo ocho = buscar(AppCorta.codigos(q, c), '8');
         assertTrue("con sus pasos hechos y su oscuro, el 8 queda listo: " + ocho.motivo, ocho.listo);
         assertEquals("y sin motivo que dar", "", ocho.motivo);
-        assertEquals("solo el 8: los demas siguen sin banco", "8", AppCorta.listos(AppCorta.codigos(q, c)));
+        // RF-COV-17 "nunca el codigo" (Cov363, arreglo 5): listos() da el nombre, no el caracter de codigo.
+        // Antes de este arreglo, EN ROJO: devolvia "8" (Fabrica.nombreCorto no existia con esta firma en
+        // 7b4391b, y AppCorta.listos() todavia usaba x.k, no Fabrica.nombreCorto(x.k)).
+        assertEquals("solo el 8, por su nombre: los demas siguen sin banco", "amarillo, lámina tipo I",
+                AppCorta.listos(AppCorta.codigos(q, c)));
     }
 
     /** Una serie medida y aceptada en ese paso, con su paso anotado HECHO. */
@@ -313,8 +317,9 @@ public class AppCortaTest {
         assertTrue("dice el banco", t.contains("Banco: COMPLETO"));
         assertTrue("dice que no hay ninguno listo, en vez de callarse",
                 t.contains("NO hay ningún código listo para calibrar."));
-        assertTrue("y da el motivo de cada uno", t.contains("1: " + MOTIVO_FALTAN));
-        assertTrue("distinguiendo el que solo se verifica", t.contains("7: " + MOTIVO_VERIFICA));
+        // RF-COV-17 "nunca el código" (Cov363, arreglo 5): por nombre (Fabrica.nombreCorto), no por dígito.
+        assertTrue("y da el motivo de cada uno", t.contains(Fabrica.nombreCorto('1') + ": " + MOTIVO_FALTAN));
+        assertTrue("distinguiendo el que solo se verifica", t.contains(Fabrica.nombreCorto('7') + ": " + MOTIVO_VERIFICA));
         assertTrue("y dice la s_rep, que es la otra puerta", t.contains("s_rep"));
     }
 

@@ -304,10 +304,12 @@ public class Cov362DefectosTest {
         f.pin("1234");
 
         String resumen = f.calibrarAutomatico("Prueba RF-COV-17");
+        // Cov363 (arreglo 5, RF-COV-17 "nunca el código"): el resumen usa Fabrica.nombreCorto ("amarillo,
+        // lámina tipo I"), no Fabrica.nombre ("amarillo opaco"), que sigue siendo el de la app de campo.
         assertTrue("RF-COV-17: un solo Calibrar deja el 8 calibrado: " + resumen,
-                resumen.contains(Fabrica.nombre('8')));
+                resumen.contains(Fabrica.nombreCorto('8')));
         assertTrue("y, en la misma pulsación, la b (después del 8): " + resumen,
-                resumen.contains(Fabrica.nombre('b')));
+                resumen.contains(Fabrica.nombreCorto('b')));
 
         Ecuacion ocho = sim.curvas.get('8');
         assertEquals("c1 del código 8 (informe §4.1, y recálculo independiente del arquitecto)",

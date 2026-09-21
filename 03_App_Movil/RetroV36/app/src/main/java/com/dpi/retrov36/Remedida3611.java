@@ -139,14 +139,23 @@ public final class Remedida3611 {
      * Conforme si |R_medida - R_cert| / R_cert <= 10 % (VERIF-5-10: "conforme hasta ±10 %"). Se mantiene la
      * comprobacion de que la medida es valida (colocacion()) y los dos intentos + restaurar si no es
      * conforme (remedida(), sin cambios: el bucle y la restauracion son los mismos para las dos reglas).
+     *
+     * RF-COV-12 / A-1 (Cov363, arreglo 2) y VERIF-5-10 (confirmado por Diego, nota 3 de
+     * DECISIONES-Diego-2026-09-19.md): la MISMA regla vale para todos los codigos que se escriben en la app
+     * de calibrar, la b incluida (sustituye a REMEDIDA-b/RF-CAL-18 en este camino). El acta registra, por
+     * patron: el certificado, el rango a ±5 % y a ±10 %, lo medido y si queda dentro de ±5 % (el certificado
+     * lo dice ademas); es CONFORME dentro de ±10 %.
      */
     public static Resultado evaluarCertificado(String patron, double cert, List<double[]> xPorCol, List<double[]> rPorCol) {
         double xRem = mediaDeMedias(xPorCol);
         double rMedida = mediaDeMedias(rPorCol);
         double dev = 100 * (rMedida - cert) / cert;
         boolean ok = Math.abs(rMedida - cert) <= 0.10 * cert;
-        String t = String.format(Locale.US, "%s: R %.1f frente a certificado %.0f (%+.1f %%, límite ±10 %%, RF-COV-12: sin "
-                        + "el criterio de s_rep) %s", patron, rMedida, cert, dev, ok ? "OK" : "FALLA");
+        boolean ok5 = Math.abs(rMedida - cert) <= 0.05 * cert;
+        String t = String.format(Locale.US, "%s: certificado %.0f (±5 %%: %.1f–%.1f; ±10 %%: %.1f–%.1f), medido R %.1f "
+                        + "(%+.1f %%); dentro de ±5 %%: %s; dentro de ±10 %% (RF-COV-12, VERIF-5-10: sin el criterio de "
+                        + "s_rep): %s", patron, cert, 0.95 * cert, 1.05 * cert, 0.90 * cert, 1.10 * cert, rMedida, dev,
+                ok5 ? "sí" : "no", ok ? "OK" : "FALLA");
         return new Resultado(ok ? "CONFORME" : "NO_CONFORME", xRem, rMedida, t);
     }
 

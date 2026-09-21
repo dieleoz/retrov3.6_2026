@@ -482,7 +482,12 @@ public class CalibrarActivity extends Base {
                 // 3.6.17 (principio de Diego): si faltan muestras, se dice cuales y se ofrece ir a tomarlas.
                 // RF-COV-11 (H-1): en la app de calibrar NO HAY Banco (no se instala): el aviso dice qué hacer
                 // sin ofrecer ese camino, que en esta app no existe (CalibrarActivity.java:441-446 en 9435f69).
-                if (f.contains("no se escribe") || f.contains("falta") || f.contains("Falta")) {
+                // BAJO B-2 (Cov363, arreglo 5, QA): el resumen de calibrarAutomatico (RF-COV-17) mezcla en un
+                // solo texto lo calibrado y lo no calibrado; un código bloqueado por el motivo de OTRO código
+                // (p. ej. "falta la serie del banco...") no puede disparar "No se puede calibrar" cuando la
+                // propia calibración fue correcta (huboExito: "Calibrado: " sin ser "ninguno").
+                boolean huboExito = BuildConfig.CORTO && CalibracionAutomatica.huboExito(f);
+                if (!huboExito && (f.contains("no se escribe") || f.contains("falta") || f.contains("Falta"))) {
                     if (BuildConfig.CORTO) {
                         alerta("No se puede calibrar", f);
                     } else {
@@ -521,8 +526,11 @@ public class CalibrarActivity extends Base {
         e.setHint("Motivo");
         caja.addView(e);
         new AlertDialog.Builder(this).setTitle("Rechazar el acta").setView(caja)
-                .setMessage("No se grabará fecha. Todo lo escrito (también un #S sin resolver) vuelve a su curva "
-                        + "anterior, verificado con #G (P12 §6.8).")
+                // MEDIO (A-06, RF-COV-13, Cov363 arreglo 3): "No se grabará fecha" ya no es cierto sin más si
+                // esta acta llegó a grabar #SC antes de rechazarla: en ese caso se devuelve la fecha anterior.
+                .setMessage("Si esta acta llegó a grabar la fecha (#SC), se devuelve la anterior (o se borra si no "
+                        + "había). Todo lo escrito (también un #S sin resolver) vuelve a su curva anterior, "
+                        + "verificado con #G (P12 §6.8).")
                 .setPositiveButton("Rechazar", (d, w) -> accion("Rechazar",
                         () -> flujo.rechazar(e.getText().toString().trim()), true))
                 .setNegativeButton("Cancelar", null).show();

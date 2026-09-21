@@ -49,6 +49,16 @@ public final class Fabrica {
         return color(k) + (esIntensa(k) ? " intenso" : " opaco");
     }
 
+    /**
+     * RF-COV-17 (Cov363, arreglo 5): nombre para la app corta "RTV Calibra" ("amarillo, lámina tipo I"),
+     * no "amarillo opaco" — Diego: "es cargar un .zip y calibrar, ni idea el funcional qué es un 8". Solo
+     * la usan {@link AppCorta} y {@code CalibracionAutomatica} (BuildConfig.CORTO); {@link #nombre(char)}
+     * sigue tal cual para la app de campo, que no se toca.
+     */
+    public static String nombreCorto(char k) {
+        return esIntensa(k) ? nombre(k) : color(k) + ", lámina tipo I";
+    }
+
     /** Codigo intenso de un color del CSV, o 0 si no hay. */
     public static char codigoIntenso(String color) {
         for (char k : CODIGOS) {

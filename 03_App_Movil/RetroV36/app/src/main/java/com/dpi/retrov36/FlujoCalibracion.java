@@ -284,6 +284,16 @@ public final class FlujoCalibracion {
         encendidoPor = k;
     }
 
+    /** BAJO (QA-Cov363, arreglo 6): #Q# cierra el modo administrador. Cortesía: si el enlace ya no
+     * responde no se rompe el resumen de una calibración que, por lo demás, ya quedó hecha. */
+    void salirModoAdministrador() {
+        try {
+            ops.escribir("#Q#");
+        } catch (IOException | InterruptedException e) {
+            // best effort: el modo admin caduca solo a los 10 min (QA-3612-13) si esto no llega
+        }
+    }
+
     /** QA-3613-02: tras cualquier fallo de #L el flujo olvida el PIN; la pantalla lo vuelve a pedir. */
     public boolean necesitaPin() {
         return pin == null || pin.isEmpty();
@@ -1428,8 +1438,12 @@ public final class FlujoCalibracion {
                     acta.intento(k, reloj.ahoraIso(), "NO_VALIDA", falla);
                     if (++noValidas >= MAX_NO_VALIDAS) {
                         // O-14: sin limite, un operador que pulsa OK sin corregir no acaba nunca.
-                        return "Demasiadas colocaciones no válidas seguidas (" + MAX_NO_VALIDAS + "): se para la re-medida del "
-                                + "código " + k + ". Revise el patrón y el apoyo, y vuelva a pulsar Calibrar.";
+                        // ALTO (QA-Cov363, arreglo 1): antes de este arreglo, aqui se paraba SIN restaurar
+                        // (a diferencia de la via de debeRestaurarse(), arriba en este mismo metodo): la curva
+                        // nueva quedaba escrita en el equipo sin verificar. Se restaura, igual que alli.
+                        String r = restaurarCodigo(k);
+                        return "Demasiadas colocaciones no válidas seguidas (" + MAX_NO_VALIDAS + "): se para la re-medida "
+                                + "del código " + k + ". Revise el patrón y el apoyo antes de volver a calibrar. " + r;
                     }
                     int r = operador.preguntar("Colocación no válida", falla + "\nVuelva a colocar " + pat.nombre
                             + " y pulse OK.", "OK", "Parar aquí");
@@ -1449,17 +1463,19 @@ public final class FlujoCalibracion {
                 }
             }
             Remedida3611.Resultado res;
-            if ("RF-CAL-18".equals(f.reglaRemedida)) {
-                // Codigo con dispensa de Diego (b, PA-24): RF-CAL-18 frente a la curva escrita decide; el
-                // incumplimiento frente al certificado queda escrito en el acta. No cambia con BuildConfig.CORTO:
-                // REMEDIDA-b ya fijo esta regla para el b (decisiones.csv), y H-2 es del criterio 2 de s_rep, no
-                // de esta.
+            if (corto) {
+                // RF-COV-12 / A-1 (Cov363, arreglo 2): en la app de calibrar TODOS los codigos que se
+                // escriben se juzgan igual, sin el criterio de s_rep — la b (RF-CAL-18/REMEDIDA-b) INCLUIDA
+                // (VERIF-5-10, confirmado por Diego: "la misma regla para todos los codigos, la b incluida:
+                // sustituye a REMEDIDA-b en la app de calibrar"). Antes de este arreglo, el chequeo de
+                // f.reglaRemedida iba primero y la b nunca llegaba aqui pese a corto = true.
+                res = Remedida3611.evaluarCertificado(pat.nombre, pat.valor, xs, rs);
+            } else if ("RF-CAL-18".equals(f.reglaRemedida)) {
+                // Codigo con dispensa de Diego (b, PA-24), SOLO en la app de campo: RF-CAL-18 frente a la
+                // curva escrita decide; el incumplimiento frente al certificado queda escrito en el acta.
                 res = Remedida3611.evaluarConDispensa(pat.nombre, pat.valor, xs, rs, xBanco, kBanco,
                         sr == null ? Double.NaN : sr.valor, sr == null ? "" : sr.texto, c.leida, f.dispensa,
                         f.alcanceDe("RF-CAL-14", pat.nombre));
-            } else if (corto) {
-                // RF-COV-12 (H-2): en la app de calibrar, sin el criterio de s_rep.
-                res = Remedida3611.evaluarCertificado(pat.nombre, pat.valor, xs, rs);
             } else {
                 res = Remedida3611.evaluar(pat.nombre, pat.valor, xs, rs, xBanco, kBanco,
                         sr == null ? Double.NaN : sr.valor, sr == null ? "" : sr.texto);
@@ -1563,12 +1579,18 @@ public final class FlujoCalibracion {
         if (hoy.equals(antes)) {
             acta.dato("#SC", "no se reescribe: el equipo ya tiene la fecha de hoy (" + g0.describir() + ")");
         } else {
+            // MEDIO (A-06, RF-COV-13, Cov363 arreglo 3): la fecha anterior queda anotada ANTES de enviar
+            // #SC, para el acta y para que rechazar() pueda devolverla si esta acta no llega a aceptarse.
+            acta.dato("#SC emitido, fecha anterior", antes == null ? Calibracion.NONE : antes);
             Cliente.Respuesta r = ops.escribir("#SC," + hoy + "#");
             scEnUltimoAceptar = true;         // una escritura: el siguiente T-C41 apaga el suyo (F-04)
             encendidoReciente = false;
             Cliente.Respuesta g = ops.pedir("#GC#");
             String leida = g.valida() ? Calibracion.fechaDe(g.trama) : null;
             if (!Tramas.esOk(r.trama) || !hoy.equals(leida)) {
+                // MEDIO (A-06): la rama de fallo tambien anota #SC y #GC#, no solo el texto de retorno.
+                acta.dato("#SC", r.describir());
+                acta.dato("#GC#", g.describir());
                 return "#SC no quedó grabada (#SC -> " + r.describir() + ", #GC# -> " + g.describir()
                         + "): el acta NO se cierra. Reintente.";
             }
@@ -1627,6 +1649,19 @@ public final class FlujoCalibracion {
                     fallos.append(c.k);
                 }
                 t.append("código ").append(c.k).append(r.ok ? " restaurado; " : " SIN RESTAURAR (" + r.texto + "); ");
+            }
+            // MEDIO (A-06, RF-COV-13, Cov363 arreglo 3): si esta acta llegó a emitir #SC (aceptar() lo anotó
+            // antes de enviarlo), se devuelve la fecha anterior con #SC,<anterior># (o #SC,NONE# si no había)
+            // y se relee #GC#, para que "No se grabará fecha" (CalibrarActivity) sea cierto.
+            String antesSC = acta.dato("#SC emitido, fecha anterior");
+            if (antesSC != null) {
+                Cliente.Respuesta rSc = ops.escribir("#SC," + antesSC + "#");
+                Cliente.Respuesta gSc = ops.pedir("#GC#");
+                String leidaSc = gSc.valida() ? Calibracion.fechaDe(gSc.trama) : null;
+                boolean okSc = Tramas.esOk(rSc.trama) && antesSC.equals(leidaSc);
+                acta.dato("#SC al rechazar", "#SC," + antesSC + "# -> " + rSc.describir() + "; #GC# -> "
+                        + gSc.describir() + (okSc ? " (fecha anterior restaurada)" : " (NO SE PUDO RESTAURAR LA FECHA)"));
+                t.append("fecha #SC devuelta a ").append(antesSC).append(okSc ? "; " : " SIN VERIFICAR; ");
             }
         }
         if (fallos.length() > 0) {

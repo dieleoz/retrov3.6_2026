@@ -165,12 +165,18 @@ public final class AppCorta {
         return false;
     }
 
-    /** Los codigos listos, en una cadena corta ("8 b"); "" si ninguno. */
+    /**
+     * Los codigos listos, por su nombre ("amarillo, lámina tipo I, rojo, lámina tipo I"); "" si ninguno.
+     *
+     * RF-COV-17 "nunca el código" (Cov363, arreglo 5, QA): antes de este arreglo devolvia una cadena corta
+     * con los caracteres de codigo ("8 b"), que es justo lo que esta app no debe ensenar en pantalla ("es
+     * cargar un .zip y calibrar, ni idea el funcional que es un 8").
+     */
     public static String listos(List<Codigo> l) {
         StringBuilder sb = new StringBuilder();
         for (Codigo x : l) {
             if (x.listo) {
-                sb.append(sb.length() == 0 ? "" : " ").append(x.k);
+                sb.append(sb.length() == 0 ? "" : ", ").append(Fabrica.nombreCorto(x.k));
             }
         }
         return sb.toString();
@@ -206,7 +212,8 @@ public final class AppCorta {
         sb.append(sr.texto).append('\n');
         for (Codigo x : l) {
             if (!x.listo) {
-                sb.append("  ").append(x.k).append(": ").append(x.motivo).append('\n');
+                // RF-COV-17 (arreglo 5): el nombre, nunca el código.
+                sb.append("  ").append(Fabrica.nombreCorto(x.k)).append(": ").append(x.motivo).append('\n');
             }
         }
         return sb.toString();
