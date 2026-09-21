@@ -117,6 +117,59 @@ public class Sonda362ExigirTest {
         assertEquals(2, equipo.enviosDe("#GN#")); // 1 silencio + la respuesta: no se gasta un segundo reintento.
     }
 
+    /** QA-9(1): caso mixto ERR,FORMATO + mudo, GN da el ERR,FORMATO y GC calla, exigir_362 = true
+     *  (por defecto): el ERR,FORMATO explícito manda, igual que en el caso uniforme. */
+    @Test
+    public void mixtoErrFormatoEnGnYMudoEnGcConExigir362VerdaderoPideActualizar() {
+        EquipoSimulado equipo = new EquipoSimulado().responde("#GN#", "#ERR,FORMATO#"); // #GC# sin configurar: silencio.
+        ParametrosRitmo params = new ParametrosRitmo();
+
+        Sonda362.ResultadoSonda r = sondear(equipo, params);
+
+        assertEquals(Sonda362.Resultado.ACTUALIZAR_FIRMWARE, r.resultado());
+    }
+
+    /** QA-9(2), espejo del anterior con exigir_362 = false: mide igual, sin serie ni fecha (el
+     *  ERR,FORMATO no deja nada que leer de #GN#, y #GC# calló). */
+    @Test
+    public void mixtoErrFormatoEnGnYMudoEnGcConExigir362FalsoMideSinDatos() {
+        EquipoSimulado equipo = new EquipoSimulado().responde("#GN#", "#ERR,FORMATO#");
+        ParametrosRitmo params = new ParametrosRitmo();
+        params.exigir362(false);
+
+        Sonda362.ResultadoSonda r = sondear(equipo, params);
+
+        assertEquals(Sonda362.Resultado.OK, r.resultado());
+        assertFalse(r.serieLeida());
+        assertFalse(r.fechaRegistrada());
+    }
+
+    /** QA-9(3): espejo por campo del (1) — el ERR,FORMATO llega por #GC#, y #GN# calla — con
+     *  exigir_362 = true: mismo veredicto, ACTUALIZAR_FIRMWARE (no importa cuál de las dos lo dio). */
+    @Test
+    public void mixtoMudoEnGnYErrFormatoEnGcConExigir362VerdaderoPideActualizar() {
+        EquipoSimulado equipo = new EquipoSimulado().responde("#GC#", "#ERR,FORMATO#"); // #GN# sin configurar: silencio.
+        ParametrosRitmo params = new ParametrosRitmo();
+
+        Sonda362.ResultadoSonda r = sondear(equipo, params);
+
+        assertEquals(Sonda362.Resultado.ACTUALIZAR_FIRMWARE, r.resultado());
+    }
+
+    /** QA-9(4): espejo del (3) con exigir_362 = false: mide igual, sin serie ni fecha. */
+    @Test
+    public void mixtoMudoEnGnYErrFormatoEnGcConExigir362FalsoMideSinDatos() {
+        EquipoSimulado equipo = new EquipoSimulado().responde("#GC#", "#ERR,FORMATO#");
+        ParametrosRitmo params = new ParametrosRitmo();
+        params.exigir362(false);
+
+        Sonda362.ResultadoSonda r = sondear(equipo, params);
+
+        assertEquals(Sonda362.Resultado.OK, r.resultado());
+        assertFalse(r.serieLeida());
+        assertFalse(r.fechaRegistrada());
+    }
+
     /** M5: se pausan 150 ms exactamente una vez, entre el envío de #GN# y el de #GC# (no antes, no después). */
     @Test
     public void sePausan150MsEntreGnYGc() {

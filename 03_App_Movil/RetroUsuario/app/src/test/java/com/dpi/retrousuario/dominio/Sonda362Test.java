@@ -72,22 +72,26 @@ public class Sonda362Test {
         assertFalse(r.fechaRegistrada());
     }
 
-    /** Vista en rojo (CLAUDE.md §7): contra un borrador que sólo mirase si la respuesta es null para
-     *  decidir "actualice el firmware" (confundiendo silencio con ERR,FORMATO), este caso fallaría:
-     *  el borrador diría ACTUALIZAR_FIRMWARE donde el esperado es SIN_RESPUESTA_REINTENTAR. Se deja
-     *  como comentario porque el borrador nunca se escribió como clase aparte: la implementación
-     *  actual de Sonda362.clasificar ya distingue null (SILENCIO) de "#ERR,FORMATO#" explícito. */
+    /** T-USR-01c(c) (SPEC r6, corrige un borrador que confundía este caso mixto con silencio puro):
+     *  un "#ERR,PIN#" o "#ERR,BLOQUEADO#" no debería darse aquí (esta app no envía #L#), pero el
+     *  parser no debe fallar si llega: se trata como "sin respuesta útil" (SPEC §3) para #GN#, NO
+     *  como "actualice el firmware" (eso es sólo ERR,FORMATO). Como #GC# SÍ contestó, la sonda mide
+     *  con la fecha de #GC#: no se descarta toda la sonda por el fallo de #GN# solo. Vista en rojo
+     *  contra 32c785d (condición QA-2): esa versión devolvía SIN_RESPUESTA_REINTENTAR con
+     *  fechaCalibracion() = "" en este mismo caso, descartando la fecha que #GC# sí trajo. */
     @Test
-    public void unMotivoDeErrorDistintoDeFormatoNoPideActualizar() {
-        // Un "#ERR,PIN#" o "#ERR,BLOQUEADO#" no debería darse aquí (esta app no envía #L#), pero el
-        // parser no debe fallar si llega: se trata como "sin respuesta útil" (SPEC §3), no como
-        // "actualice el firmware".
+    public void unMotivoDeErrorDistintoDeFormatoNoPideActualizarYConservaLaFechaQueSiContesto() {
         EquipoSimulado equipo = new EquipoSimulado()
                 .responde("#GN#", "#ERR,PIN#")
                 .responde("#GC#", "#GC,2026-09-19#");
 
         Sonda362.ResultadoSonda r = Sonda362.sondear(equipo);
 
-        assertEquals(Sonda362.Resultado.SIN_RESPUESTA_REINTENTAR, r.resultado());
+        assertEquals(Sonda362.Resultado.OK, r.resultado());
+        assertFalse(r.serieLeida());
+        assertEquals("", r.serie());
+        assertEquals("ninguna", r.origenSerie());
+        assertTrue(r.fechaRegistrada());
+        assertEquals("2026-09-19", r.fechaCalibracion());
     }
 }

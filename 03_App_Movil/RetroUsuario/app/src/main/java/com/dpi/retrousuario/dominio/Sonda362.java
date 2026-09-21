@@ -11,11 +11,18 @@ package com.dpi.retrousuario.dominio;
  * Un "#ERR,<otro motivo>#" (PIN, BLOQUEADO, EEPROM: no deberían darse aquí, esta app no hace #L#) se
  * trata igual que el silencio (SPEC §3: "sin respuesta útil"), no como "actualice el firmware".
  *
- * Precisión de este trabajo, sin ficha propia en TDD-V3.6.md §8 que la fije con casos mixtos: si
- * #GN# y #GC# no coinciden (uno ERR,FORMATO y el otro silencio, o uno ERR,FORMATO y el otro OK), el
- * ERR,FORMATO explícito manda sobre la ambigüedad del otro campo: ACTUALIZAR_FIRMWARE. Las tres
- * fichas de T-USR-01b (T-USR-01b (b)-(d)) sólo prueban los casos uniformes (los dos OK, los dos ERR,
- * los dos mudos); esta regla de desempate no está medida contra un caso mixto todavía.
+ * Caso mixto (T-USR-01c(c), TDD-V3.6.md r6): si #GN# y #GC# no coinciden, dos reglas, en este orden:
+ * (1) un ERR,FORMATO explícito en cualquiera de las dos manda sobre la ambigüedad del otro campo:
+ * ACTUALIZAR_FIRMWARE con {@code exigir_362 = true} (degradado si {@code false}, igual que el caso
+ * uniforme). (2) si ninguna de las dos dio ERR,FORMATO pero SÍ contestó una de ellas (la otra en
+ * silencio o "sin respuesta útil" — un ERR,&lt;motivo≠FORMATO&gt;, T-USR-01c(c)), la sonda mide con lo
+ * que sí contestó (p. ej. la fecha de #GC# aunque #GN# no diera nada), como en la rama degradada de
+ * {@code exigir_362 = false} — esto pasa **con cualquier valor de exigir_362**, porque no es la falta
+ * de firmware 3.6.2 lo que impide medir, es que una de las dos SÍ lo confirmó. Sólo cuando NINGUNA de
+ * las dos contesta nada útil se aplica la puerta de {@code exigir_362} (SIN_RESPUESTA_REINTENTAR si es
+ * {@code true}). Antes de esta corrección (r6, condición QA-2), un GN mudo/sin-respuesta-útil con GC
+ * contestando perdía la fecha de GC sin motivo bajo {@code exigir_362 = true} (daba
+ * SIN_RESPUESTA_REINTENTAR con la fecha descartada; ver {@code Sonda362Test}, T-USR-01c(c)).
  */
 public final class Sonda362 {
 
@@ -111,11 +118,20 @@ public final class Sonda362 {
         if (cGN == Clasificacion.OK && cGC == Clasificacion.OK) {
             return resultadoOk(tGN, tGC);
         }
-        if (!params.exigir362()) {
+        if (cGN == Clasificacion.ERR_FORMATO || cGC == Clasificacion.ERR_FORMATO) {
+            if (!params.exigir362()) {
+                return resultadoOkDegradado(cGN, tGN, cGC, tGC);
+            }
+            return new ResultadoSonda(Resultado.ACTUALIZAR_FIRMWARE, "", false, "", false);
+        }
+        // Ni ERR,FORMATO en ninguna, ni las dos OK: si alguna SÍ contestó (caso mixto, T-USR-01c(c)),
+        // se mide con lo que contestó, sea cual sea exigir_362 (esa puerta es sólo para "ninguna dio
+        // nada útil"). Si ninguna contestó nada útil, exigir_362 decide igual que antes.
+        if (cGN == Clasificacion.OK || cGC == Clasificacion.OK) {
             return resultadoOkDegradado(cGN, tGN, cGC, tGC);
         }
-        if (cGN == Clasificacion.ERR_FORMATO || cGC == Clasificacion.ERR_FORMATO) {
-            return new ResultadoSonda(Resultado.ACTUALIZAR_FIRMWARE, "", false, "", false);
+        if (!params.exigir362()) {
+            return resultadoOkDegradado(cGN, tGN, cGC, tGC);
         }
         return new ResultadoSonda(Resultado.SIN_RESPUESTA_REINTENTAR, "", false, "", false);
     }
