@@ -131,21 +131,21 @@ no se replica.
 
 ## 6. Contradicciones abiertas (no se elige aquí)
 
-- **C-USR-01.** Alcance de "elegir señal": el flujo simple de §1 (código + color propuesto) contra el
-  inventario georreferenciado completo de SPEC-REG §2.4-§6 (`senal_id` propio, GPS, historial). Este
-  documento trata lo segundo como capa posterior sobre el mismo guardado, sin fusionar RF.
+- **C-USR-01. Cerrada (USR-SIMPLE).** Flujo simple: elegir la señal por icono y código y medir. El
+  inventario georreferenciado de SPEC-REG §2.4-§6 queda fuera de esta app. Diego: "por favor simple,
+  esa app tiene múltiples funcionalidades que sólo las entiende el que hizo el firmware, no un
+  funcional".
 - **C-USR-02.** Nombre `Protocolo` repetido entre `main` y `rtv-1.0` (§3): resolución pendiente.
-- **C-USR-03.** `SPEC-REG:326-328` dice "ningún comando Bluetooth devuelve la serie"; `PROTOCOLO-V3.6.md:54`
-  documenta `#GN#` (firmware 3.6.2) ya definido para leerla. Puede que SPEC-REG quedara desactualizada
-  tras la 3.6.2, o que `#GN#` tenga un defecto de campo no registrado: no se ha medido en ningún equipo.
+- **C-USR-03.** `SPEC-REG:328-332` dice "hoy la serie no se puede obtener del equipo" (estado antes de
+  la 3.6.2); su propio §3.3 (`SPEC-REG:354-368`) ya documenta `#GN#`/`#SN#` como decisión de Diego
+  (PA-07) para la 3.6.2, igual que `PROTOCOLO-V3.6.md:54`. No es contradicción entre documentos: lo
+  que falta es medir `#GN#` en un equipo real con 3.6.2, algo que ninguna de las dos fuentes reporta.
 - **C-USR-04.** Con un equipo sin `#GN#` (pre-3.6.2), RF-REG-01 exige serie no vacía para guardar; esta
   SPEC no dice si eso **bloquea** guardar o si basta "SIN SERIE" explícito, como con la calibración.
 
 ## 7. Preguntas para Diego
 
-1. ¿Esta app sustituye a `RetroVerticalP1`/Ionic para los equipos V3.6, o convive con ellas mientras
-   no haya decisión de retirarlas (`T-C30` sigue `PENDIENTE` en `TDD-V3.6.md`)?
-2. Con un equipo sin `#GN#` (pre-3.6.2), ¿guardar sin serie identificada **bloquea** o sólo **avisa y
-   marca** "SIN SERIE", como se decidió para la calibración vencida (PA-01)? (C-USR-04)
-3. La pantalla "Elegir señal", ¿empieza con el inventario georreferenciado completo de SPEC-REG desde
-   la primera versión, o con el flujo simple de código + color propuesto? (C-USR-01)
+Resuelta la 3 (C-USR-01, USR-SIMPLE). Para las otras dos, propuesta según esa misma regla, sin confirmar:
+
+1. ▸ Sustituye a `RetroVerticalP1`/Ionic en los equipos V3.6.
+2. ▸ Sin `#GN#`, se guarda con la marca "SIN SERIE" y un aviso; no bloquea (como PA-01). (C-USR-04)

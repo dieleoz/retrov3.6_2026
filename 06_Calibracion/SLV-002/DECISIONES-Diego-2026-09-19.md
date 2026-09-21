@@ -32,6 +32,7 @@ registrada, y no en una casilla del operador (P11 §3, QA-3612).
 | **VERIF-5-10** | Verificación final: 10 patrones re-medidos y su desviación (nota 3) | 21-sep-2026 | nota 3 |
 | **CERT-TITULO** | "Certificado de calibración", firmado por ITVIAL SAS (nota 4) | 21-sep-2026 | nota 4 |
 | **FECHA-EQUIPO** | Una sola fecha en el equipo: la del día en que se calibra (nota 5) | 21-sep-2026 | nota 5 |
+| **USR-SIMPLE** | App de usuario simple: señal por icono y medir (nota 6) | 21-sep-2026 | nota 6 |
 
 Notas de las filas del 21-sep-2026:
 
@@ -61,3 +62,6 @@ Notas de las filas del 21-sep-2026:
    dé al botón calibrar, ese día se genera el acta y sale". Opción (b) de la revisión app-firmware.
    ▸ Propuesta, sin confirmar: la re-medida tras escribir cada código se juzga como la verificación
    (VERIF-5-10): error frente al certificado dentro de ±10 %, en lugar del criterio de s_rep.
+6. **USR-SIMPLE.** La app de usuario se queda en lo mínimo: conectar, elegir la señal por su icono y
+   código del catálogo, medir, guardar y exportar. Diego: "por favor simple, esa app tiene múltiples
+   funcionalidades que sólo las entiende el que hizo el firmware, no un funcional". Cierra C-USR-01.
