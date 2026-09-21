@@ -1762,31 +1762,34 @@ APK, tramas en crudo). **AT-U05 y AT-U06 son encargos de medida**: su resultado 
 
 ## 8. App de usuario
 
-**r3, 21-sep-2026: cierra el NO APTO del `arquitecto-iot` sobre la r2** (H-A1 a H-A4, M-1 a M-8, B-1 a
-B-5, verificados por el agente principal; ver SPEC r3 para el detalle de cada punto). Cambios de fondo
-sobre r2: T-USR-04 corregida (H-A1: el recuento de 363 era otra columna, `lamina_minima`, no
-`color_fondo`; contradicción de `:1822-1824` cerrada); T-USR-06 con la regla de cero de toda la serie
-(H-A3, ▸ propuesta); T-USR-09 y T-USR-10 con lámina por defecto, NO_DICTAMINABLE mientras C-06 esté
-abierta y truncado en vez de redondeo (el "−51 %" de r2 era redondeo estándar; DECISIONES nota 11a dice
-literalmente "−50 %"); T-USR-11 con la fuente corregida (los números del histórico son un cálculo de
-este trabajo, no una cita de Diego); T-USR-12 con "no" por defecto y reactivación; T-USR-19 con
-aserción en ejecución sobre `tramas.log`, no sólo `grep`; fichas nuevas T-USR-22 a T-USR-28 (H-A4
-tramas, M-3, M-4a/b/c, M-8, B-4). r2 cerraba el NO APTO sobre la r1 (T-USR-01 sólo contra V3.6;
-T-USR-11 de aviso F-2020 y T-USR-12 de batería, retiradas por fuera de USR-ALCANCE; T-USR-05 corregida
-a "0 (saturado o negativo)"; T-USR-06 con la serie declarada; fichas de filtro/búsqueda, columnas del
-CSV con L-23, lista blanca de bytes TX y mapa color→byte sobre las 376 filas del catálogo). Requisitos:
-[`SPEC-App-Usuario-V3.6.md`](SPEC-App-Usuario-V3.6.md) r3 (RF-USR-01 a RF-USR-16). Ninguna ficha de
-esta sección sustituye a `T-C30` (§3, "App del cliente", operador real): esa sigue `PENDIENTE sin
-fecha` hasta que exista un operador con esta app delante de un equipo (R-09). El valor esperado de
+**r4, 21-sep-2026: cierra el NO APTO del `arquitecto-iot` sobre la r3.** Cambios de fondo sobre r3:
+T-USR-06 con la regla de cero en dos ramas, repetir una vez y guardar con motivo si persiste (sustituye
+a "serie entera inválida, repetir" de r3); T-USR-07(b) con serie vacía y `serie_origen = "ninguna"`
+(M-2, ya no `serie_declarada`); T-USR-10 con el mínimo real de la Tabla 2-5 (360, no 325, para blanco
+IV) y un caso nuevo que sí espera CUMPLE (A-3); T-USR-19 aseverando sobre lo que recibe
+`EquipoSimulado`, no sobre `tramas.log` de la app (evita el falso verde de un volcado a fichero
+defectuoso); T-USR-21 con la lista fija de columnas de `medidas.csv` del incremento 1 (M-6); T-USR-24
+con las citas de `Tramas.java`/`ecuacionesCalibracion.c` corregidas y los casos de plazo vencido y de
+dos `::` en la misma ventana; T-USR-13b con los dos casos de los 15 m (fuera de rango, y dos candidatas
+del mismo código); §8.2 con las citas entre comillas que no eran literales de Diego retiradas o
+corregidas al punto (a)-(f) que sí dice lo mismo. Requisitos: [`SPEC-App-Usuario-V3.6.md`]
+(SPEC-App-Usuario-V3.6.md) r4 (RF-USR-01 a RF-USR-16), organizada en **dos incrementos** (SPEC §0):
+**Incremento 1, "Medir y exportar"** — RF-USR-01 a 06, 15, 15 bis, 16; fichas T-USR-01, 01b, 02, 03,
+03b, 04, 06, 07, 19, 20, 21, 22, 23, 24. **Incremento 2, "Señal a señal"**, depende de propuestas ▸
+pendientes de Diego (umbral doble, geometría, 15 m) — RF-USR-07 a 14; fichas T-USR-05, 08 a 18. Ninguna
+ficha de esta sección sustituye a `T-C30` (§3, "App del cliente", operador real): esa sigue `PENDIENTE
+sin fecha` hasta que exista un operador con esta app delante de un equipo (R-09). El valor esperado de
 cada ficha viene de una fuente ajena al código de esta app —protocolo, firmware, el catálogo, SPEC-REG,
 el Manual 2024 o una decisión de Diego—, nunca de la salida de código todavía por escribir; donde el
-valor de ejemplo es un cálculo de este trabajo y no una cita literal, se dice así. Receta **R-JVM**
-(§1): JVM contra `EquipoSimulado`, un simulador propio de esta sección, o un fichero CSV de prueba;
-nivel **A** salvo que se diga otra cosa. **Las precisiones de Diego del 21-sep están registradas**:
-caen todas bajo la **nota 11 (USR-DETALLE)** de `DECISIONES-Diego-2026-09-19.md`, puntos (a)-(f); no
-existen notas 12-15 separadas (r2 las citaba por error, `:2017-2020` de esa versión). Lo que no esté en
-esa nota 11 ni en otra fila de la tabla de decisiones se marca "fija comportamiento" en cada ficha, no
-"cita de Diego".
+valor de ejemplo es un cálculo de este trabajo y no una cita literal, se dice así, y donde r3 marcaba
+como "cita de Diego" un texto que no era literal de `DECISIONES-Diego-2026-09-19.md`, esta r4 lo retira
+o lo deja como "fija comportamiento". Receta **R-JVM** (§1): JVM contra `EquipoSimulado`, un simulador
+propio de esta sección, o un fichero CSV de prueba; nivel **A** salvo que se diga otra cosa. **Las
+precisiones de Diego del 21-sep están registradas**: caen todas bajo la **nota 11 (USR-DETALLE)** de
+`DECISIONES-Diego-2026-09-19.md`, puntos (a)-(f); no existen notas 12-15 separadas. De los puntos (a)-
+(f), sólo (a) y (b) llevan frases **literales** entre comillas en esa nota; (c), (d), (e) y (f) son el
+resumen del analista, sin comillas en la fuente: una cita entre comillas de esos puntos en esta sección
+es, como mucho, tan literal como el resumen de la nota, nunca palabra de Diego.
 
 **T-USR-01 — Detección sólo V3.6, nunca `e`, nunca otro firmware.** RF-USR-01 · A · R-JVM ·
 **PENDIENTE**
@@ -1799,19 +1802,22 @@ esa nota 11 ni en otra fila de la tabla de decisiones se marca "fija comportamie
   `6`), **esta ficha no prueba contra F-2020/V4 más que para confirmar el rechazo**: USR-ALCANCE saca
   esos firmwares del alcance de esta app.
 - Fuente del esperado: `PROTOCOLO-V3.6.md:42` (formato de `#V#`; **cita corregida, r2 decía `:24`**,
-  que es un párrafo de otro tema); SPEC r3 RF-USR-01; decisión USR-ALCANCE.
+  que es un párrafo de otro tema); SPEC r4 RF-USR-01; decisión USR-ALCANCE.
 
-**T-USR-01b — Exige firmware 3.6.2 (M-3, ▸ propuesta pendiente de Diego).** RF-USR-01 · A · R-JVM ·
-**PENDIENTE**
+**T-USR-01b — Exige firmware 3.6.2, y un silencio no es lo mismo que `#ERR,FORMATO#` (M-3, B-3, ▸
+propuesta pendiente de Diego).** RF-USR-01 · A · R-JVM · **PENDIENTE**
 - Pasos: tras (a) de T-USR-01, (b) `EquipoSimulado` responde `#GN,SLV-002#` y `#GC,2026-09-19#` a las
   sondas siguientes; (c) otro `EquipoSimulado` (firmware "3.6" o "3.6.1", sin `#GN#`/`#GC#`) responde
-  `#ERR,FORMATO#` a ambas.
+  `#ERR,FORMATO#` a ambas; (d) un tercer `EquipoSimulado` no responde nada a `#GN#` ni a `#GC#` dentro
+  del plazo de RF-USR-16 (ni `#GN,...#` ni `#ERR,...#`: silencio puro, por ejemplo un corte del enlace).
 - Esperado: (b) la app sigue a la pantalla de modo, sin aviso de firmware; (c) "actualice el firmware
-  del equipo", y no se ofrece medir. Distinto de `#GN,NONE#` (T-USR-07b): eso sí mide, con serie
-  declarada.
+  del equipo", y no se ofrece medir; (d) la app **no** concluye "actualice el firmware": muestra "el
+  equipo no respondió, reintente" y ofrece repetir la sonda, porque un silencio puede ser el enlace, no
+  la versión (§3, parser). Distinto de `#GN,NONE#` (T-USR-07(b)): eso sí mide, sin serie ni tecleo.
 - Fuente del esperado: `PROTOCOLO-V3.6.md:51-54` (`#GN#`/`#GC#` son de firmware 3.6.2, `#ERR,FORMATO#`
-  es la respuesta genérica a un campo que el firmware no reconoce); SPEC r3 RF-USR-01 (M-3, cierra
-  C-USR-04 como propuesta).
+  es la respuesta genérica a un campo que el firmware no reconoce) y `:70-72` (formato de `motivo`);
+  SPEC r4 RF-USR-01 (M-3, cierra C-USR-04 como propuesta) y §3 (parser, B-3, ficha (d) que fija
+  comportamiento de este trabajo, sin cita de Diego).
 
 **T-USR-02 — Aviso antes del primer byte, y dispara la luz en 2020.** RF-USR-01 · A · R-JVM y lectura
 de `gui.c` · **PENDIENTE**
@@ -1872,41 +1878,53 @@ sobre `08_Senales/senales.csv` y R-JVM · **PENDIENTE**
 - Fuente del esperado: `08_Senales/senales.csv`, recuento exacto verificado en este trabajo con
   `python3 -c 'import csv; ...'` (comando y salida completa en §8.2); SENAL-FILTRO.
 
-**T-USR-06 — Disparos, 3 por defecto, y una serie con cero se repite entera (H-A3).** RF-USR-04 · A ·
-R-JVM · **PENDIENTE**
+**T-USR-06 — Disparos, 3 por defecto, y un cero repite una vez, con motivo si persiste (H-A3, corrige
+r3).** RF-USR-04 · A · R-JVM · **PENDIENTE**
 - Pasos: (a) fijar tres respuestas `::100`, `::110`, `::120` para el mismo código, medir con el valor
-  por defecto de `lecturas_por_color`; (b) fijar `::0` y medir una vez; (c) fijar la serie `::0`,
-  `::0`, `::330` (▸ propuesta pendiente de Diego, caso del encargo).
-- Esperado: (a) `lecturas_por_color` por defecto es **3** (no 4); media 110, mínimo 100, n = 3; (b)
-  "0 (saturado o negativo)", nunca el dígito `0` solo; (c) la serie entera queda **"medida no válida,
-  repetir"**: **no** se calcula una media de 330 con n = 1 descartando sólo los ceros; la app no
-  guarda ningún valor de esa serie hasta repetirla sin ceros.
-- Fuente del esperado: (a) DECISIONES nota 11a, "leído 3 veces promedio"; (b)-(c)
-  `ecuacionesCalibracion.c:44-58` (`arreglar_dato`, `reflectivityValue` sin signo, negativo → entero
-  grande → `> 4000 → 0`, llamada en `conversionDatoEnviar:59`) y `SPEC-V3.6.md:501-503` (texto de
-  "0 (saturado o negativo)"); la regla de "serie entera inválida" es propuesta de este trabajo, sin
-  confirmar por Diego.
+  por defecto de `lecturas_por_color`; (b) fijar `::0` y medir una vez; (c) fijar la primera serie
+  `::0`, `::0`, `::330` y, en la repetición automática, `::105`, `::0`, `::115` (el cero persiste en
+  la segunda serie); (d) fijar la primera serie `::0`, `::105`, `::110` y, en la repetición, `::100`,
+  `::108`, `::112` (sin ceros: la repetición sí vale).
+- Esperado: (a) `lecturas_por_color` por defecto es **3** (no 4); media 110 (redondeo estándar del
+  promedio, M-6), mínimo 100, n = 3, `valido = SI`; (b) "0 (saturado o negativo)", nunca el dígito `0`
+  solo; (c) la app repite automáticamente al ver el cero; como la repetición **también** trae un cero,
+  se guarda la fila con `media = 0`, `valido = NO`, `motivo = "saturado_o_negativo"`, y **no** se
+  calcula una media de 330 con n = 1 descartando sólo los ceros de la primera serie; esa fila cuenta
+  como NO CUMPLE / bajo referencia (RF-USR-10), no se excluye de la exportación; (d) la app repite una
+  vez al ver el cero de la primera serie; la segunda serie no trae ceros, así que se guarda con esos
+  valores (`media` de 100/108/112, `valido = SI`, `motivo` vacío): la repetición se usa, la primera no.
+- Fuente del esperado: (a) DECISIONES nota 11a, "leído 3 veces promedio"; (b) `ecuacionesCalibracion.c:
+  49-54` (`arreglar_dato`, `reflectivityValue` sin signo, negativo → entero grande → `> 4000 → 0`,
+  llamada en `conversionDatoEnviar:59`) y `SPEC-V3.6.md:501-503` (texto de "0 (saturado o negativo)");
+  (c)-(d) DECISIONES nota 8 (USR-ALCANCE), "no decir null a todo sino indicar que no cumple con una
+  medida estándar" (literal); la regla de "repetir una vez y guardar con motivo si persiste" sustituye
+  a la de r3 ("serie entera inválida, repetir siempre"), y sigue sin confirmar por Diego (H-A3).
 
-**T-USR-07 — "Medir y exportar": cero tecleo, y serie declarada.** RF-USR-05, RF-USR-06 · A · R-JVM ·
+**T-USR-07 — "Medir y exportar": cero tecleo, sin serie tecleada (M-2, corrige r3).** RF-USR-05,
+RF-USR-06 · A · R-JVM ·
 **PENDIENTE**
 - Pasos: (a) abrir el modo "Medir y exportar" (comprobar que es el que abre por defecto); recorrer
   todas sus pantallas y comprobar que ninguna tiene un campo de texto, casilla ni selector salvo el de
   color; medir y exportar; (b) con `EquipoSimulado` respondiendo `#GN,NONE#`, medir y exportar.
 - Esperado: (a) "Medir y exportar" es el modo inicial; 0 campos de texto en sus pantallas; el CSV
-  exportado no tiene columna de señal ni de cumple/no cumple; (b) la fila exportada lleva
-  `serie_declarada = SI` y `serie_equipo` vacío o "declarada", nunca un valor inventado. Este caso
-  (b) es de un equipo **3.6.2 que sí responde `#GN#`**, pero sin serie grabada (`NONE`): distinto de
-  T-USR-01b, donde el equipo ni siquiera responde a `#GN#`.
+  exportado no tiene columna de señal ni de cumple/no cumple; (b) la app **no ofrece teclear nada**; la
+  fila exportada lleva `serie_equipo` vacío, `serie_origen = "ninguna"` y en pantalla "SIN SERIE",
+  nunca un valor inventado ni una casilla de texto. Este caso (b) es de un equipo **3.6.2 que sí
+  responde `#GN#`**, pero sin serie grabada (`NONE`): distinto de T-USR-01b, donde el equipo ni
+  siquiera responde a `#GN#`. La serie tecleada por el operador (SERIE-USR) no existe en este modo:
+  sólo en "Señal a señal" (incremento 2, RF-USR-07).
 - Fuente del esperado: DECISIONES nota 10 (USR-MODOS, "no necesito... escribiendo en la app");
-  SERIE-USR; `PROTOCOLO-V3.6.md:54` (`#GN,NONE#`).
+  `PROTOCOLO-V3.6.md:54` (`#GN,NONE#`); RF-USR-06 (M-2, corrige r3: r3 pedía teclear "serie
+  declarada", que sí es de "Señal a señal", no de este modo).
 
 **T-USR-08 — Estado de la señal no cambia el resultado.** RF-USR-08 · A · R-JVM · **PENDIENTE**
 - Pasos: medir el mismo color y valor dos veces en la misma señal: una vez marcando "limpia = sí,
   bien instalada = sí", otra "limpia = no, mal instalada"; comparar el resultado de RF-USR-10.
 - Esperado: `cumple`, `pct_vs_umbral` y `valor_umbral` son **idénticos** en las dos medidas; sólo
   cambian las columnas de mantenimiento (`limpia`, `bien_instalada`, `en_condiciones`, `observacion`).
-- Fuente del esperado: precisión de Diego, nota 11, punto 4 (§8.2: "el estado... no es parte del
-  indicador ni del cumple/no cumple ni da multa").
+- Fuente del esperado: DECISIONES nota 11, punto (b) — **cita corregida (r3 decía "punto 4" y
+  parafraseaba entre comillas)**: la nota dice, literal, "es para mantenimiento y no es tema de
+  indicador y no multa" (§8.2).
 
 **T-USR-09 — Referencia y lámina por defecto (H-A2).** RF-USR-09 · A · R-JVM y `python3 -c` sobre
 `08_Senales/senales.csv` · **PENDIENTE**
@@ -1921,54 +1939,85 @@ R-JVM · **PENDIENTE**
 - Fuente del esperado: DECISIONES nota 10, nota 11a (§8.2); nota 9 (UMBRAL-LEY); SPEC-REG `:128-160`
   (C-01, C-06), `:221`; `08_Senales/senales.csv` (recuento de `lamina_minima`, §8.2).
 
-**T-USR-10 — Resultado con números, truncado (no redondeo) y dictamen sin truncar.** RF-USR-10 · A ·
-R-JVM (aritmética pura, sin equipo) · **PENDIENTE**
-- Pasos: (a) umbral = mínimo del Manual = 325, leído = 160 (promedio de 3), C-06 abierta; (b)
-  instalación 2024 = 310, umbral 80 % = 248, leído = 160, instalación medida con este mismo equipo; (c)
-  umbral = 248, leído = 247 (caso límite del dictamen); (d) ▸ propuesta pendiente de Diego, umbral
-  doble: blanco IV, instalación 310 (umbral 80 % = 248), mínimo Manual 360, leído 300.
-- Esperado: (a) `Δ% = trunc(160/325 × 100) − 100 = trunc(49,230...) − 100 = 49 − 100 = −50 %` (**no**
-  −51 %, que es redondeo estándar); texto exacto `"Mínimo Manual 2024: 325 · Leído: 160 · −50 % · POR
-  DEBAJO del mínimo del Manual (referencia indicativa)"`, con `dictamen = NO_DICTAMINABLE` y
-  `bajo_referencia = SI`; (b) `Δ% = trunc(160/248 × 100) − 100 = trunc(64,516...) − 100 = 64 − 100 =
-  −35 %`; texto exacto `"Instalación 2024: 310 · umbral 80 % = 248 · Leído: 160 · −35 % · NO CUMPLE"`;
-  (c) el texto muestra `Δ% = trunc(99,596...) − 100 = −0 %`, pero el dictamen es **NO CUMPLE**, porque
-  247 < 248 con la división sin truncar; (d) 300 ≥ 248 (cumple el 80 %) **y** 300 < 360 (no cumple el
-  Manual): con la regla "o" de la condición 3, el resultado es **NO CUMPLE**, no CUMPLE.
-- Fuente del esperado: DECISIONES nota 11a, con los valores **literales** "−50 %" y "−35 %" (no −51 %
-  ni −36 %: la r2 redondeaba); nota 9 (UMBRAL-LEY, condición 3, ▸ propuesta); SPEC-REG `:574`
-  (RF-REG-09, NO_DICTAMINABLE); truncado hacia cero = descartar la parte decimal sin redondear (M-7).
+**T-USR-10 — Resultado con números, una sola división entera truncada, y dictamen sin truncar (M-3,
+corrige r3).** RF-USR-10 · A · R-JVM (aritmética pura, sin equipo) · **PENDIENTE**
+- **Corrige r3:** la fórmula `trunc((leído/umbral) × 100) − 100` truncaba primero y restaba 100
+  después; para (160, 325) eso da `trunc(49,230...) − 100 = 49 − 100 = −51 %`, no −50 %, aunque r3
+  escribiera "−50 %" al final del mismo paso (cuenta inconsistente con su propio resultado). La fórmula
+  correcta, `Δ% = trunc(100 · (leído − umbral) / umbral)`, trunca **una sola vez**, al final, y sí da
+  −50 %: verificado con `python3`, división entera al estilo Java (§8.2, comando y salida).
+- Pasos: (a) umbral = mínimo real de la Tabla 2-5 para blanco IV = **360**
+  (`Manual-Senalizacion-Vial-Extracto.md:230`), leído = 160 (promedio de 3), C-06 abierta; (b)
+  instalación 2024 = 310, umbral 80 % = 248, leído = 160, `serie_equipo_instalacion` coincide con la
+  serie del equipo conectado; (c) umbral = 248, leído = 247 (caso límite del dictamen); (d) ▸ propuesta
+  pendiente de Diego, umbral doble: blanco IV, instalación 310 (umbral 80 % = 248), mínimo Manual 360,
+  leído 300; (e) instalación 2024 = 310, umbral 80 % = 248, mínimo Manual 360, leído = 380, serie
+  coincide (A-3): **caso que cumple los dos mínimos**; (f) igual que (e) mismos números, pero
+  `serie_equipo_instalacion` **no coincide** con la serie del equipo conectado (o va vacía).
+- Esperado: (a) `Δ% = trunc(100 · (160 − 360) / 360) = trunc(−20000 / 360) = trunc(−55,55...) = −55 %`;
+  texto exacto `"Mínimo Manual 2024: 360 · Leído: 160 · −55 % · POR DEBAJO del mínimo del Manual
+  (referencia indicativa)"`, con `dictamen = NO_DICTAMINABLE` y `bajo_referencia = SI`; (b)
+  `Δ% = trunc(100 · (160 − 248) / 248) = trunc(−8800 / 248) = trunc(−35,48...) = −35 %`; texto exacto
+  `"Instalación 2024: 310 · umbral 80 % = 248 · Leído: 160 · −35 % · NO CUMPLE"`; (c) el texto muestra
+  `Δ% = trunc(100 · (247 − 248) / 248) = trunc(−0,40...) = −0 %`, pero el dictamen es **NO CUMPLE**,
+  porque 247 < 248 con la división sin truncar; (d) 300 ≥ 248 (cumple el 80 %) **y** 300 < 360 (no
+  cumple el Manual): con la regla "o" de la condición 3, el resultado es **NO CUMPLE**, no CUMPLE; (e)
+  `Δ% = trunc(100 · (380 − 248) / 248) = trunc(13200 / 248) = trunc(53,22...) = +53 %`; 380 ≥ 248 **y**
+  380 ≥ 360, y la serie coincide: `dictamen = CUMPLE`, texto exacto `"Instalación 2024: 310 · umbral
+  80 % = 248 · Leído: 380 · +53 % · CUMPLE"` (**único caso de esta ficha con `dictamen = CUMPLE`**,
+  A-3); (f) mismos números que (e), pero sin coincidir la serie: `dictamen = NO_DICTAMINABLE` a pesar
+  de que 380 supera los dos mínimos — la serie manda sobre el valor.
+- Fuente del esperado: DECISIONES nota 11a, con los valores **literales** "−50 %" y "−35 %" citados en
+  §8.2 (esa cita usa el 325 del propio ejemplo de Diego, **no** el mínimo real de la Tabla 2-5 para
+  blanco IV, que es 360: por eso el paso (a) de esta ficha usa 360, no 325 — la app calcula el umbral
+  desde el catálogo y el Manual, no desde el ejemplo de la nota); nota 9 (UMBRAL-LEY, condición 3, ▸
+  propuesta); SPEC-REG `:574` (RF-REG-09, NO_DICTAMINABLE); `Manual-Senalizacion-Vial-Extracto.md:230`
+  (Tabla 2-5, blanco IV = 360, 0,20°/−4°); RF-USR-13 (`serie_equipo_instalacion`, A-3).
 
-**T-USR-11 — Historial: curva de degradación por señal y color, truncado (M-7).** RF-USR-11 · A · R-JVM
-· **PENDIENTE**
+**T-USR-11 — Historial: curva de degradación por señal y color, una sola división truncada (M-3, M-7).**
+RF-USR-11 · A · R-JVM · **PENDIENTE**
 - Pasos: instalación 2024 = 310; medir sucesivamente 240, luego 200, luego 160 (misma señal y color).
-- Esperado, con la misma convención de truncado hacia cero que RF-USR-10 (M-7): fila de instalación
-  (310, 2024); medida 240 → `pct_vs_referencia = trunc(240/310 × 100) = 77 %`,
-  `pct_vs_anterior = trunc((240/310 − 1) × 100) = −22 %` (la "anterior" de la primera medida es la
-  instalación); medida 200 → `pct_vs_referencia = trunc(200/310 × 100) = 64 %`,
-  `pct_vs_anterior = trunc((200/240 − 1) × 100) = −16 %`; medida 160 →
-  `pct_vs_referencia = trunc(160/310 × 100) = 51 %`, `pct_vs_anterior = trunc((160/200 − 1) × 100) =
-  −20 %`. Ninguna carga borra ni reordena filas anteriores.
-- Fuente del esperado: el **concepto** (instalación, medida, siguiente medida) es DECISIONES nota 11f;
-  los **números 310/240/200/160 y sus porcentajes son un ejemplo calculado en este trabajo para
-  ilustrar RF-USR-11, no una cita literal de Diego** (r2 los atribuía a Diego por error). Recalculados
-  aquí con truncado (M-7): r2 daba 77 %/−23 %, 65 %/−17 %, 52 %/−20 % con redondeo estándar; con
-  truncado hacia cero salen 77 %/−22 %, 64 %/−16 %, 51 %/−20 % (el último coincide, es un caso exacto).
+- Esperado, con la misma convención de RF-USR-10 (M-3: `trunc(100 · (a − b) / b)`, una sola división
+  entera truncada al final, no `trunc(a/b × 100) − 100`): fila de instalación (310, 2024); medida 240 →
+  `pct_vs_referencia = trunc(100 · 240 / 310) = 77 %`,
+  `pct_vs_anterior = trunc(100 · (240 − 310) / 310) = −22 %` (la "anterior" de la primera medida es la
+  instalación); medida 200 → `pct_vs_referencia = trunc(100 · 200 / 310) = 64 %`,
+  `pct_vs_anterior = trunc(100 · (200 − 240) / 240) = −16 %`; medida 160 →
+  `pct_vs_referencia = trunc(100 · 160 / 310) = 51 %`, `pct_vs_anterior = trunc(100 · (160 − 200) /
+  200) = −20 %`. Ninguna carga borra ni reordena filas anteriores.
+- Fuente del esperado: el **concepto** (instalación, medida, siguiente medida) es DECISIONES nota 11,
+  punto (f); los **números 310/240/200/160 y sus porcentajes son un ejemplo calculado en este trabajo
+  para ilustrar RF-USR-11, no una cita literal de Diego**. Verificado con `python3` (§8.2, división
+  entera al estilo Java, y con la fórmula de r3 para comparar): la fórmula correcta de M-3,
+  `trunc(100 · (a − b) / b)`, da **77 %/−22 %, 64 %/−16 %, 51 %/−20 %**; la fórmula de r3,
+  `trunc(a/b × 100) − 100` (el mismo error que T-USR-10 (a) corrige), da **77 %/−23 %, 64 %/−17 %,
+  51 %/−20 %** para los mismos tres pares — el primer y el tercer `pct_vs_anterior` no cambian, el
+  segundo sí (−16 % frente a −17 %); esta ficha usa los valores de la fórmula correcta, −22 %/−16 %,
+  no −23 %/−17 %.
 
-**T-USR-12 — Inventario: sustitución con "no" por defecto (B-3), y reactivación (M-4e).** RF-USR-12 ·
-A · R-JVM · **PENDIENTE**
+**T-USR-12 — Inventario: sustitución con "no" por defecto (B-3), 15 m, y reactivación (M-4e, M-5).**
+RF-USR-12 · A · R-JVM · **PENDIENTE**
 - Pasos: (a) dar de alta una señal `SR-01` en `lat,lon = 4.60971,-74.08175`, estado ACTIVA; dar de alta
-  otra `SR-01` con GPS a menos de 15 m (umbral a fijar por el desarrollo, ▸ propuesta) y **no tocar** la
-  pregunta "¿sustituye a `<id>` anterior?"; (b) repetir, esta vez confirmando "sí"; (c) sobre una señal
-  RETIRADA, dar de alta de nuevo con el mismo identificador.
+  otra `SR-01` con GPS a menos de 15 m (**cita corregida, r3 decía "umbral a fijar por el desarrollo";
+  es ▸ propuesta pendiente de Diego, 15 m, RF-USR-13**) y **no tocar** la pregunta "¿sustituye a `<id>`
+  anterior?"; (b) repetir, esta vez confirmando "sí"; (c) sobre una señal RETIRADA, dar de alta de nuevo
+  con el mismo identificador; (d) dar de alta otra `SR-01` con GPS a **15 m o más** de la de (a); (e)
+  con dos `SR-01` ACTIVAS a menos de 15 m entre sí (tras (b)), dar de alta una tercera `SR-01` a menos
+  de 15 m de las dos.
 - Esperado: (a) por defecto es "no": la señal nueva se da de alta **aparte**, la anterior sigue ACTIVA,
   sin sustitución; (b) la señal nueva queda ACTIVA con su propio identificador; la anterior pasa a
   RETIRADA con `sustituida_por = <id nuevo>` y la fecha; la anterior no aparece en la lista de trabajo
   pero sí en el histórico y en la exportación; (c) la señal **se reactiva** (vuelve a ACTIVA) y la
-  vista previa lo dice: "`<id>` estaba RETIRADA, se reactiva".
-- Fuente del esperado: DECISIONES nota 11c: "si la tumban y reponen otra... es OTRA señal... pero la
-  vieja no puede desaparecer del inventario"; "no" por defecto y la reactivación son fichas que fijan
-  comportamiento de este trabajo (B-3, M-4e), no citas literales de esa nota.
+  vista previa lo dice: "`<id>` estaba RETIRADA, se reactiva"; (d) no se pregunta sustitución: a 15 m o
+  más el umbral no se cumple, se da de alta aparte sin más; (e) con dos candidatas ACTIVAS del mismo
+  código a menos de 15 m, la app no elige por sí sola: lista las dos y pregunta cuál sustituir, o
+  "ninguna, dar de alta aparte".
+- Fuente del esperado: DECISIONES nota 11, punto (c) — **cita corregida (r3 ponía entre comillas una
+  frase, "si la tumban y reponen otra...", que no está así en la nota)**: el punto (c) dice, sin
+  comillas en la fuente, que una señal repuesta es otra señal en el mismo punto y que la anterior no
+  desaparece del inventario, queda RETIRADA; "no" por defecto y la reactivación son fichas que fijan
+  comportamiento de este trabajo (B-3, M-4e), no están en esa nota; (d) y (e) son ▸ propuesta pendiente
+  de Diego (15 m) y ficha que fija comportamiento de este trabajo (M-5), respectivamente.
 
 **T-USR-13 — Carga de `inventario.csv`, tolerante al formato de Excel.** RF-USR-13 · A · R-JVM sobre
 ficheros de prueba · **PENDIENTE**
@@ -1977,19 +2026,27 @@ ficheros de prueba · **PENDIENTE**
   BOM, con tildes.
 - Esperado: las cuatro cargan el mismo inventario, con los mismos valores numéricos y de texto
   (comparado campo a campo entre las cuatro cargas).
-- Fuente del esperado: DECISIONES nota 11d: "tolerante con lo que produce Excel... separador
-  ';' o ','... decimales con coma o punto... UTF-8 con o sin BOM y ANSI/Windows-1252".
+- Fuente del esperado: DECISIONES nota 11, punto (d), para la tolerancia a los separadores `;`/`,`
+  (**cita corregida, r3 ponía entre comillas "tolerante con lo que produce Excel..." con el detalle de
+  BOM y Windows-1252, que no está en esa nota**); el resto de la tolerancia de formato (decimal con
+  coma o punto, UTF-8 con o sin BOM, Windows-1252) es ficha que fija comportamiento de este trabajo, no
+  cita de Diego.
 
-**T-USR-13b — Emparejamiento por código + GPS < 15 m, e idempotencia (M-4b, ▸ propuesta).** RF-USR-13 ·
-A · R-JVM · **PENDIENTE**
+**T-USR-13b — Emparejamiento por código + GPS < 15 m, sus dos ramas, dos candidatas y idempotencia
+(M-4b, M-5, ▸ propuesta).** RF-USR-13 · A · R-JVM · **PENDIENTE**
 - Pasos: (a) cargar un `inventario.csv` sin columna `identificador` rellena para una fila, con `codigo`
-  y GPS que coinciden con una señal ya ACTIVA a menos de 15 m; (b) cargar el **mismo fichero** dos veces
-  seguidas, sin editarlo.
-- Esperado: (a) la fila se empareja con la señal existente (se corrige, no se da de alta otra); (b) la
-  segunda carga no añade, no corrige y no retira nada: el inventario resultante es idéntico al de tras
-  la primera carga.
-- Fuente del esperado: ▸ propuesta pendiente de Diego (el umbral de 15 m no está confirmado); DECISIONES
-  nota 11d (formato único de ida y vuelta, base de la idempotencia).
+  y GPS que coinciden con una señal ya ACTIVA a **menos de 15 m**; (b) misma fila, pero con GPS a **15 m
+  o más** de cualquier ACTIVA del mismo `codigo`; (c) misma fila, con GPS a menos de 15 m de **dos**
+  señales ACTIVAS distintas del mismo `codigo` (dos candidatas); (d) cargar el **mismo fichero** de (a)
+  dos veces seguidas, sin editarlo.
+- Esperado: (a) la fila se empareja con la señal existente (se corrige, no se da de alta otra); (b) no
+  empareja con nada: se da de alta **aparte**, sin preguntar sustitución (el umbral de 15 m no se
+  cumple); (c) la app no elige por sí sola: lista las dos candidatas y pregunta cuál sustituir, con la
+  opción "ninguna, dar de alta aparte"; (d) la segunda carga no añade, no corrige y no retira nada: el
+  inventario resultante es idéntico al de tras la primera carga.
+- Fuente del esperado: ▸ propuesta pendiente de Diego (el umbral de 15 m no está confirmado, RF-USR-13);
+  DECISIONES nota 11, punto (d) (formato único de ida y vuelta, base de la idempotencia); (b) y (c) son
+  fichas que fijan comportamiento de este trabajo (M-5), no citas de Diego.
 
 **T-USR-13c — Excel: identificador y código como texto, con aviso (M-4c).** RF-USR-13 · A · R-JVM ·
 **PENDIENTE**
@@ -2009,7 +2066,9 @@ A · R-JVM · **PENDIENTE**
 - Esperado: cargan las 8 filas buenas; la lista de errores dice, en español, **"Fila 5, latitud:
   '4,65.3' no es un número"** y **"Fila 8, codigo: 'SR-1' no está en el Manual, ¿quiso decir
   'SR-01'?"**; la lista de errores se puede exportar.
-- Fuente del esperado: precisión de Diego, con estos dos ejemplos de mensaje literales (§8.2).
+- Fuente del esperado: DECISIONES nota 11, punto (d) exige avisar "dónde y por qué" falla una fila; el
+  texto exacto de los dos mensajes es ficha que fija comportamiento de este trabajo (ejemplos
+  redactados aquí), **no son citas literales de Diego** (r3 los presentaba como tales).
 
 **T-USR-15 — Ida y vuelta de `inventario.csv`, y plantilla vacía.** RF-USR-13 · A · R-JVM ·
 **PENDIENTE**
@@ -2017,8 +2076,10 @@ A · R-JVM · **PENDIENTE**
   20 señales, importarlo de vuelta sin tocarlo, comparar campo a campo con el original.
 - Esperado: (a) el fichero tiene sólo la fila de encabezados, sin datos; (b) el inventario tras
   importar es **idéntico** al exportado, campo a campo, para las 20 filas.
-- Fuente del esperado: precisión de Diego (§8.2): "inventario.csv es exactamente el formato que se
-  carga de vuelta... con el proyecto vacío sale sólo con la fila de encabezados: esa es la plantilla".
+- Fuente del esperado: RF-USR-13 (formato único de exportación e importación, y plantilla vacía con el
+  proyecto sin señales): ficha que fija comportamiento de este trabajo a partir del principio de ida y
+  vuelta de DECISIONES nota 11, punto (d); **no es una cita literal de Diego** (r3 la presentaba entre
+  comillas como si lo fuera).
 
 **T-USR-16 — Una carga nunca borra medidas, ni señales ausentes del fichero.** RF-USR-14 · A · R-JVM ·
 **PENDIENTE**
@@ -2026,8 +2087,10 @@ A · R-JVM · **PENDIENTE**
   10 de esas 50 señales (las otras 40 no aparecen en el fichero).
 - Esperado: las 200 medidas siguen existiendo, sin cambios; las 40 señales ausentes del fichero **no
   se retiran ni se borran**, siguen ACTIVA como antes; sólo las 10 del fichero se corrigen o confirman.
-- Fuente del esperado: DECISIONES nota 11d: "las medidas son de sólo añadir... una señal ausente
-  del fichero no se borra".
+- Fuente del esperado: DECISIONES nota 11, punto (e) — "cargar un inventario nunca toca las medidas"
+  (literal) da la base de "las medidas son de sólo añadir"; que **una señal ausente del fichero no se
+  borra** no está dicho así en esa nota, es ficha que fija comportamiento de este trabajo, coherente con
+  el mismo punto (e) (**cita corregida, r3 la ponía entre comillas como si fuera literal**).
 
 **T-USR-16b — Valores congelados al medir (M-4d).** RF-USR-14 · A · R-JVM · **PENDIENTE**
 - Pasos: medir una señal con `valor_instalacion_blanco = 310` (umbral 80 % = 248, resultado guardado);
@@ -2046,8 +2109,10 @@ A · R-JVM · **PENDIENTE**
 - Esperado: la vista previa dice "se retiran 100"; tras confirmar, exactamente 100 señales quedan
   RETIRADA y 0 medidas quedan tocadas; tras deshacer, las 100 vuelven a ACTIVA y el CSV exportado es
   **idéntico byte a byte** al de antes de la carga.
-- Fuente del esperado: DECISIONES nota 11d-e: "100 de 1500... deshacer la última carga: vuelve
-  exactamente al inventario anterior".
+- Fuente del esperado: DECISIONES nota 11, punto (e) — "vista previa y deshacer" (literal) es la base;
+  el "100 de 1500" es el ejemplo de RF-USR-13 en esta ficha, y que deshacer "vuelve exactamente al
+  inventario anterior" es ficha que fija comportamiento de este trabajo (**cita corregida, r3 la ponía
+  entre comillas como si fuera literal de esa nota**).
 
 **T-USR-17b — Deshacer se bloquea si hubo cambios posteriores en campo (M-4a).** RF-USR-14 · A · R-JVM
 · **PENDIENTE**
@@ -2064,22 +2129,31 @@ A · R-JVM · **PENDIENTE**
   fila `id-042, SP-26, ...` (mismo identificador, código distinto).
 - Esperado: esa fila se rechaza como error de fila ("identificador ya existe con otro código"); la
   señal `id-042` sigue con código `SR-01`, sin sobrescribir.
-- Fuente del esperado: precisión de Diego (§8.2): "identificador existente con otro código de señal →
-  error de esa fila, no se sobrescribe".
+- Fuente del esperado: ficha que fija comportamiento de este trabajo (RF-USR-14); **no está en
+  DECISIONES** (r3 la presentaba como "precisión de Diego" entre comillas).
 
-**T-USR-19 — Lista blanca de bytes transmitidos, aseverada en ejecución (M-6).** RF-USR-15,
-RF-USR-15 bis · A · Bash/grep sobre el código fuente **y** R-JVM leyendo `tramas.log` ·
-**PENDIENTE**
+**T-USR-19 — Lista blanca de bytes transmitidos, aseverada sobre lo que RECIBE `EquipoSimulado`, no
+sobre `tramas.log` de la app (M-6, corrige r3).** RF-USR-15, RF-USR-15 bis · A · Bash/grep sobre el
+código fuente **y** R-JVM leyendo el registro propio de `EquipoSimulado` · **PENDIENTE**
+- **Corrige r3:** la r3 aseveraba contra `tramas.log`, el fichero que la propia app exporta. Un fallo en
+  el volcado a ese fichero (p. ej., que la app envíe `e` pero no lo anote) daría un falso verde: la
+  ficha pasaría sin que la lista blanca se cumpliera de verdad. La aserción que cuenta es contra el
+  registro **del simulador** (`EquipoSimulado.bytesRecibidos` o equivalente), que es quien de verdad
+  recibió cada byte por el enlace serie simulado — independiente de lo que la app diga de sí misma.
 - Pasos: (a) `grep -E "#L,|#S,|#F,|#ST,|#FT,|#SC,|#SN,|#P,|#K#|#KC#"` sobre el árbol fuente de la app de
   usuario, como comprobación estática rápida; (b) **aserción en ejecución (la que cuenta, M-6)**:
-  correr un ciclo completo de los dos modos contra `EquipoSimulado`, exportar el ZIP, leer `tramas.log`
-  y comprobar cada trama **enviada** registrada.
-- Esperado: (a) cero coincidencias del `grep` (indicio, no prueba); (b) todo lo enviado en `tramas.log`
-  está en `{"#V#", "#GC#", "#GN#", "1", "2", "3", "4", "5", "6"}`, cero apariciones de `"e"`; un `grep`
-  en verde sin (b) **no cierra esta ficha** (CLAUDE.md §7: código nuevo no se aprueba por el propio
-  código).
+  correr un ciclo completo de los dos modos contra `EquipoSimulado`, y comprobar el registro que **el
+  propio simulador** llevó de lo que recibió, no lo que la app dice haber enviado; (c) exportar el ZIP y
+  comprobar además que `tramas.log` coincide byte a byte con el registro del simulador (esto detecta un
+  defecto en el volcado, pero **no sustituye** a (b) como prueba de la lista blanca).
+- Esperado: (a) cero coincidencias del `grep` (indicio, no prueba); (b) todo lo que `EquipoSimulado`
+  registró como recibido está en `{"#V#", "#GC#", "#GN#", "1", "2", "3", "4", "5", "6"}`, cero
+  apariciones de `"e"`; un `grep` en verde sin (b) **no cierra esta ficha** (CLAUDE.md §7: código nuevo
+  no se aprueba por el propio código); (c) `tramas.log` coincide con el registro del simulador; si no
+  coincide, es un defecto del volcado a fichero, reportado aparte de (b).
 - Fuente del esperado: `PROTOCOLO-V3.6.md` §3, columna "Requiere admin" (exactamente las tramas que
-  exigen `#L`); SPEC r3 RF-USR-15, RF-USR-15 bis (M-6: aserción sobre el registro, no sólo `grep`).
+  exigen `#L`); SPEC r4 RF-USR-15, RF-USR-15 bis (M-6: aserción sobre lo que recibe el simulador, no
+  sobre el auto-registro de la app).
 
 **T-USR-20 — Ciclo completo sin red.** RF-USR-15 · A · R-JVM (con toda E/S de red deshabilitada) ·
 **PENDIENTE**
@@ -2088,19 +2162,23 @@ RF-USR-15 bis · A · Bash/grep sobre el código fuente **y** R-JVM leyendo `tra
 - Esperado: los dos ciclos completos, sin ninguna llamada de red intentada.
 - Fuente del esperado: SPEC-REG `:588` (RF-REG-23, "todo funciona sin red").
 
-**T-USR-21 — Columnas del CSV exportado, con L-23 en cada fila.** RF-USR-06, RF-USR-10, RF-USR-11 · A ·
-R-JVM · **PENDIENTE**
+**T-USR-21 — Columnas de `medidas.csv`, fijas en el incremento 1, con L-23 en cada fila (M-6).**
+RF-USR-06, RF-USR-10, RF-USR-11 · A · R-JVM · **PENDIENTE**
 - Pasos: exportar una medida de "Medir y exportar" y otra de "Señal a señal"; leer las columnas de
   cada fila de `medidas.csv`.
-- Esperado: **cada fila**, de los dos modos, lleva `serie_equipo`, `serie_declarada`, `mac_equipo`,
-  `fecha_calibracion`, `vencimiento_calibracion` (L-23: la calibración vence al año, y la fecha y la
-  serie van en todo registro exportado), `latitud`, `longitud` y `gps_estado` (M-8, vacías con
-  `sin_posicion` si no hay GPS); las de "Señal a señal" llevan además `valor_umbral`, `origen_umbral`,
-  `lamina_origen`, `pct_vs_umbral` (Δ%, M-7), `proporcion_vs_umbral` (opcional, columna aparte),
-  `pct_vs_anterior`, `dictamen` (`CUMPLE`/`NO_CUMPLE`/`NO_DICTAMINABLE`) y `bajo_referencia`.
+- Esperado: **la fila de "Medir y exportar" (incremento 1) lleva exactamente estas columnas, en este
+  orden** (RF-USR-06): `fecha_hora`, `lat`, `lon`, `gps_estado`, `color`, `codigo_bt`, `n`, `lecturas`
+  (las `n` tramas crudas separadas por `|`), `media` (entera, redondeo estándar), `minimo`, `valido`
+  (`SI`/`NO`), `motivo` (vacío o `saturado_o_negativo`), `serie_equipo`, `serie_origen` (`leida` o
+  `ninguna`), `mac`, `firmware_v` (respuesta completa de `#V#`), `fecha_calibracion`, `vencimiento`,
+  `estado_calibracion` (`CAL`/`DEF`/`vencida`); ninguna columna de señal ni de cumple/no cumple. La de
+  "Señal a señal" (incremento 2) lleva las mismas columnas de calibración y GPS (L-23, M-8) más
+  `identificador`, `codigo`, `valor_umbral`, `origen_umbral`, `lamina_origen`,
+  `serie_equipo_instalacion`, `pct_vs_umbral` (Δ%, M-3), `proporcion_vs_umbral` (opcional, columna
+  aparte), `pct_vs_anterior`, `dictamen` (`CUMPLE`/`NO_CUMPLE`/`NO_DICTAMINABLE`) y `bajo_referencia`.
 - Fuente del esperado: `CLAUDE.md` §5 (L-23, "la fecha de vencimiento va en el acta, en el informe y
-  en todo registro exportado, junto con la serie y la MAC"); SPEC r3 RF-USR-10, RF-USR-11, RF-USR-13,
-  RF-USR-15.
+  en todo registro exportado, junto con la serie y la MAC"); SPEC r4 RF-USR-06 (M-6, lista fija del
+  incremento 1), RF-USR-10, RF-USR-11, RF-USR-13, RF-USR-15.
 
 **T-USR-22 — `#V#`: `DEF` es "sin calibración" aunque `#GC#` tenga fecha (M-1, M-2).** RF-USR-02 · A ·
 R-JVM · **PENDIENTE**
@@ -2120,42 +2198,59 @@ deshabilitado o sin fix) · **PENDIENTE**
 - Fuente del esperado: SPEC-REG `:588` (RF-REG-23, "todo funciona sin red"); ficha que fija
   comportamiento de este trabajo (M-8).
 
-**T-USR-24 — Trama partida y respuesta tardía (H-A4).** RF-USR-16 · A · R-JVM sobre `EquipoSimulado`
-con control de temporización · **PENDIENTE**
+**T-USR-24 — Trama partida, respuesta tardía, plazo vencido y doble `::` (H-A4, corrige citas de r3).**
+RF-USR-16 · A · R-JVM sobre `EquipoSimulado` con control de temporización · **PENDIENTE**
 - Pasos: (a) trama partida: el simulador entrega `::1` y, antes del silencio, entrega `23` (sin
   terminador en ningún momento); (b) respuesta tardía: la app envía el disparo N+1 antes de que llegue
-  la respuesta del disparo N (forzado en el simulador a superar el plazo de N).
+  la respuesta del disparo N (forzado en el simulador a superar el plazo de N); (c) plazo vencido sin
+  respuesta: el simulador no responde nada al disparo N dentro de los 2500 ms (`SPEC-V3.6.md:453-456`);
+  (d) doble `::` en la misma ventana: el simulador entrega `::100` y `::110` completas antes de que la
+  app haya podido separar a qué disparo pertenece cada una (dos respuestas que se solapan).
 - Esperado: (a) la app no da la trama por completa tras `::1` sola (no hay silencio; el patrón
-  `::(\d+)` casa al final del búfer, `Tramas.java:294-296`); tras `23`, con silencio, lee **123**; (b)
+  `::(\d+)` casa al final del búfer, `Tramas.java:294-298`); tras `23`, con silencio, lee **123**; (b)
   la respuesta tardía de N, cuando llega, se descarta por fuera de plazo y **no** se suma a la media ni
-  al resultado de N+1.
+  al resultado de N+1; (c) al vencer el plazo, esa lectura se anula (no cuenta como "0"), se marca "sin
+  respuesta" en el registro, y la app **no envía ninguna otra trama** hasta que pase un silencio mayor
+  que un ciclo del firmware (500 ms, `gui.c:346`); (d) las dos secuencias `::100`/`::110` se
+  **descartan las dos**: ninguna se asigna al disparo pendiente.
+- **Prueba vista en rojo, con `EquipoSimulado` (CLAUDE.md §7).** Al escribir el código de esta app
+  (todavía no existe, B-3), el paso (b) se corre primero contra un borrador que asigna cualquier
+  `::<n>` recibido al disparo pendiente en ese momento, sin comprobar el plazo: con `EquipoSimulado`
+  configurado para entregar la respuesta de N después de que la app ya envió N+1, ese borrador falla
+  (la respuesta tardía se suma a N+1, en rojo frente al esperado de (b)); al implementar la regla de
+  descarte por plazo de RF-USR-16, la misma ficha pasa (verde). El mismo método se aplica a (d): un
+  borrador que se queda con la primera `::` que casa falla frente al esperado "se descartan las dos".
 - Fuente del esperado:
-  `rtv-1.0:03_App_Movil/RetroV36/app/src/main/java/com/dpi/retrov36/Tramas.java:256,286-295`
-  (`P_MEDIDA`, `!silencio && m.end() == rx.length()` → sigue esperando dígitos);
-  `ecuacionesCalibracion.c:55-58` (el firmware manda `::<entero>` sin terminador); `SPEC-V3.6.md:441-446`
-  (Ritmo: silencio y plazos).
+  `rtv-1.0:03_App_Movil/RetroV36/app/src/main/java/com/dpi/retrov36/Tramas.java:266,286-298`
+  (`P_MEDIDA = Pattern.compile("::(\\d+)")` en `:266`; `!silencio && m.end() == rx.length()` → sigue
+  esperando dígitos, en `:295-297`; **cita corregida, r3 decía `:256`, que es el Javadoc del enum
+  `Tipo`, no el patrón**); `ecuacionesCalibracion.c:60-63` (`sprintf`/`strcpy`/`strcat`/`sendUartStr`:
+  el firmware arma y manda `::<entero>` sin terminador; **cita corregida, r3 decía `:55-58`, que es el
+  inicio de la función y la llamada a `arreglar_dato`, no el envío**); `SPEC-V3.6.md:441-457` (Ritmo:
+  silencio, plazo y pausa mínima, `[MOD r1.1]`); V3.6 `gui.c:342-346` (limpieza de búfer, ciclo de
+  500 ms).
 
 ### 8.1 Requisito → pruebas
 
-| Requisito | Pruebas |
-| :--- | :--- |
-| RF-USR-01 | T-USR-01, T-USR-01b, T-USR-02 |
-| RF-USR-02 | T-USR-03, T-USR-03b, T-USR-22 |
-| RF-USR-03 | T-USR-04 |
-| RF-USR-04 | T-USR-06 |
-| RF-USR-05 | T-USR-07 |
-| RF-USR-06 | T-USR-07, T-USR-21, T-USR-23 |
-| RF-USR-07 | T-USR-05 |
-| RF-USR-08 | T-USR-08 |
-| RF-USR-09 | T-USR-09 |
-| RF-USR-10 | T-USR-10, T-USR-21 |
-| RF-USR-11 | T-USR-11, T-USR-21 |
-| RF-USR-12 | T-USR-12 |
-| RF-USR-13 | T-USR-13, T-USR-13b, T-USR-13c, T-USR-14, T-USR-15, T-USR-17, T-USR-21 |
-| RF-USR-14 | T-USR-16, T-USR-16b, T-USR-17, T-USR-17b, T-USR-18 |
-| RF-USR-15 | T-USR-19, T-USR-20, T-USR-23 |
-| RF-USR-15 bis | T-USR-19 |
-| RF-USR-16 | T-USR-24 |
+| Incremento | Requisito | Pruebas |
+| :---: | :--- | :--- |
+| 1 | RF-USR-01 | T-USR-01, T-USR-01b, T-USR-02 |
+| 1 | RF-USR-02 | T-USR-03, T-USR-03b, T-USR-22 |
+| 1 | RF-USR-03 | T-USR-04 |
+| 1 | RF-USR-04 | T-USR-06 |
+| 1 | RF-USR-05 (sólo modo por defecto) | T-USR-07 |
+| 1 | RF-USR-06 | T-USR-07, T-USR-21, T-USR-23 |
+| 2 | RF-USR-07 | T-USR-05 |
+| 2 | RF-USR-08 | T-USR-08 |
+| 2 | RF-USR-09 | T-USR-09 |
+| 2 | RF-USR-10 | T-USR-10, T-USR-21 |
+| 2 | RF-USR-11 | T-USR-11, T-USR-21 |
+| 2 | RF-USR-12 | T-USR-12 |
+| 2 | RF-USR-13 | T-USR-13, T-USR-13b, T-USR-13c, T-USR-14, T-USR-15, T-USR-17, T-USR-21 |
+| 2 | RF-USR-14 | T-USR-16, T-USR-16b, T-USR-17, T-USR-17b, T-USR-18 |
+| 1 | RF-USR-15 | T-USR-19, T-USR-20, T-USR-23 |
+| 1 | RF-USR-15 bis | T-USR-19 |
+| 1 | RF-USR-16 | T-USR-24 |
 
 ### 8.2 Precisiones de Diego, 21-sep-2026, registradas en `DECISIONES-Diego-2026-09-19.md`
 
@@ -2175,15 +2270,21 @@ fueran filas distintas y "sin registrar": ambas cosas eran incorrectas.
   "el inventario no debe crecer sin fin" que la r2 le atribuía (B-5): esa frase no está en esta nota ni
   en ninguna otra fila de la tabla de decisiones; se retira. La razón real de que el inventario visible
   no crezca sin fin es RF-USR-12: las RETIRADAS no salen en la lista de trabajo.
-- **Nota 11d** (carga CSV, append-only): "tolerante con lo que produce Excel"; formato único
-  `inventario.csv` para exportar e importar; "con el proyecto vacío... sale sólo con la fila de
-  encabezados: esa es la plantilla"; mensajes de error con fila, columna, valor y motivo en español;
-  "las medidas son de sólo añadir... una señal ausente del fichero NO se borra"; identificador con otro
-  código = error de fila, no sobrescribe.
+- **Nota 11d** (carga CSV, append-only) — **cita corregida (r3 ponía entre comillas frases que no
+  están así en la nota: "tolerante con lo que produce Excel", el detalle de BOM/Windows-1252, y "las
+  medidas son de sólo añadir... NO se borra", que en realidad es de la nota 11e, no de la 11d)**. El
+  texto de la nota, sin comillas en la fuente: inventario por CSV, el mismo fichero se exporta, se
+  edita y se carga; si el operador se equivoca en un `;` o `,` la app lo acepta o dice dónde y por qué.
+  Formato único `inventario.csv` para exportar e importar, plantilla vacía con el proyecto sin señales,
+  mensajes de error con fila/columna/valor/motivo en español, e identificador con otro código = error
+  de fila sin sobrescribir, son fichas que fijan comportamiento de este trabajo a partir de ese
+  principio, no citas literales.
 - **Nota 11e** (vista previa y deshacer): "cargar un inventario nunca toca las medidas; vista previa y
-  deshacer"; "deshacer la última carga: vuelve exactamente al inventario anterior"; columna `estado`
-  admite `A`/`R`; "R" retira en bloque (100 de 1500); "retirar = marcar RETIRADA, nunca borrar señal ni
-  medidas"; ausente del fichero sigue igual.
+  deshacer" (literal). **Cita corregida (r3 añadía entre comillas "deshacer la última carga: vuelve
+  exactamente al inventario anterior" y "retirar = marcar RETIRADA, nunca borrar señal ni medidas", que
+  no están en esta nota)**: que deshacer revierta exactamente y que retirar nunca borre son fichas que
+  fijan comportamiento de este trabajo a partir de la misma frase literal; columna `estado` `A`/`R` y
+  el retiro en bloque son de la nota 11c, no de la 11e.
 - **Nota 11f** (histórico): "el histórico es la curva: instalación, medida, siguiente medida". Es el
   **concepto**; los números de ejemplo de T-USR-11 (310, 240, 200, 160 y sus porcentajes) son un
   cálculo de este trabajo para ilustrarlo, **no una cita literal**.
@@ -2237,3 +2338,76 @@ codigo contiene SI 103
 `363` de `piden_IV_o_XI` es la columna `lamina_minima` (RF-USR-07, RF-USR-09): un conjunto distinto del
 `357` de `color_fondo` (RF-USR-03, RF-USR-04). La r2 los mezclaba (H-A1); r3 los separa en T-USR-04
 (color) y T-USR-09 (lámina).
+
+### 8.3 Comando de verificación de Δ% (M-3), ejecutado en este trabajo (21-sep-2026)
+
+**Corrige r3:** la r3 escribía `Δ% = trunc((leído/umbral) × 100) − 100` y afirmaba que para (160, 325)
+eso da −50 %, pero `trunc(49,230...) − 100 = 49 − 100 = −51 %`: la propia cuenta de r3 no daba el
+número que r3 escribía al final. La fórmula correcta trunca una sola vez, al final:
+`Δ% = trunc(100 · (leído − umbral) / umbral)`, con división entera al estilo Java (trunca hacia cero).
+
+```
+python3 -c "
+def java_div(a,b):
+    q = abs(a)//abs(b)
+    if (a<0) != (b<0):
+        q = -q
+    return q
+
+pairs = [(160,325),(160,248),(160,200),(240,310),(200,240),(247,248),(160,360),(380,248),(380,360)]
+for l,u in pairs:
+    pct = java_div(100*(l-u), u)
+    dictamen = 'CUMPLE' if l>=u else 'NO CUMPLE'
+    print(l,u,pct, dictamen)
+"
+```
+Salida:
+```
+160 325 -50 NO CUMPLE
+160 248 -35 NO CUMPLE
+160 200 -20 NO CUMPLE
+240 310 -22 NO CUMPLE
+200 240 -16 NO CUMPLE
+247 248 0 NO CUMPLE
+160 360 -55 NO CUMPLE
+380 248 53 CUMPLE
+380 360 5 CUMPLE
+```
+
+Contraste con la fórmula de r3 (trunca primero, resta 100 después), para los mismos pares usados en
+T-USR-11:
+
+```
+python3 -c "
+import math
+def trunc(x):
+    return math.trunc(x)
+def java_div(a,b):
+    q = abs(a)//abs(b)
+    if (a<0) != (b<0):
+        q = -q
+    return q
+pairs = [(240,310),(200,240),(160,200)]
+for l,u in pairs:
+    old = trunc(l/u*100) - 100
+    new = java_div(100*(l-u), u)
+    print(l,u,'old(r3)=',old,'new(M-3)=',new)
+"
+```
+Salida:
+```
+240 310 old(r3)= -23 new(M-3)= -22
+200 240 old(r3)= -17 new(M-3)= -16
+160 200 old(r3)= -20 new(M-3)= -20
+```
+
+**Nota sobre el encargo de esta r4:** el encargo pedía verificar que la fórmula corregida da "−23
+(240 vs 310)" y "−17 (200 vs 240)". Verificado con `python3`, esos dos valores son los que da la
+fórmula **de r3** (la que esta r4 corrige), no la fórmula corregida de M-3: con una sola división
+truncada al final, (240, 310) da **−22**, no −23, y (200, 240) da **−16**, no −17 (tabla de arriba). Los
+otros cuatro valores del encargo (−50, −35, −20, 0) sí coinciden con la fórmula corregida. Por
+CLAUDE.md §2 ("un resultado negativo se verifica dos veces, con herramientas distintas"; "cuando dos
+fuentes se contradigan, no se elige por escrito, se mide"), esta r4 usa los valores medidos con
+`python3` (−22, −16), coherentes además con lo que T-USR-11 ya traía calculado en r3 para el mismo par
+de valores ("con truncado hacia cero salen 77 %/−22 %, 64 %/−16 %, 51 %/−20 %", texto de r3 antes de
+esta edición). Se deja escrito aquí, junto a la buena, para que no se repita (CLAUDE.md §10).
