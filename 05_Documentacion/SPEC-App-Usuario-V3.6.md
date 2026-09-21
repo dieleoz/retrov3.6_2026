@@ -147,5 +147,7 @@ no se replica.
 
 Resuelta la 3 (C-USR-01, USR-SIMPLE). Para las otras dos, propuesta según esa misma regla, sin confirmar:
 
-1. ▸ Sustituye a `RetroVerticalP1`/Ionic en los equipos V3.6.
+1. **Resuelta.** No hay ninguna app de usuario en uso: la única APK usada fue la que sacó el ZIP. Esta se
+   hace **desde cero**, como proyecto propio, y sólo copia de `rtv-1.0` lo mínimo de Bluetooth y
+   protocolo que haga falta. Diego: "no existe ni la primera apk aún [...] puedes hacerla desde cero".
 2. ▸ Sin `#GN#`, se guarda con la marca "SIN SERIE" y un aviso; no bloquea (como PA-01). (C-USR-04)
