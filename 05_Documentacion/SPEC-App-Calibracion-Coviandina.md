@@ -250,6 +250,31 @@ Todo lo que necesita (catálogo, colas, decisiones) va en sus assets.
 **RF-COV-16 — Nombre de versión.** `Cov_<versión>_calibrar` (petición de Diego); `versionCode` propio,
 distinto del de cualquier APK anterior del mismo paquete.
 
+**RF-COV-18 — La fecha anterior se lee antes de grabar la nueva.** Antes de `#SC` la app lee `#GC#`. Si no
+responde (plazo vencido) o responde algo que no es una fecha ni `NONE`, **no se envía `#SC`**: el acta dice
+"no se pudo leer la fecha del equipo; reintente" y el código queda como "escrito sin aceptar". La fecha
+anterior leída (una fecha o `NONE`) se anota en el acta antes de enviar `#SC`.
+
+**RF-COV-19 — Rechazar devuelve sólo la fecha que se leyó.** Si el acta emitió `#SC`, al rechazar se envía
+`#SC,<fecha anterior leída>#` (o `#SC,NONE#` sólo si lo leído fue `NONE`) y se relee `#GC#`. Si no hay fecha
+anterior leída, no se envía nada y el acta lo dice. Nunca se borra una fecha que no se leyó.
+
+**RF-COV-20 — El acta dice con qué regla se juzgó cada código.** En esta app, todos con RF-COV-12
+(VERIF-5-10); ninguna línea del acta cita RF-CAL-18 ni s_rep para la b.
+
+**RF-COV-21 — Cierre automático y mensajes coherentes.** Si tras la secuencia un acta no tiene ningún código
+conforme, se rechaza sola y el resumen no pide pulsar Rechazar. El motivo de cada restauración es el real
+("colocaciones no válidas" o "re-medida fuera de ±10 %"). El contador de colocaciones no válidas es de
+**seguidas**: una válida lo pone a cero. Al terminar, `#Q#` cierra el modo administrador (PROTOCOLO:44).
+Ningún texto que vea el operador lleva el número de código (RF-COV-17).
+
+**RF-COV-22 — Estructura.** La secuencia automática vive en `CalibracionAutomatica`; la lectura, escritura y
+devolución de la fecha, en una clase propia. Ningún arreglo hace crecer `FlujoCalibracion.java` ni
+`CalibrarActivity.java` (rules/modularidad.md); ningún método pasa de 100 líneas.
+
+**Nota:** RF-COV-18, 19 y 21 (restauración y contador) corrigen código compartido con la app de campo, que
+hereda el cambio y necesita su propia revisión antes de entregarse.
+
 **Lo que sigue pendiente, fuera de esta revisión:** la verificación final de 10 patrones sobre todos los
 códigos y el "Certificado de calibración" firmado por ITVIAL SAS (VERIF-5-10, CERT-TITULO); la toma de
 muestras (TOMA-50). Van en la app de empresa completa (`ROADMAP.md`, tareas 1 a 4 y 9).
