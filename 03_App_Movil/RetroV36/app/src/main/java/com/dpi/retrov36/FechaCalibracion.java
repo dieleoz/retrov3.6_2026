@@ -74,6 +74,8 @@ final class FechaCalibracion {
     static String devolver(Ops ops, Acta acta) throws IOException, InterruptedException {
         String antesSC = acta.dato("#SC emitido, fecha anterior");
         if (antesSC == null) {
+            // RF-COV-19: "si no hay fecha anterior leída, no se envía nada y el acta lo dice".
+            acta.dato("#SC al rechazar", "no se envía nada: esta acta no llegó a leer ni a emitir #SC");
             return "";
         }
         Cliente.Respuesta rSc = ops.escribir("#SC," + antesSC + "#");

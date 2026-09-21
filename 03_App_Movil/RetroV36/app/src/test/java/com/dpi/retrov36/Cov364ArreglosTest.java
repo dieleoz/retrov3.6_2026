@@ -185,6 +185,9 @@ public class Cov364ArreglosTest {
         assertTrue(rech, rech.contains("Acta rechazada"));
         assertEquals("EN ROJO contra ed7e604: rechazar() habría enviado \"#SC,NONE#\"", 0, e.sim.cuantas("#SC,"));
         assertEquals("la fecha real del equipo sigue intacta", "2026-09-19", e.sim.fecha);
+        String diario = e.almacen.diariosCerrados.get(e.almacen.diariosCerrados.size() - 1);
+        assertTrue("RF-COV-19: \"si no hay fecha anterior leída, no se envía nada y el ACTA LO DICE\": " + diario,
+                diario.contains("no se envía nada"));
     }
 
     // ============================================================ H-2 (MEDIO): RF-COV-20
