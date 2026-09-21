@@ -11,11 +11,12 @@ android {
         applicationId "com.dpi.retrov36"
         minSdkVersion 24
         targetSdkVersion 30
-        // RTV 1.0.0-rc10 (Cov364: RF-COV-18 a 22). rc1 = 10000/"1.0.0" (072331f); rc2 = 10001; rc3 = 10002;
-        // rc4 = 10003; rc5 = 10004; rc6 = 10005; rc7 = 10006; rc8 = 10007; rc9 = 10008. Cada rc lleva su
-        // propio par para que no se confundan en el telefono (RF-APP-41).
-        versionCode 10009
-        versionName "1.0.0-rc10"
+        // RTV 1.0.0-rc11 (Cov365: condiciones RF-COV-17/21/22 del arquitecto-iot a Cov_3.6.4_calibrar).
+        // rc1 = 10000/"1.0.0" (072331f); rc2 = 10001; rc3 = 10002; rc4 = 10003; rc5 = 10004; rc6 = 10005;
+        // rc7 = 10006; rc8 = 10007; rc9 = 10008; rc10 = 10009. Cada rc lleva su propio par para que no se
+        // confundan en el telefono (RF-APP-41).
+        versionCode 10010
+        versionName "1.0.0-rc11"
         // Valores por defecto de la app de campo. El APK corto los cambia en el buildType "coviandina".
         buildConfigField "boolean", "CORTO", "false"
         manifestPlaceholders = [etiqueta: "RTV"]
@@ -45,20 +46,20 @@ android {
             buildConfigField "boolean", "CORTO", "true"
             // versionNameOverride (abajo) solo cambia el manifiesto; lo que la app imprime en pantalla, en
             // el acta y en el registro sale de BuildConfig.VERSION_NAME, y se fija aqui al mismo valor.
-            buildConfigField "String", "VERSION_NAME", "\"Cov_3.6.4_calibrar\""
+            buildConfigField "String", "VERSION_NAME", "\"Cov_3.6.5_calibrar\""
             manifestPlaceholders = [etiqueta: "RTV Calibra"]
             matchingFallbacks = ['debug']
         }
     }
 
-    // El APK de calibrar lleva el nombre que fijo Diego el 21-sep-2026: "Cov_3.6.4_calibrar" (RF-COV-16:
-    // versionCode propio, distinto del de cualquier APK anterior del mismo paquete; comparte el par 10009
+    // El APK de calibrar lleva el nombre que fijo Diego el 21-sep-2026: "Cov_3.6.5_calibrar" (RF-COV-16:
+    // versionCode propio, distinto del de cualquier APK anterior del mismo paquete; comparte el par 10010
     // con la app de campo, que es OTRO paquete). Un buildType no puede fijar versionName por si mismo, asi
     // que se sobreescribe en la salida de la variante (AGP 4.1.1: versionNameOverride).
     applicationVariants.all { variant ->
         if (variant.buildType.name == "coviandina") {
             variant.outputs.all { output ->
-                output.versionNameOverride = "Cov_3.6.4_calibrar"
+                output.versionNameOverride = "Cov_3.6.5_calibrar"
             }
         }
     }
