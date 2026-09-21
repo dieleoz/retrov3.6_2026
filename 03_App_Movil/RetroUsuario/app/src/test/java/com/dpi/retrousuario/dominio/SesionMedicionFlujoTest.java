@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -141,6 +142,34 @@ public class SesionMedicionFlujoTest {
         assertTrue(zip2.exists());
         assertTrue(!zip1.getName().equals(zip2.getName()));
         assertEquals(3, sesion.filas().size());
+    }
+
+    /** D-4: exportar dos veces con el MISMO Date (mismo segundo exacto) no pisa el primer ZIP: el
+     *  segundo nombre lleva el sufijo de colisión "_2" (NombreZip.resolverColision), y las dos
+     *  exportaciones sobreviven en la carpeta con sus dos ficheros distintos. */
+    @Test
+    public void exportarDosVecesConElMismoDateProduceElSufijoDeColision() {
+        EquipoSimuladoDisparos sim = new EquipoSimuladoDisparos();
+        SesionMedicion sesion = nuevaSesion(sim);
+        sesion.registrarEquipo("MAC", "#V,3.6,2026-09-19,CAL,0000#", "SLV-002", true,
+                RespuestaV.EstadoAjuste.CAL, "2026-09-19", true, FechaISO.de(2026, 9, 21));
+        sim.programarValor(10, 100);
+        sim.programarValor(10, 100);
+        sim.programarValor(10, 100);
+        sesion.medir("rojo", "x1", "", "", "sin_posicion");
+
+        Date mismoInstante = new Date(1758470400000L);
+        TimeZone utc = TimeZone.getTimeZone("UTC");
+        File zip1 = sesion.exportar(carpeta, mismoInstante, utc);
+        File zip2 = sesion.exportar(carpeta, mismoInstante, utc); // MISMO Date exacto: colisión de nombre.
+
+        assertTrue(zip1.exists());
+        assertTrue(zip2.exists());
+        assertFalse(zip1.getName().equals(zip2.getName()));
+        assertTrue("el segundo nombre no lleva el sufijo de colision: " + zip2.getName(),
+                zip2.getName().endsWith("_2.zip"));
+        // el primer nombre NO lleva sufijo (es el que existia cuando se resolvio la colision del segundo).
+        assertFalse(zip1.getName().endsWith("_2.zip"));
     }
 
     /** T-USR-28: la API de medir no recibe lecturasPorColor; sólo Ajustes (ParametrosRitmo) lo cambia. */
