@@ -72,7 +72,7 @@ lo están los demás**, con el motivo tomado literal de `BancoCola.calibrable` y
 exactamente lo que esa noche no se veía en ninguna pantalla. Un código que la cola sólo verifica (7,
 a, c, d en la completa) no dice "faltan patrones": dice **"esta cola sólo lo verifica"**.
 
-**RF-COV-04 — Paso 2: "Calibrar".** *(Modificado en r2: RF-COV-11 a RF-COV-13.)*
+**RF-COV-04 — Paso 2: "Calibrar".** *(Modificado en r2: RF-COV-11 a 13 y 17.)*
 Abre `CalibrarActivity`, **sin cambios**: previas, una tarjeta por
 código con su motivo, **nombre del superadministrador** (paso 3), **nota de la conformidad** (paso 4),
 casilla por código, PIN una vez por conexión, escritura, re-medida, persistencia y **acta** (paso 6).
@@ -216,10 +216,17 @@ Fuentes: decisiones APPS-DPI, VERIF-5-10, CERT-TITULO y FECHA-EQUIPO
 (APTO CON CONDICIONES, C-1). Las revisiones están en el scratchpad de la sesión, sin archivar.
 
 **RF-COV-11 — Ninguna salida al Banco.** Desde esta app no se llega al Banco ni a "Tomar muestras" por
-ningún camino (cierra H-1, `CalibrarActivity.java:441-446`). Si un código no se puede escribir, la app
-dice qué hacer sin salir. **La b no se ofrece hasta que el 8 tenga acta aceptada**
-(`TablaCalibracion.java:196`). Criterio: con el ZIP de las 18:11, marcar sólo la b es imposible y
-ninguna pantalla de la app abre `BancoActivity`.
+ningún camino (cierra H-1, `CalibrarActivity.java:441-446`). Criterio: ninguna pantalla abre
+`BancoActivity`.
+
+**RF-COV-17 — Un solo botón, sin códigos a la vista.** Diego: "es cargar un .zip y calibrar, ni idea
+el funcional qué es un 8". El operador **no elige códigos, ni los ve por su número**: pulsa "Calibrar",
+teclea su nombre una vez y la app calibra sola **todo lo que el ZIP permite, en el orden que exige la
+tabla** (el 8 antes que la b, `TablaCalibracion.java:196`), dando por aceptada cada acta cuya re-medida
+sea conforme (RF-COV-12) para poder seguir con la siguiente. Si alguna no es conforme, restaura ese
+código, sigue con los demás que no dependan de él y lo dice al final. En pantalla, colores por su nombre
+("amarillo, lámina tipo I"), nunca el código. Al terminar, un resumen: qué quedó calibrado, qué no y por
+qué, y "Guardar". Sustituye a la casilla por código y a la aceptación código a código de RF-COV-04.
 
 **RF-COV-12 — Re-medida tras escribir: error frente al certificado.** Sustituye al criterio de
 reproducción por s_rep (`Remedida3611.java:65-66`, H-2), que exigía ±2 cuentas cuando el mismo patrón
