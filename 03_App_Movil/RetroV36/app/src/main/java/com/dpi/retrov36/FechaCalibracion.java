@@ -42,7 +42,10 @@ final class FechaCalibracion {
         Cliente.Respuesta g0 = ops.pedir("#GC#");
         String antes = g0.valida() ? Calibracion.fechaDe(g0.trama) : null;
         if (antes == null) {
-            acta.dato("#GC# antes de #SC", g0.describir());
+            // BAJO (RF-COV-18, arquitecto-iot a Cov_3.6.4_calibrar): la frase literal va también en el
+            // DATO del acta, no solo en el texto que ve el operador (que se pierde si no se anota).
+            acta.dato("#GC# antes de #SC", "no se pudo leer la fecha del equipo; reintente (#GC# -> "
+                    + g0.describir() + ")");
             return new Resultado(false, false, "no se pudo leer la fecha del equipo (#GC# -> " + g0.describir()
                     + "); reintente. El código queda escrito sin aceptar.");
         }

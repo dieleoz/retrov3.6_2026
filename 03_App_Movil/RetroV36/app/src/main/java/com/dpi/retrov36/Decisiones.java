@@ -242,11 +242,25 @@ public final class Decisiones {
     }
 
     public String texto(String equipo) {
+        return texto(equipo, false);
+    }
+
+    /**
+     * RF-COV-20 (H-2, arquitecto-iot a Cov_3.6.4_calibrar): en corto (app de calibrar), REMEDIDA-b no se
+     * imprime con su texto normal — afirmaría "se juzga con RF-CAL-18", que en ese camino ya no es cierto
+     * (VERIF-5-10 la sustituye, RF-COV-12) — sino marcada sustituida. En campo (corto = false), exactamente
+     * igual que antes (regresión: la app de campo no cambia).
+     */
+    public String texto(String equipo, boolean corto) {
         StringBuilder sb = new StringBuilder();
         for (Decision x : validas.values()) {
-            if (x.equipo.equals(equipo)) {
-                sb.append(sb.length() == 0 ? "" : "; ").append(x.texto());
+            if (!x.equipo.equals(equipo)) {
+                continue;
             }
+            String t = corto && "REMEDIDA-b".equals(x.id)
+                    ? x.id + " (" + x.equipo + "): sustituida por VERIF-5-10 (RF-COV-12) en corto, no se aplica"
+                    : x.texto();
+            sb.append(sb.length() == 0 ? "" : "; ").append(t);
         }
         return sb.length() == 0 ? "ninguna decisión registrada para " + equipo : sb.toString();
     }

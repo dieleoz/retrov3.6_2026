@@ -210,15 +210,25 @@ public final class FlujoCalibracion {
     private boolean scEnUltimoAceptar;
     /** Codigo cuya persistencia dejo el equipo recien encendido (para anotarlo en el acta siguiente). */
     private char encendidoPor;
-    /** Codigos que se escriben en la pulsacion en curso (T-C41 no los coteja: van a cambiar). */
-    private final Set<Character> escribiendoAhora = new HashSet<>();
+    /**
+     * Codigos que se escriben en la pulsacion en curso (T-C41 no los coteja: van a cambiar). De paquete
+     * (RF-COV-22, modularidad): {@link CalibracionManual} lo usa directamente, sin getter de relleno.
+     */
+    final Set<Character> escribiendoAhora = new HashSet<>();
     /**
      * RF-COV-12 (H-2): true SOLO en el camino de la app de calibrar (BuildConfig.CORTO). Entra por
      * constructor, en vez de leer BuildConfig aqui, para que la rama se pueda probar en la JVM: la suite
      * de pruebas compila siempre contra el variant debug (BuildConfig.CORTO = false, README.md:33), asi
      * que una FlujoCalibracion que mirase BuildConfig directamente no podria ejercitar nunca esta rama.
+     * De paquete (RF-COV-22): {@link CalibracionManual} y {@link CalibracionAutomatica} la usan por
+     * {@link #corto()}.
      */
     private final boolean corto;
+
+    /** De paquete (RF-COV-22, modularidad): ver {@link #corto}. */
+    boolean corto() {
+        return corto;
+    }
 
     public FlujoCalibracion(Canal canal, Operador operador, AlmacenActa almacen, BancoCola cola, Campana campana,
                             List<Patron> catalogo, Decisiones decisiones, Contexto ctx, Reloj reloj) throws IOException {
@@ -370,7 +380,7 @@ public final class FlujoCalibracion {
     // ------------------------------------------------ actas aceptadas (P14-02, QA-3615-05)
 
     /** El acta ACEPTADA mas reciente con el codigo k conforme y no restaurado; null si ninguna. */
-    private Acta aceptadaVigente(char k) {
+    Acta aceptadaVigente(char k) {
         try {
             Acta v = null;
             for (Acta a : almacen.aceptadas()) {
@@ -392,7 +402,7 @@ public final class FlujoCalibracion {
      * QA-3615-05: un codigo con acta ACEPTADA se puede volver a calibrar si alguna serie que uso (ajuste, re-medida u
      * OSCURO) se ha anulado en el banco despues ("rehacer" avisado). Devuelve la serie anulada, o null.
      */
-    private String serieAnuladaDe(Acta a, char k) {
+    String serieAnuladaDe(Acta a, char k) {
         String ids = a == null ? null : a.dato("series " + k);
         if (ids == null || campana == null) {
             return null;
@@ -812,7 +822,7 @@ public final class FlujoCalibracion {
     }
 
     /** Motivo por el que el codigo k de ESTA acta no admite escritura (independiente de otros codigos). */
-    private String motivoCodigo(char k) {
+    String motivoCodigo(char k) {
         if (acta == null) {
             return null;
         }
@@ -947,7 +957,7 @@ public final class FlujoCalibracion {
         return l.texto;
     }
 
-    private Bateria.Lectura bateria() throws IOException, InterruptedException {
+    Bateria.Lectura bateria() throws IOException, InterruptedException {
         Bateria.Lectura l = ops.bateria();
         ultimaBateria = l;
         if (campana != null && !campana.cerrada()) {
@@ -972,7 +982,7 @@ public final class FlujoCalibracion {
         return l;
     }
 
-    private String entrar() throws IOException, InterruptedException {
+    String entrar() throws IOException, InterruptedException {
         String m = ops.entrar(pin);
         if (m != null) {
             pin = null;   // QA-3613-02: cualquier fallo de #L hace que la pantalla vuelva a pedir el PIN
@@ -981,7 +991,7 @@ public final class FlujoCalibracion {
     }
 
     /** QA-3613-05: un acta retomada (p. ej. de la 3.6.12) recibe los datos obligatorios que le falten. */
-    private void completarDatos() {
+    void completarDatos() {
         if (acta == null || acta.cerrada()) {
             return;
         }
@@ -990,7 +1000,9 @@ public final class FlujoCalibracion {
             acta.dato("código 5", f5.escribible() ? f5.origen : f5.aviso);
         }
         if (acta.dato("decisiones") == null) {
-            acta.dato("decisiones", decisiones.texto(equipo()));
+            // RF-COV-20 (H-2, arquitecto-iot a Cov_3.6.4_calibrar): en corto, REMEDIDA-b va marcada
+            // sustituida (Decisiones.texto(equipo, corto)); no repite "se juzga con RF-CAL-18".
+            acta.dato("decisiones", decisiones.texto(equipo(), corto));
         }
     }
 
@@ -1019,118 +1031,17 @@ public final class FlujoCalibracion {
         return r + descartarActaVacia(r.length() > 120 ? r.substring(0, 120) + "..." : r);
     }
 
+    /**
+     * RF-COV-22 (arquitecto-iot a Cov_3.6.4_calibrar, modularidad rules/modularidad.md: 100 líneas de
+     * techo por método): el cuerpo (antes 110 líneas, todo aquí) vive en {@link CalibracionManual}, para
+     * no hacer crecer este fichero. Sin cambio de comportamiento: mismos pasos, mismo orden, mismos
+     * textos (suite en verde, salida idéntica).
+     */
     private String calibrarInterno(Set<Character> seleccion, String nombre, String nota) throws IOException, InterruptedException {
-        Set<Character> sel = seleccion == null ? new HashSet<>() : new HashSet<>(seleccion);
-        String pv = motivoPrevias();
-        if (pv != null) {
-            return "No se calibra: " + pv;
-        }
-        if (acta != null && acta.rechazoPendiente() != null) {
-            // P14-06: con un rechazo pendiente no se continua la calibracion.
-            return "Hay un rechazo pendiente (" + acta.rechazoPendiente() + "): vuelva a pulsar Rechazar, o ciérrela sin "
-                    + "restaurar, firmándola con el PIN de administrador. No se calibra.";
-        }
-        for (char k : sel) {
-            Acta vig = aceptadaVigente(k);
-            if (vig != null && serieAnuladaDe(vig, k) == null && (acta == null || acta.codigo(k) == null)) {
-                return "El código " + k + " ya tiene un acta ACEPTADA vigente: no se vuelve a escribir.";
-            }
-        }
-        Map<Character, Plan> planes = new LinkedHashMap<>();
-        for (char k : Fabrica.CODIGOS) {
-            if (!sel.contains(k)) {
-                continue;
-            }
-            Plan p = plan(k, null);
-            if (!p.escribible()) {
-                return "El código " + k + " no se escribe: " + p.motivoNo;
-            }
-            String mc = motivoCodigo(k);
-            if (mc != null) {
-                return mc;
-            }
-            planes.put(k, p);
-        }
-        for (Plan p : planes.values()) {
-            if (p.fila.solo && (planes.size() > 1 || (acta != null && !acta.codigos().isEmpty() && acta.codigo(p.k) == null))) {
-                return Fabrica.elCodigoCap(p.k, corto) + " va solo, en un acta propia (P12 §6.3): desmarque los "
-                        + "demás o acabe el acta en curso.";  // H-3 (Cov364, RF-COV-17): nunca el número en corto.
-            }
-        }
-        if (acta != null) {
-            for (Acta.Codigo c : acta.codigos()) {
-                TablaCalibracion.Fila fc = fila(c.k);
-                if (fc != null && fc.solo && !planes.isEmpty() && !planes.containsKey(c.k)) {
-                    return "El acta en curso es del " + Fabrica.elCodigo(c.k, corto) + ", que va solo: acéptela o recházela antes.";
-                }
-            }
-        }
-        if (!planes.isEmpty() && (nombre == null || nombre.trim().isEmpty() || nota == null || nota.trim().isEmpty())) {
-            return "Escriba el nombre y la nota de la conformidad.";
-        }
-        String e = entrar();
-        if (e != null) {
-            return e;
-        }
-        if (acta == null) {
-            abrirActa();
-        }
-        completarDatos();
-        String conformidad = "";
-        if (!planes.isEmpty()) {
-            conformidad = nombre.trim() + ". " + nota.trim();
-            for (Plan p : planes.values()) {
-                // QA-3613-08 / RF-COV-20 (H-2): dispensa y quien la decidio; en corto, siempre RF-COV-12, nunca RF-CAL-18.
-                acta.conformidad(nombre.trim() + ": código " + p.k + ". " + nota.trim() + (p.fila.dispensa.isEmpty() ? ""
-                        : " | dispensa " + p.fila.dispensa + ": " + (corto ? "RF-COV-12 (VERIF-5-10)" : p.fila.origen)));
-            }
-        }
-        // T-C41: los heredados, antes de tocar nada.
-        escribiendoAhora.clear();
-        escribiendoAhora.addAll(planes.keySet());
-        String t41 = heredados();
-        if (t41 != null) {
-            return t41;
-        }
-        operador.progreso("Batería antes de la calibración...");
-        Bateria.Lectura b = bateria();
-        if (b.bloqueaEscrituras) {
-            return b.texto + " No se escribe nada.";
-        }
-        if (acta.escribiendo() != 0) {
-            String r = resolverCorte();
-            if (r != null) {
-                return r;
-            }
-        }
-        // Lo que el acta tiene a medias: restauraciones sin verificar, dos NO CONFORME, re-medidas.
-        for (Acta.Codigo c : new ArrayList<>(acta.codigos())) {
-            if (c.resuelto()) {
-                continue;
-            }
-            String r = c.restauracionFallida != null ? restaurarCodigo(c.k, "restauración pendiente")
-                    : c.debeRestaurarse() ? restaurarCodigo(c.k, corto ? "re-medida fuera de ±10 %" : "dos re-medidas NO CONFORME")
-                    : remedida(c.k);
-            if (r != null) {
-                return r;
-            }
-        }
-        for (Plan p : planes.values()) {
-            String r = escribir(p, conformidad(p, "Conformidad de " + conformidad));
-            if (r != null) {
-                return r;
-            }
-            r = remedida(p.k);
-            if (r != null) {
-                return r;
-            }
-        }
-        return acta.motivoNoAceptable(false) == null
-                ? "Códigos escritos y verificados. Ahora: persistencia (apagar y encender) y después aceptar."
-                : "Sin cambios pendientes: " + acta.motivoNoAceptable(false);
+        return new CalibracionManual(this).calibrarInterno(seleccion, nombre, nota);
     }
 
-    private static String conformidad(Plan p, String general) {
+    static String conformidad(Plan p, String general) {
         String t = general;
         if (!p.propuesta.incumplimientos.isEmpty()) {
             t += " | Dispensa " + p.fila.dispensa + " (" + p.fila.origen + "): " + String.join("; ", p.propuesta.incumplimientos);
@@ -1138,7 +1049,7 @@ public final class FlujoCalibracion {
         return t;
     }
 
-    private void abrirActa() throws IOException {
+    void abrirActa() throws IOException {
         acta = new Acta(campana.serieConHistoria(), campana.mac, ctx.firmware, Remedida3611.K, Remedida3611.M, 1, reloj.ahoraIso());
         acta.tabla = TablaCalibracion.VERSION;
         almacen.adjuntar(acta);
@@ -1152,7 +1063,8 @@ public final class FlujoCalibracion {
         Anclas.Valor sr = sRep();
         acta.dato("s_rep", sr == null ? "" : sr.texto);
         acta.dato("app", ctx.app);
-        acta.dato("decisiones", decisiones.texto(equipo()));
+        // RF-COV-20 (H-2, arquitecto-iot a Cov_3.6.4_calibrar): idem completarDatos().
+        acta.dato("decisiones", decisiones.texto(equipo(), corto));
         TablaCalibracion.Fila f5 = fila('5');
         acta.dato("código 5", f5.escribible() ? f5.origen : f5.aviso);
         TablaCalibracion.Fila fb = fila('b');   // RF-COV-20 (H-2): en corto no se cita RF-CAL-18 (fb.origen, PA-24).
@@ -1196,7 +1108,7 @@ public final class FlujoCalibracion {
     }
 
     /** T-C41 / P11-M6: al empezar, #V# y #G de los heredados frente al acta anterior; y #E. */
-    private String heredados() throws IOException, InterruptedException {
+    String heredados() throws IOException, InterruptedException {
         if (acta.dato("heredados (T-C41)") != null) {
             return null;
         }
@@ -1249,7 +1161,7 @@ public final class FlujoCalibracion {
     }
 
     /** RF-APP-37: resuelve un corte entre #S y la relectura. null si se puede seguir. */
-    private String resolverCorte() throws IOException, InterruptedException {
+    String resolverCorte() throws IOException, InterruptedException {
         char k = acta.escribiendo();
         operador.progreso("Resolviendo el corte durante #S," + k + "...");
         Ecuacion g = ops.leerG(k);
@@ -1298,7 +1210,7 @@ public final class FlujoCalibracion {
     }
 
     /** #S del plan. null si fue bien; si no, el motivo para parar. */
-    private String escribir(Plan p, String conformidad) throws IOException, InterruptedException {
+    String escribir(Plan p, String conformidad) throws IOException, InterruptedException {
         char k = p.k;
         String no = acta.motivoNoEscribir(k);
         if (no != null) {
@@ -1349,16 +1261,17 @@ public final class FlujoCalibracion {
         String t = "#S," + k + " -> " + r.describir() + (porE == null ? "" : "; " + porE);
         Ops.Restauracion res = ops.restaurar(k, anterior);
         if (!res.ok) {
-            return "Escritura del código " + k + " fallida (" + t + ") y RESTAURACIÓN NO VERIFICADA (" + res.texto
-                    + "). El #S queda sin resolver: vuelva a pulsar Calibrar para reintentarlo.";
+            // RF-COV-17/21 (H-3, arquitecto-iot a Cov_3.6.4_calibrar): en corto, sin el número de código.
+            return "Escritura del " + Fabrica.elCodigo(k, corto) + " fallida (" + t + ") y RESTAURACIÓN NO VERIFICADA ("
+                    + res.texto + "). El #S queda sin resolver: vuelva a pulsar Calibrar para reintentarlo.";
         }
         acta.sinEscribir(k, t + "; " + res.texto);
-        return "Escritura del código " + k + " fallida: " + t + ". Restaurado.";
+        return "Escritura del " + Fabrica.elCodigo(k, corto) + " fallida: " + t + ". Restaurado.";
     }
 
     /** P11-M1: restauracion verificada, o el codigo queda sin resolver. `motivo` es el real (Cov364, B-2/
      *  B-3): "colocaciones no válidas" o "re-medida fuera de ±10 %" en corto. */
-    private String restaurarCodigo(char k, String motivo) throws IOException, InterruptedException {
+    String restaurarCodigo(char k, String motivo) throws IOException, InterruptedException {
         Acta.Codigo c = acta.codigo(k);
         operador.progreso(Fabrica.elCodigoCap(k, corto) + ": restaurando la curva anterior...");
         String e0 = entrar();
@@ -1392,7 +1305,7 @@ public final class FlujoCalibracion {
     /** Colocaciones no válidas SEGUIDAS (RF-COV-21, B-3): remedida() la pone a 0, colocar() la usa. */
     private int noValidas;
 
-    private String remedida(char k) throws IOException, InterruptedException {
+    String remedida(char k) throws IOException, InterruptedException {
         TablaCalibracion.Fila f = fila(k);
         Patron pat = campana.patron(f.remedida);
         Campana.Serie banco = pat == null ? null : campana.elegida(pat.nombre);
@@ -1629,6 +1542,10 @@ public final class FlujoCalibracion {
         }
         StringBuilder t = new StringBuilder();
         StringBuilder fallos = new StringBuilder();
+        // RF-COV-17/21 (H-3, arquitecto-iot a Cov_3.6.4_calibrar): lista en corto, sin el número de código,
+        // para el mensaje de rechazo pendiente (fallos guarda los caracteres crudos solo para el chequeo
+        // de longitud y para la app de campo, que sigue diciendo "código k").
+        StringBuilder fallosTexto = new StringBuilder();
         {
             // P12 §6.8: rechazar SIEMPRE restaura lo escrito, verificado con #G.
             String e0 = entrar();
@@ -1642,10 +1559,12 @@ public final class FlujoCalibracion {
                 Ops.Restauracion r = ops.restaurar(k, acta.escribiendoAnterior());
                 if (r.ok) {
                     acta.sinEscribir(k, "al rechazar, con el #S sin resolver: " + r.texto);
-                    t.append("código ").append(k).append(" (#S sin resolver) restaurado; ");
+                    t.append(Fabrica.elCodigo(k, corto)).append(" (#S sin resolver) restaurado; ");
                 } else {
-                    t.append("código ").append(k).append(" (#S sin resolver) SIN RESTAURAR (").append(r.texto).append("); ");
+                    t.append(Fabrica.elCodigo(k, corto)).append(" (#S sin resolver) SIN RESTAURAR (").append(r.texto)
+                            .append("); ");
                     fallos.append(k);
+                    fallosTexto.append(Fabrica.elCodigo(k, corto)).append(", ");
                 }
             }
             for (Acta.Codigo c : new ArrayList<>(acta.codigos())) {
@@ -1658,8 +1577,9 @@ public final class FlujoCalibracion {
                 } else {
                     acta.restauracionFallida(c.k, "al rechazar: " + r.texto);
                     fallos.append(c.k);
+                    fallosTexto.append(Fabrica.elCodigo(c.k, corto)).append(", ");
                 }
-                t.append("código ").append(c.k).append(r.ok ? " restaurado; " : " SIN RESTAURAR (" + r.texto + "); ");
+                t.append(Fabrica.elCodigo(c.k, corto)).append(r.ok ? " restaurado; " : " SIN RESTAURAR (" + r.texto + "); ");
             }
             // RF-COV-19 (H-1): si esta acta emitio #SC, devuelve la fecha REALMENTE leida (FechaCalibracion).
             t.append(FechaCalibracion.devolver(ops, acta));
@@ -1670,7 +1590,10 @@ public final class FlujoCalibracion {
             // P14-05/06: queda un RECHAZO PENDIENTE: no se escribe nada mas ni se continua; solo Rechazar otra vez o
             // cerrar sin restaurar, firmado con el PIN de administrador (P14-10). El motivo queda anotado.
             acta.rechazoPendiente(reloj.ahoraIso(), (motivo == null ? "" : motivo) + " | " + t);
-            return "NO se rechaza: RESTAURACIÓN NO VERIFICADA del código " + fallos + " (" + t + "). El acta queda con un "
+            // RF-COV-17/21: en corto, la lista de fallos usa fallosTexto (sin número); en campo, "código " +
+            // los caracteres crudos de fallos, exactamente como antes (regresión: la app de campo no cambia).
+            String listaFallos = corto ? fallosTexto.substring(0, fallosTexto.length() - 2) : "código " + fallos;
+            return "NO se rechaza: RESTAURACIÓN NO VERIFICADA del " + listaFallos + " (" + t + "). El acta queda con un "
                     + "rechazo pendiente: vuelva a pulsar Rechazar para reintentarlo; si no se resuelve, avise a Diego "
                     + "(\"Cerrar sin restaurar\", con su firma).";
         }
