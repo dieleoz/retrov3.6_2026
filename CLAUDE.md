@@ -1,4 +1,4 @@
-Orquestador: a13dd24
+Orquestador: e69feac
 
 # CLAUDE.md — Reglas permanentes del repositorio V3.6
 
