@@ -79,3 +79,5 @@ No se eligen: se cierran midiendo o con registro. Las cerradas están en `HISTOR
   SERIE-2 lo cambia a `SLV-002-2026`.
 - **Modelo de pantalla:** STA035WT-01 frente a STVA035WT(-01) (`HISTORIA.md`). Se mira la etiqueta.
 - **Numeración:** "P10-P14" nombra puertas del proceso y revisiones de arquitectura de la app.
+- **Formato de `#V#`:** `PROTOCOLO-V3.6.md:42` da cuatro campos; el firmware manda cinco, con la máscara
+  (`calibracion_v36.c:636-641`). Manda el protocolo (`CLAUDE.md` §5): o se corrige el protocolo o el firmware.
