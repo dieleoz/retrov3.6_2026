@@ -1,5 +1,5 @@
 # SPEC-Calibracion-V3.6 — Calibración contra patrones certificados
-
+Mapa: `ARQUITECTURA.map` §M2 (banco, campaña, ajuste, acta, ZIP e informe).
 **Nada de esta especificación se ha ejecutado de principio a fin contra un equipo.** La campaña de
 medida de SLV-002 del 19-sep-2026 está a medias. El ajuste, la escritura con `#S` y la re-medida no
 se han hecho nunca. Los criterios de aceptación de §5 son **propuestas** sin norma que los fije. No

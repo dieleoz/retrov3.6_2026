@@ -1,5 +1,5 @@
 # TDD-V3.6 — Plan de pruebas ejecutable del firmware y la app V3.6
-
+Mapa: `ARQUITECTURA.map` §M4 (compilación y pruebas) y §M3 (cadena documental).
 **Estado, 19-sep-2026, 10:30: ninguna escritura de calibración se ha probado en un equipo, y C1 no se
 cumple por la letra (T-A23 falla el criterio de 0 ulp).** SLV-002 corrió la V3.6 del 18-sep y con ella
 pasó G4 (T-C01, T-C03, T-C04, y `#E` 60/60). A las 09:36 se regrabó con un `.hex` del tamaño de la

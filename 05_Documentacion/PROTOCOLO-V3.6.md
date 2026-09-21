@@ -1,5 +1,5 @@
 # Protocolo Bluetooth del firmware V3.6 — contrato entre firmware y app
-
+Mapa: `ARQUITECTURA.map` §M1 (contrato entre firmware y app, EEPROM).
 **Estado (19-sep-2026, revisión 1.2 de las notas):** contrato 1.1 (§4 bis) implementado en el
 firmware V3.6.1 (commit `8860445`) y en la app RTV 3.6.4 (commit `090c84c`); **probado en simulador y,
 en parte, en SLV-002** (`#V#`, `#G`, `#GT#`, `#E` 60/60, con la V3.6 del 18-sep). Ninguna escritura

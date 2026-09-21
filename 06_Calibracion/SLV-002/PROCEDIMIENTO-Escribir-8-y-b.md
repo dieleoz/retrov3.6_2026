@@ -1,5 +1,5 @@
 # Procedimiento — escribir los códigos 8 y b en SLV-002
-
+Mapa: `ARQUITECTURA.map` §M2 (flujo de calibración y evidencia de SLV-002).
 **Nada de esto se ha probado en un teléfono ni contra el equipo.** Sale de leer el fuente de la app,
 el fuente del firmware V3.6 y el ZIP del banco. Ningún texto de los que se citan se ha visto en una
 pantalla. Si algo no aparece como aquí se dice, **pare y anote la hora**: manda lo que haga el equipo,

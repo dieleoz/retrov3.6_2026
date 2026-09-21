@@ -1,5 +1,5 @@
 # SPEC-V3.6 — Especificación del firmware y la app V3.6 del Retrorreflectómetro Vertical
-
+Mapa: `ARQUITECTURA.map` §M3 (cadena SPEC → TDD → matriz → código → revisión) y §M1 (firmware, EEPROM y app).
 **Estado: revisión 1.2 de la SPEC, 19-sep-2026, 10:30. Ninguna escritura de calibración se ha hecho
 en un equipo, y C1 sigue sin cumplirse por la letra.** SLV-002 corrió la V3.6 (md5 `680b6a7d…`) desde
 el 18-sep a las 20:24 y G4 pasó con ella el 19-sep a las 08:53; a las 09:36 del 19-sep se regrabó con

@@ -1,5 +1,5 @@
 # RETOMAR — dónde se quedó el trabajo
-
+Mapa del sistema: `ARQUITECTURA.map` §M2 (calibración y evidencia de SLV-002) y §M1 (equipo, firmware y app).
 **Puesto al día:** 21-sep-2026, por la mañana. Entre la noche del 19-sep y hoy **no se hizo nada**
 (Diego): no se midió, no se grabó y no hay ZIP fuera del repositorio. Repositorio
 `D:\IT\P_RetroVertical_V3.6` (remoto `github.com/dieleoz/retrov3.6_2026`). Reglas en `CLAUDE.md`;

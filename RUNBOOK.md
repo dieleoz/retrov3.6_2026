@@ -1,5 +1,5 @@
 # RUNBOOK — calibrar un equipo V3 con la V3.6, paso a paso
-
+Mapa: `ARQUITECTURA.map` §M1 (fases 0-7: equipo, lectura y grabación) y §M2 (fases 8-12: campaña, ajuste y acta).
 **Nota del 19-sep-2026, tarde:** las fases 9-11 llevan un bloque "Flujo nuevo, PENDIENTE" con el banco
 guiado P1-P132 y "Calibrar este equipo", que especifican `SPEC-Calibracion-V3.6.md` §12 y `SPEC-V3.6.md`
 r1.3. **No está implementado.** SLV-002 tiene escritos los códigos 1 y 2 desde las 12:23 (fase 11).

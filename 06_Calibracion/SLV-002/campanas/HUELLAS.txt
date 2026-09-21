@@ -29,3 +29,4 @@ ZIP de soporte del banco representativo (80 pasos HECHO), base del INFORME-Ajust
 md5    fce014de4528fc9be88f1e0c1e6b4035
 sha256 15fa6ca4e483a31a553c79d0bc639c8362ed5580b9bfac4d3e72c43d905d2f7d
 Registro del HONOR ABR-LX3 con la app 1.0.0-rc3 (10002), NO la 3.6.17. Campana abierta con 0 series; importa el ZIP de las 18:11 en una campana de cola COMPLETO (129 series, 69 pasos hechos, quedan 64). Pruebas del equipo NO APTO (coherencia y repetibilidad). Bateria n = 0 bloquea escrituras; #L enviado, previsualizacion del 8 con recta anclada, #Q al final. No se envio #S: nada escrito. Copiado de Descargas el 21-sep-2026.
+Correccion 21-sep: las pruebas del equipo dieron NO APTO en la primera tanda (l.586) y APTO en la segunda (l.1170); la recta anclada del 8 que se ve es la vista previa de Avanzado, no la del flujo Calibrar.

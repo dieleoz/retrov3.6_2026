@@ -1,5 +1,5 @@
 # Matriz SPEC ↔ código de la V3.6
-
+Mapa: `ARQUITECTURA.map` §M3 (cadena documental).
 **Nada de esta matriz está medido salvo lo que cita un registro de tramas, el acta de SLV-002 o el ZIP
 `06_Calibracion/SLV-002/campanas/campana_SLV-002_20260919_122727.zip`.** "Cumple" quiere decir **que el
 código hace lo que pide el requisito**, no que se haya probado en un equipo. Revisión del 19-sep-2026 por
