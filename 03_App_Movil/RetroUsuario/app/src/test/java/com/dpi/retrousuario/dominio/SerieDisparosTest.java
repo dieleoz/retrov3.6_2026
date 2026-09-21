@@ -159,6 +159,43 @@ public class SerieDisparosTest {
         assertEquals(Arrays.asList(100, 110, 120), r.lecturas);
     }
 
+    /** A1 (ALTO): un cambio de `lecturasPorColor` desde Ajustes a mitad de esta serie no la afecta;
+     *  n se fija al empezar la serie (3, el valor de antes del cambio), y la serie se guarda con
+     *  esas 3 lecturas, no con las 6 del valor nuevo. */
+    @Test
+    public void unCambioDeLecturasPorColorAMitadDeLaSerieNoLaAfecta() {
+        sim.programarValor(50, 100);
+        sim.programarValor(50, 110);
+        sim.programarValor(50, 120);
+        FuenteBytes fuenteQueCambiaAjustesAMitad = new FuenteBytes() {
+            private int enviosHechos = 0;
+
+            @Override
+            public long ahoraMs() {
+                return sim.ahoraMs();
+            }
+
+            @Override
+            public void enviarByte(int b) {
+                sim.enviarByte(b);
+                enviosHechos++;
+                if (enviosHechos == 2) {
+                    params.lecturasPorColor(6); // "Ajustes" cambiando n a mitad de esta serie.
+                }
+            }
+
+            @Override
+            public Integer leer(long limiteMs) {
+                return sim.leer(limiteMs);
+            }
+        };
+        SerieDisparos.Resultado r =
+                new SerieDisparos(fuenteQueCambiaAjustesAMitad, new EmisorRitmo(), params, log, diario, '4').medir();
+        assertTrue(r.guardada);
+        assertEquals(Arrays.asList(100, 110, 120), r.lecturas);
+        assertEquals(6, params.lecturasPorColor()); // el cambio sí queda para la SIGUIENTE medida.
+    }
+
     /** Prueba de robustez de este trabajo: una serie anulada no deja ninguna fila FILA en el diario. */
     @Test
     public void unaSerieAnuladaNoDejaFilaEnElDiario() {

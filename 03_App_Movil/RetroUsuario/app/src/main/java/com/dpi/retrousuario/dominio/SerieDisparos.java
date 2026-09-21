@@ -77,14 +77,18 @@ final class SerieDisparos {
     }
 
     Resultado medir() {
-        List<Integer> intento1 = intentarSerieCompleta();
+        // A1: n se fija UNA vez, al empezar esta serie (que puede llevar hasta dos intentos, el
+        // segundo si el primero trae un cero); un cambio de lecturasPorColor desde Ajustes a mitad
+        // de esta serie no la afecta, sólo se aplica a la siguiente medida que se pida.
+        int n = params.lecturasPorColor();
+        List<Integer> intento1 = intentarSerieCompleta(n);
         if (intento1 == null) {
             return Resultado.anulada();
         }
         if (!intento1.contains(0)) {
             return Resultado.de(intento1, true);
         }
-        List<Integer> intento2 = intentarSerieCompleta();
+        List<Integer> intento2 = intentarSerieCompleta(n);
         if (intento2 == null) {
             return Resultado.anulada();
         }
@@ -92,10 +96,10 @@ final class SerieDisparos {
     }
 
     /** null si algún disparo agotó sus reintentos por anulación (RF-USR-16): la serie entera se anula. */
-    private List<Integer> intentarSerieCompleta() {
+    private List<Integer> intentarSerieCompleta(int n) {
         long intentoId = diario.nuevoIntento();
         List<Integer> valores = new ArrayList<>();
-        for (int i = 0; i < params.lecturasPorColor(); i++) {
+        for (int i = 0; i < n; i++) {
             Integer v = intentarUnDisparo();
             if (v == null) {
                 return null;

@@ -86,8 +86,16 @@ public final class SesionMedicion {
     /**
      * Mide una serie completa del color dado (RF-USR-04) y, si se guarda, la persiste y la devuelve;
      * {@code null} si la serie se anuló (RF-USR-16: no produce fila, T-USR-06b).
+     *
+     * <p><b>A1 (ALTO), cerrojo de una sola medida en vuelo.</b> {@code synchronized} sobre este
+     * objeto: dos llamadas concurrentes (dos hilos pulsando "Medir" a la vez, o una segunda
+     * pulsación antes de que la interfaz llegue a deshabilitar el botón) se sirven una detrás de
+     * otra, nunca entrelazadas sobre el mismo {@link #fuente}/{@link #ritmo} — que no son de por sí
+     * seguros entre hilos. La interfaz (MedirActivity) deshabilita los controles mientras mide como
+     * primera línea de defensa; este cerrojo es la segunda, en el dominio, para que una serie nunca
+     * quede a medias mezclada con otra aunque la interfaz falle.</p>
      */
-    public FilaMedida medir(String colorFondo, String fechaHoraIso, String latitud, String longitud,
+    public synchronized FilaMedida medir(String colorFondo, String fechaHoraIso, String latitud, String longitud,
             String gpsEstado) {
         Character codigo = MapaColor.byteParaColor(colorFondo);
         if (codigo == null) {
@@ -122,6 +130,22 @@ public final class SesionMedicion {
         File destino = new File(carpeta, nombre);
         ExportadorZip.escribir(destino, filas, log);
         return destino;
+    }
+
+    /**
+     * A4: bytes del ZIP para la vía {@code MediaStore.Downloads} (API 29+), donde la carpeta y la
+     * colisión de nombre las resuelve el sistema (MediaStore renombra automáticamente un nombre
+     * repetido), no el sistema de ficheros: por eso no hay aquí un equivalente a
+     * {@code NombreZip.resolverColision}.
+     */
+    public byte[] exportarBytes() {
+        return ExportadorZip.generarBytes(filas(), log);
+    }
+
+    /** A4: nombre sugerido para la vía MediaStore.Downloads (mismo esquema RTVU_&lt;serie&gt;_&lt;fecha&gt;.zip). */
+    public String nombreZipSugerido(Date instante, TimeZone zona) {
+        String segmento = segmentoSerieParaNombre(filas());
+        return NombreZip.base(segmento, instante, zona) + ".zip";
     }
 
     private String segmentoSerieParaNombre(List<FilaMedida> filas) {

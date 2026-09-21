@@ -19,6 +19,16 @@ import java.util.regex.Pattern;
  * acumulado no es una única `::<n>` limpia (le sobran caracteres, o hay más de una coincidencia del
  * patrón) → se anula como {@link ResultadoDisparo.Tipo#ANULADO_DOBLE}, igual que un plazo vencido
  * (RF-USR-04: no se adivina cuál de las dos es la buena).</p>
+ *
+ * <p><b>A3, corrige un borrador anterior:</b> el búfer se da por completo sólo si el **silencio**
+ * ({@code silencioMs} desde el último byte) se confirmó ANTES de llegar al plazo total. Si el plazo
+ * vence mientras todavía se esperaba ese silencio (los últimos bytes recibidos no llevan
+ * {@code silencioMs} de quietud detrás porque el reloj se acabó antes), el búfer NO se da por
+ * completo aunque, por casualidad, tenga la forma exacta de un `::<n>` válido: se anula por plazo
+ * (ANULADO_PLAZO), igual que si no hubiera llegado nada. Caso real: `::12` llega cerca del final del
+ * plazo, y el `3` que lo habría completado a `::123` llega ya vencido el plazo (dentro de la
+ * cuarentena que abre la anulación) — sin esta distinción, `::12` se leería como el valor 12, un dato
+ * incompleto tomado por bueno.</p>
  */
 final class LectorDisparo {
 
@@ -34,6 +44,7 @@ final class LectorDisparo {
         StringBuilder buffer = new StringBuilder();
         List<ResultadoDisparo.ByteRecibido> recibidos = new ArrayList<>();
         long tUltimoByte = -1;
+        boolean silencioConfirmado = false;
 
         while (true) {
             long limiteSilencio = tUltimoByte < 0
@@ -41,7 +52,11 @@ final class LectorDisparo {
                     : Math.min(limiteAbsoluto, tUltimoByte + params.silencioMs());
             Integer b = fuente.leer(limiteSilencio);
             if (b == null) {
-                break; // silencio confirmado (si ya habia bytes) o plazo total vencido sin nada.
+                // A3: silencio confirmado sólo si el límite que se venció fue el de silencio (hubo
+                // margen respecto al plazo total); si limiteSilencio == limiteAbsoluto, lo que se
+                // venció fue el plazo, no un silencio completo (o nunca llegó ningún byte).
+                silencioConfirmado = tUltimoByte >= 0 && limiteSilencio < limiteAbsoluto;
+                break;
             }
             tUltimoByte = fuente.ahoraMs();
             buffer.append((char) b.intValue());
@@ -49,7 +64,7 @@ final class LectorDisparo {
         }
 
         long tFin = fuente.ahoraMs();
-        if (buffer.length() == 0) {
+        if (buffer.length() == 0 || !silencioConfirmado) {
             return new ResultadoDisparo(ResultadoDisparo.Tipo.ANULADO_PLAZO, 0, recibidos, tFin);
         }
         Integer valor = valorUnico(buffer.toString());

@@ -81,6 +81,22 @@ public class RitmoYCuarentenaTest {
         assertEquals(1, sim.tramasRecibidas().size());
     }
 
+    /** A3: "::12" llega antes del plazo pero sin silencio confirmado (180 ms) antes de que venza el
+     *  plazo total; el "3" que lo habría completado a "::123" llega ya vencido el plazo. El disparo
+     *  se anula por plazo (no se lee "12" como si fuera un valor completo), y el "3" tardío se
+     *  descarta en la cuarentena que sigue y queda anotado (ByteRecibido devuelto por cuarentena). */
+    @Test
+    public void bytesSinSilencioConfirmadoAntesDelPlazoSeAnulanAunqueParezcanCompletos() {
+        sim.programarFragmentos(2400L, "::12", 2600L, "3");
+        sim.enviarByte('4');
+        ResultadoDisparo r = LectorDisparo.leer(sim, params, 0);
+        assertEquals(ResultadoDisparo.Tipo.ANULADO_PLAZO, r.tipo());
+        assertEquals(params.plazoDisparoMs(), r.tFin());
+
+        List<ResultadoDisparo.ByteRecibido> descartados = new EmisorRitmo().cuarentena(sim, params, r.tFin());
+        assertEquals("3", textoDe(descartados)); // lo descartado en la pausa queda anotado (tramas.log lo hace via SerieDisparos).
+    }
+
     private static String textoDe(List<ResultadoDisparo.ByteRecibido> bytes) {
         StringBuilder sb = new StringBuilder();
         for (ResultadoDisparo.ByteRecibido b : bytes) {
