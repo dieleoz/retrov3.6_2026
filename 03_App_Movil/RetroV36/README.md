@@ -7,7 +7,13 @@ en ningún equipo. La V4.6 tampoco existe grabada: se prueba contra `EquipoSimul
 funcionar es la medida contra un V3 2020 (SLV-002) y contra un V4 original (`@LEERV`), y ninguna de las
 dos se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36` (no cambia), etiqueta "RTV", `versionCode 10007`, `versionName 1.0.0-rc8` (RTV 1.0.0, sucede a 3.6.16; decisión VERSION de Diego). rc7 = `10006`, rc6 = `10005`, rc5 = `10004`. El APK de calibrar (buildType `coviandina`) es `com.dpi.retrov36.calibra`, `versionName Cov_3.6.2_calibrar`, `versionCode 10007` (nombre fijado por Diego el 21-sep-2026; RF-COV-16). La **rc1** se compiló con `10000`/`1.0.0` y es **anterior** a la mezcla de la 3.6.17 (`3dcaf41`): ese par no se reutiliza. Antes: `versionCode 3616`, `versionName 3.6.16` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.16 → 3616) (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36` (no cambia), etiqueta "RTV", `versionCode 10008`, `versionName 1.0.0-rc9`
+  (RTV 1.0.0, sucede a 3.6.16; decisión VERSION de Diego). rc8 = `10007`, rc7 = `10006`, rc6 = `10005`,
+  rc5 = `10004`. El APK de calibrar (buildType `coviandina`) es `com.dpi.retrov36.calibra`, `versionName
+  Cov_3.6.3_calibrar`, `versionCode 10008` (nombre fijado por Diego el 21-sep-2026; RF-COV-16). La **rc1**
+  se compiló con `10000`/`1.0.0` y es **anterior** a la mezcla de la 3.6.17 (`3dcaf41`): ese par no se
+  reutiliza. Antes: `versionCode 3616`, `versionName 3.6.16` (desde la 3.6.10 el versionCode sigue a
+  RF-APP-41: 3.6.10 → 3610, 3.6.16 → 3616) (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -62,9 +68,10 @@ cd app && "$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;bui
   com.dpi.retrov36.Rc6DefectosTest com.dpi.retrov36.AppCortaTest com.dpi.retrov36.Cov362DefectosTest
 ```
 
-Más seguro que copiar la lista: pasar todas las `*Test.java` de `app/src/test/java/com/dpi/retrov36/` (32 clases,
-**368 tests**, 21-sep-2026: 360 de `2aa46e7` + `Cov362DefectosTest`, 8 nuevas — los arreglos de H-1, H-2, H-3,
-M-1 y B-2 de la revisión arquitecto-iot a `Cov_3.6.1_calibrar`).
+Más seguro que copiar la lista: pasar todas las `*Test.java` de `app/src/test/java/com/dpi/retrov36/` (33 clases,
+**377 tests**, 21-sep-2026: 368 de `7b4391b` + `Cov363ArreglosTest`, 9 nuevas — los arreglos ALTO/MEDIO/BAJO de
+las revisiones arquitecto-iot y qa-istqb a `Cov_3.6.2_calibrar`, más 3 aserciones actualizadas en
+`AppCortaTest` y `Cov362DefectosTest`, RF-COV-17 "nunca el código").
 
 `FabricaTest` compara las 12 ecuaciones de la app con el **texto** de
 `01_Firmware/base_2020_d089f962/RetroVertical1.X/ecuacionesCalibracion.c`: si alguien cambia una
@@ -79,6 +86,31 @@ se han visto instaladas a la vez. SPEC: `05_Documentacion/SPEC-App-Calibracion-C
 ```bash
 ./gradlew clean assembleDebug assembleCoviandina --offline
 ```
+
+**rc9 / Cov_3.6.3_calibrar (21-sep-2026), arreglos ALTO/MEDIO/BAJO** de las revisiones arquitecto-iot y
+qa-istqb a `Cov_3.6.2_calibrar`: MAX_NO_VALIDAS restaura (ALTO, QA); la b se juzga como el 8 en la app de
+calibrar (ALTO, A-1, RF-COV-12/VERIF-5-10); `#SC`/`#GC#` anotados y devueltos al rechazar (MEDIO, A-06,
+RF-COV-13); el resumen no confunde "queda escrito sin aceptar" con "No calibrado", y un acta sin ningún
+código conforme se rechaza sola (MEDIO); nombres sin código (RF-COV-17) y sin la alerta "No se puede
+calibrar" cuando la calibración fue correcta (BAJO, B-2); `#Q#` cierra el modo administrador al terminar
+(BAJO, QA); `decisiones.csv` con VERIF-5-10 y FECHA-EQUIPO. Antes de estos arreglos, `calibrarAutomatico`
+se sacó a `CalibracionAutomatica.java`, en su propio commit y con la suite en verde y salida idéntica
+(rules/modularidad.md, fichero 500 líneas). Compilado con `clean assembleDebug assembleCoviandina --offline`
+sobre el árbol de este commit (rama `rtv-1.0-cierre`, sobre `7b4391b`), `aapt dump badging`, build-tools
+30.0.3. Las 33 clases `*Test.java` pasaron antes con JUnitCore: `OK (377 tests)`.
+
+| APK | md5 | versionCode | versionName | label |
+| :--- | :--- | :--- | :--- | :--- |
+| `app-debug.apk` | `e1aba96e6383658f6241fa3e5189d24e` | 10008 | `1.0.0-rc9` | RTV |
+| `app-coviandina.apk` | `98718ed9828f4c327815754df05fba87` | 10008 | `Cov_3.6.3_calibrar` | RTV Calibra |
+
+package: `com.dpi.retrov36` (campo) y `com.dpi.retrov36.calibra` (calibrar).
+
+Copia en `03_App_Movil/`: sólo el par de calibrar, `Cov_3.6.3_calibrar.apk` y
+`Cov_3.6.3_calibrar-10008.apk` (el encargo no pidió copiar el de campo).
+
+**Sin arquitecto ni QA sobre ESTE par: sigue sin ser entregable** (§6 del CLAUDE.md: "a Diego sólo se le
+entrega una APK con el visto bueno escrito del arquitecto y de QA — los dos").
 
 **rc8 / Cov_3.6.2_calibrar (21-sep-2026), tras cerrar H-1, H-2, H-3, M-1 y B-2** de la revisión
 arquitecto-iot a `Cov_3.6.1_calibrar` (NO APTO) — `SPEC-App-Calibracion-Coviandina.md` §8, RF-COV-11 a
