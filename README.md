@@ -56,7 +56,7 @@ acta son de cada equipo físico. Entre equipos se reutilizan catálogo, método,
 | `04_Pantalla_STONE/` | Proyecto STONE de 2020 |
 | `05_Documentacion/` | Protocolo, SPEC, TDD, matriz, revisiones, QA y estudios |
 | `06_Calibracion/` | Catálogo y colas de patrones; una carpeta por equipo |
-| `07 pruebas/` | Material en bruto del teléfono, **sin versionar**; lo que vale pasa a `06_Calibracion/<equipo>/` |
+| `07 pruebas/` | Capa cruda del teléfono, versionada y sin editar; lo que vale pasa a `06_Calibracion/<equipo>/` |
 | `08_Senales/` | Catálogo de señales del Manual 2024 |
 | `.claude/particularidades/` | Lo propio de cada skill `orquestador:*` (entregar, verificar, STONE, planos PCB) |
 

@@ -6,3 +6,4 @@
 06_Calibracion/*/tramas/*.txt -text
 .githooks/* text eol=lf
 .topes text eol=lf
+07[[:space:]]pruebas/** -text

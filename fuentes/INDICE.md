@@ -6,6 +6,10 @@ Este repositorio **no guarda ningún PDF ni ninguna transcripción propia** (com
 de pago no se redistribuyen. Si una fuente entra en este repositorio, va a `fuentes/` sin tocar, su
 transcripción a `fuentes/md/` y una fila en esta tabla.
 
+Excepción de sitio: el material en bruto del teléfono (tramas, medidas, ZIP de campaña) es capa cruda y
+está en `07 pruebas/`, no en `fuentes/`, porque medio centenar de citas de las SPEC, las revisiones y las
+pruebas usan esa ruta. Se versiona byte a byte (`.gitattributes`) y no se edita.
+
 | Fuente | Dónde está | Transcripción | Quién la cita aquí |
 | :--- | :--- | :--- | :--- |
 | NTC 4739:2011 (IDT ASTM D4956-11a) | Repositorio V5 | V5 `04_Manuales/NTC-4739-Requisitos.md` | `08_Senales/CATALOGO-Senales-Manual-2024.md`, `SPEC-Calibracion-V3.6.md` §1.3 |

@@ -103,5 +103,5 @@ Modelos: opus sólo para `arquitecto-iot`; el resto sonnet o haiku; Fable, sólo
 Ninguno es una bitácora. Si `ROADMAP.md` y `RETOMAR.md` discrepan, gana el registro (`git log`, md5,
 trama). Español técnico y sobrio, sin emojis; si algo está sin medir, se dice en la primera línea.
 `build/`, `dist/`, `debug/` no sirven para deducir qué hace el equipo: se abre el `.c`.
-`.apk` y `07 pruebas/` no se versionan; `.hex`, `.md5`, colas y tramas, byte a byte
+`.apk` no se versiona; `07 pruebas/` es capa cruda y no se edita; `.hex`, `.md5`, colas y tramas, byte a byte
 (`.gitattributes`). Lo aprendido pasa a la V4.6 en `APRENDIDO-DE-V3.6.md`.

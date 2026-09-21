@@ -31,7 +31,7 @@ estable es el nombre del método o de la constante** que se cita junto a ella.
 | `V4.6:` | `D:\IT\P_RetroVertical_V4.6\` |
 
 `C1` y `C2` son las copias más largas de cada fichero. Las demás son prefijos suyos (L-21). La
-carpeta `07 pruebas/` no está en git.
+carpeta `07 pruebas/` es capa cruda versionada.
 
 ---
 
