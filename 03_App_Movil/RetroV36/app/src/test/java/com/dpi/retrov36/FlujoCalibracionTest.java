@@ -349,6 +349,19 @@ public class FlujoCalibracionTest {
      * RF-COV-06 / RF-APP-U37: el acta dice de donde sale la serie que la encabeza. Hasta la rc6 no lo decia, y
      * un acta con serie declarada por el operador era indistinguible de una con serie leida del equipo
      * (riesgo R-U18). Aqui SLV-002 tiene la serie en EEPROM, asi que el acta tiene que decir que la dio #GN#.
+     *
+     * De donde sale el valor esperado: que el acta diga el origen de la serie es RF-COV-06 / RF-APP-U37 (fuente
+     * externa); el LITERAL "leída del equipo con #GN#" lo escribio el mismo autor en FlujoCalibracion.abrirActa,
+     * asi que esa parte fija comportamiento. Esta prueba no ejercita la rama DECLARADA del acta: con la serie
+     * declarada la previa de serie (FlujoCalibracion.previas, "#GN# = NONE") no deja calibrar.
+     *
+     * VISTA EN ROJO el 21-sep-2026 con dos roturas deliberadas de FlujoCalibracion.abrirActa (restauradas):
+     *  1. quitado acta.dato("serie", ...):
+     *     java.lang.AssertionError: el acta deja escrito de dónde salió la serie
+     *     expected:<leída del equipo con #GN#> but was:<null>
+     *  2. invertida la condicion (serie leida -> texto de declarada):
+     *     org.junit.ComparisonFailure: el acta deja escrito de dónde salió la serie
+     *     expected:<[leída del equipo con #GN#]> but was:<[DECLARADA por el operador, no leída del equipo]>
      */
     @Test
     public void elActaDiceSiLaSerieLaDioElEquipo() throws Exception {

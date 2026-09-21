@@ -26,6 +26,54 @@ public final class AppCorta {
     // dos textos distintos diciendo lo mismo. La app corta llama a la del protocolo (CortoActivity.familia),
     // igual que la de campo (FlujoCalibracion.java:379-380).
 
+    /**
+     * Paso 1 de la app corta: importar el diario del ZIP en la campana del equipo conectado, con el rechazo
+     * duro por familia de RF-COV-09 (SPEC-App-Calibracion-Coviandina.md §3) y RF-APP-U32.
+     *
+     * La guarda de familia de la rc6 (ImportadorCampana.comprobarFamilia) compara con la familia de la
+     * CAMPANA. En esta app la campana nace vacia, con familia desconocida, y una familia desconocida no bloquea
+     * (Familia.compatibles): el primer ZIP entraba fuera cual fuera su familia. Aqui se compara ANTES con la del
+     * EQUIPO CONECTADO, que es lo que pide la SPEC ("el ZIP es de otra familia que el equipo conectado"). Despues
+     * se importa por la via de siempre, con todas sus guardas (equipo, MAC, catalogo, atomicidad).
+     *
+     * @param familiaEquipo nombre de {@link Protocolo.Firmware} del equipo conectado ("F36", "F46", ...). Una
+     *                      familia desconocida no bloquea, con la misma regla que {@link Familia#compatibles}.
+     * @throws IllegalArgumentException si el ZIP es de otra familia; no se ha escrito nada.
+     */
+    public static ImportadorCampana.Resultado importar(Campana c, String diario, List<Patron> catalogo,
+            String origen, String familiaEquipo) throws java.io.IOException {
+        String equipo = Familia.de(familiaEquipo);
+        String zip = familiaDelDiario(diario, catalogo);
+        if (!Familia.compatibles(equipo, zip)) {
+            throw new IllegalArgumentException("El equipo conectado es un " + Familia.texto(equipo)
+                    + " y este ZIP trae medidas de un " + Familia.texto(zip) + " (" + c.equipo + ", MAC " + c.mac
+                    + "; la MAC es del módulo Bluetooth y no cambia al grabar). La lectura x no está "
+                    + "en la misma escala. No se ha importado nada. Si quiere conservar esas medidas, abra una "
+                    + "campaña aparte para la etapa anterior (en la app de campo, RTV).");
+        }
+        return ImportadorCampana.importarDiario(c, diario, catalogo, origen);
+    }
+
+    /**
+     * Familia de lo que trae un diario: la del evento FAMILIA si lo lleva (rc6 en adelante) y, si no, la del
+     * texto de firmware de sus series (los diarios anteriores a la rc6). {@link Familia#DESCONOCIDA} si nada la
+     * identifica. Si el diario mezclara dos familias, lo rechaza despues ImportadorCampana.importarDiario.
+     */
+    static String familiaDelDiario(String diario, List<Patron> catalogo) throws java.io.IOException {
+        Campana todo = new Campana(catalogo);
+        todo.leerDiario(new java.io.StringReader(diario));
+        if (!Familia.DESCONOCIDA.equals(todo.familia())) {
+            return todo.familia();
+        }
+        for (Campana.Serie s : todo.series()) {
+            String f = Familia.de(s.firmware);
+            if (!f.isEmpty()) {
+                return f;
+            }
+        }
+        return Familia.DESCONOCIDA;
+    }
+
     /** Una linea por codigo: si esta listo para calibrar y, si no, por que. */
     public static final class Codigo {
         public final char k;

@@ -164,6 +164,16 @@ public class AppCortaTest {
      *   - 1, 2, 3, 4, 5, 6, 8, b: les faltan patrones de AJUSTE o RE-MEDIDA (RF-CAL-35). A los de tipo I les
      *     faltan porque TIPO-I-REPETIR de Diego anula sus series para repetirlas en preciso.
      *   - 7, a, c, d: en esta cola solo se VERIFICAN, no se ajustan. No es que falte nada.
+     *
+     * VISTA EN ROJO el 21-sep-2026 con dos roturas deliberadas de AppCorta.codigos (restauradas):
+     *  1. motivo siempre "faltan patrones" (tieneAjuste(cola, s) -> true): falla esta y h_.
+     *     org.junit.ComparisonFailure: codigo 7: esta cola solo lo verifica
+     *     expected:<[esta cola solo lo verifica: no se ajusta]> but was:<[faltan patrones de AJUSTE o RE-MEDIDA del banco]>
+     *  2. saltada la puerta BancoCola.calibrable (if (false && ...)): fallan esta, c2_ y h_.
+     *     org.junit.ComparisonFailure: codigo 1: le faltan patrones del banco
+     *     expected:<falta[n patrones de AJUSTE o RE-MEDIDA del banco]> but was:<falta[ el OSCURO del final de la sesión 1: no hay ancla]>
+     *     Ojo: con esa rotura d_lasPuertasSonLasDeFlujoCalibracion SIGUE EN VERDE con este ZIP, porque a ningun
+     *     codigo le queda el oscuro y "listo" sale false por las dos vias. d_ no vigila la puerta 1 por si sola.
      */
     @Test
     public void c_porCodigoDiceQueEstaListoYQueFalta() throws Exception {
@@ -330,6 +340,76 @@ public class AppCortaTest {
                 sin.serieGN == null || Calibracion.NONE.equals(sin.serieGN));
         assertEquals("la serie la declara el operador, y el acta tiene que decirlo",
                 Deteccion.MARCA_DECLARADA, sin.marcaSerie);
+    }
+
+    /**
+     * RF-COV-09 — ASEVERA UN REQUISITO. Valor esperado de fuera del codigo:
+     *  - SPEC-App-Calibracion-Coviandina.md §3, fila "El ZIP es de otra familia que el equipo conectado":
+     *    "No entra nada. Un dialogo, con el motivo y que hacer (RF-APP-U32)".
+     *  - RF-COV-09 (misma SPEC): "detiene [el paso 1] ... El texto lleva siempre la salida: 'abra una campana
+     *    aparte para la etapa anterior'".
+     *  - RF-APP-U32 (SPEC-App-Unica-Familias-y-ZIP.md §3.3), texto de ejemplo: "La lectura x no esta en la misma
+     *    escala. No se ha importado nada."
+     *  - El caso es el de SPEC-App-Unica-Familias-y-ZIP.md §3.2: al SLV-003-2026 se le grabo la V4.6 y la MAC
+     *    NO cambio; un ZIP suyo de ANTES (V4 original) tiene la misma serie y la misma MAC.
+     *
+     * Por que hace falta aqui y no basta la guarda de la rc6: esa guarda compara con la familia de la CAMPANA
+     * (ImportadorCampana.comprobarFamilia) y en la app corta la campana nace VACIA, con familia desconocida,
+     * que no bloquea nada (Familia.compatibles). Asi que en la app corta el primer ZIP entraba fuera cual fuera
+     * su familia. La comparacion tiene que ser con el EQUIPO CONECTADO, que es lo que dice la SPEC.
+     *
+     * VISTA EN ROJO el 21-sep-2026 antes de arreglarlo, con AppCorta.importar delegando sin mas en
+     * ImportadorCampana.importarDiario (= lo que hacia CortoActivity.importar en 72d00cd):
+     *   k_unZipDeOtraFamiliaQueElEquipoConectadoNoEntra: java.lang.AssertionError:
+     *   un ZIP de V4 original no puede entrar con un V4.6 conectado (RF-COV-09)
+     */
+    @Test
+    public void k_unZipDeOtraFamiliaQueElEquipoConectadoNoEntra() throws Exception {
+        String serie = "SLV-003-2026";
+        String mac = "00:22:09:01:65:10";
+        // ZIP de ANTES de grabar: V4 original, misma serie y misma MAC.
+        StringWriter antes = new StringWriter();
+        Campana v4 = new Campana(catalogo, serie, mac);
+        v4.escribirEn(antes);
+        Campana.Serie s = v4.nuevaSerie("2026-09-19T18:00:00-0500", serie, mac, "V4 original (V4.1)", "P20", 0, '2');
+        v4.agregarDisparo(s, 1, "t", "@LEERV,716@", Double.NaN);
+        v4.cerrar(s, "OK", true, "");
+
+        // La app corta: campana recien abierta y VACIA, y conectado el mismo equipo ya con la V4.6.
+        Campana c = new Campana(catalogo, serie, mac);
+        c.escribirEn(new StringWriter());
+        String familiaEquipo = new ProtocoloV46().firmware().name();
+        try {
+            AppCorta.importar(c, antes.toString(), catalogo, "ZIP de antes de grabar", familiaEquipo);
+            org.junit.Assert.fail("un ZIP de V4 original no puede entrar con un V4.6 conectado (RF-COV-09)");
+        } catch (IllegalArgumentException e) {
+            String m = e.getMessage();
+            assertTrue("RF-APP-U32: dice que no ha entrado nada: " + m, m.contains("No se ha importado nada"));
+            assertTrue("RF-APP-U32: dice por que (la escala de x): " + m,
+                    m.contains("La lectura x no está en la misma escala"));
+            assertTrue("RF-COV-09: el texto lleva siempre la salida: " + m,
+                    m.contains("abra una campaña aparte para la etapa anterior"));
+        }
+        assertTrue("no entra ni una serie", c.series().isEmpty());
+        assertTrue("ni un paso", c.pasos().isEmpty());
+    }
+
+    /**
+     * RF-COV-09, el contrapunto — ASEVERA UN REQUISITO (RF-COV-02: cargar el ZIP deja el equipo listo, sin paso
+     * intermedio). El ZIP archivado de las 15:10 es de SLV-002 con la V3.6 (sus 38 SERIE dicen "V3.6 2026-09-19
+     * (3.6.2) CAL mascara 0003"), y con un V3.6 conectado tiene que entrar. Sin esto, k no distinguiria
+     * "rechaza la otra familia" de "rechaza todo".
+     *
+     * VISTA EN ROJO el 21-sep-2026 con una rotura deliberada de AppCorta.importar (rechazar siempre; restaurada):
+     *   java.lang.IllegalArgumentException: El equipo conectado es un V3.6 y este ZIP trae medidas de un V3.6 ...
+     */
+    @Test
+    public void k2_unZipDeLaMismaFamiliaEntra() throws Exception {
+        Campana c = vacia();
+        ImportadorCampana.Resultado r = AppCorta.importar(c, diario, catalogo, "zip 15:10",
+                new ProtocoloV36().firmware().name());
+        assertTrue("entran las series del ZIP", r.series > 0);
+        assertFalse("y la campana deja de estar vacia", c.series().isEmpty());
     }
 
     /** Sin cola o sin campana no se inventa un veredicto: se dice que no se puede decir. */

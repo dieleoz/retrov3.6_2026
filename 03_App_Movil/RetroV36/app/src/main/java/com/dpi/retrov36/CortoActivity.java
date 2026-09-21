@@ -217,8 +217,11 @@ public class CortoActivity extends Base {
                 return nombre + ": el ZIP no trae el diario de la campaña. Cargue el de soporte (soporte_…zip).";
             }
             Campana c = Campanas.abrir(this, s.serie(), s.mac);
-            ImportadorCampana.Resultado r = ImportadorCampana.importarDiario(c, diario, c.catalogo(),
-                    nombre + " md5 " + md5);
+            // RF-COV-09: la familia se compara con la del EQUIPO CONECTADO antes de importar (AppCorta.importar):
+            // la campana de esta app nace vacia y la guarda de la rc6, que mira la de la campana, no bloqueaba.
+            Protocolo p = s.protocolo;
+            ImportadorCampana.Resultado r = AppCorta.importar(c, diario, c.catalogo(), nombre + " md5 " + md5,
+                    p == null ? "" : p.firmware().name());
             String bp = aplicarBancoPrevio(c);
             BancoCola cola = colaApk(BancoCola.Tipo.de(c.colaTipo()));
             return nombre + " (md5 " + md5 + ")\n" + AppCorta.texto(r, cola, c)
