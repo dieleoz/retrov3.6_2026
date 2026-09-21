@@ -7,7 +7,7 @@ en ningún equipo. La V4.6 tampoco existe grabada: se prueba contra `EquipoSimul
 funcionar es la medida contra un V3 2020 (SLV-002) y contra un V4 original (`@LEERV`), y ninguna de las
 dos se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36` (no cambia), etiqueta "RTV", `versionCode 10006`, `versionName 1.0.0-rc7` (RTV 1.0.0, sucede a 3.6.16; decisión VERSION de Diego). rc6 = `10005`, rc5 = `10004`. El APK de calibrar (buildType `coviandina`) es `com.dpi.retrov36.calibra`, `versionName Cov_3.6.1_calibrar`, `versionCode 10006` (nombre fijado por Diego el 21-sep-2026). La **rc1** se compiló con `10000`/`1.0.0` y es **anterior** a la mezcla de la 3.6.17 (`3dcaf41`): ese par no se reutiliza. Antes: `versionCode 3616`, `versionName 3.6.16` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.16 → 3616) (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36` (no cambia), etiqueta "RTV", `versionCode 10007`, `versionName 1.0.0-rc8` (RTV 1.0.0, sucede a 3.6.16; decisión VERSION de Diego). rc7 = `10006`, rc6 = `10005`, rc5 = `10004`. El APK de calibrar (buildType `coviandina`) es `com.dpi.retrov36.calibra`, `versionName Cov_3.6.2_calibrar`, `versionCode 10007` (nombre fijado por Diego el 21-sep-2026; RF-COV-16). La **rc1** se compiló con `10000`/`1.0.0` y es **anterior** a la mezcla de la 3.6.17 (`3dcaf41`): ese par no se reutiliza. Antes: `versionCode 3616`, `versionName 3.6.16` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.16 → 3616) (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -59,11 +59,12 @@ cd app && "$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;bui
   com.dpi.retrov36.RupturaEquivTest com.dpi.retrov36.RupturaBancoTest \
   com.dpi.retrov36.RtvUnicaTest com.dpi.retrov36.RupturaRtv10Test \
   com.dpi.retrov36.RitmoTest com.dpi.retrov36.TemperaturaRtv10Test com.dpi.retrov36.FirmaActaTest com.dpi.retrov36.SerieYAdminV46Test \
-  com.dpi.retrov36.Rc6DefectosTest com.dpi.retrov36.AppCortaTest
+  com.dpi.retrov36.Rc6DefectosTest com.dpi.retrov36.AppCortaTest com.dpi.retrov36.Cov362DefectosTest
 ```
 
-Más seguro que copiar la lista: pasar todas las `*Test.java` de `app/src/test/java/com/dpi/retrov36/` (31 clases,
-**360 tests** con la app corta, 21-sep-2026: 358 de `72d00cd` + `AppCortaTest.k_` y `k2_`).
+Más seguro que copiar la lista: pasar todas las `*Test.java` de `app/src/test/java/com/dpi/retrov36/` (32 clases,
+**368 tests**, 21-sep-2026: 360 de `2aa46e7` + `Cov362DefectosTest`, 8 nuevas — los arreglos de H-1, H-2, H-3,
+M-1 y B-2 de la revisión arquitecto-iot a `Cov_3.6.1_calibrar`).
 
 `FabricaTest` compara las 12 ecuaciones de la app con el **texto** de
 `01_Firmware/base_2020_d089f962/RetroVertical1.X/ecuacionesCalibracion.c`: si alguien cambia una
@@ -79,19 +80,30 @@ se han visto instaladas a la vez. SPEC: `05_Documentacion/SPEC-App-Calibracion-C
 ./gradlew clean assembleDebug assembleCoviandina --offline
 ```
 
-Compilado el 21-sep-2026 con `clean assembleDebug assembleCoviandina --offline` sobre el árbol limpio de
-`2aa46e7` (`aapt dump badging`, build-tools 30.0.3). Las 31 clases `*Test.java` pasaron antes con JUnitCore:
-`OK (360 tests)`.
+**rc8 / Cov_3.6.2_calibrar (21-sep-2026), tras cerrar H-1, H-2, H-3, M-1 y B-2** de la revisión
+arquitecto-iot a `Cov_3.6.1_calibrar` (NO APTO) — `SPEC-App-Calibracion-Coviandina.md` §8, RF-COV-11 a
+RF-COV-17. Compilado con `clean assembleDebug assembleCoviandina --offline` sobre el árbol de este commit
+(rama `rtv-1.0-cierre`, sobre 9435f69), `aapt dump badging`, build-tools 30.0.3. Las 32 clases `*Test.java`
+pasaron antes con JUnitCore: `OK (368 tests)` (360 de `2aa46e7` + `Cov362DefectosTest`, 8 nuevas).
 
 | APK | md5 | package | versionCode | versionName | application-label | Copia en `03_App_Movil/` |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `app-debug.apk` | `83d8ad85175038a92eb8e87d8eb9a195` | `com.dpi.retrov36` | 10006 | `1.0.0-rc7` | RTV | `RTV-V1.0.0-rc7.apk`, `RTV-V1.0.0-rc7-10006.apk` |
-| `app-coviandina.apk` | `0ece357f94d38b91b8df0767a426c771` | `com.dpi.retrov36.calibra` | 10006 | `Cov_3.6.1_calibrar` | RTV Calibra | `Cov_3.6.1_calibrar.apk`, `Cov_3.6.1_calibrar-10006.apk` |
+| `app-debug.apk` | `bedbd4787f8c6c1976c76ed6c08b5ab4` | `com.dpi.retrov36` | 10007 | `1.0.0-rc8` | RTV | `RTV-V1.0.0-rc8.apk`, `RTV-V1.0.0-rc8-10007.apk` |
+| `app-coviandina.apk` | `43d1008715308933dabc66270f072511` | `com.dpi.retrov36.calibra` | 10007 | `Cov_3.6.2_calibrar` | RTV Calibra | `Cov_3.6.2_calibrar.apk`, `Cov_3.6.2_calibrar-10007.apk` |
 
 El `versionName` del APK de calibrar se fija por partida doble en `app/build.gradle`: `versionNameOverride`
 para el manifiesto (lo que lee aapt y el teléfono) y `buildConfigField "String", "VERSION_NAME"` para lo que
 la app imprime en pantalla, acta y registro (`Base.java:55`, `Campanas.java:362,597`, `Registro.java:71`).
 Ninguna prueba JVM asevera ese valor: se comprobó en el `BuildConfig.java` generado de la variante y con aapt.
+
+**Sin arquitecto ni QA sobre ESTE par: sigue sin ser entregable** (§6 del CLAUDE.md: "a Diego sólo se le
+entrega una APK con el visto bueno escrito del arquitecto y de QA — los dos"). Lo que cierra este commit es
+la NO APTO anterior; falta la vuelta a revisión.
+
+Compilación anterior, Cov_3.6.1_calibrar (21-sep-2026) sobre el árbol limpio de `2aa46e7`: `app-debug.apk`
+`83d8ad85175038a92eb8e87d8eb9a195` (10006/`1.0.0-rc7`) y `app-coviandina.apk`
+`0ece357f94d38b91b8df0767a426c771` (10006/`Cov_3.6.1_calibrar`). Esa fue la que dio NO APTO. Sustituidas
+por las de arriba (RF-APP-41: un par de versionCode/versionName no se reutiliza).
 
 Compilación anterior del 21-sep sobre `0a849fe`: `app-debug.apk` `037d4543c83f3c22d843398e03fda2b7` y
 `app-coviandina.apk` `101d95535250748d6096bfd5fd8637f9`, las dos con el par `10005`/`1.0.0-rc6(-calibra)`
