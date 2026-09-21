@@ -12,7 +12,7 @@ orden de trabajo en `ROADMAP.md`; procedimiento del 8 y la b en
 
 ## Estado (verificado con `git log` y los registros, 21-sep)
 
-- `main` en `fbfa43e`; rama `rtv-1.0` en `72d00cd`. Local y remoto coinciden.
+- Al empezar el día: `main` en `fbfa43e`, rama `rtv-1.0` en `72d00cd`, local y remoto iguales. Rama local nueva `rtv-1.0-cierre` (sin subir).
 - **SLV-002** lleva el firmware **3.6.2**. **Códigos 1 y 2 calibrados**, acta ACEPTADA 12:23:26 del
   19-sep (ZIP de las 12:27, hecha en el HONOR con la 3.6.9), vence 2027-09-19. Serie en EEPROM
   `SLV-002`; `SLV-002-2026` decidida y **sin grabar** (se graba **después** de calibrar el 8 y la b).
