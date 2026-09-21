@@ -35,6 +35,7 @@ registrada, y no en una casilla del operador (P11 §3, QA-3612).
 | **USR-SIMPLE** | App de usuario simple: señal por icono y medir (nota 6) | 21-sep-2026 | nota 6 |
 | **SERIE-USR** | App de usuario: si el equipo no da la serie, la escribe el operador (nota 7) | 21-sep-2026 | nota 7 |
 | **SENAL-FILTRO** | App de usuario: filtro por familia y búsqueda al escribir (nota 7) | 21-sep-2026 | nota 7 |
+| **USR-ALCANCE** | App de usuario: sólo firmware V3.6; informe por señal (nota 8) | 21-sep-2026 | nota 8 |
 
 Notas de las filas del 21-sep-2026:
 
@@ -71,3 +72,11 @@ Notas de las filas del 21-sep-2026:
    señalización un filtro, verticales, preventivas, reglamentarias, luego al escribir SI... el filtro ya
    me recoge las que queden, hacerle la vida fácil al funcional". La serie tecleada va marcada
    "declarada, no leída del equipo".
+8. **USR-ALCANCE.** Diego: "3.6 trabaja sólo para este firmware, encontramos que cada firmware varía en
+   códigos [...] es apk por cliente en calibración y en apk de usuario final"; "sólo lo que indique el
+   manual de señalización vial, los tipo I es un tema interno"; la curva debe "permitir en lo posible
+   sacar valores bajos [...] no decir null a todo sino indicar que no cumple con una medida estándar";
+   "se miden sólo el papel retrorreflectivo, lo otro es parte de mantenimiento"; el informe lleva
+   "señal, ubicación, estado de la señal [...] si está limpia, en buen estado", y "algunas señales
+   tienen un serial detrás para identificar la medida con el identificador de esa señal en campo".
+   La V4.6 es otra app y otro cliente; lo que se salve de aquí pasa por el Orquestador.
