@@ -607,6 +607,11 @@ la SPEC no vaya por detrás del código; todo es ▸ propuesta de este trabajo, 
   medida, RF-USR-15 bis) (0.3.1).
 - **GPS:** se pide permiso; una posición de más de 2 min o con precisión peor que 50 m se exporta como
   `posicion_antigua` o `sin_posicion`, nunca como `con_posicion` (0.3.1).
+- **Equipo caído:** el enlace se marca caído si el lector termina o falla, o si un envío falla. Si una
+  detección sobre un enlace reutilizado no recibe nada a `#V#`, se cierra y se reintenta **una vez** con
+  conexión nueva antes de decir "no compatible" (0.3.3).
+- **Salir libera el equipo:** salir con Atrás cierra el enlace aunque haya una sesión de medida viva, para
+  que otro teléfono pueda conectar; girar la pantalla no lo cierra (0.3.3).
 - **Ajustes persistentes:** `lecturas_por_color` sobrevive a reiniciar la app (preferencias del sistema).
 - **Verificación del APK por contenido:** el md5 del ZIP del APK no se reproduce entre compilaciones
   (el empaquetador reordena entradas); se compara `classes*.dex`, recursos y certificado, y los fuentes
