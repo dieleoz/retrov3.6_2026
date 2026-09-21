@@ -33,10 +33,13 @@ final class EnlaceBluetooth implements Canal, FuenteBytes {
     private final BluetoothSocket socket;
     private final OutputStream salida;
     private final LinkedBlockingQueue<Integer> bytesRecibidos = new LinkedBlockingQueue<>();
+    private final long tApertura = System.currentTimeMillis(); // M2: t_ms de tramas.log es desde aqui.
+    private final String macConectada;
 
-    private EnlaceBluetooth(BluetoothSocket socket, OutputStream salida, InputStream entrada) {
+    private EnlaceBluetooth(BluetoothSocket socket, OutputStream salida, InputStream entrada, String macConectada) {
         this.socket = socket;
         this.salida = salida;
+        this.macConectada = macConectada;
         Thread lector = new Thread(() -> leerSinParar(entrada), "lector-spp-usuario");
         lector.setDaemon(true);
         lector.start();
@@ -52,7 +55,13 @@ final class EnlaceBluetooth implements Canal, FuenteBytes {
             s = dispositivo.createRfcommSocketToServiceRecord(UUID_SPP);
             s.connect();
         }
-        return new EnlaceBluetooth(s, s.getOutputStream(), s.getInputStream());
+        return new EnlaceBluetooth(s, s.getOutputStream(), s.getInputStream(), dispositivo.getAddress());
+    }
+
+    /** A2: la MAC del dispositivo con el que este enlace REALMENTE conectó (no la del último elegido
+     *  en la lista, que puede no coincidir si la conexión falló a mitad). */
+    String macConectada() {
+        return macConectada;
     }
 
     private void leerSinParar(InputStream entrada) {
@@ -120,9 +129,10 @@ final class EnlaceBluetooth implements Canal, FuenteBytes {
 
     // --- FuenteBytes: disparos "::<n>" (RF-USR-04/16). Comparte socket y cola con Canal, arriba. ---
 
+    /** M2: relativo a la apertura del enlace (no epoch absoluto), para que t_ms de tramas.log sea legible. */
     @Override
     public long ahoraMs() {
-        return System.currentTimeMillis();
+        return System.currentTimeMillis() - tApertura;
     }
 
     @Override

@@ -23,9 +23,13 @@
     <string name="medir_sin_equipo">No hay equipo conectado</string>
     <string name="medir_midiendo">Midiendo…</string>
     <string name="medir_serie_anulada">Serie anulada: el equipo no respondió a 3 intentos</string>
-    <string name="medir_resultado">%1$s — media %2$d, mínimo %3$d, válido %4$s</string>
+    <string name="medir_resultado">%1$s — lecturas: %2$s — media %3$s, mínimo %4$s, válido %5$s</string>
     <string name="medir_filas_guardadas">%1$d medidas guardadas</string>
     <string name="medir_exportado">Exportado a %1$s</string>
+    <string name="exportar_error">No se pudo exportar: %1$s</string>
+    <string name="exportar_permiso_necesario">Hace falta permiso de almacenamiento; toque Exportar otra vez tras concederlo</string>
+    <string name="exportar_permiso_concedido">Permiso concedido; toque Exportar otra vez</string>
+    <string name="exportar_permiso_denegado">Permiso denegado: no se puede exportar</string>
 
     <string name="color_blanco">Blanco</string>
     <string name="color_amarillo">Amarillo</string>
@@ -33,4 +37,5 @@
     <string name="color_rojo">Rojo</string>
     <string name="color_azul">Azul</string>
     <string name="color_anaranjado">Anaranjado</string>
+    <string name="color_marron">Marrón</string>
 </resources>

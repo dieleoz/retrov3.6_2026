@@ -39,6 +39,7 @@ public final class AjustesActivity extends AppCompatActivity {
             return;
         }
         SesionHolder.parametros().lecturasPorColor(valor);
+        SesionHolder.guardarLecturasPorColor(getApplicationContext(), valor); // B3: sobrevive a la muerte del proceso.
         Toast.makeText(this, R.string.ajustes_guardado, Toast.LENGTH_SHORT).show();
         finish();
     }

@@ -36,6 +36,9 @@
         <Button android:id="@+id/btnAnaranjado" style="?android:attr/buttonStyleSmall"
             android:layout_width="0dp" android:layout_height="wrap_content"
             android:layout_columnWeight="1" android:text="@string/color_anaranjado" />
+        <Button android:id="@+id/btnMarron" style="?android:attr/buttonStyleSmall"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="@string/color_marron" />
     </GridLayout>
 
     <TextView

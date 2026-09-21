@@ -1,5 +1,8 @@
 package com.dpi.retrousuario;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+
 import com.dpi.retrousuario.dominio.ParametrosRitmo;
 import com.dpi.retrousuario.dominio.SesionMedicion;
 
@@ -16,6 +19,9 @@ import com.dpi.retrousuario.dominio.SesionMedicion;
  */
 final class SesionHolder {
 
+    private static final String PREFS = "retrousuario_ajustes";
+    private static final String CLAVE_LECTURAS_POR_COLOR = "lecturasPorColor";
+
     private static final ParametrosRitmo PARAMETROS = new ParametrosRitmo();
     private static SesionMedicion sesion;
     private static EnlaceBluetooth enlace;
@@ -25,6 +31,17 @@ final class SesionHolder {
 
     static ParametrosRitmo parametros() {
         return PARAMETROS;
+    }
+
+    /**
+     * A2 (ALTO): invalida la sesión y el enlace anteriores (al cambiar de equipo, antes de conectar
+     * al nuevo). No cierra el socket aquí (eso lo hace quien tenga la referencia real al enlace,
+     * MainActivity, antes de llamar a esto): esto sólo quita la referencia compartida, para que
+     * {@link MedirActivity}/{@link AjustesActivity} dejen de ver la sesión vieja de inmediato.
+     */
+    static void limpiar() {
+        sesion = null;
+        enlace = null;
     }
 
     static void establecer(SesionMedicion s, EnlaceBluetooth e) {
@@ -38,5 +55,23 @@ final class SesionHolder {
 
     static EnlaceBluetooth enlace() {
         return enlace;
+    }
+
+    /** B3: `lecturasPorColor` sobrevive a la muerte del proceso (SharedPreferences), no sólo a que
+     *  la Activity se recree. Se llama una vez, al arrancar (MainActivity.onCreate). */
+    static void cargarAjustesPersistidos(Context contexto) {
+        SharedPreferences prefs = contexto.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        int valor = prefs.getInt(CLAVE_LECTURAS_POR_COLOR, PARAMETROS.lecturasPorColor());
+        if (valor >= 1) {
+            PARAMETROS.lecturasPorColor(valor);
+        }
+    }
+
+    /** B3: guarda `lecturasPorColor` (AjustesActivity, tras validar el valor). */
+    static void guardarLecturasPorColor(Context contexto, int valor) {
+        contexto.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .edit()
+                .putInt(CLAVE_LECTURAS_POR_COLOR, valor)
+                .apply();
     }
 }

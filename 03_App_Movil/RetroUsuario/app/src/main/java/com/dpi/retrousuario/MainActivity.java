@@ -13,6 +13,8 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.dpi.retrousuario.dominio.Canal;
+import com.dpi.retrousuario.dominio.CanalRegistrado;
 import com.dpi.retrousuario.dominio.DetectorEquipo;
 import com.dpi.retrousuario.dominio.Diario;
 import com.dpi.retrousuario.dominio.EstadoCalibracion;
@@ -44,8 +46,16 @@ public final class MainActivity extends AppCompatActivity {
     private ListView lvEquipos;
     private Button btnReintentar;
     private Button btnContinuar;
-    private EnlaceBluetooth enlace;
+    /** M7: leído/escrito desde el hilo de interfaz y desde el hilo de detección/sonda. */
+    private volatile EnlaceBluetooth enlace;
     private BluetoothDevice equipoActual;
+    /** M7: "una sola detección a la vez" — una segunda pulsación mientras hay una en curso se ignora. */
+    private volatile boolean detectando = false;
+
+    /** M2: UN registro y UN diario para toda la vida del proceso (fichero, no memoria): así una
+     *  reconexión o una Activity recreada no pierde lo acumulado hasta que se exporte. */
+    private RegistroTramas log;
+    private Diario diario;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +67,11 @@ public final class MainActivity extends AppCompatActivity {
         btnReintentar.setOnClickListener(v -> conectarYDetectar(equipoActual));
         btnContinuar = findViewById(R.id.btnContinuar);
         btnContinuar.setOnClickListener(v -> startActivity(new Intent(this, MedirActivity.class)));
+
+        SesionHolder.cargarAjustesPersistidos(getApplicationContext()); // B3.
+        log = new RegistroTramas(new File(getFilesDir(), "tramas.log"));
+        diario = new Diario(new File(getFilesDir(), "diario_medidas.txt"));
+
         mostrarAvisoPrevio();
     }
 
@@ -88,38 +103,65 @@ public final class MainActivity extends AppCompatActivity {
         lvEquipos.setOnItemClickListener((parent, view, position, id) -> conectarYDetectar(emparejados.get(position)));
     }
 
+    /**
+     * A2 (ALTO): al elegir OTRO equipo, desconecta y anula el enlace/sesión anteriores antes de
+     * conectar al nuevo — nunca reutiliza un enlace abierto para un dispositivo distinto. Reintentar
+     * sobre el MISMO equipo (botón "Reintentar") sí reutiliza el enlace si sigue abierto: sólo repite
+     * la sonda, no la conexión SPP entera.
+     */
     private void conectarYDetectar(BluetoothDevice dispositivo) {
-        if (dispositivo == null) {
-            return;
+        if (dispositivo == null || detectando) {
+            return; // M7: una sola detección a la vez; una segunda pulsación mientras hay una en curso se ignora.
+        }
+        boolean cambioDeEquipo = equipoActual != null && !dispositivo.getAddress().equals(equipoActual.getAddress());
+        if (cambioDeEquipo && enlace != null) {
+            enlace.desconectar();
+            enlace = null;
+            SesionHolder.limpiar(); // A2: la sesión y el enlace del equipo anterior dejan de estar disponibles.
         }
         equipoActual = dispositivo;
+        detectando = true;
         btnReintentar.setVisibility(View.GONE);
+        btnContinuar.setVisibility(View.GONE);
+        lvEquipos.setEnabled(false);
         tvEstado.setText(R.string.conectando);
         new Thread(() -> {
             try {
-                if (enlace == null) {
-                    enlace = EnlaceBluetooth.conectar(dispositivo);
+                EnlaceBluetooth enlaceLocal = enlace;
+                if (enlaceLocal == null) {
+                    enlaceLocal = EnlaceBluetooth.conectar(dispositivo);
+                    enlace = enlaceLocal;
                 }
-                DetectorEquipo.ResultadoDeteccion deteccion = DetectorEquipo.detectar(enlace);
-                runOnUiThread(() -> mostrarResultadoDeteccion(deteccion));
+                Canal canalRegistrado = new CanalRegistrado(enlaceLocal, log, enlaceLocal); // M2.
+                DetectorEquipo.ResultadoDeteccion deteccion =
+                        DetectorEquipo.detectar(canalRegistrado, SesionHolder.parametros());
+                runOnUiThread(() -> mostrarResultadoDeteccion(deteccion, canalRegistrado));
             } catch (Exception e) {
-                runOnUiThread(() -> tvEstado.setText("No se pudo conectar: " + e.getMessage()));
+                detectando = false;
+                runOnUiThread(() -> {
+                    tvEstado.setText("No se pudo conectar: " + e.getMessage());
+                    lvEquipos.setEnabled(true);
+                });
             }
         }, "deteccion-usuario").start();
     }
 
-    private void mostrarResultadoDeteccion(DetectorEquipo.ResultadoDeteccion deteccion) {
+    private void mostrarResultadoDeteccion(DetectorEquipo.ResultadoDeteccion deteccion, Canal canalRegistrado) {
         if (deteccion.resultado() == DetectorEquipo.Resultado.NO_COMPATIBLE) {
+            detectando = false;
             tvEstado.setText(R.string.equipo_no_compatible);
+            lvEquipos.setEnabled(true); // A2: tras "no compatible", elegir otro sin reiniciar.
             return;
         }
         new Thread(() -> {
-            Sonda362.ResultadoSonda sonda = Sonda362.sondear(enlace);
+            Sonda362.ResultadoSonda sonda = Sonda362.sondear(canalRegistrado, SesionHolder.parametros());
+            detectando = false;
             runOnUiThread(() -> mostrarResultadoSonda(deteccion.respuestaV(), sonda));
         }, "sonda-362-usuario").start();
     }
 
     private void mostrarResultadoSonda(RespuestaV v, Sonda362.ResultadoSonda sonda) {
+        lvEquipos.setEnabled(true);
         switch (sonda.resultado()) {
             case ACTUALIZAR_FIRMWARE:
                 tvEstado.setText(R.string.actualice_firmware);
@@ -142,13 +184,11 @@ public final class MainActivity extends AppCompatActivity {
         tvEstado.setText(texto);
 
         // RF-USR-04, RF-USR-05, RF-USR-06: la sesion de medir se crea aqui, una vez, con lo que ya sondeo esta pantalla.
-        RegistroTramas log = new RegistroTramas();
-        Diario diario = new Diario(new File(getFilesDir(), "diario_medidas.txt"));
         SesionMedicion sesion = new SesionMedicion(enlace, SesionHolder.parametros(), log, diario);
-        String mac = equipoActual != null ? equipoActual.getAddress() : "";
-        sesion.registrarEquipo(mac, "#V," + v.version() + "," + v.fechaCompilacion() + ","
-                + (v.estadoAjuste() == RespuestaV.EstadoAjuste.CAL ? "CAL" : "DEF") + "#",
-                sonda.serie(), sonda.serieLeida(), v.estadoAjuste(), fechaGC, true, hoy);
+        // A2: la MAC sale del dispositivo REALMENTE conectado (el socket), no sólo del último elegido en la lista.
+        String mac = enlace != null ? enlace.macConectada() : "";
+        sesion.registrarEquipo(mac, v.crudo(), sonda.serie(), sonda.serieLeida(), // D-1/M1: texto crudo de "#V#", sin reconstruir.
+                v.estadoAjuste(), fechaGC, sonda.fechaRegistrada(), hoy);
         SesionHolder.establecer(sesion, enlace);
         btnContinuar.setVisibility(View.VISIBLE);
     }
@@ -158,11 +198,19 @@ public final class MainActivity extends AppCompatActivity {
         return FechaISO.de(c.get(Calendar.YEAR), c.get(Calendar.MONTH) + 1, c.get(Calendar.DAY_OF_MONTH));
     }
 
+    /**
+     * M7 (revisión P16 de RetroUsuario 0.2.0): si la sesión sigue viva ({@link SesionHolder} ya tiene
+     * ESTE enlace, porque {@link MedirActivity} lo está usando), no se cierra aquí — cerrarlo
+     * rompería el socket Bluetooth de una sesión que sigue en curso (p. ej. al recrear esta Activity
+     * por un giro de pantalla). Sólo se cierra un enlace huérfano: uno que nunca llegó a entregarse a
+     * una sesión, o que ya fue reemplazado (A2, cambio de equipo).
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (enlace != null) {
-            enlace.desconectar();
+        EnlaceBluetooth actual = enlace;
+        if (actual != null && actual != SesionHolder.enlace()) {
+            actual.desconectar();
         }
     }
 }
