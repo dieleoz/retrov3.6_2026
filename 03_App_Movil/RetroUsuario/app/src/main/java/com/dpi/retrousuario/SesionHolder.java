@@ -41,6 +41,11 @@ final class SesionHolder {
     private static boolean avisoAceptado = false;
     /** C2: el permiso de ubicación se pide una sola vez por proceso (mismo patrón que el aviso previo). */
     private static boolean permisoUbicacionPedido = false;
+    /** M-1 (arq, sobre 0.3.2): "una detección en curso" ya no es un campo de {@code MainActivity}
+     *  (se pierde al recrearla, giro de pantalla) — vive aquí, para que una Activity recreada a
+     *  mitad de una detección en fondo sepa que sigue en curso ({@code onCreate} restaura la
+     *  interfaz desde este valor, no arranca "en blanco"). */
+    private static volatile boolean detectando = false;
 
     /** B-1: canal (envuelve el mismo {@link #enlace}), reintentos hechos y `#V#` ya confirmado de la
      *  sonda EN CURSO — mientras se espera a que el operador pulse "Reintentar" o continúe. Se limpia
@@ -69,6 +74,16 @@ final class SesionHolder {
 
     static void marcarPermisoUbicacionPedido() {
         permisoUbicacionPedido = true;
+    }
+
+    /** M-1: true mientras hay una detección (conexión + "#V#" + primera sonda) en curso en un hilo
+     *  de fondo, con o sin la Activity que la lanzó todavía viva. */
+    static boolean detectando() {
+        return detectando;
+    }
+
+    static void marcarDetectando(boolean valor) {
+        detectando = valor;
     }
 
     static ParametrosRitmo parametros() {

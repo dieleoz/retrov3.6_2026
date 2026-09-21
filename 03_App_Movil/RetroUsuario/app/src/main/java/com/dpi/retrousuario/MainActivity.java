@@ -61,8 +61,6 @@ public final class MainActivity extends AppCompatActivity {
     private Button btnReintentar;
     private Button btnContinuar;
     private Button btnExportar;
-    /** M7: "una sola detección a la vez" — una segunda pulsación mientras hay una en curso se ignora. */
-    private volatile boolean detectando = false;
 
     /** M2: UN registro y UN diario para toda la vida del proceso (fichero, no memoria): así una
      *  reconexión o una Activity recreada no pierde lo acumulado hasta que se exporte. */
@@ -87,6 +85,24 @@ public final class MainActivity extends AppCompatActivity {
         diario = new Diario(new File(getFilesDir(), "diario_medidas.txt"));
 
         mostrarAvisoPrevio();
+        restaurarInterfaz(); // M-1: una Activity recreada (giro) no arranca "en blanco".
+    }
+
+    /**
+     * M-1 (arq, sobre 0.3.2): {@code detectando} vive en {@link SesionHolder}, no en un campo de
+     * esta Activity (se perdía al recrearla, giro de pantalla, dejando la lista habilitada a mitad
+     * de una detección en fondo). Esta Activity recreada pinta lo que {@link SesionHolder} ya sabe,
+     * en vez de arrancar como si nada estuviera en curso; el resultado de una detección que termina
+     * con la Activity anterior ya destruida lo publica {@link #mostrarResultadoDeteccion} sobre
+     * {@link SesionHolder}, y esta instancia lo recoge aquí en el siguiente {@code onCreate}.
+     */
+    private void restaurarInterfaz() {
+        lvEquipos.setEnabled(!SesionHolder.detectando());
+        btnReintentar.setVisibility(SesionHolder.canalSondaEnCurso() != null ? View.VISIBLE : View.GONE);
+        btnContinuar.setVisibility(SesionHolder.sesion() != null ? View.VISIBLE : View.GONE);
+        if (SesionHolder.detectando()) {
+            tvEstado.setText(R.string.conectando);
+        }
     }
 
     /** RF-USR-01: el aviso tiene que estar visible antes de cualquier trama (T-USR-02). M-1: sólo
@@ -138,7 +154,7 @@ public final class MainActivity extends AppCompatActivity {
      * es siempre la única fuente de verdad.
      */
     private void conectarYDetectar(BluetoothDevice dispositivo) {
-        if (dispositivo == null || detectando) {
+        if (dispositivo == null || SesionHolder.detectando()) {
             return; // M7: una sola detección a la vez; una segunda pulsación mientras hay una en curso se ignora.
         }
         EnlaceBluetooth previo = SesionHolder.enlace();
@@ -152,7 +168,7 @@ public final class MainActivity extends AppCompatActivity {
             }
             SesionHolder.limpiar(); // A2: la sesión, el enlace y el estado de "Reintente" anteriores dejan de estar disponibles.
         }
-        detectando = true;
+        SesionHolder.marcarDetectando(true); // M-1: en SesionHolder, sobrevive a un giro a mitad de detección.
         prepararControlesConectando();
         new Thread(() -> hiloConectarYDetectar(dispositivo, reutilizar), "deteccion-usuario").start();
     }
@@ -168,6 +184,15 @@ public final class MainActivity extends AppCompatActivity {
         try {
             EnlaceBluetooth enlaceLocal = reutilizar ? SesionHolder.enlace() : EnlaceBluetooth.conectar(dispositivo);
             if (!reutilizar) {
+                // arq B-3 (sobre 0.3.2): si la Activity ya terminó de verdad mientras connect()
+                // estaba en curso (botón Atrás a mitad de la conexión), este socket recién abierto
+                // no tiene ya ninguna pantalla a la que volver — se cierra aquí en vez de registrarlo
+                // en SesionHolder como un enlace huérfano que nadie va a liberar (isFinishing() NO es
+                // true en un giro de pantalla, sólo en una salida real: MainActivity.onDestroy).
+                if (isFinishing()) {
+                    enlaceLocal.desconectar();
+                    return;
+                }
                 SesionHolder.registrarEnlaceAbierto(enlaceLocal); // C1: única fuente de verdad, desde antes de sondear.
             }
             CanalRegistrado canalRegistrado = new CanalRegistrado(enlaceLocal, log, enlaceLocal); // M2.
@@ -176,9 +201,16 @@ public final class MainActivity extends AppCompatActivity {
             }
             // QA-3: detección ("#V#") y primera sonda ("#GN#"/"#GC#") con la pausa de 150 ms entre las dos.
             DeteccionYSonda.Resultado resultado = DeteccionYSonda.ejecutar(canalRegistrado, SesionHolder.parametros());
+            if (debeReintentarConexionNueva(reutilizar, resultado)) {
+                // arq ALTO, segunda parte: el REUTILIZADO puede estar muerto sin que vivo() lo supiera
+                // todavía — se cierra y se reintenta con conexión nueva antes de concluir "no compatible".
+                enlaceLocal.desconectar();
+                hiloConectarYDetectar(dispositivo, false); // UNA vez: la vuelta siguiente ya no es "reutilizado".
+                return;
+            }
             runOnUiThread(() -> mostrarResultadoDeteccion(canalRegistrado, resultado));
         } catch (Exception e) {
-            detectando = false;
+            SesionHolder.marcarDetectando(false);
             runOnUiThread(() -> {
                 tvEstado.setText("No se pudo conectar: " + e.getMessage());
                 lvEquipos.setEnabled(true);
@@ -186,8 +218,15 @@ public final class MainActivity extends AppCompatActivity {
         }
     }
 
+    /** Arq ALTO, segunda parte (sobre 0.3.2): decisión en dominio puro,
+     *  {@link GestorEnlace#debeReintentarConexionNueva}, sobre el resultado de esta detección. */
+    private static boolean debeReintentarConexionNueva(boolean reutilizar, DeteccionYSonda.Resultado resultado) {
+        boolean noCompatible = resultado.deteccion().resultado() == DetectorEquipo.Resultado.NO_COMPATIBLE;
+        return noCompatible && GestorEnlace.debeReintentarConexionNueva(reutilizar, resultado.deteccion().sinRespuesta());
+    }
+
     private void mostrarResultadoDeteccion(Canal canalRegistrado, DeteccionYSonda.Resultado resultado) {
-        detectando = false;
+        SesionHolder.marcarDetectando(false);
         if (resultado.deteccion().resultado() == DetectorEquipo.Resultado.NO_COMPATIBLE) {
             tvEstado.setText(R.string.equipo_no_compatible);
             lvEquipos.setEnabled(true); // A2: tras "no compatible", elegir otro (o el mismo, C1) sin reiniciar.
@@ -208,16 +247,16 @@ public final class MainActivity extends AppCompatActivity {
     private void reintentarSonda() {
         Canal canal = SesionHolder.canalSondaEnCurso();
         SondaReintentable reintentos = SesionHolder.reintentosSondaEnCurso();
-        if (detectando || canal == null || reintentos == null) {
+        if (SesionHolder.detectando() || canal == null || reintentos == null) {
             return;
         }
-        detectando = true;
+        SesionHolder.marcarDetectando(true);
         btnReintentar.setVisibility(View.GONE);
         lvEquipos.setEnabled(false);
         tvEstado.setText(R.string.conectando);
         new Thread(() -> {
             Sonda362.ResultadoSonda sonda = reintentos.intentar(canal);
-            detectando = false;
+            SesionHolder.marcarDetectando(false);
             runOnUiThread(() -> mostrarResultadoSonda(sonda));
         }, "reintento-sonda-usuario").start();
     }
@@ -342,28 +381,33 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * M7 + B-1 (carrera del giro, condición arq sobre 0.3.1): con el enlace viviendo siempre en
-     * {@link SesionHolder} (nunca en un campo propio, desde {@link #conectarYDetectar}), esta Activity
-     * ya no tiene una referencia propia que pudiera cerrar un socket que otra instancia (tras un giro)
-     * o {@link MedirActivity} siguen usando — el fallo de 766e6f2: comparaba contra un campo local que
-     * SÍ se había rellenado antes de terminar la sonda, así que un giro A MITAD de la detección cerraba
-     * el socket que el hilo de fondo seguía usando. {@link #isChangingConfigurations()} distingue un
-     * giro (no se toca nada: {@link SesionHolder} sobrevive tal cual) de una salida real; en una salida
-     * real, sin sesión establecida, lo que quede en {@link SesionHolder#enlace()} es, como mucho, un
-     * enlace huérfano (NO_COMPATIBLE, ACTUALIZAR_FIRMWARE o reintentos agotados) que ya no tiene
-     * Activity a la que volver: se cierra. Con sesión viva no se toca nunca (puede seguir en curso en
-     * {@link MedirActivity}).
+     * M-2 (arq, sobre 0.3.2, corrige M7/B-1 de la 0.3.1): {@code MainActivity} es la Activity RAÍZ
+     * de esta app (lanzador único, sin `singleTask` ni tareas separadas) — cuando el operador la
+     * cierra de verdad (botón Atrás desde aquí, o "Cerrar" del sistema), eso es salir de la app, y
+     * el equipo se libera para que otro teléfono pueda conectar: se cierra el enlace y se limpia
+     * {@link SesionHolder} (sesión incluida), aunque hubiera una sesión de medida en curso — README
+     * "salir con Atrás libera el equipo".
+     *
+     * <p>{@link #isFinishing()} distingue esto de las otras dos formas de pasar por
+     * {@code onDestroy} sin que sea una salida real: {@link #isChangingConfigurations()} (giro de
+     * pantalla: {@link SesionHolder} sobrevive tal cual, ni se toca) y que el sistema recicle esta
+     * instancia por memoria sin que el usuario haya pedido salir ({@code isFinishing() == false} en
+     * ese caso también). El fallo de 766e6f2 que motivó M7/B-1: comparaba contra un campo local que
+     * SÍ se había rellenado antes de terminar la sonda, así que un giro A MITAD de la detección
+     * cerraba el socket que el hilo de fondo seguía usando; con el enlace viviendo siempre en
+     * {@link SesionHolder} (nunca en un campo propio, desde {@link #conectarYDetectar}) esa carrera
+     * ya no puede pasar.</p>
      */
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (isChangingConfigurations() || SesionHolder.sesion() != null) {
-            return;
+        if (!isFinishing() || isChangingConfigurations()) {
+            return; // giro de pantalla, o destrucción sin terminar de verdad (el sistema recupera memoria).
         }
         EnlaceBluetooth actual = SesionHolder.enlace();
         if (actual != null) {
             actual.desconectar();
-            SesionHolder.limpiar();
         }
+        SesionHolder.limpiar(); // M-2: libera el equipo aunque hubiera sesión viva (MedirActivity no sobrevive a esto).
     }
 }
