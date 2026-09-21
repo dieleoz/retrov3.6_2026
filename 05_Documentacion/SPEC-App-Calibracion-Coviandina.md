@@ -1,6 +1,9 @@
 # SPEC — "RTV Calibra": cargar el ZIP y calibrar. App corta, aparte, para las cuatro familias
 
-**Sin medir. No se ha probado en un teléfono ni contra un equipo.** Sale de leer
+**Sin medir. No se ha probado en un teléfono ni contra un equipo.** Revisión r2 (§8): cambios pedidos
+por Diego y por las revisiones de `Cov_3.6.1_calibrar`; §8 manda sobre lo anterior donde choquen.
+
+**Estado r1:** Sale de leer
 `03_App_Movil/RetroV36/` en la rama `rtv-1.0` (base `d7d7b4d`, RTV 1.0.0-rc5) y de ejecutar la suite
 JVM contra `EquipoSimulado`. El APK corto **compila y nada más**: no se ha instalado ni arrancado en
 ningún teléfono, ni se ha visto conviviendo con la app de campo.
@@ -69,7 +72,8 @@ lo están los demás**, con el motivo tomado literal de `BancoCola.calibrable` y
 exactamente lo que esa noche no se veía en ninguna pantalla. Un código que la cola sólo verifica (7,
 a, c, d en la completa) no dice "faltan patrones": dice **"esta cola sólo lo verifica"**.
 
-**RF-COV-04 — Paso 2: "Calibrar".** Abre `CalibrarActivity`, **sin cambios**: previas, una tarjeta por
+**RF-COV-04 — Paso 2: "Calibrar".** *(Modificado en r2: RF-COV-11 a RF-COV-13.)*
+Abre `CalibrarActivity`, **sin cambios**: previas, una tarjeta por
 código con su motivo, **nombre del superadministrador** (paso 3), **nota de la conformidad** (paso 4),
 casilla por código, PIN una vez por conexión, escritura, re-medida, persistencia y **acta** (paso 6).
 
@@ -203,6 +207,45 @@ no por nombre. Lo que **sí** es cierto es lo de fondo —y sigue abierto—: **
 su familia**, que es `RF-APP-U29`, y ahí el documento hermano tiene toda la razón.
 
 ---
+
+## 8. Revisión r2: lo que cambia
+
+Fuentes: decisiones APPS-DPI, VERIF-5-10, CERT-TITULO y FECHA-EQUIPO
+(`06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md`); revisión `arquitecto-iot` de
+`Cov_3.6.1_calibrar` (NO APTO: H-1, H-2, H-3, M-1, B-2); revisión de la cadena app-firmware en MPLAB SIM
+(APTO CON CONDICIONES, C-1). Las revisiones están en el scratchpad de la sesión, sin archivar.
+
+**RF-COV-11 — Ninguna salida al Banco.** Desde esta app no se llega al Banco ni a "Tomar muestras" por
+ningún camino (cierra H-1, `CalibrarActivity.java:441-446`). Si un código no se puede escribir, la app
+dice qué hacer sin salir. **La b no se ofrece hasta que el 8 tenga acta aceptada**
+(`TablaCalibracion.java:196`). Criterio: con el ZIP de las 18:11, marcar sólo la b es imposible y
+ninguna pantalla de la app abre `BancoActivity`.
+
+**RF-COV-12 — Re-medida tras escribir: error frente al certificado.** Sustituye al criterio de
+reproducción por s_rep (`Remedida3611.java:65-66`, H-2), que exigía ±2 cuentas cuando el mismo patrón
+varía 11 en un día. La re-medida es **conforme si |R medida − R certificado| / R certificado ≤ 10 %**
+(VERIF-5-10: margen de ±5 % o ±10 %, "da igual, es sacar el valor"; se toma el 10 %, propuesta marcada en
+la nota 5 de las decisiones). Se mantienen los dos intentos y restaurar el estado anterior si no es
+conforme.
+
+**RF-COV-13 — La fecha, escrita y releída.** `#SC` graba la fecha **del día en que se calibra**
+(FECHA-EQUIPO); vence un año después. Tras `#SC` la app relee `#GC#` y, si no coincide, el acta lo dice y
+no queda aceptada (cierra H-3). El equipo guarda una sola fecha; el histórico son los ZIP de cada
+calibración. Cierra C-1 de la revisión app-firmware.
+
+**RF-COV-14 — "Listos para calibrar" dice la verdad.** Tras cargar el ZIP sólo aparecen los códigos que
+esta app puede escribir de verdad, filtrados con `TablaCalibracion` (cierra M-1): 1 y 2 no se reescriben;
+los bloqueados, con su motivo; la b, "después del 8".
+
+**RF-COV-15 — Funciona sola.** No supone la app de campo instalada ni remite a ella en sus textos (B-2).
+Todo lo que necesita (catálogo, colas, decisiones) va en sus assets.
+
+**RF-COV-16 — Nombre de versión.** `Cov_<versión>_calibrar` (petición de Diego); `versionCode` propio,
+distinto del de cualquier APK anterior del mismo paquete.
+
+**Lo que sigue pendiente, fuera de esta revisión:** la verificación final de 10 patrones sobre todos los
+códigos y el "Certificado de calibración" firmado por ITVIAL SAS (VERIF-5-10, CERT-TITULO); la toma de
+muestras (TOMA-50). Van en la app de empresa completa (`ROADMAP.md`, tareas 1 a 4 y 9).
 
 ## 7. Lo que esta SPEC NO ha comprobado
 
