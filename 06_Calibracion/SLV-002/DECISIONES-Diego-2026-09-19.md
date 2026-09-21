@@ -33,6 +33,8 @@ registrada, y no en una casilla del operador (P11 §3, QA-3612).
 | **CERT-TITULO** | "Certificado de calibración", firmado por ITVIAL SAS (nota 4) | 21-sep-2026 | nota 4 |
 | **FECHA-EQUIPO** | Una sola fecha en el equipo: la del día en que se calibra (nota 5) | 21-sep-2026 | nota 5 |
 | **USR-SIMPLE** | App de usuario simple: señal por icono y medir (nota 6) | 21-sep-2026 | nota 6 |
+| **SERIE-USR** | App de usuario: si el equipo no da la serie, la escribe el operador (nota 7) | 21-sep-2026 | nota 7 |
+| **SENAL-FILTRO** | App de usuario: filtro por familia y búsqueda al escribir (nota 7) | 21-sep-2026 | nota 7 |
 
 Notas de las filas del 21-sep-2026:
 
@@ -65,3 +67,7 @@ Notas de las filas del 21-sep-2026:
 6. **USR-SIMPLE.** La app de usuario se queda en lo mínimo: conectar, elegir la señal por su icono y
    código del catálogo, medir, guardar y exportar. Diego: "por favor simple, esa app tiene múltiples
    funcionalidades que sólo las entiende el que hizo el firmware, no un funcional". Cierra C-USR-01.
+7. **SERIE-USR y SENAL-FILTRO.** Diego: "la escribe el funcional"; "deben existir según el manual de
+   señalización un filtro, verticales, preventivas, reglamentarias, luego al escribir SI... el filtro ya
+   me recoge las que queden, hacerle la vida fácil al funcional". La serie tecleada va marcada
+   "declarada, no leída del equipo".

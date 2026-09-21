@@ -20,10 +20,9 @@ y de la rama `rtv-1.0`, y la app legacy en `D:\@Proyect\IT\old\VERTICAL\4_Apps\`
 
 1. **Conectar.** Emparejados del teléfono, detectar firmware (RF-USR-01), mostrar estado de
    calibración apenas responde (RF-USR-02).
-2. **Elegir señal.** Buscar por código del Manual 2024 o navegar el catálogo por icono; propone
-   color de fondo y lámina mínima (RF-USR-03). Búsqueda manual si no hay GPS o la señal no está
-   (RF-REG-19 de SPEC-REG). Señal nueva: alta mínima (código, familia, color); el resto del
-   inventario georreferenciado de SPEC-REG §2.4 es opcional en esta versión (§6, C-USR-01).
+2. **Elegir señal.** Filtro por familia (Reglamentarias, Preventivas, Informativas, De obra...) y
+   cuadro de texto: al escribir "SI" o parte del nombre quedan sólo las que casan, con su icono
+   (RF-USR-03). Propone color de fondo y lámina mínima. Sin inventario georreferenciado (USR-SIMPLE).
 3. **Medir.** Confirmar color y tipo (I / no-I), disparos por color con media y mínimo (RF-USR-04,
    RF-USR-05), botón único "Medir", nivel de batería (RF-USR-12).
 4. **Guardar visita.** Identidad de equipo, ubicación, observación (RF-USR-06).
@@ -44,7 +43,11 @@ año; si `NONE`, vencida o huella distinta, **avisa y marca, no bloquea** (PA-01
 `PROTOCOLO-V3.6.md:51-54`; `SPEC-REG:370-382` (RF-REG-02 a RF-REG-04). *CA:* con `#GC#` de hace 400
 días, "EQUIPO CON CALIBRACIÓN VENCIDA" aparece en pantalla y en cada exportación; la medida sigue.
 
-**RF-USR-03 — Elegir señal por catálogo.** `08_Senales/senales.csv` da `color_fondo`, `color_orla`,
+**RF-USR-03 — Elegir señal por catálogo.** Primero un **filtro por familia** (columna `familia`:
+SR reglamentarias, SP preventivas, SI informativas, SPPO de obra..., `CATALOGO-Senales-Manual-2024.md`
+§2) y un **cuadro de búsqueda** que filtra por código o nombre mientras se escribe; cada resultado con
+su icono. Decisión SENAL-FILTRO: "hacerle la vida fácil al funcional". `08_Senales/senales.csv` da
+`color_fondo`, `color_orla`,
 `color_simbolo` y `lamina_minima`; el operador confirma tipo I / no-I cuando el catálogo no lo
 resuelve solo (p. ej. `"superior a IV; XI"`). *Fuente:* `08_Senales/CATALOGO-Senales-Manual-2024.md`.
 *CA:* elegido `SR-01`, propone fondo rojo y pide confirmar tipo.
@@ -61,8 +64,9 @@ mínimo, trama cruda; nunca `e`, con equipo identificado o no. La app legacy Ion
 100, 110, 120, 130 → media 115, mínimo 100, n = 4; `EquipoSimulado` respondiendo `::0` muestra la
 leyenda completa; 0 apariciones de `e` en el registro de toda la app.
 
-**RF-USR-06 — Guardar visita con identidad de equipo.** MAC, nombre Bluetooth, serie (o "SIN SERIE"
-explícito si `#GN,NONE#`) y `#V#` completo en cada visita; nada se sobrescribe (una corrección es un
+**RF-USR-06 — Guardar visita con identidad de equipo.** MAC, nombre Bluetooth, serie (si `#GN,NONE#`,
+la teclea el operador y queda marcada "declarada", decisión SERIE-USR) y `#V#` completo en cada
+visita; nada se sobrescribe (una corrección es un
 evento nuevo). *Fuente:* `SPEC-REG:566` (RF-REG-01); `SPEC-REG` §2.6 (RF-REG-13, diario);
 `SPEC-REG:490` (defecto de `medicion.java:1563,1565`, "tras guardar el campo queda en 0", que no se
 repite). *CA:* ninguna visita exportada tiene esos campos vacíos; guardar dos medidas seguidas deja
@@ -150,4 +154,5 @@ Resuelta la 3 (C-USR-01, USR-SIMPLE). Para las otras dos, propuesta según esa m
 1. **Resuelta.** No hay ninguna app de usuario en uso: la única APK usada fue la que sacó el ZIP. Esta se
    hace **desde cero**, como proyecto propio, y sólo copia de `rtv-1.0` lo mínimo de Bluetooth y
    protocolo que haga falta. Diego: "no existe ni la primera apk aún [...] puedes hacerla desde cero".
-2. ▸ Sin `#GN#`, se guarda con la marca "SIN SERIE" y un aviso; no bloquea (como PA-01). (C-USR-04)
+2. **Resuelta (SERIE-USR).** Si el equipo no da la serie, la escribe el operador y queda marcada
+   "declarada, no leída del equipo". Diego: "la escribe el funcional". Cierra C-USR-04.
