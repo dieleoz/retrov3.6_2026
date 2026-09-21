@@ -16,6 +16,8 @@ Aquí sólo hay **reglas**, y no se añade una sin quitar o fundir otra. Las cif
   ésa es la V4.1/V5.
 - La V3.6 pasa la calibración a **EEPROM**, ajustable **desde la app en modo administrador**. Todo lo
   demás se comporta como en 2020. **La STONE no se toca.**
+- **Dos apps que no se mezclan:** la de empresa (DPI, por USB; muestras, calibrar, certificado) y la
+  de usuario (va con el equipo y la usa el cliente).
 - **Proyecto independiente** (`github.com/dieleoz/retrov3.6_2026`). Son otros proyectos, que se
   consultan y no se mezclan: V4.1/V5 (`D:\IT\P_RetroReflectometro_Vertical`), V4.6
   (`D:\IT\P_RetroVertical_V4.6`) y Ruta al Mar (`D:\IT\P_RetroVertical_RutaAlMar`).

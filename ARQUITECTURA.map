@@ -87,6 +87,8 @@ graph TD
             AP_RTV["rtv-1.0: RTV 1.0, APP UNICA V3.6 / V4.6 (SPEC-App-Unica-V36-V46.md)<br>Interfaz rtv-1.0:APP Protocolo.java con ProtocoloV2020, ProtocoloV36,<br>ProtocoloV46, ProtocoloV4Original. Solo en rtv-1.0: ProtocoloV36, Familia,<br>Deteccion, Entregables, AppCorta (comprobado con git ls-tree y Glob)."]
             AP_DET["DETECCION - nunca 'e' a un equipo sin identificar (CLAUDE.md §4)<br>3.6.1 a 3.6.x: #V# -> 9 -> 6 -> @LEERV,BLA,1@ (SPEC-V3.6.md:459-465).<br>rtv-1.0: #V# -> 9 -> 6 -> @LEERV,BLA,2@ (rtv-1.0:APP Deteccion.java:12;<br>SPEC-App-Unica-V36-V46.md:153-166, C-U01 cerrada)."]
             AP_CORTA["App corta 'RTV Calibra' - SPEC-App-Calibracion-Coviandina.md<br>rtv-1.0:APP AppCorta.java, CortoActivity.java; sabor con<br>applicationIdSuffix '.calibra' (rtv-1.0:03_App_Movil/RetroV36/app/build.gradle:43).<br>Cierre en la rama local rtv-1.0-cierre (sin subir): estado en RETOMAR.md."]
+            AP_EMP["APP DE EMPRESA (DPI, USB): muestras, calibrar, verificar,<br>certificado (DECISIONES APPS-DPI)"]
+            AP_USR["APP DE USUARIO: va con el equipo; medir en campo<br>(SPEC-App-Usuario-V3.6.md)"]
             AP_APK["APK entregadas: 03_App_Movil/RTV-V&lt;versionName&gt;[-&lt;versionCode&gt;].apk<br>NO se versionan (.gitignore). Solo con arquitecto y QA escritos (CLAUDE.md §6)."]
             AP_MAIN --> AP_RTV
             AP_RTV --> AP_DET

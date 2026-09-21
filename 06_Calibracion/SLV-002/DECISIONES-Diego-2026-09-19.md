@@ -29,7 +29,7 @@ registrada, y no en una casilla del operador (P11 §3, QA-3612).
 | **APP-SIMPLE** | **La app de calibracion se reduce a: cargar el ZIP, calibrar, nombre y nota, y como mucho cambiar la serie. Poco mas.** No es una mejora de lo que hay: es otra version, mas corta. Motivo medido: la noche del 19-sep hicieron falta cuatro pantallas y una hora para escribir un codigo, porque el ZIP venia de un banco REPRESENTATIVO y la campana se abrio en COMPLETO, y la app avisa del desajuste pero deja al operador adivinar que hay que ir a "Tomar muestras" a cambiar la cola. Lo que Diego pide es que importar un ZIP deje la campana lista para calibrar, sin pasos intermedios | 19-sep-2026, noche | "no mejora, cambia esa a una version que sea cargar, y calibrar, nombre, nota y si algo si desea cambiar el nombre, poco mas" |
 | **APPS-DPI** | Apps de calibración sólo de DPI; USB por proyecto; cierra D-10 (nota 1) | 21-sep-2026 | nota 1 |
 | **TOMA-50** | La toma de un equipo no pasa de 50 tomas (nota 2) | 21-sep-2026 | nota 2 |
-| **VERIF-5-10** | Verificación final: 5 a 10 referencias re-medidas y su desviación (nota 3) | 21-sep-2026 | nota 3 |
+| **VERIF-5-10** | Verificación final: 10 patrones re-medidos y su desviación (nota 3) | 21-sep-2026 | nota 3 |
 | **CERT-TITULO** | "Certificado de calibración", firmado por ITVIAL SAS (nota 4) | 21-sep-2026 | nota 4 |
 
 Notas de las filas del 21-sep-2026:
@@ -45,8 +45,9 @@ Notas de las filas del 21-sep-2026:
    112 es exagerado, demora más de 1 hora tomando medidas".
    ▸ Propuesta, sin confirmar: 1 colocación por referencia. Si anula PROTOCOLO-AJUSTE y TIPO-I-REPETIR
    está pendiente (D-16).
-3. **VERIF-5-10.** Tras calibrar se re-miden 5 a 10 referencias; el certificado da el valor medido y
-   el error % de cada una. Margen: Diego acepta los dos de 2018 (±5 % y ±10 %): "pues ambos, al final
+3. **VERIF-5-10.** Tras calibrar se re-miden 10 patrones ("10 ok, es para validar lo que llevas");
+   el certificado da el valor medido y el error % de cada uno. Margen: Diego acepta los dos de 2018
+   (±5 % y ±10 %): "pues ambos, al final
    da igual, es sacar el valor". Cierra D-14.
    ▸ Propuesta, sin confirmar: se imprime el error; conforme hasta ±10 %, con marca por encima de ±5 %.
 4. **CERT-TITULO.** "Certificado de calibración", tal cual; firma ITVIAL SAS. Diego: "Certificado de
