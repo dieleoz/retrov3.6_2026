@@ -49,7 +49,7 @@ public final class AppCorta {
                     + " y este ZIP trae medidas de un " + Familia.texto(zip) + " (" + c.equipo + ", MAC " + c.mac
                     + "; la MAC es del módulo Bluetooth y no cambia al grabar). La lectura x no está "
                     + "en la misma escala. No se ha importado nada. Si quiere conservar esas medidas, abra una "
-                    + "campaña aparte para la etapa anterior (en la app de campo, RTV).");
+                    + "campaña aparte para la etapa anterior.");
         }
         return ImportadorCampana.importarDiario(c, diario, catalogo, origen);
     }
@@ -96,10 +96,31 @@ public final class AppCorta {
      * no se ajusta. Se dice con esas palabras.
      */
     public static List<Codigo> codigos(BancoCola cola, Campana c) {
+        return codigos(cola, c, Decisiones.ninguna(), c == null ? "" : equipoDe(c),
+                java.util.Collections.<Character>emptySet());
+    }
+
+    /**
+     * M-1 (revisión arquitecto-iot de Cov_3.6.1_calibrar; cierra RF-COV-14): las dos puertas de arriba
+     * (`BancoCola.calibrable` y `Anclas.oscuro`) dicen si el banco de un código está completo, pero NO dicen
+     * si ESTE APK puede escribirlo — un código con el banco completo pero `NO_REESCRIBIR` (1, 2) o que va
+     * después de otro (`b`, `5`: tras el acta ACEPTADA del 8) seguía saliendo "listo" aunque "Calibrar" lo
+     * fuera a rechazar después. Aquí se añade el filtro de {@link TablaCalibracion}, en el mismo orden que
+     * {@link FlujoCalibracion#plan} (RF-CAL-35 y `Anclas.oscuro` primero; la tabla, después), para que un
+     * código que YA estaba excluido por el banco siga dando el mismo motivo que daba antes (AppCortaTest.c_,
+     * con el ZIP de las 15:10, sigue en rojo si esto cambia el orden).
+     *
+     * @param aceptados códigos con acta ACEPTADA vigente de este equipo (para el "requiereAceptado" de la
+     *                   tabla, p. ej. el 8 antes que el b); vacío o null si no se sabe.
+     */
+    public static List<Codigo> codigos(BancoCola cola, Campana c, Decisiones decisiones, String equipo,
+            java.util.Set<Character> aceptados) {
         List<Codigo> l = new ArrayList<>();
         if (cola == null || c == null) {
             return l;
         }
+        java.util.Map<Character, TablaCalibracion.Fila> tabla = TablaCalibracion.tabla(
+                decisiones == null ? Decisiones.ninguna() : decisiones, equipo == null ? "" : equipo);
         java.util.Map<Integer, String> est = c.pasos();
         for (char k : Fabrica.CODIGOS) {
             String s = String.valueOf(k);
@@ -114,9 +135,23 @@ public final class AppCorta {
                 l.add(new Codigo(k, false, osc.texto));
                 continue;
             }
+            TablaCalibracion.Fila f = tabla.get(k);
+            if (f == null || !f.escribible()) {
+                l.add(new Codigo(k, false, f == null ? "código desconocido"
+                        : f.aviso.isEmpty() ? "no se escribe (" + f.texto() + ")" : f.aviso));
+                continue;
+            }
+            if (f.requiereAceptado != 0 && (aceptados == null || !aceptados.contains(f.requiereAceptado))) {
+                l.add(new Codigo(k, false, "va después del acta ACEPTADA del código " + f.requiereAceptado));
+                continue;
+            }
             l.add(new Codigo(k, true, ""));
         }
         return l;
+    }
+
+    private static String equipoDe(Campana c) {
+        return TablaCalibracion.canonico(c.historialSeries(), c.mac);
     }
 
     /** true si la cola tiene algun paso de AJUSTE o RE-MEDIDA para ese codigo. */
@@ -147,6 +182,13 @@ public final class AppCorta {
      * listo con su motivo — que es lo que esta noche no se veia en ninguna pantalla.
      */
     public static String texto(ImportadorCampana.Resultado r, BancoCola cola, Campana c) {
+        return texto(r, cola, c, Decisiones.ninguna(), c == null ? "" : equipoDe(c),
+                java.util.Collections.<Character>emptySet());
+    }
+
+    /** M-1: como {@link #texto(ImportadorCampana.Resultado, BancoCola, Campana)}, filtrado con TablaCalibracion. */
+    public static String texto(ImportadorCampana.Resultado r, BancoCola cola, Campana c, Decisiones decisiones,
+            String equipo, java.util.Set<Character> aceptados) {
         StringBuilder sb = new StringBuilder();
         if (r != null) {
             sb.append(r.texto()).append('\n');
@@ -156,7 +198,7 @@ public final class AppCorta {
             return sb.toString();
         }
         sb.append("Banco: ").append(c.colaTipo()).append('\n');
-        List<Codigo> l = codigos(cola, c);
+        List<Codigo> l = codigos(cola, c, decisiones, equipo, aceptados);
         String listos = listos(l);
         sb.append(listos.isEmpty() ? "NO hay ningún código listo para calibrar."
                 : "Listos para calibrar: " + listos).append('\n');

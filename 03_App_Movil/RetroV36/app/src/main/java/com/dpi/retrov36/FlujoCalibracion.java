@@ -212,9 +212,22 @@ public final class FlujoCalibracion {
     private char encendidoPor;
     /** Codigos que se escriben en la pulsacion en curso (T-C41 no los coteja: van a cambiar). */
     private final Set<Character> escribiendoAhora = new HashSet<>();
+    /**
+     * RF-COV-12 (H-2): true SOLO en el camino de la app de calibrar (BuildConfig.CORTO). Entra por
+     * constructor, en vez de leer BuildConfig aqui, para que la rama se pueda probar en la JVM: la suite
+     * de pruebas compila siempre contra el variant debug (BuildConfig.CORTO = false, README.md:33), asi
+     * que una FlujoCalibracion que mirase BuildConfig directamente no podria ejercitar nunca esta rama.
+     */
+    private final boolean corto;
 
     public FlujoCalibracion(Canal canal, Operador operador, AlmacenActa almacen, BancoCola cola, Campana campana,
                             List<Patron> catalogo, Decisiones decisiones, Contexto ctx, Reloj reloj) throws IOException {
+        this(canal, operador, almacen, cola, campana, catalogo, decisiones, ctx, reloj, false);
+    }
+
+    public FlujoCalibracion(Canal canal, Operador operador, AlmacenActa almacen, BancoCola cola, Campana campana,
+                            List<Patron> catalogo, Decisiones decisiones, Contexto ctx, Reloj reloj, boolean corto)
+            throws IOException {
         this.canal = canal;
         this.ops = new Ops(canal, ctx.protocolo);
         this.operador = operador;
@@ -225,6 +238,7 @@ public final class FlujoCalibracion {
         this.decisiones = decisiones == null ? Decisiones.ninguna() : decisiones;
         this.ctx = ctx;
         this.reloj = reloj;
+        this.corto = corto;
         Acta a = almacen.enCurso();
         this.acta = a == null || a.cerrada() ? null : a;
     }
@@ -1402,14 +1416,22 @@ public final class FlujoCalibracion {
                     }
                 }
             }
-            Remedida3611.Resultado res = !"RF-CAL-18".equals(f.reglaRemedida)
-                    ? Remedida3611.evaluar(pat.nombre, pat.valor, xs, rs, xBanco, kBanco,
-                    sr == null ? Double.NaN : sr.valor, sr == null ? "" : sr.texto)
-                    // Codigo con dispensa de Diego (b, PA-24): RF-CAL-18 frente a la curva escrita decide; el
-                    // incumplimiento frente al certificado queda escrito en el acta.
-                    : Remedida3611.evaluarConDispensa(pat.nombre, pat.valor, xs, rs, xBanco, kBanco,
-                    sr == null ? Double.NaN : sr.valor, sr == null ? "" : sr.texto, c.leida, f.dispensa,
-                    f.alcanceDe("RF-CAL-14", pat.nombre));
+            Remedida3611.Resultado res;
+            if ("RF-CAL-18".equals(f.reglaRemedida)) {
+                // Codigo con dispensa de Diego (b, PA-24): RF-CAL-18 frente a la curva escrita decide; el
+                // incumplimiento frente al certificado queda escrito en el acta. No cambia con BuildConfig.CORTO:
+                // REMEDIDA-b ya fijo esta regla para el b (decisiones.csv), y H-2 es del criterio 2 de s_rep, no
+                // de esta.
+                res = Remedida3611.evaluarConDispensa(pat.nombre, pat.valor, xs, rs, xBanco, kBanco,
+                        sr == null ? Double.NaN : sr.valor, sr == null ? "" : sr.texto, c.leida, f.dispensa,
+                        f.alcanceDe("RF-CAL-14", pat.nombre));
+            } else if (corto) {
+                // RF-COV-12 (H-2): en la app de calibrar, sin el criterio de s_rep.
+                res = Remedida3611.evaluarCertificado(pat.nombre, pat.valor, xs, rs);
+            } else {
+                res = Remedida3611.evaluar(pat.nombre, pat.valor, xs, rs, xBanco, kBanco,
+                        sr == null ? Double.NaN : sr.valor, sr == null ? "" : sr.texto);
+            }
             acta.intento(k, reloj.ahoraIso(), res.estado, res.texto);
             if ("NO_EVALUABLE".equals(res.estado)) {
                 return res.texto;
@@ -1813,6 +1835,128 @@ public final class FlujoCalibracion {
         }
         return "Sesión completa: " + hecho + (saltados.length() == 0 ? "" : " Ya aceptados antes: "
                 + saltados.toString().trim() + ".");
+    }
+
+    /** RF-COV-17: nota fija de la conformidad en el camino automático (la app de calibrar no pide nota). */
+    private static final String NOTA_AUTOMATICA = "Calibración automática (RTV Calibra, un solo botón, RF-COV-17)";
+
+    /**
+     * RF-COV-17 — SOLO camino CORTO. Sustituye a la casilla por código y a la aceptación código a código de
+     * RF-COV-04: el operador teclea su nombre una vez y pulsa "Calibrar"; la app calibra sola todo lo que el
+     * ZIP permite, en el orden de {@link #ORDEN_SESION} (el 8 antes que el b, {@code TablaCalibracion.java:196}),
+     * dando por ACEPTADA cada acta cuya re-medida sea conforme (RF-COV-12, sin el "Aceptar" que pregunta
+     * {@link #persistirConfirmarYAceptar}) para poder seguir con la siguiente. Si un código no queda
+     * conforme, la propia {@link #remedida} ya lo restaura (dos intentos y restaurar, sin cambios); aquí se seleccionan
+     * SOLO los que no dependan de un código que no haya quedado aceptado, y se sigue con esos.
+     *
+     * @return un resumen: qué quedó calibrado y qué no, con el motivo (nombres de {@link Fabrica#nombre}, no
+     *      códigos, salvo en el acta en disco, que es el documento técnico y sigue citando el código).
+     */
+    public String calibrarAutomatico(String nombre) throws IOException, InterruptedException {
+        sesionTodo = true;
+        encendidoReciente = false;
+        try {
+            return calibrarAutomaticoInterno(nombre);
+        } finally {
+            sesionTodo = false;
+            encendidoReciente = false;
+            escribiendoAhora.clear();
+        }
+    }
+
+    private String calibrarAutomaticoInterno(String nombre) throws IOException, InterruptedException {
+        if (nombre == null || nombre.trim().isEmpty()) {
+            return "Escriba su nombre antes de pulsar Calibrar.";
+        }
+        String pv = motivoPrevias();
+        if (pv != null) {
+            return "No se calibra: " + pv;
+        }
+        String vacia = descartarActaVacia("al retomar");
+        if (!vacia.isEmpty()) {
+            operador.progreso(vacia.trim());
+        }
+        StringBuilder ok = new StringBuilder();
+        StringBuilder no = new StringBuilder();
+        if (acta != null) {
+            if (acta.rechazoPendiente() != null) {
+                return "Hay un rechazo pendiente (" + acta.rechazoPendiente() + "): vuelva a pulsar Calibrar para "
+                        + "reintentar, o resuélvalo con el PIN de administrador. No se calibra.";
+            }
+            // Termina primero lo que hubiera a medias de una sesión anterior (igual que "Calibrar todo").
+            char k0 = acta.codigos().isEmpty() ? acta.escribiendo() : acta.codigos().get(0).k;
+            String r = calibrar(new HashSet<Character>(), "", "");
+            if (acta != null && acta.motivoNoAceptable(false) == null) {
+                String a = persistirYAceptarAuto(k0);
+                if (a == null) {
+                    ok.append(Fabrica.nombre(k0)).append("; ");
+                } else {
+                    no.append(Fabrica.nombre(k0)).append(": ").append(a).append("; ");
+                }
+            } else if (acta != null) {
+                no.append(Fabrica.nombre(k0)).append(": ").append(r).append("; ");
+            }
+        }
+        Set<Character> aceptados = new HashSet<>();
+        for (char k : ORDEN_SESION) {
+            if (aceptadoVigente(k)) {
+                aceptados.add(k);
+            }
+        }
+        for (char k : ORDEN_SESION) {
+            if (aceptados.contains(k)) {
+                continue;
+            }
+            TablaCalibracion.Fila f = fila(k);
+            Plan p = plan(k, null, true);
+            if (!p.escribible()) {
+                no.append(Fabrica.nombre(k)).append(": ").append(p.motivoNo).append("; ");
+                continue;
+            }
+            if (f.requiereAceptado != 0 && !aceptados.contains(f.requiereAceptado)) {
+                no.append(Fabrica.nombre(k)).append(": depende de que quede aceptado el código ")
+                        .append(Fabrica.nombre(f.requiereAceptado)).append("; ");
+                continue;
+            }
+            operador.progreso("Calibrando " + Fabrica.nombre(k) + "...");
+            Set<Character> uno = new HashSet<>();
+            uno.add(k);
+            String r = calibrar(uno, nombre, NOTA_AUTOMATICA);
+            if (acta == null || acta.motivoNoAceptable(false) != null) {
+                no.append(Fabrica.nombre(k)).append(": ").append(r).append("; ");
+                continue;
+            }
+            String a = persistirYAceptarAuto(k);
+            if (a != null) {
+                no.append(Fabrica.nombre(k)).append(": ").append(a).append("; ");
+                continue;
+            }
+            aceptados.add(k);
+            ok.append(Fabrica.nombre(k)).append("; ");
+        }
+        if (ok.length() == 0 && no.length() == 0) {
+            return "Nada que calibrar: todos los códigos ya tienen acta ACEPTADA vigente.";
+        }
+        return "Calibrado: " + (ok.length() == 0 ? "ninguno" : ok.toString().trim()) + ". No calibrado: "
+                + (no.length() == 0 ? "ninguno" : no.toString().trim());
+    }
+
+    /**
+     * Como {@link #persistirConfirmarYAceptar}, pero SIN preguntar "¿Acepta esta acta?" (RF-COV-17: el camino
+     * automático no para a confirmar cada acta una por una; si la re-medida es conforme, se acepta sola).
+     */
+    private String persistirYAceptarAuto(char k) throws IOException, InterruptedException {
+        String p = persistencia();
+        if (!p.startsWith("Persistencia OK")) {
+            return p;
+        }
+        String a = aceptar();
+        if (a.startsWith("Acta ACEPTADA")) {
+            encendidoReciente = sesionTodo && !scEnUltimoAceptar;
+            encendidoPor = k;
+            return null;
+        }
+        return a;
     }
 
     /**

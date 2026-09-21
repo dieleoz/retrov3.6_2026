@@ -125,6 +125,31 @@ public final class Remedida3611 {
                 mediaDeMedias(rPorCol));
     }
 
+    /**
+     * RF-COV-12 (H-2 de la revision arquitecto-iot de Cov_3.6.1_calibrar; decision FECHA-EQUIPO nota 5,
+     * propuesta derivada, y VERIF-5-10, de DECISIONES-Diego-2026-09-19.md): SOLO en el camino de la app de
+     * calibrar (BuildConfig.CORTO), la re-medida tras escribir se juzga UNICAMENTE por el error frente al
+     * certificado del patron, sin el criterio 2 (reproduccion frente a s_rep). El criterio 2 exige, con
+     * x = 800 y K = 5, un limite de en torno a ±1,6 cuentas (2 * s_rep * x * raiz(2/K), s_rep 0,15-0,31 %);
+     * el mismo patron se movio 7 cuentas entre dos series del mismo cuarto de hora, y el diario de P43
+     * midio hasta 11,1 cuentas de variacion en el mismo dia (INFORME-Ajuste-SLV-002-20260919-1811.md §6).
+     * Es previsible que el criterio 2 falle aunque la calibracion este bien: no es un defecto del ajuste,
+     * es que el umbral no sirve en campo.
+     *
+     * Conforme si |R_medida - R_cert| / R_cert <= 10 % (VERIF-5-10: "conforme hasta ±10 %"). Se mantiene la
+     * comprobacion de que la medida es valida (colocacion()) y los dos intentos + restaurar si no es
+     * conforme (remedida(), sin cambios: el bucle y la restauracion son los mismos para las dos reglas).
+     */
+    public static Resultado evaluarCertificado(String patron, double cert, List<double[]> xPorCol, List<double[]> rPorCol) {
+        double xRem = mediaDeMedias(xPorCol);
+        double rMedida = mediaDeMedias(rPorCol);
+        double dev = 100 * (rMedida - cert) / cert;
+        boolean ok = Math.abs(rMedida - cert) <= 0.10 * cert;
+        String t = String.format(Locale.US, "%s: R %.1f frente a certificado %.0f (%+.1f %%, límite ±10 %%, RF-COV-12: sin "
+                        + "el criterio de s_rep) %s", patron, rMedida, cert, dev, ok ? "OK" : "FALLA");
+        return new Resultado(ok ? "CONFORME" : "NO_CONFORME", xRem, rMedida, t);
+    }
+
     static double mediaDeMedias(List<double[]> g) {
         List<Double> m = new ArrayList<>();
         for (double[] v : g) {

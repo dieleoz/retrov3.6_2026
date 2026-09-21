@@ -224,7 +224,19 @@ public class CortoActivity extends Base {
                     p == null ? "" : p.firmware().name());
             String bp = aplicarBancoPrevio(c);
             BancoCola cola = colaApk(BancoCola.Tipo.de(c.colaTipo()));
-            return nombre + " (md5 " + md5 + ")\n" + AppCorta.texto(r, cola, c)
+            // M-1 (RF-COV-14): "Listos para calibrar" se filtra con TablaCalibracion (1 y 2 no se reescriben;
+            // la b y el 5, tras el acta ACEPTADA del 8), no solo con las puertas del banco.
+            Decisiones decisiones = Decisiones.leer(asset(Decisiones.ASSET));
+            String equipo = TablaCalibracion.canonico(c.historialSeries(), c.mac);
+            java.util.Set<Character> aceptados = new java.util.HashSet<>();
+            try {
+                if (Campanas.aceptadoAntes(this, '8')) {
+                    aceptados.add('8');
+                }
+            } catch (IOException e) {
+                // sin acta todavia: el 8 no cuenta como aceptado
+            }
+            return nombre + " (md5 " + md5 + ")\n" + AppCorta.texto(r, cola, c, decisiones, equipo, aceptados)
                     + (bp.isEmpty() ? "" : "Banco: " + bp + "\n");
         } catch (IOException | RuntimeException e) {
             return "No se pudo cargar el ZIP: " + EnlaceSerie.descripcion(e);
@@ -252,8 +264,8 @@ public class CortoActivity extends Base {
         new AlertDialog.Builder(this).setTitle("Serie del equipo")
                 .setMessage("El equipo responde «" + (s.serieEquipo == null ? "?" : s.serieEquipo)
                         + "» a #GN#. La campaña y el acta van a nombre de la serie que escriba aquí; queda marcada "
-                        + "\"declarada, no leída del equipo\" si no la dio el equipo.\n\nPara grabarla en el equipo "
-                        + "(#SN) hace falta la app de campo, en Modo administrador.")
+                        + "\"declarada, no leída del equipo\" si no la dio el equipo.\n\nEsta app no graba la serie "
+                        + "en el equipo (#SN).")
                 .setView(e).setCancelable(true)
                 .setPositiveButton("Aceptar", (d, w) -> {
                     dialogoSerieAbierto = false;

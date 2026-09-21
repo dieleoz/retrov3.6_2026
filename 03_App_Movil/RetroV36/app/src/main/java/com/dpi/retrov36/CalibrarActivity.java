@@ -65,21 +65,36 @@ public class CalibrarActivity extends Base {
         super.onCreate(b);
         titulo("Comprobaciones previas");
         txtPrevias = texto("");
-        titulo("Códigos (tabla RF-CAL-37 del APK)");
+        // RF-COV-17: la app de calibrar no ensena codigos ni tarjetas por codigo (el operador ni los ve ni
+        // los elige); tarjetas se queda sin usar (pintar() no la rellena en CORTO) y sin vista propia.
         tarjetas = new LinearLayout(this);
         tarjetas.setOrientation(LinearLayout.VERTICAL);
-        raiz.addView(tarjetas);
-        edNombre = campo("Nombre del superadministrador (se recuerda)", InputType.TYPE_CLASS_TEXT);
+        if (!BuildConfig.CORTO) {
+            titulo("Códigos (tabla RF-CAL-37 del APK)");
+            raiz.addView(tarjetas);
+        }
+        edNombre = campo(BuildConfig.CORTO ? "Nombre de quien calibra (se recuerda)"
+                : "Nombre del superadministrador (se recuerda)", InputType.TYPE_CLASS_TEXT);
         edNombre.setText(getSharedPreferences(PREFS, MODE_PRIVATE).getString(PREF_NOMBRE, ""));
         edNota = campo("Nota de la conformidad", InputType.TYPE_CLASS_TEXT);
         edNombre.setSingleLine(true);
         edNota.setSingleLine(true);
-        // 3.6.15: una sola sesion. "Calibrar todo" escribe, re-mide, hace la persistencia y acepta el acta de cada
-        // codigo marcado, en orden (8, b, 5, 3, 4, 6), y sigue solo con el siguiente.
-        btnTodo = boton("Calibrar todo (8 → b → 5 …)", v -> accion("Calibrar", this::calibrarTodo, true));
-        btnCalibrar = boton("Continuar / un código", v -> accion("Calibrar", this::calibrar, true));
-        btnBateria = boton("Leer batería (9)", v -> accion("Batería", () -> flujo.leerBateria(), false));
-        fila(btnCalibrar, btnBateria);
+        if (BuildConfig.CORTO) {
+            // RF-COV-17: sin casillas por código y sin "Calibrar todo"/"Continuar un código": un solo botón que
+            // calibra sola toda la sesión, en el orden de TablaCalibracion, con el nombre tecleado una vez. La
+            // nota de conformidad no la pide esta app (RF-COV-17 solo menciona el nombre).
+            edNota.setVisibility(android.view.View.GONE);
+            btnCalibrar = boton("Calibrar", v -> accion("Calibrar", this::calibrarAutomatico, true));
+            btnBateria = boton("Leer batería (9)", v -> accion("Batería", () -> flujo.leerBateria(), false));
+            fila(btnCalibrar, btnBateria);
+        } else {
+            // 3.6.15: una sola sesion. "Calibrar todo" escribe, re-mide, hace la persistencia y acepta el acta de
+            // cada codigo marcado, en orden (8, b, 5, 3, 4, 6), y sigue solo con el siguiente.
+            btnTodo = boton("Calibrar todo (8 → b → 5 …)", v -> accion("Calibrar", this::calibrarTodo, true));
+            btnCalibrar = boton("Continuar / un código", v -> accion("Calibrar", this::calibrar, true));
+            btnBateria = boton("Leer batería (9)", v -> accion("Batería", () -> flujo.leerBateria(), false));
+            fila(btnCalibrar, btnBateria);
+        }
         txtProgreso = texto("");
         txtProgreso.setTypeface(Typeface.MONOSPACE);
         btnPersistencia = boton("Persistencia: apagar y encender el equipo", v -> accion("Persistencia",
@@ -88,6 +103,13 @@ public class CalibrarActivity extends Base {
         btnRechazar = boton("Rechazar", v -> rechazar());
         btnCerrar = boton("Cerrar sin restaurar (PIN de administrador)", v -> cerrarSinRestaurar());
         btnLiberar = boton("Liberar tras el cierre sin restaurar (PIN de administrador)", v -> liberar());
+        if (BuildConfig.CORTO) {
+            // RF-COV-17: "Calibrar" ya escribe, re-mide, hace la persistencia y acepta sola; estos dos botones
+            // quedan sin uso en el camino normal. Se dejan Rechazar/Cerrar sin restaurar/Liberar, que son la
+            // valvula de seguridad para una sesion que quedo a medias (rechazo pendiente, cierre sin restaurar).
+            btnPersistencia.setVisibility(android.view.View.GONE);
+            btnAceptar.setVisibility(android.view.View.GONE);
+        }
         titulo("Acta");
         txtActa = texto("");
         txtActa.setTypeface(Typeface.MONOSPACE);
@@ -203,8 +225,11 @@ public class CalibrarActivity extends Base {
             }
         };
         try {
+            // RF-COV-12 (H-2): BuildConfig.CORTO solo se lee aqui, al construir el flujo (Base.java es donde vive
+            // la Activity real); FlujoCalibracion.java no importa android y recibe el booleano por parametro,
+            // para poder probarse en la JVM sin depender del variant compilado (FlujoCalibracion.java:206-211).
             flujo = new FlujoCalibracion(Cliente.instancia(), operador(), almacen, cola, campana, cat,
-                    Decisiones.leer(asset(Decisiones.ASSET)), ctx, reloj);
+                    Decisiones.leer(asset(Decisiones.ASSET)), ctx, reloj, BuildConfig.CORTO);
             flujo.pin(s.pinAdmin);
         } catch (IOException | RuntimeException e) {
             alerta("Acta", "No se pudo leer el acta en curso: " + e.getMessage());
@@ -320,21 +345,24 @@ public class CalibrarActivity extends Base {
         for (char k : Fabrica.CODIGOS) {
             vig.put(k, Sesion.get().ecuacionVigente(k));
         }
-        for (FlujoCalibracion.Tarjeta t : flujo.tarjetas(vig)) {
-            TextView tv = new TextView(this);
-            tv.setPadding(dp(6), dp(8), dp(6), dp(2));
-            tv.setTypeface(Typeface.MONOSPACE);
-            tv.setText(t.texto);
-            tv.setBackgroundColor(t.casilla ? GRIS : AMARILLO);
-            tarjetas.addView(tv);
-            if (t.casilla) {
-                CheckBox cb = new CheckBox(this);
-                cb.setText(t.textoCasilla);
-                cb.setEnabled(!ocupado);
-                cb.setChecked(antes.contains(t.k));
-                cb.setOnCheckedChangeListener((v, c) -> pintarBotones());
-                tarjetas.addView(cb);
-                casillas.put(t.k, cb);
+        if (!BuildConfig.CORTO) {
+            // RF-COV-17: la app de calibrar no ensena tarjetas por codigo ni casillas (el operador no elige).
+            for (FlujoCalibracion.Tarjeta t : flujo.tarjetas(vig)) {
+                TextView tv = new TextView(this);
+                tv.setPadding(dp(6), dp(8), dp(6), dp(2));
+                tv.setTypeface(Typeface.MONOSPACE);
+                tv.setText(t.texto);
+                tv.setBackgroundColor(t.casilla ? GRIS : AMARILLO);
+                tarjetas.addView(tv);
+                if (t.casilla) {
+                    CheckBox cb = new CheckBox(this);
+                    cb.setText(t.textoCasilla);
+                    cb.setEnabled(!ocupado);
+                    cb.setChecked(antes.contains(t.k));
+                    cb.setOnCheckedChangeListener((v, c) -> pintarBotones());
+                    tarjetas.addView(cb);
+                    casillas.put(t.k, cb);
+                }
             }
         }
         pintarBotones();
@@ -346,15 +374,21 @@ public class CalibrarActivity extends Base {
 
     private void pintarBotones() {
         boolean libre = !ocupado && flujo != null;
-        Set<Character> sel = seleccion();
-        btnCalibrar.setEnabled(libre && flujo.puedeCalibrar(sel));
-        btnCalibrar.setText(sel.isEmpty() && libre && flujo.pendientes() > 0 ? "Continuar la calibración a medias" : "Continuar / un código");
-        btnTodo.setEnabled(libre && flujo.motivoPrevias() == null && (!sel.isEmpty() || flujo.pendientes() > 0));
+        boolean pend = flujo != null && flujo.rechazoPendiente();
+        if (BuildConfig.CORTO) {
+            // RF-COV-17: sin casillas, "Calibrar" se habilita con las previas en verde y sin rechazo pendiente;
+            // la propia calibrarAutomatico() decide, código a código, qué hay para hacer.
+            btnCalibrar.setEnabled(libre && !pend && flujo.motivoPrevias() == null);
+        } else {
+            Set<Character> sel = seleccion();
+            btnCalibrar.setEnabled(libre && flujo.puedeCalibrar(sel));
+            btnCalibrar.setText(sel.isEmpty() && libre && flujo.pendientes() > 0 ? "Continuar la calibración a medias" : "Continuar / un código");
+            btnTodo.setEnabled(libre && flujo.motivoPrevias() == null && (!sel.isEmpty() || flujo.pendientes() > 0));
+        }
         btnBateria.setEnabled(libre && ctx.conectado);
         btnPersistencia.setEnabled(libre && flujo.puedePersistencia());
         btnAceptar.setEnabled(libre && flujo.puedeAceptar());
         btnRechazar.setEnabled(libre && flujo.puedeRechazar());
-        boolean pend = flujo != null && flujo.rechazoPendiente();
         btnCerrar.setEnabled(libre && pend);
         btnCerrar.setVisibility(pend ? android.view.View.VISIBLE : android.view.View.GONE);
         boolean bloq = flujo != null && flujo.bloqueoSinRestaurar() != null;
@@ -362,7 +396,9 @@ public class CalibrarActivity extends Base {
         btnLiberar.setVisibility(bloq ? android.view.View.VISIBLE : android.view.View.GONE);
         if (pend) {
             // P14-05/06: con un rechazo pendiente no se escribe nada ni se continua.
-            btnTodo.setEnabled(false);
+            if (btnTodo != null) {
+                btnTodo.setEnabled(false);
+            }
             btnCalibrar.setEnabled(false);
             btnPersistencia.setEnabled(false);
             btnAceptar.setEnabled(false);
@@ -381,6 +417,11 @@ public class CalibrarActivity extends Base {
 
     private String calibrar() throws IOException, InterruptedException {
         return flujo.calibrar(seleccionAlPulsar, edNombreAlPulsar, edNotaAlPulsar);
+    }
+
+    /** RF-COV-17: el único botón de la app de calibrar. */
+    private String calibrarAutomatico() throws IOException, InterruptedException {
+        return flujo.calibrarAutomatico(edNombreAlPulsar);
     }
 
     private Set<Character> seleccionAlPulsar = new HashSet<>();
@@ -439,11 +480,17 @@ public class CalibrarActivity extends Base {
                 pantallaEncendida(false);
                 txtProgreso.setText(f);
                 // 3.6.17 (principio de Diego): si faltan muestras, se dice cuales y se ofrece ir a tomarlas.
+                // RF-COV-11 (H-1): en la app de calibrar NO HAY Banco (no se instala): el aviso dice qué hacer
+                // sin ofrecer ese camino, que en esta app no existe (CalibrarActivity.java:441-446 en 9435f69).
                 if (f.contains("no se escribe") || f.contains("falta") || f.contains("Falta")) {
-                    new AlertDialog.Builder(this).setTitle("Faltan muestras").setMessage(f)
-                            .setPositiveButton("Tomar muestras", (d, w) -> startActivity(
-                                    new android.content.Intent(this, BancoActivity.class)))
-                            .setNegativeButton("Cerrar", null).show();
+                    if (BuildConfig.CORTO) {
+                        alerta("No se puede calibrar", f);
+                    } else {
+                        new AlertDialog.Builder(this).setTitle("Faltan muestras").setMessage(f)
+                                .setPositiveButton("Tomar muestras", (d, w) -> startActivity(
+                                        new android.content.Intent(this, BancoActivity.class)))
+                                .setNegativeButton("Cerrar", null).show();
+                    }
                 }
                 if ("Calibrar".equals(titulo)) {
                     // QA-3612-04: las casillas no siguen marcadas despues del flujo.
