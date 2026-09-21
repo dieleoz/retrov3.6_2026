@@ -42,6 +42,14 @@ completos quedaron en el directorio temporal de la sesión; aquí se archiva lo 
   - **QA:** quitar `marcarCaido()` del catch de `EnlaceBluetooth.leerSinParar` no lo detecta ninguna prueba
     (126/126 en verde): la capa Android no tiene arnés. Pide prueba con un `InputStream` doble y, en
     campo, reconexión tras apagar el equipo. El rojo por aserción invertida no vale.
+- **0.3.4** — arquitecto APTO con condiciones; QA en curso.
+  - C1 cerrada (`finally` en `MainActivity.hiloConectarYDetectar`).
+  - **C2 sigue abierta (Alto):** `runOnUiThread(this::restaurarInterfaz)` (`MainActivity.java:259`) corre
+    en la Activity destruida tras un giro y consume el resultado de un solo uso; la nueva queda en
+    "Conectando". El error tampoco se publica. Además, esa llamada se encola antes del `finally` que
+    baja `detectando`: si el hilo principal la ejecuta antes, pinta "Conectando" y no recoge el resultado.
+  - Anotado, no bloquea: `reintentarSonda` pinta sobre `this`; ventana entre `limpiar()` y
+    `marcarDetectando(true)`; dos detecciones al salir y volver a entrar enseguida.
 
 ## Regla que sale de estas vueltas
 

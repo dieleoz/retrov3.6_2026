@@ -1,6 +1,8 @@
-# SPEC — App de usuario (campo) V3.6: flujo y pantallas (r6)
+# SPEC — App de usuario (campo) V3.6: flujo y pantallas (r7)
 
-**Nada de esto está medido contra un equipo ni un teléfono; no hay código propio de esta app todavía.**
+**Nada de esto está medido contra un equipo ni un teléfono; el incremento 1 está programado (RetroUsuario
+0.3.x) y sin probar en teléfono.** **r7: decisiones de Diego (DECISIONES notas 16-18): ninguna repetición
+es automática ni muda (RF-USR-04), `exigir_362` decidido y la app de usuario no dictamina (UMBRAL-CSV).**
 **r6, 21-sep-2026: cierra las condiciones del `arquitecto-iot` sobre la r5 (APTO CON CONDICIONES al
 incremento 1, base `39c754f`; condiciones C1-C5 del informe correspondiente).** Cambios de fondo sobre
 r5: (C1, ALTO) la garantía de "respuesta tardía descartada" (RF-USR-16) se **acota a la ventana
@@ -87,7 +89,7 @@ conectar. Al conectar, se envía **únicamente** `#V#`; **antes de confirmar que
 RF-USR-15): hasta ese punto la secuencia enviada es exactamente `#V#`, sin excepción (T-USR-01(a)). Si
 la respuesta no empieza por `#V,3.6,`, "equipo no compatible" y ningún otro byte (nunca `9`, `6`, `e`,
 `@LEERV...`). Con `#V,3.6,` confirmado, la app prueba `#GN#` y `#GC#` (ninguna mide).
-- **Parámetro `exigir_362`** (▸ propuesta pendiente de Diego, M-3, cierra C-USR-04; booleano,
+- **Parámetro `exigir_362`** (decidido: EXIGIR-362, DECISIONES nota 17; cierra C-USR-04; booleano,
   por defecto `true`, configurable como el resto de RF-USR-16). Rama `true`: se exige firmware
   **3.6.2 o posterior**, que responde a `#GN#`/`#GC#`; si cualquiera de las dos devuelve
   `#ERR,FORMATO#` (3.6 o 3.6.1, que no las tienen, `PROTOCOLO-V3.6.md:51-54`), "actualice el firmware
@@ -162,34 +164,35 @@ fecha de compilación, no la de hoy); `PROTOCOLO-V3.6.md:34,42,51`; `CAMBIOS-V3.
 opaco (`7`,`8`,`a`-`d`): ninguna fila pide tipo I. Fuera de medida: `negro`, fluorescentes y color
 compuesto (§8.2 del TDD). *Fuente:* `ecuacionesCalibracion.c:141-164` (por carácter, no hex).
 
-**RF-USR-04 — Disparos por color; un cero repite una vez, y si persiste se guarda con motivo.**
+**RF-USR-04 — Disparos por color; ante un cero o un disparo sin respuesta, la app lo dice y pregunta.**
 `lecturas_por_color` disparos, **3 por defecto** (Diego: "leído 3 veces promedio", DECISIONES nota
 11a; distinto del 4 de RF-REG-08 general), configurable **desde Ajustes** (pantalla 5, §1), **nunca
 desde la pantalla de medir**: la pantalla 4 no tiene selector de disparos; media, mínimo, trama cruda.
-Un `0` se muestra **"0 (saturado o negativo)"**, nunca oculto ni nulo. **Regla del cero, corregida
-(H-A3, sustituye a "repetir siempre"):** si la serie trae algún `0`, se repite **una vez**; si la
-**segunda** serie también trae algún `0`, se guarda la fila con `media = 0`, `válido = NO` y `motivo =
-"saturado_o_negativo"`, en vez de excluirse: "no decir null a todo sino indicar que no cumple con una
+Un `0` se muestra **"0 (saturado o negativo)"**, nunca oculto ni nulo. **Regla del cero (r7, REPETIR-PREGUNTA,
+DECISIONES nota 18; sustituye a "se repite una vez" de H-A3):** la app **nunca repite sola**. Si la serie
+trae algún `0`, muestra "La lectura dio 0 (saturada o negativa: lámina muy degradada, sucia o mal
+colocada). ¿Repetir la serie o saltar?" con dos botones. **Repetir** mide una serie nueva, que se juzga
+igual. **Saltar** guarda la fila con `media = 0`, `válido = NO` y `motivo = "saturado_o_negativo"`, en
+vez de excluirse: "no decir null a todo sino indicar que no cumple con una
 medida estándar" (DECISIONES nota 8, USR-ALCANCE). **En el incremento 1 esa fila no lleva juicio de
 cumple/no cumple** (no hay columna de dictamen, RF-USR-06, RF-USR-10 es del incremento 2): se exporta
 igual, con `valido = NO` y su `motivo`, y es la interventoría quien la lee en Excel. **Nunca se
 promedia excluyendo sólo los ceros** (una serie `0, 0, 330` no da media 330 con n = 1: se repite entera,
 y si la repetición también trae ceros, se guarda con el motivo). Con repetición por cero, `lecturas`
-(RF-USR-06) lleva **sólo los valores de la segunda serie** (la que se guarda); la primera serie
-descartada va únicamente a `tramas.log` (RF-USR-15 bis), no a `medidas.csv`, para no duplicar filas de
+(RF-USR-06) lleva **sólo los valores de la última serie** (la que se guarda); las series
+descartadas van únicamente a `tramas.log` (RF-USR-15 bis), no a `medidas.csv`, para no duplicar filas de
 una misma medida. Motivo técnico del cero: `reflectivityValue` es sin signo; una lectura negativa da un
 entero enorme, `> 4000`, y se fuerza a `0` (`ecuacionesCalibracion.c:49-54`, `arreglar_dato`, llamada en
 `:59` de `conversionDatoEnviar`); `0` casi siempre es lámina muy degradada o mala lectura.
 - **Disparo anulado por plazo o por doble `::` (RF-USR-16), distinto del cero.** Si un disparo de la
   serie se anula —por vencer el plazo o por llegar dos secuencias `::<n>` en la misma ventana de espera,
-  las dos causas cuentan igual (nunca cuenta como "0", RF-USR-16)—, **ese disparo se repite hasta 2
-  veces**; si las 2 repeticiones también se anulan (por plazo o por doble `::`, en cualquier
-  combinación), **la serie entera de ese color se anula**: no se guarda fila en `medidas.csv`, la app lo
-  dice en pantalla ("serie anulada: el equipo no respondió a 3 intentos") y los 3 intentos van a
-  `tramas.log`. `n`, `lecturas`, `media` y `valido` sólo existen para una serie que sí se guarda
-  (RF-USR-06); una serie anulada no produce ninguno de los cuatro. Ficha que fija comportamiento de este
-  trabajo (▸ propuesta pendiente de Diego, sin cita: el límite de 2 repeticiones no está en
-  `DECISIONES-Diego-2026-09-19.md`).
+  las dos causas cuentan igual (nunca cuenta como "0", RF-USR-16)—, la app lo dice y
+  pregunta (REPETIR-PREGUNTA): "El equipo no respondió a este disparo. ¿Repetir o saltar?". **Repetir**
+  vuelve a disparar; **Saltar** anula la serie entera de ese color: no se guarda fila en `medidas.csv`, la
+  app lo dice en pantalla ("serie anulada: el equipo no respondió") y los intentos van a `tramas.log`.
+  `n`, `lecturas`, `media` y `valido` sólo existen para una serie que sí se guarda (RF-USR-06); una serie
+  anulada no produce ninguno de los cuatro. Sin límite de repeticiones: decide el operador (DECISIONES
+  nota 18).
 *Fuente:* `SPEC-V3.6.md:501-503`; `ecuacionesCalibracion.c:49-54`; DECISIONES nota 11a (disparos); nota
 8 (motivo de no ocultar el 0); RF-USR-16 (plazo, doble `::` y anulación de un disparo).
 
@@ -469,11 +472,10 @@ el texto muestra "−0 %" pero el dictamen es **NO CUMPLE**, porque 247 < 248 ex
 - **Con instalación, medida con este mismo equipo.** Dictamen válido **sólo si** la fila de instalación
   declara `serie_equipo_instalacion` (RF-USR-13; la **serie**, no la MAC: la serie es el identificador
   que lee `#GN#` y sobrevive a un cambio de adaptador Bluetooth) y coincide con la serie del equipo
-  conectado; si no consta o no coincide, `dictamen = NO_DICTAMINABLE` (A-3). ▸ **Propuesta pendiente de
-  Diego (condición 3, umbral doble):** `NO CUMPLE` si `leído` baja del mínimo del Manual **o** del
-  80 % de instalación (DECISIONES nota 9, "UMBRAL-LEY"), no sólo del 80 %. Prueba: blanco IV,
-  instalación 310 (umbral 80 % = 248), mínimo Manual 360, leído 300 → cumple el 80 % (300 ≥ 248) pero
-  **no cumple** el Manual (300 < 360): con la regla "o", el resultado es **NO CUMPLE**.
+  conectado; si no consta o no coincide, `dictamen = NO_DICTAMINABLE` (A-3). **Decidido (UMBRAL-CSV,
+  DECISIONES nota 16): la app de usuario no dictamina.** El CSV lleva `leído`, el mínimo del Manual, el
+  80 % de instalación y el % frente a cada uno; el funcional valida y determina en Excel. El dictamen de
+  este apartado se reescribe con esa decisión antes de programar el incremento 2.
 
 **Texto exacto, único en SPEC y TDD (B-2):**
 - Sin instalación, con el mínimo real de la Tabla 2-5 (blanco IV = 360, no 325):

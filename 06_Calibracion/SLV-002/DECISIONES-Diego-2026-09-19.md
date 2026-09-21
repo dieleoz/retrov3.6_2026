@@ -105,3 +105,31 @@ Notas de las filas del 21-sep-2026:
     exporta, se edita y se carga; si el operador se equivoca en un ";" o "," la app lo acepta o dice
     dónde y por qué. (e) Cargar un inventario nunca toca las medidas; vista previa y deshacer.
     (f) El histórico es la curva: instalación, medida, siguiente medida.
+12. **TOMA-SEL (cierra D-13).** Diego: "las que estimes como referenciales según tu curva, muchos
+    patrones se repiten, en color y medida". Las referencias de la toma corta las elige este trabajo con
+    el análisis de la curva sobre el banco ya medido, quitando las que repiten color y valor; la lista
+    se le enseña a Diego antes de usarla.
+13. **TOMA-FORMA (cierra D-16).** Diego: "una cosa son los patrones de referencia, y otra que me hagas
+    tomar 112 patrones de 4 veces x 4 veces, no es normal, que se optimizara el .zip a x4 tomas x 1
+    patrón a 50 patrones, ni idea cuáles". Toma corta: hasta 50 patrones, 1 colocación y 4 tomas por
+    patrón. En las campañas nuevas sustituye a PROTOCOLO-AJUSTE (5 × 4) y a TIPO-I-REPETIR.
+14. **AJUSTE-POR-CURVA (cierra D-3).** Diego: "lo que en la simulación de la curva te dé más problemas o
+    influya más en la calibración; podrás pedir otras muestras". Qué códigos se ajustan (también 3, 4 y
+    6) sale de simular la curva con el banco: se proponen los que más error dan, y se pueden pedir
+    muestras nuevas para ellos.
+15. **CAFE-LILA (cierra D-4).** Diego: "se miden con el rojo, no sé si entran en el ajuste del rojo y
+    esa curva si lo da bien; si no, se entiende que la curva debería dar para todo tipo de color sin más
+    y sin indicarle color". Café y lila se juzgan con la curva del código del rojo: si la simulación los
+    da bien, no se hace nada aparte; la curva es por código, sin pedir el color al operador.
+16. **UMBRAL-CSV.** Sobre el umbral doble de la app de usuario, Diego: "si es la app del usuario, dejas
+    eso tal cual en el .csv y que el funcional valide y determine". La app no dictamina CUMPLE / NO
+    CUMPLE: exporta el leído, el mínimo del Manual, el 80 % de instalación y el % frente a cada uno.
+17. **EXIGIR-362.** Diego: "revisa tu firmware y decide, es una apk puntual sólo para este proyecto
+    hasta que mejoremos a algo más universal; si el firmware te dice, ok, dale". SLV-002 lleva la
+    3.6.2, que responde a `#GN#` y `#GC#` (`PROTOCOLO-V3.6.md:51-54`): `exigir_362 = true`.
+18. **REPETIR-PREGUNTA.** Diego: "repetir, pero cuando se hace la toma no se sabe por qué mandas a
+    medir una y otra vez; bien podrías decir: la lectura da cero, ¿desea repetir? ¿saltar? No das
+    opciones y uno le da tomar y ok las veces que lo pides". Ninguna repetición es automática ni muda,
+    en las dos apps: la app dice el motivo y ofrece Repetir o Saltar.
+19. **FIRMA-DPI (cierra D-8).** Las APK entregadas se firman con una clave propia de DPI, guardada fuera
+    del repositorio y con copia de seguridad.
