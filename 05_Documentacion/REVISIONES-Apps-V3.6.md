@@ -35,6 +35,13 @@ completos quedaron en el directorio temporal de la sesión; aquí se archiva lo 
     y un V3.6 sale "no compatible" en bucle.
   - M-1 detección doble tras un giro; M-2 el enlace no se libera al salir con Atrás; B-3 enlace huérfano;
     cita a una sección inexistente en `PermisoUbicacion.java`.
+- **0.3.3** — APTO con condiciones / APTO con condiciones.
+  - **C1 (arq):** salir con Atrás durante "Conectando" deja `detectando` en verdadero para siempre.
+  - **C2 (arq):** tras un giro, el resultado de la detección se pinta en la Activity destruida.
+  - **C3 (arq):** SPEC atrasada; cerrada en `SPEC-App-Usuario-V3.6.md` §4 bis.
+  - **QA:** quitar `marcarCaido()` del catch de `EnlaceBluetooth.leerSinParar` no lo detecta ninguna prueba
+    (126/126 en verde): la capa Android no tiene arnés. Pide prueba con un `InputStream` doble y, en
+    campo, reconexión tras apagar el equipo. El rojo por aserción invertida no vale.
 
 ## Regla que sale de estas vueltas
 

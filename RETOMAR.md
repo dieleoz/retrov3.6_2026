@@ -13,10 +13,11 @@ Estado vigente; se reescribe en cada sesión. Reglas en `CLAUDE.md`; orden en `R
   QA APTO; arquitecto APTO CON CONDICIONES (mensajes de fallo con número de código, antes de darla a un
   operador de Coviandina). **Entregable a Diego** en `03_App_Movil/Cov_3.6.5_calibrar.apk`. Cargar el ZIP →
   un botón "Calibrar" → re-medida ±10 % frente al certificado → fecha del día (se lee antes y se relee).
-- **App de usuario: `RetroUsuario` 0.3.0** (`com.dpi.retrousuario.coviandina`, md5 `68b8a961…`), rama
-  `worktree-agent-a0b5ff37e1945291c` (se sube como `retro-usuario`). Incremento 1 "Medir y exportar".
-  Arquitecto y QA: APTO CON CONDICIONES. **0.3.1 en curso** con esas condiciones. Incremento 2 ("señal a
-  señal", indicador por norma, inventario) sin programar.
+- **App de usuario: `RetroUsuario` 0.3.3** (`com.dpi.retrousuario.coviandina`, versionCode 6), rama
+  `worktree-agent-a0b5ff37e1945291c` (`09d6130`, se sube como `retro-usuario`). Incremento 1 "Medir y
+  exportar". Arquitecto y QA: APTO CON CONDICIONES (`05_Documentacion/REVISIONES-Apps-V3.6.md`).
+  **0.3.4 en curso:** `detectando` tras Atrás, resultado tras giro y prueba del lector con equipo caído.
+  Incremento 2 ("señal a señal", indicador por norma, inventario) sin programar.
 - **SPEC al día con el código:** calibrar, `SPEC-App-Calibracion-Coviandina.md` §8 (RF-COV-11 a 23);
   usuario, `SPEC-App-Usuario-V3.6.md` r6 + §4 bis.
 
@@ -26,7 +27,8 @@ Estado vigente; se reescribe en cada sesión. Reglas en `CLAUDE.md`; orden en `R
 2. **Subir las ramas** (el sistema bloquea el push a los subagentes):
    `git -C .claude/worktrees/agent-abbfb74fdaea81269 push origin rtv-1.0-cierre` y
    `git -C .claude/worktrees/agent-a0b5ff37e1945291c push origin worktree-agent-a0b5ff37e1945291c:retro-usuario`.
-3. Probar la app de usuario en dos teléfonos (Android ≤9 y ≥10): exportar, girar, cambiar de equipo.
+3. Probar la 0.3.4 en dos teléfonos (Android ≤9 y ≥10): exportar, girar, cambiar de equipo, salir con
+   Atrás y apagar el equipo a mitad de sesión.
 4. Decisiones abiertas del `ROADMAP.md` (D-13, D-16, D-3, D-4, D-5, D-8) y las propuestas ▸ de la SPEC
    de usuario (geometría del equipo, umbral doble, cero, 3.6.2 obligatoria).
 
@@ -35,5 +37,5 @@ Estado vigente; se reescribe en cada sesión. Reglas en `CLAUDE.md`; orden en `R
 ```
 Retomamos la V3.6 (D:\IT\P_RetroVertical_V3.6, github.com/dieleoz/retrov3.6_2026). Lee CLAUDE.md,
 RETOMAR.md y ROADMAP.md; comprueba con git log. Dos apps: calibrar (Cov_3.6.5_calibrar, entregada) y
-usuario (RetroUsuario 0.3.x). Siguiente: el resultado de Diego al calibrar el 8 y la b; revisión de la 0.3.1.
+usuario (RetroUsuario 0.3.x). Siguiente: el resultado de Diego al calibrar el 8 y la b; revisión de la 0.3.4.
 ```

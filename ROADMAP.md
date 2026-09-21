@@ -33,12 +33,11 @@ QA APTO y arquitecto APTO CON CONDICIONES; entregable a Diego para calibrar el 8
    fallo con número de código (`FlujoCalibracion.java:1190,1230,1452-1456,1499-1502`); prueba en rojo.
 3. **A5.** Certificado PDF, verificación de 10 patrones y toma corta: SPEC, arquitecto, código y QA.
 
-**Carril B — app de usuario.** `RetroUsuario` 0.3.0: incremento 1 "Medir y exportar"; arquitecto y QA
-APTO CON CONDICIONES.
+**Carril B — app de usuario.** `RetroUsuario` 0.3.3: incremento 1 "Medir y exportar"; arquitecto y QA
+APTO CON CONDICIONES (`REVISIONES-Apps-V3.6.md`).
 
-1. **B5.** 0.3.1 con las condiciones (sonda con reintentos ofrecidos, caso mixto, pausa #V#→#GN#, nombres
-   en MediaStore, giro de pantalla, exportar sin equipo, GPS reciente, reproducibilidad por contenido).
-2. **B6.** Arquitecto y QA sobre la 0.3.1; prueba de Diego en dos teléfonos (Android ≤9 y ≥10).
+1. **B5.** 0.3.4: `detectando` al salir, resultado tras giro, prueba del lector con equipo caído.
+2. **B6.** Revisión corta de la 0.3.4; prueba de Diego en dos teléfonos (Android ≤9 y ≥10).
 3. **B7.** Incremento 2 "señal a señal" (indicador por norma, histórico, inventario por CSV): tras las
    propuestas ▸ pendientes de Diego (geometría, umbral doble, cero, 3.6.2 obligatoria).
 
