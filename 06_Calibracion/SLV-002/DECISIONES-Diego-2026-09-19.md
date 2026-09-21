@@ -56,7 +56,10 @@ Notas de las filas del 21-sep-2026:
    el certificado da el valor medido y el error % de cada uno. Margen: Diego acepta los dos de 2018
    (±5 % y ±10 %): "pues ambos, al final
    da igual, es sacar el valor". Cierra D-14.
-   ▸ Propuesta, sin confirmar: se imprime el error; conforme hasta ±10 %, con marca por encima de ±5 %.
+   Confirmado por Diego: "el certificado lo indica" a ±5 % tal valor y a ±10 % tal valor: por patrón, el
+   valor certificado, los rangos a ±5 % y a ±10 %, lo medido y dónde cae. Conforme dentro de ±10 %;
+   el certificado dice además si está dentro de ±5 %. La misma regla para todos los códigos, la b
+   incluida: sustituye a REMEDIDA-b (RF-CAL-18) en la app de calibrar.
 4. **CERT-TITULO.** "Certificado de calibración", tal cual; firma ITVIAL SAS. Diego: "Certificado de
    calibración tal cual sí", "ITVIAL SAS firma". Sustituye la propuesta de RF-CAL-30 (P-CAL-02) y
    cierra D-15; la SPEC se corrige al escribir la de Calibra.

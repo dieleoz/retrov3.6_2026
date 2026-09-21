@@ -228,12 +228,12 @@ código, sigue con los demás que no dependan de él y lo dice al final. En pant
 ("amarillo, lámina tipo I"), nunca el código. Al terminar, un resumen: qué quedó calibrado, qué no y por
 qué, y "Guardar". Sustituye a la casilla por código y a la aceptación código a código de RF-COV-04.
 
-**RF-COV-12 — Re-medida tras escribir: error frente al certificado.** Sustituye al criterio de
-reproducción por s_rep (`Remedida3611.java:65-66`, H-2), que exigía ±2 cuentas cuando el mismo patrón
-varía 11 en un día. La re-medida es **conforme si |R medida − R certificado| / R certificado ≤ 10 %**
-(VERIF-5-10: margen de ±5 % o ±10 %, "da igual, es sacar el valor"; se toma el 10 %, propuesta marcada en
-la nota 5 de las decisiones). Se mantienen los dos intentos y restaurar el estado anterior si no es
-conforme.
+**RF-COV-12 — Re-medida tras escribir: error frente al certificado, para todos los códigos.**
+Sustituye al criterio de reproducción por s_rep (`Remedida3611.java:65-66`, H-2) y a REMEDIDA-b
+(RF-CAL-18) en esta app: la b se juzga igual que el 8. **Conforme si el valor medido cae dentro de ±10 %
+del certificado**; el acta y el certificado dan, por patrón, el valor certificado, el rango a ±5 % y a
+±10 %, lo medido y si queda dentro de ±5 % (VERIF-5-10, confirmado por Diego). Se mantienen los dos
+intentos y restaurar el estado anterior si no es conforme.
 
 **RF-COV-13 — La fecha, escrita y releída.** `#SC` graba la fecha **del día en que se calibra**
 (FECHA-EQUIPO); vence un año después. Tras `#SC` la app relee `#GC#` y, si no coincide, el acta lo dice y
