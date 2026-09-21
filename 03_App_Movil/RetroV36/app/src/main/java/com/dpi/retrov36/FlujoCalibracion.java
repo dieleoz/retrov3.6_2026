@@ -278,8 +278,11 @@ public final class FlujoCalibracion {
     }
 
     /** Lo que hacía {@code persistirYAceptarAuto} tras un "Acta ACEPTADA": el siguiente T-C41 puede usar
-     * este apagado, salvo que después se escribiera #SC (F-04). */
+     * este apagado, salvo que después se escribiera #SC (F-04). Cov364: sin efecto si `acta` sigue viva. */
     void marcarAceptadoReciente(char k) {
+        if (acta != null) {
+            return;
+        }
         encendidoReciente = sesionTodo && !scEnUltimoAceptar;
         encendidoPor = k;
     }
@@ -1050,14 +1053,15 @@ public final class FlujoCalibracion {
         }
         for (Plan p : planes.values()) {
             if (p.fila.solo && (planes.size() > 1 || (acta != null && !acta.codigos().isEmpty() && acta.codigo(p.k) == null))) {
-                return "El código " + p.k + " va solo, en un acta propia (P12 §6.3): desmarque los demás o acabe el acta en curso.";
+                return Fabrica.elCodigoCap(p.k, corto) + " va solo, en un acta propia (P12 §6.3): desmarque los "
+                        + "demás o acabe el acta en curso.";  // H-3 (Cov364, RF-COV-17): nunca el número en corto.
             }
         }
         if (acta != null) {
             for (Acta.Codigo c : acta.codigos()) {
                 TablaCalibracion.Fila fc = fila(c.k);
                 if (fc != null && fc.solo && !planes.isEmpty() && !planes.containsKey(c.k)) {
-                    return "El acta en curso es del código " + c.k + ", que va solo: acéptela o recházela antes.";
+                    return "El acta en curso es del " + Fabrica.elCodigo(c.k, corto) + ", que va solo: acéptela o recházela antes.";
                 }
             }
         }
@@ -1076,9 +1080,9 @@ public final class FlujoCalibracion {
         if (!planes.isEmpty()) {
             conformidad = nombre.trim() + ". " + nota.trim();
             for (Plan p : planes.values()) {
-                // QA-3613-08: una conformidad por codigo, con su dispensa (si la hay) y quien la decidio.
-                acta.conformidad(nombre.trim() + ": código " + p.k + ". " + nota.trim()
-                        + (p.fila.dispensa.isEmpty() ? "" : " | dispensa " + p.fila.dispensa + ": " + p.fila.origen));
+                // QA-3613-08 / RF-COV-20 (H-2): dispensa y quien la decidio; en corto, siempre RF-COV-12, nunca RF-CAL-18.
+                acta.conformidad(nombre.trim() + ": código " + p.k + ". " + nota.trim() + (p.fila.dispensa.isEmpty() ? ""
+                        : " | dispensa " + p.fila.dispensa + ": " + (corto ? "RF-COV-12 (VERIF-5-10)" : p.fila.origen)));
             }
         }
         // T-C41: los heredados, antes de tocar nada.
@@ -1104,7 +1108,9 @@ public final class FlujoCalibracion {
             if (c.resuelto()) {
                 continue;
             }
-            String r = c.restauracionFallida != null || c.debeRestaurarse() ? restaurarCodigo(c.k) : remedida(c.k);
+            String r = c.restauracionFallida != null ? restaurarCodigo(c.k, "restauración pendiente")
+                    : c.debeRestaurarse() ? restaurarCodigo(c.k, corto ? "re-medida fuera de ±10 %" : "dos re-medidas NO CONFORME")
+                    : remedida(c.k);
             if (r != null) {
                 return r;
             }
@@ -1149,8 +1155,8 @@ public final class FlujoCalibracion {
         acta.dato("decisiones", decisiones.texto(equipo()));
         TablaCalibracion.Fila f5 = fila('5');
         acta.dato("código 5", f5.escribible() ? f5.origen : f5.aviso);
-        TablaCalibracion.Fila fb = fila('b');
-        acta.dato("código b", fb.escribible() ? fb.origen + ". " + fb.aviso : fb.aviso);
+        TablaCalibracion.Fila fb = fila('b');   // RF-COV-20 (H-2): en corto no se cita RF-CAL-18 (fb.origen, PA-24).
+        acta.dato("código b", !fb.escribible() ? fb.aviso : corto ? fb.textoCorto() : fb.origen + ". " + fb.aviso);
     }
 
     /** Mascara de #V# con los bits de los heredados y de lo certificado, y marca CAL (P11-M6). */
@@ -1298,10 +1304,10 @@ public final class FlujoCalibracion {
         if (no != null) {
             return no;
         }
-        operador.progreso("Código " + k + ": batería antes de #S...");
+        operador.progreso(Fabrica.elCodigoCap(k, corto) + ": batería antes de #S...");
         Bateria.Lectura b = bateria();
         if (b.bloqueaEscrituras) {
-            return b.texto + " No se escribe el código " + k + ".";
+            return b.texto + " No se escribe el " + Fabrica.elCodigo(k, corto) + ".";
         }
         String e0 = entrar();   // QA-3612-13: el modo administrador caduca a los 10 min
         if (e0 != null) {
@@ -1321,12 +1327,14 @@ public final class FlujoCalibracion {
         acta.dato("patrones " + k, p.patrones);
         acta.dato("series " + k, seriesDe(k, p.fila));   // QA-3614-03: que series usa este codigo (y su OSCURO)
         Anclas.Valor srk = sRep(k);
-        acta.dato("s_rep " + k, srk == null ? "" : srk.texto);   // C-P14-2: de donde sale
+        if (!corto || k != 'b') {   // RF-COV-20 (H-2): en corto, ninguna línea del acta cita s_rep para la b.
+            acta.dato("s_rep " + k, srk == null ? "" : srk.texto);   // C-P14-2: de donde sale
+        }
         acta.dato("protocolo banco " + k, protocoloDe(k, p.fila));   // B3: con que protocolo se midio el banco
-        acta.dato("rango " + k, rango(k, p));
-        String metodo = p.propuesta.metodo + "; tabla " + p.fila.texto();
+        acta.dato("rango " + k, rango(k, p));   // RF-COV-20 (H-2): ESCRIBIENDO/ESCRITO citan RF-COV-12 en corto.
+        String metodo = p.propuesta.metodo + "; tabla " + (corto ? p.fila.textoCorto() : p.fila.texto());
         String osc = p.oscuroTexto(ts.enviada);
-        operador.progreso("Código " + k + ": #S...");
+        operador.progreso(Fabrica.elCodigoCap(k, corto) + ": #S...");
         encendidoReciente = false;
         acta.escribiendo(k, anterior, ts.enviada, metodo, osc, conformidad);
         Cliente.Respuesta r = ops.escribir(ts.texto);
@@ -1348,10 +1356,11 @@ public final class FlujoCalibracion {
         return "Escritura del código " + k + " fallida: " + t + ". Restaurado.";
     }
 
-    /** P11-M1: restauracion verificada, o el codigo queda sin resolver. */
-    private String restaurarCodigo(char k) throws IOException, InterruptedException {
+    /** P11-M1: restauracion verificada, o el codigo queda sin resolver. `motivo` es el real (Cov364, B-2/
+     *  B-3): "colocaciones no válidas" o "re-medida fuera de ±10 %" en corto. */
+    private String restaurarCodigo(char k, String motivo) throws IOException, InterruptedException {
         Acta.Codigo c = acta.codigo(k);
-        operador.progreso("Código " + k + ": restaurando la curva anterior...");
+        operador.progreso(Fabrica.elCodigoCap(k, corto) + ": restaurando la curva anterior...");
         String e0 = entrar();
         if (e0 != null) {
             return e0;
@@ -1365,11 +1374,12 @@ public final class FlujoCalibracion {
             for (Acta.Codigo x : acta.codigos()) {
                 alguno |= x.conforme();
             }
-            return "Código " + k + " restaurado tras dos re-medidas no conformes: " + r.texto + ". La secuencia se detiene."
-                    + (alguno ? "" : " El acta no tiene ningún código conforme: pulse Rechazar.");
+            // B-1 (Cov364): en corto el acta sin conforme se rechaza SOLA justo despues (anotarNoCalibrado).
+            return Fabrica.elCodigoCap(k, corto) + " restaurado (" + motivo + "): " + r.texto + ". La secuencia se detiene."
+                    + (alguno || corto ? "" : " El acta no tiene ningún código conforme: pulse Rechazar.");
         }
         acta.restauracionFallida(k, r.texto);
-        return "RESTAURACIÓN NO VERIFICADA del código " + k + ": " + r.texto
+        return "RESTAURACIÓN NO VERIFICADA del " + Fabrica.elCodigo(k, corto) + " (" + motivo + "): " + r.texto
                 + ". El acta no se puede aceptar; vuelva a pulsar Calibrar para reintentarla.";
     }
 
@@ -1378,6 +1388,9 @@ public final class FlujoCalibracion {
      * se registran y se repiten. Una repeticion como maximo; si falla, restaurar (verificado).
      */
     public static final int MAX_NO_VALIDAS = 10;
+
+    /** Colocaciones no válidas SEGUIDAS (RF-COV-21, B-3): remedida() la pone a 0, colocar() la usa. */
+    private int noValidas;
 
     private String remedida(char k) throws IOException, InterruptedException {
         TablaCalibracion.Fila f = fila(k);
@@ -1389,78 +1402,26 @@ public final class FlujoCalibracion {
         double xBanco = banco.media();
         int kBanco = Math.max(1, banco.colocaciones().size());
         Anclas.Valor sr = sRep(k);
-        int noValidas = 0;
+        noValidas = 0;
         while (true) {
             Acta.Codigo c = acta.codigo(k);
             if (c.conforme()) {
                 return null;
             }
             if (c.debeRestaurarse()) {
-                return restaurarCodigo(k);
+                return restaurarCodigo(k, corto ? "re-medida fuera de ±10 %" : "dos re-medidas NO CONFORME");
             }
-            int q = operador.preguntar("Re-medida del código " + k + (c.validos() == 1 ? " (repetición)" : ""),
+            int q = operador.preguntar("Re-medida del " + Fabrica.elCodigo(k, corto) + (c.validos() == 1 ? " (repetición)" : ""),
                     "Coloque " + pat.nombre + " (" + pat + ") y pulse OK. " + Remedida3611.K + " colocaciones × "
-                            + Remedida3611.M + " pares ('e' y código " + k + ").", "OK", "Parar aquí");
+                            + Remedida3611.M + " pares" + (corto ? "." : " ('e' y código " + k + ")."), "OK", "Parar aquí");
             if (q != 0) {
-                return "Parado en la re-medida del código " + k + ". El acta queda a medias.";
+                return "Parado en la re-medida del " + Fabrica.elCodigo(k, corto) + ". El acta queda a medias.";
             }
             List<double[]> xs = new ArrayList<>();
             List<double[]> rs = new ArrayList<>();
-            while (xs.size() < Remedida3611.K) {
-                operador.progreso("Código " + k + ": colocación " + (xs.size() + 1) + " de " + Remedida3611.K + "...");
-                double[] xe = new double[Remedida3611.M];
-                double[] rk = new double[Remedida3611.M];
-                String falla = null;
-                Double va;
-                try {
-                    // RTV 1.0: x con la trama del protocolo ('e' en la V3.6, "#X,k#" en la V4.6).
-                    va = ops.medirX(k);
-                    for (int i = 0; i < Remedida3611.M && falla == null; i++) {
-                        Double vx = ops.medirX(k);
-                        Integer vr = ops.medirR(k);
-                        if (vx == null || vr == null) {
-                            falla = "par " + (i + 1) + " sin respuesta";
-                        } else {
-                            xe[i] = vx;
-                            rk[i] = vr;
-                        }
-                    }
-                } catch (IOException ex) {
-                    // T-S09: la colocacion interrumpida queda en el acta (no cuenta).
-                    acta.intento(k, reloj.ahoraIso(), "INTERRUMPIDA", "colocación " + (xs.size() + 1)
-                            + " cortada: " + ex.getMessage());
-                    throw ex;
-                }
-                if (falla == null) {
-                    falla = Remedida3611.colocacion(pat.nombre, va == null ? Double.NaN : va, xBanco, xe, rk, c.leida);
-                }
-                if (falla != null) {
-                    acta.intento(k, reloj.ahoraIso(), "NO_VALIDA", falla);
-                    if (++noValidas >= MAX_NO_VALIDAS) {
-                        // O-14: sin limite, un operador que pulsa OK sin corregir no acaba nunca.
-                        // ALTO (QA-Cov363, arreglo 1): antes de este arreglo, aqui se paraba SIN restaurar
-                        // (a diferencia de la via de debeRestaurarse(), arriba en este mismo metodo): la curva
-                        // nueva quedaba escrita en el equipo sin verificar. Se restaura, igual que alli.
-                        String r = restaurarCodigo(k);
-                        return "Demasiadas colocaciones no válidas seguidas (" + MAX_NO_VALIDAS + "): se para la re-medida "
-                                + "del código " + k + ". Revise el patrón y el apoyo antes de volver a calibrar. " + r;
-                    }
-                    int r = operador.preguntar("Colocación no válida", falla + "\nVuelva a colocar " + pat.nombre
-                            + " y pulse OK.", "OK", "Parar aquí");
-                    if (r != 0) {
-                        return "Parado en la re-medida del código " + k + ". El acta queda a medias.";
-                    }
-                    continue;
-                }
-                xs.add(xe);
-                rs.add(rk);
-                if (xs.size() < Remedida3611.K) {
-                    int r = operador.preguntar("Levante y apoye (" + (xs.size() + 1) + " de " + Remedida3611.K + ")",
-                            "Levante el equipo y vuelva a apoyarlo sobre " + pat.nombre + ".", "OK", "Parar aquí");
-                    if (r != 0) {
-                        return "Parado en la re-medida del código " + k + ". El acta queda a medias.";
-                    }
-                }
+            String parar = colocar(k, pat, xBanco, c, xs, rs);
+            if (parar != null) {
+                return parar;
             }
             Remedida3611.Resultado res;
             if (corto) {
@@ -1488,6 +1449,71 @@ public final class FlujoCalibracion {
                 operador.preguntar("Re-medida NO CONFORME", res.texto + "\nQueda una repetición.", "OK");
             }
         }
+    }
+
+    /** Las K colocaciones de una repetición, en xs/rs; null si completo, o el motivo si se paró (sacado
+     *  de {@code remedida}, modularidad.md: 100 líneas por función). */
+    private String colocar(char k, Patron pat, double xBanco, Acta.Codigo c, List<double[]> xs, List<double[]> rs)
+            throws IOException, InterruptedException {
+        while (xs.size() < Remedida3611.K) {
+            operador.progreso(Fabrica.elCodigoCap(k, corto) + ": colocación " + (xs.size() + 1) + " de " + Remedida3611.K + "...");
+            double[] xe = new double[Remedida3611.M];
+            double[] rk = new double[Remedida3611.M];
+            String falla = null;
+            Double va;
+            try {
+                // RTV 1.0: x con la trama del protocolo ('e' en la V3.6, "#X,k#" en la V4.6).
+                va = ops.medirX(k);
+                for (int i = 0; i < Remedida3611.M && falla == null; i++) {
+                    Double vx = ops.medirX(k);
+                    Integer vr = ops.medirR(k);
+                    if (vx == null || vr == null) {
+                        falla = "par " + (i + 1) + " sin respuesta";
+                    } else {
+                        xe[i] = vx;
+                        rk[i] = vr;
+                    }
+                }
+            } catch (IOException ex) {
+                // T-S09: la colocacion interrumpida queda en el acta (no cuenta).
+                acta.intento(k, reloj.ahoraIso(), "INTERRUMPIDA", "colocación " + (xs.size() + 1)
+                        + " cortada: " + ex.getMessage());
+                throw ex;
+            }
+            if (falla == null) {
+                falla = Remedida3611.colocacion(pat.nombre, va == null ? Double.NaN : va, xBanco, xe, rk, c.leida);
+            }
+            if (falla != null) {
+                acta.intento(k, reloj.ahoraIso(), "NO_VALIDA", falla);
+                if (++noValidas >= MAX_NO_VALIDAS) {
+                    // O-14: sin limite, un operador que pulsa OK sin corregir no acaba nunca.
+                    // ALTO (QA-Cov363, arreglo 1): antes de este arreglo, aqui se paraba SIN restaurar
+                    // (a diferencia de la via de debeRestaurarse(), arriba en este mismo metodo): la curva
+                    // nueva quedaba escrita en el equipo sin verificar. Se restaura, igual que alli.
+                    String r = restaurarCodigo(k, corto ? "colocaciones no válidas" : "demasiadas colocaciones no válidas seguidas");
+                    return "Demasiadas colocaciones no válidas seguidas (" + MAX_NO_VALIDAS + "): se para la "
+                            + "re-medida del " + Fabrica.elCodigo(k, corto) + ". Revise el patrón y el apoyo "
+                            + "antes de volver a calibrar. " + r;
+                }
+                int r = operador.preguntar("Colocación no válida", falla + "\nVuelva a colocar " + pat.nombre
+                        + " y pulse OK.", "OK", "Parar aquí");
+                if (r != 0) {
+                    return "Parado en la re-medida del " + Fabrica.elCodigo(k, corto) + ". El acta queda a medias.";
+                }
+                continue;
+            }
+            noValidas = 0;   // RF-COV-21 (B-3): el contador es de SEGUIDAS: una colocación válida lo pone a cero.
+            xs.add(xe);
+            rs.add(rk);
+            if (xs.size() < Remedida3611.K) {
+                int r = operador.preguntar("Levante y apoye (" + (xs.size() + 1) + " de " + Remedida3611.K + ")",
+                        "Levante el equipo y vuelva a apoyarlo sobre " + pat.nombre + ".", "OK", "Parar aquí");
+                if (r != 0) {
+                    return "Parado en la re-medida del " + Fabrica.elCodigo(k, corto) + ". El acta queda a medias.";
+                }
+            }
+        }
+        return null;
     }
 
     /** Boton "Persistencia": apagar, encender, reconectar y releer (RF-APP-46). */
@@ -1573,27 +1599,12 @@ public final class FlujoCalibracion {
         }
         String hoy = reloj.hoy();
         scEnUltimoAceptar = false;
-        // P14-04: #SC una vez. Si el equipo ya tiene la fecha de hoy (otra acta de esta sesion), no se reescribe.
-        Cliente.Respuesta g0 = ops.pedir("#GC#");
-        String antes = g0.valida() ? Calibracion.fechaDe(g0.trama) : null;
-        if (hoy.equals(antes)) {
-            acta.dato("#SC", "no se reescribe: el equipo ya tiene la fecha de hoy (" + g0.describir() + ")");
-        } else {
-            // MEDIO (A-06, RF-COV-13, Cov363 arreglo 3): la fecha anterior queda anotada ANTES de enviar
-            // #SC, para el acta y para que rechazar() pueda devolverla si esta acta no llega a aceptarse.
-            acta.dato("#SC emitido, fecha anterior", antes == null ? Calibracion.NONE : antes);
-            Cliente.Respuesta r = ops.escribir("#SC," + hoy + "#");
-            scEnUltimoAceptar = true;         // una escritura: el siguiente T-C41 apaga el suyo (F-04)
-            encendidoReciente = false;
-            Cliente.Respuesta g = ops.pedir("#GC#");
-            String leida = g.valida() ? Calibracion.fechaDe(g.trama) : null;
-            if (!Tramas.esOk(r.trama) || !hoy.equals(leida)) {
-                // MEDIO (A-06): la rama de fallo tambien anota #SC y #GC#, no solo el texto de retorno.
-                acta.dato("#SC", r.describir());
-                acta.dato("#GC#", g.describir());
-                return "#SC no quedó grabada (#SC -> " + r.describir() + ", #GC# -> " + g.describir()
-                        + "): el acta NO se cierra. Reintente.";
-            }
+        // P14-04 / RF-COV-18 (H-1): #GC#, #SC y su devolucion viven en FechaCalibracion (modularidad).
+        FechaCalibracion.Resultado fc = FechaCalibracion.grabar(ops, acta, hoy);
+        scEnUltimoAceptar = fc.escribioSc;    // una escritura: el siguiente T-C41 apaga el suyo (F-04)
+        encendidoReciente &= !fc.escribioSc;
+        if (!fc.ok) {
+            return fc.motivo;
         }
         // P14-B02: el ZIP de soporte se exporta antes de cerrar y el acta cita su SHA-256.
         String sha = almacen.soporteSha256(acta);
@@ -1650,19 +1661,8 @@ public final class FlujoCalibracion {
                 }
                 t.append("código ").append(c.k).append(r.ok ? " restaurado; " : " SIN RESTAURAR (" + r.texto + "); ");
             }
-            // MEDIO (A-06, RF-COV-13, Cov363 arreglo 3): si esta acta llegó a emitir #SC (aceptar() lo anotó
-            // antes de enviarlo), se devuelve la fecha anterior con #SC,<anterior># (o #SC,NONE# si no había)
-            // y se relee #GC#, para que "No se grabará fecha" (CalibrarActivity) sea cierto.
-            String antesSC = acta.dato("#SC emitido, fecha anterior");
-            if (antesSC != null) {
-                Cliente.Respuesta rSc = ops.escribir("#SC," + antesSC + "#");
-                Cliente.Respuesta gSc = ops.pedir("#GC#");
-                String leidaSc = gSc.valida() ? Calibracion.fechaDe(gSc.trama) : null;
-                boolean okSc = Tramas.esOk(rSc.trama) && antesSC.equals(leidaSc);
-                acta.dato("#SC al rechazar", "#SC," + antesSC + "# -> " + rSc.describir() + "; #GC# -> "
-                        + gSc.describir() + (okSc ? " (fecha anterior restaurada)" : " (NO SE PUDO RESTAURAR LA FECHA)"));
-                t.append("fecha #SC devuelta a ").append(antesSC).append(okSc ? "; " : " SIN VERIFICAR; ");
-            }
+            // RF-COV-19 (H-1): si esta acta emitio #SC, devuelve la fecha REALMENTE leida (FechaCalibracion).
+            t.append(FechaCalibracion.devolver(ops, acta));
         }
         if (fallos.length() > 0) {
             // QA-3613-01 / P13-05: con una restauracion NO verificada el acta no se cierra: el equipo puede
