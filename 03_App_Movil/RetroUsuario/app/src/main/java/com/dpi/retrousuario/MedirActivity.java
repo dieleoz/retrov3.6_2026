@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat;
 import com.dpi.retrousuario.dominio.CsvMedidas;
 import com.dpi.retrousuario.dominio.EstrategiaExportacion;
 import com.dpi.retrousuario.dominio.FilaMedida;
+import com.dpi.retrousuario.dominio.PermisoUbicacion;
 import com.dpi.retrousuario.dominio.SesionMedicion;
 
 import java.io.File;
@@ -35,6 +36,7 @@ import java.util.TimeZone;
 public final class MedirActivity extends AppCompatActivity {
 
     private static final int PETICION_PERMISO_EXPORTAR = 100;
+    private static final int PETICION_PERMISO_UBICACION = 101;
 
     private TextView tvResultado;
     private TextView tvContador;
@@ -66,6 +68,25 @@ public final class MedirActivity extends AppCompatActivity {
 
         btnAjustes.setOnClickListener(v -> startActivity(new Intent(this, AjustesActivity.class)));
         btnExportar.setOnClickListener(v -> exportar());
+
+        pedirPermisoUbicacionSiHaceFalta(); // arq C2: al entrar a medir, una sola vez por proceso.
+    }
+
+    /**
+     * arq C2 (condición sobre 0.3.1): la app nunca pedía {@code ACCESS_FINE_LOCATION} en tiempo de
+     * ejecución, pese a declararlo en el manifiesto. RF-USR-15: se pida o no, o se conceda o no, la
+     * medida nunca se bloquea por esto — {@link UbicacionGps} cae a {@code sin_posicion} igual con
+     * {@link SecurityException} que sin permiso declarado. La decisión de SI toca pedirlo (no
+     * concedido, y no pedido ya en este proceso) está en {@link PermisoUbicacion}, probada en la JVM.
+     */
+    private void pedirPermisoUbicacionSiHaceFalta() {
+        boolean concedido = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+        if (PermisoUbicacion.debePedirse(concedido, SesionHolder.permisoUbicacionPedido())) {
+            SesionHolder.marcarPermisoUbicacionPedido();
+            ActivityCompat.requestPermissions(this,
+                    new String[] { Manifest.permission.ACCESS_FINE_LOCATION }, PETICION_PERMISO_UBICACION);
+        }
     }
 
     @Override
@@ -227,6 +248,9 @@ public final class MedirActivity extends AppCompatActivity {
             boolean concedido = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
             tvResultado.setText(concedido ? R.string.exportar_permiso_concedido : R.string.exportar_permiso_denegado);
         }
+        // arq C2/RF-USR-15: PETICION_PERMISO_UBICACION no lleva reacción propia, concedido o no — se
+        // mide igual (con o sin posición), sin bloquear ni avisar; UbicacionGps ya distingue el
+        // resultado (gps_estado) fila a fila.
     }
 
     /** ISO 8601 con zona (RF-USR-06, M-6): "XXX" da el offset con dos puntos, p. ej. "-05:00" (disponible desde API 24). */

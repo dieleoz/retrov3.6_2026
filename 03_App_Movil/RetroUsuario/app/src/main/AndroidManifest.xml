@@ -5,9 +5,10 @@
     <!-- targetSdkVersion 30: BLUETOOTH y BLUETOOTH_ADMIN se conceden en la instalacion. -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-    <!-- RF-USR-06/M-8: GPS es opcional, sin pedirlo en tiempo de ejecucion (UbicacionGps degrada a
-         sin_posicion si el sistema la niega); se declara para que el sistema pueda concederla si el
-         usuario la otorga por otra via. RF-USR-15: "sin permiso o sin posicion, se mide igual". -->
+    <!-- RF-USR-06/M-8: GPS es opcional. arq C2 (condicion sobre 0.3.1): ACCESS_FINE_LOCATION SI se
+         pide en tiempo de ejecucion, al entrar a medir (MedirActivity, una vez por proceso); se
+         conceda o no, UbicacionGps degrada a sin_posicion igual (RF-USR-15: "sin permiso o sin
+         posicion, se mide igual", nunca bloquea). -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <!-- RF-USR-15 bis: exportar a Download/RetroUsuario/. API 29-30 con almacenamiento con ambito:
