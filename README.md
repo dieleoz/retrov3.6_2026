@@ -25,7 +25,7 @@ acta son de cada equipo físico. Entre equipos se reutilizan catálogo, método,
 | :--- | :--- | :--- |
 | Firmware V3.6 | `01_Firmware/RetroVertical_V3.6.X/` | MPLAB X, XC8 2.10; cambios en `CAMBIOS-V3.6.md`; pruebas en MPLAB SIM (`pruebas/`, `TDD-V3.6.md`) |
 | Base de 2020 | `01_Firmware/base_2020_d089f962/` | Sin tocar; referencia de toda comparación |
-| Apps | Empresa (DPI) y usuario (va con el equipo); ramas `rtv-1.0*` | JDK 11, Gradle 6.5, JUnit a mano |
+| Apps | Calibrar (`RetroV36`, rama `rtv-1.0-cierre`) y usuario (`RetroUsuario`) | JDK 11, Gradle 6.5 |
 | Contrato de órdenes `#...#` | `05_Documentacion/PROTOCOLO-V3.6.md` | Manda sobre firmware y app |
 | Banco de patrones | `06_Calibracion/` (catálogo, colas) | Una carpeta por equipo con campañas, tramas, actas y `HUELLAS.txt` |
 | Pantalla STONE | `04_Pantalla_STONE/` | Proyecto de 2020; sólo se cruza con el firmware |

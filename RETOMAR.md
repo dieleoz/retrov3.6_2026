@@ -1,47 +1,39 @@
 # RETOMAR — dónde se quedó el trabajo
 
-**Los códigos 8 y b de SLV-002 siguen sin escribir.** Estado vigente; se reescribe en cada sesión.
-Reglas en `CLAUDE.md`; orden en `ROADMAP.md`; decisiones en
+**Los códigos 8 y b de SLV-002 siguen sin escribir: la app para hacerlo está entregada y falta usarla.**
+Estado vigente; se reescribe en cada sesión. Reglas en `CLAUDE.md`; orden en `ROADMAP.md`; decisiones en
 `06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md`. Mapa: `ARQUITECTURA.map` §M2 y §M1.
 
-## Estado (21-sep-2026)
+## Estado (21-sep-2026, tarde)
 
-- **Orquestador acoplado** (`a13dd24`): pre-commit con `.topes`, particularidades en
-  `.claude/particularidades/`, `APRENDIDO.md`, `fuentes/INDICE.md`. Revisión `arquitecto-iot`: APTO
-  CON CONDICIONES, cerradas en el mismo commit.
-- **SLV-002 (Coviandina):** firmware 3.6.2; códigos 1 y 2 con acta aceptada (vence 2027-09-19);
-  serie en EEPROM `SLV-002`, `SLV-002-2026` decidida y sin grabar.
-- **Banco:** el ZIP de soporte de las 18:11 del 19-sep (md5 `79b23590…`) está archivado en
-  `06_Calibracion/SLV-002/campanas/` y basta para calibrar el 8 y la b. **No hay que volver a medir.**
-- **Rumbo nuevo (decisiones del 21-sep):** las apps de calibración son de DPI y van por USB
-  (APPS-DPI). Tres piezas: **Toma** (hasta 50 tomas, TOMA-50), **Calibra** (cargar ZIP, calibrar con
-  fecha y operador, verificar 5-10 referencias, VERIF-5-10) y el **"Certificado de calibración"** que
-  firma ITVIAL SAS (CERT-TITULO). Sustituye al camino "rc3/rc4 + procedimiento largo" del 19-21 sep:
-  ese procedimiento y sus once cambios quedan sin aplicar.
-- **Apps:** la app corta RTV Calibra está en la rama `rtv-1.0-cierre` (`7faaf38`, en GitHub): carga
-  el ZIP y calibra, pero no emite PDF ni tiene arquitecto ni QA. Base para la tarea 3 del ROADMAP.
-- **Teléfono de Coviandina:** HONOR con la rc3 (10002). Calibra se instala al lado, con su propio
-  paquete, sin tocar esa campaña.
-
-## Datos que ya están para la SPEC
-
-- Formato del certificado: la hoja `lista de calibracion retros.xlsx` de 2018 (VALOR ESPERADO /
-  LLEGADA / SALIDA / Error %), en `D:\@Proyect\IT\old\VERTICAL\1_V2-V3_18F4550_CCS\`; contenido
-  mínimo en `SPEC-Calibracion-V3.6.md` RF-CAL-32 (el título lo cambia CERT-TITULO).
-- Toma: propuesta de 36 tomas + 14 de reserva, por código, del cruce de los Excel de 2018 con el
-  firmware (2018 usaba ~45 patrones × 3 disparos × 1 colocación, rectas por tramos). Los códigos a, c
-  y d no tienen curva propia en 2020 (`ecuacionesCalibracion.c:32=10, 38=16, 41=19`).
+- **SLV-002 (Coviandina):** firmware 3.6.2; códigos 1 y 2 con acta aceptada (vence 2027-09-19); serie
+  `SLV-002`, `SLV-002-2026` decidida y sin grabar. ZIP del banco (18:11, md5 `79b23590…`) archivado.
+- **App de calibrar (empresa): `Cov_3.6.5_calibrar`**, `com.dpi.retrov36.calibra`, versionCode 10010,
+  md5 `dc0beaf5e110a72b7cbb288e4011cb68`, SHA-256 `770bd7c3…2a55147`. Rama `rtv-1.0-cierre`, `316a6bc`.
+  QA APTO; arquitecto APTO CON CONDICIONES (mensajes de fallo con número de código, antes de darla a un
+  operador de Coviandina). **Entregable a Diego** en `03_App_Movil/Cov_3.6.5_calibrar.apk`. Cargar el ZIP →
+  un botón "Calibrar" → re-medida ±10 % frente al certificado → fecha del día (se lee antes y se relee).
+- **App de usuario: `RetroUsuario` 0.3.0** (`com.dpi.retrousuario.coviandina`, md5 `68b8a961…`), rama
+  `worktree-agent-a0b5ff37e1945291c` (se sube como `retro-usuario`). Incremento 1 "Medir y exportar".
+  Arquitecto y QA: APTO CON CONDICIONES. **0.3.1 en curso** con esas condiciones. Incremento 2 ("señal a
+  señal", indicador por norma, inventario) sin programar.
+- **SPEC al día con el código:** calibrar, `SPEC-App-Calibracion-Coviandina.md` §8 (RF-COV-11 a 23);
+  usuario, `SPEC-App-Usuario-V3.6.md` r6 + §4 bis.
 
 ## Pendiente de Diego
 
-D-16 (¿TOMA-50 anula PROTOCOLO-AJUSTE y TIPO-I-REPETIR? ¿curva propia para a, c y d?) y las de la
-tabla del ROADMAP.
+1. **Calibrar el 8 y la b** con `Cov_3.6.5_calibrar` y el ZIP de las 18:11; traer el ZIP que salga.
+2. **Subir las ramas** (el sistema bloquea el push a los subagentes):
+   `git -C .claude/worktrees/agent-abbfb74fdaea81269 push origin rtv-1.0-cierre` y
+   `git -C .claude/worktrees/agent-a0b5ff37e1945291c push origin worktree-agent-a0b5ff37e1945291c:retro-usuario`.
+3. Probar la app de usuario en dos teléfonos (Android ≤9 y ≥10): exportar, girar, cambiar de equipo.
+4. Decisiones abiertas del `ROADMAP.md` (D-13, D-16, D-3, D-4, D-5, D-8) y las propuestas ▸ de la SPEC
+   de usuario (geometría del equipo, umbral doble, cero, 3.6.2 obligatoria).
 
 ## Prompt para retomar
 
 ```
 Retomamos la V3.6 (D:\IT\P_RetroVertical_V3.6, github.com/dieleoz/retrov3.6_2026). Lee CLAUDE.md,
-RETOMAR.md y ROADMAP.md; comprueba con git log. Objetivo: certificar SLV-002. Siguiente: SPEC de
-Calibra con el "Certificado de calibración" y sus pruebas (tarea 1), arquitecto-iot sobre ella, y
-desarrollo sobre la rama rtv-1.0-cierre. El ZIP del banco ya existe; no se vuelve a medir.
+RETOMAR.md y ROADMAP.md; comprueba con git log. Dos apps: calibrar (Cov_3.6.5_calibrar, entregada) y
+usuario (RetroUsuario 0.3.x). Siguiente: el resultado de Diego al calibrar el 8 y la b; revisión de la 0.3.1.
 ```

@@ -57,7 +57,8 @@ el acta; vence al año. El contrato `05_Documentacion/PROTOCOLO-V3.6.md` manda s
 - Proceso por puertas P1-P12 (`ROADMAP.md`); ninguna se cierra sin su evidencia.
 - **A Diego sólo va una APK con visto bueno escrito de arquitecto y de QA.** Se copia como
   `03_App_Movil/RTV-V<versionName>.apk` y `-<versionCode>.apk`, con md5 y `aapt dump badging`. Dos
-  binarios distintos con la misma versión son un defecto.
+  binarios distintos con la misma versión son un defecto. El md5 del contenedor APK no se reproduce entre compilaciones
+  (el empaquetador reordena el ZIP): la equivalencia se comprueba por contenido (dex, recursos, firma).
 - **Antes de una instrucción de campo, se mira qué app lleva ese teléfono** en la cabecera `# app:` de
   su último registro, no en la memoria. Android no instala un `versionCode` menor, la app no admite
   copia y desinstalar borra la campaña: **si una instalación falla, no se desinstala**.
