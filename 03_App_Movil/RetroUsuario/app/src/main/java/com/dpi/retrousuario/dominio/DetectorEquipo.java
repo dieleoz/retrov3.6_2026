@@ -16,8 +16,11 @@ package com.dpi.retrousuario.dominio;
  */
 public final class DetectorEquipo {
 
-    /** Plazo de espera de "#V#": el mismo de RF-USR-16 (SPEC-V3.6.md:453-456), 2500 ms. */
-    public static final long PLAZO_MS = 2500;
+    /** M5, corrige un valor anterior: plazo de una trama "#...#" (`plazoTramaMs`, SPEC-V3.6.md:455),
+     *  2000 ms — distinto del plazo de 2500 ms de un disparo "::&lt;n&gt;" (RF-USR-16), que es otro
+     *  parámetro. Se mantiene como valor por defecto de conveniencia; {@link #detectar(Canal,
+     *  ParametrosRitmo)} usa siempre {@link ParametrosRitmo#plazoTramaMs()}. */
+    public static final long PLAZO_MS = 2000;
 
     public enum Resultado { COMPATIBLE, NO_COMPATIBLE }
 
@@ -46,11 +49,17 @@ public final class DetectorEquipo {
     /**
      * Envía **únicamente** "#V#" y decide. Silencio (canal.enviar devuelve null), una trama que no
      * empieza por "#V,3.6," (otro firmware, otra version, "#ERR,...#", basura) o una que sí empieza
-     * así pero no tiene los 5 campos esperados: NO_COMPATIBLE, sin enviar ningún otro byte
-     * (RF-USR-01: "nunca 9, 6, e, @LEERV...").
+     * así pero no tiene 4 o 5 campos (D-3, corrige un comentario desactualizado: {@link RespuestaV}
+     * acepta las dos formas, r6 C3) — en cualquiera de esos casos: NO_COMPATIBLE, sin enviar ningún
+     * otro byte (RF-USR-01: "nunca 9, 6, e, @LEERV...").
      */
     public static ResultadoDeteccion detectar(Canal canal) {
-        String respuesta = canal.enviar("#V#", PLAZO_MS);
+        return detectar(canal, new ParametrosRitmo());
+    }
+
+    /** M5: plazo de la trama "#V#" con el {@code plazoTramaMs} de {@code params} (2000 ms por defecto). */
+    public static ResultadoDeteccion detectar(Canal canal, ParametrosRitmo params) {
+        String respuesta = canal.enviar("#V#", params.plazoTramaMs());
         if (!RespuestaV.esCompatible(respuesta)) {
             return new ResultadoDeteccion(Resultado.NO_COMPATIBLE, null);
         }

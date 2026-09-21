@@ -19,6 +19,8 @@ package com.dpi.retrousuario.dominio;
  */
 public final class Sonda362 {
 
+    /** @deprecated usar {@link ParametrosRitmo#plazoTramaMs()}; se mantiene como valor de conveniencia. */
+    @Deprecated
     public static final long PLAZO_MS = DetectorEquipo.PLAZO_MS;
 
     public enum Resultado { OK, ACTUALIZAR_FIRMWARE, SIN_RESPUESTA_REINTENTAR }
@@ -73,25 +75,85 @@ public final class Sonda362 {
     private Sonda362() {
     }
 
+    /** Compatibilidad: exigir_362 = true (por defecto) y plazo/pacing por defecto. */
     public static ResultadoSonda sondear(Canal canal) {
-        String crudaGN = canal.enviar("#GN#", PLAZO_MS);
-        String crudaGC = canal.enviar("#GC#", PLAZO_MS);
+        return sondear(canal, new ParametrosRitmo());
+    }
+
+    /**
+     * M-3/exigir_362 (RF-USR-01, T-USR-01c): con {@code params.exigir362() == true}, un
+     * "#ERR,FORMATO#" en #GN# o #GC# pide actualizar firmware y no se mide, y si ninguna de las dos
+     * contesta nada útil (tras los reintentos) se ofrece reintentar, sin medir. Con
+     * {@code params.exigir362() == false}, la app mide igual sea cual sea la respuesta de #GN#/#GC#
+     * (incluido "#ERR,FORMATO#" o silencio): el resultado se da como {@link Resultado#OK} con lo que
+     * sí se pudo leer, y {@code serieLeida}/{@code fechaRegistrada} en false donde no se pudo (la
+     * fila queda con {@code serie_origen = "ninguna"} y {@code estado_calibracion = "sin_fecha"} si
+     * corresponde, decidido en {@link SesionMedicion}, no aquí).
+     *
+     * <p>M5: 150 ms de pausa entre el envío de #GN# y el de #GC# (equipo ya identificado,
+     * SPEC-V3.6.md:441-446), y el plazo de cada trama es {@code params.plazoTramaMs()} (2000 ms por
+     * defecto), no el plazo de un disparo.</p>
+     */
+    public static ResultadoSonda sondear(Canal canal, ParametrosRitmo params) {
+        return sondear(canal, params, Sonda362::pausaReal);
+    }
+
+    /** Visible para pruebas (evita un {@code Thread.sleep} real de 150 ms en la JVM, M5). */
+    static ResultadoSonda sondear(Canal canal, ParametrosRitmo params, java.util.function.LongConsumer pausa) {
+        String crudaGN = enviarConReintentos(canal, "#GN#", params);
+        pausa.accept(150L); // M5: 150 ms entre dos tramas "#", equipo ya identificado.
+        String crudaGC = enviarConReintentos(canal, "#GC#", params);
         RespuestaTrama tGN = RespuestaTrama.analizar(crudaGN);
         RespuestaTrama tGC = RespuestaTrama.analizar(crudaGC);
         Clasificacion cGN = clasificar(crudaGN, tGN, "GN");
         Clasificacion cGC = clasificar(crudaGC, tGC, "GC");
 
+        if (cGN == Clasificacion.OK && cGC == Clasificacion.OK) {
+            return resultadoOk(tGN, tGC);
+        }
+        if (!params.exigir362()) {
+            return resultadoOkDegradado(cGN, tGN, cGC, tGC);
+        }
         if (cGN == Clasificacion.ERR_FORMATO || cGC == Clasificacion.ERR_FORMATO) {
             return new ResultadoSonda(Resultado.ACTUALIZAR_FIRMWARE, "", false, "", false);
         }
-        if (cGN != Clasificacion.OK || cGC != Clasificacion.OK) {
-            return new ResultadoSonda(Resultado.SIN_RESPUESTA_REINTENTAR, "", false, "", false);
-        }
+        return new ResultadoSonda(Resultado.SIN_RESPUESTA_REINTENTAR, "", false, "", false);
+    }
+
+    private static ResultadoSonda resultadoOk(RespuestaTrama tGN, RespuestaTrama tGC) {
         boolean serieLeida = !"NONE".equals(tGN.campo(1));
         String serie = serieLeida ? tGN.campo(1) : "";
         boolean fechaRegistrada = !"NONE".equals(tGC.campo(1));
         String fecha = fechaRegistrada ? tGC.campo(1) : "";
         return new ResultadoSonda(Resultado.OK, serie, serieLeida, fecha, fechaRegistrada);
+    }
+
+    /** exigir_362 = false: mide igual con lo que se pudo leer; lo que falte queda vacío/no leído. */
+    private static ResultadoSonda resultadoOkDegradado(Clasificacion cGN, RespuestaTrama tGN,
+            Clasificacion cGC, RespuestaTrama tGC) {
+        boolean serieLeida = cGN == Clasificacion.OK && !"NONE".equals(tGN.campo(1));
+        String serie = serieLeida ? tGN.campo(1) : "";
+        boolean fechaRegistrada = cGC == Clasificacion.OK && !"NONE".equals(tGC.campo(1));
+        String fecha = fechaRegistrada ? tGC.campo(1) : "";
+        return new ResultadoSonda(Resultado.OK, serie, serieLeida, fecha, fechaRegistrada);
+    }
+
+    /** RF-USR-01: si #GN#/#GC# no contestan nada, reintenta hasta {@code maxReintentosSonda} veces
+     *  (2 por defecto, 3 intentos en total); una respuesta (incluido un "#ERR,...#") no se reintenta. */
+    private static String enviarConReintentos(Canal canal, String trama, ParametrosRitmo params) {
+        String r = canal.enviar(trama, params.plazoTramaMs());
+        for (int intento = 0; r == null && intento < params.maxReintentosSonda(); intento++) {
+            r = canal.enviar(trama, params.plazoTramaMs());
+        }
+        return r;
+    }
+
+    private static void pausaReal(long ms) {
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private static Clasificacion clasificar(String cruda, RespuestaTrama t, String campoEsperado) {
