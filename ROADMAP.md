@@ -49,7 +49,7 @@ Vueltas permitidas: la 0.3.4 y una más (0.3.5). Los revisores sólo bloquean co
 escrito; el resto se anota en `REVISIONES-Apps-V3.6.md` y no bloquea. Si la 0.3.5 no cierra, es un
 bucle: revisor Fable (con autorización de Diego) y sesión limpia.
 
-1. **B5.** 0.3.4 revisada: arquitecto APTO CON CONDICIONES (C2 sigue abierta); QA en curso.
+1. **B5.** 0.3.4 revisada: arquitecto y QA APTO CON CONDICIONES; C2 sigue abierta (arquitecto).
 2. **B6.** 0.3.5, última vuelta: C2, lo que QA marque como requisito roto y la SPEC r7 (RF-USR-04,
    Repetir o Saltar). Después, prueba de Diego en dos teléfonos (Android ≤9 y ≥10).
 3. **B7.** Incremento 2 "señal a señal" (indicador por norma, histórico, inventario por CSV): tras las
