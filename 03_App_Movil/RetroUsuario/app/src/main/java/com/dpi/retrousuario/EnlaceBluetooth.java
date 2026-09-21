@@ -64,6 +64,12 @@ final class EnlaceBluetooth implements Canal, FuenteBytes {
         return macConectada;
     }
 
+    /** C1: si el socket sigue conectado — lo que decide {@link com.dpi.retrousuario.dominio.GestorEnlace}
+     *  entre reutilizar este enlace o cerrarlo antes de abrir uno nuevo. */
+    boolean vivo() {
+        return socket.isConnected();
+    }
+
     private void leerSinParar(InputStream entrada) {
         byte[] b = new byte[256];
         try {
