@@ -3,7 +3,8 @@ package com.dpi.retrousuario.dominio;
 /**
  * Condición C2 (arquitecto-iot sobre RetroUsuario 0.3.1): la app nunca pedía
  * {@code ACCESS_FINE_LOCATION} en tiempo de ejecución (sólo {@code WRITE_EXTERNAL_STORAGE}), pese a
- * declararlo en el manifiesto (AndroidManifest.xml) y a que la SPEC (§4 bis) y el README lo daban por
+ * declararlo en el manifiesto (AndroidManifest.xml) y a que la SPEC
+ * (`05_Documentacion/SPEC-App-Usuario-V3.6.md:608`, §4 bis) y el README lo daban por
  * hecho. Se pide al entrar a medir ({@code MedirActivity.onCreate}, RF-USR-15: si se deniega, se mide
  * igual con {@code gps_estado = sin_posicion}, {@link com.dpi.retrousuario.UbicacionGps} ya lo trata
  * como "sin GPS" en cualquier caso).
