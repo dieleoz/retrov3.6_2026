@@ -62,7 +62,7 @@ corregida en tres commits seguidos, uno por un carácter de control dentro de la
   ligero (incremental, no se importa): `03_App_Movil/RetroV36/README.md`, apartado Banco (RF-APP-49 a
   53). Para calibrar o reconstruir una campaña hace falta el de soporte.
 - Tramas en `06_Calibracion/<equipo>/tramas/*.txt` y colas `06_Calibracion/cola_banco_*.csv`, byte a
-  byte. `07 pruebas/` no se versiona: lo que vale pasa a `06_Calibracion/<equipo>/` con su huella.
+  byte. `07 pruebas/` es capa cruda, no se edita: lo que vale pasa a `06_Calibracion/<equipo>/` con su huella.
 - Paquete propio (fuente para otro equipo, anexo para la interventoría): como la común §9, excluyendo
   además `debug/`, `nbproject/private/` y `.gradle/`.
 

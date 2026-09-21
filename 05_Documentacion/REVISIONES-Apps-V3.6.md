@@ -35,6 +35,23 @@ completos quedaron en el directorio temporal de la sesión; aquí se archiva lo 
     y un V3.6 sale "no compatible" en bucle.
   - M-1 detección doble tras un giro; M-2 el enlace no se libera al salir con Atrás; B-3 enlace huérfano;
     cita a una sección inexistente en `PermisoUbicacion.java`.
+- **0.3.3** — APTO con condiciones / APTO con condiciones.
+  - **C1 (arq):** salir con Atrás durante "Conectando" deja `detectando` en verdadero para siempre.
+  - **C2 (arq):** tras un giro, el resultado de la detección se pinta en la Activity destruida.
+  - **C3 (arq):** SPEC atrasada; cerrada en `SPEC-App-Usuario-V3.6.md` §4 bis.
+  - **QA:** quitar `marcarCaido()` del catch de `EnlaceBluetooth.leerSinParar` no lo detecta ninguna prueba
+    (126/126 en verde): la capa Android no tiene arnés. Pide prueba con un `InputStream` doble y, en
+    campo, reconexión tras apagar el equipo. El rojo por aserción invertida no vale.
+- **0.3.4** — APTO con condiciones / APTO con condiciones.
+  - QA: 68/68 `fuente.md5`, 134/134; roturas de `LectorDeFlujo` y `EstadoDeteccion.salir()` vistas en rojo;
+    ningún requisito roto. Sin arnés: capa Android (giro, Atrás, socket real, GPS, exportación).
+  - C1 cerrada (`finally` en `MainActivity.hiloConectarYDetectar`).
+  - **C2 sigue abierta (Alto):** `runOnUiThread(this::restaurarInterfaz)` (`MainActivity.java:259`) corre
+    en la Activity destruida tras un giro y consume el resultado de un solo uso; la nueva queda en
+    "Conectando". El error tampoco se publica. Además, esa llamada se encola antes del `finally` que
+    baja `detectando`: si el hilo principal la ejecuta antes, pinta "Conectando" y no recoge el resultado.
+  - Anotado, no bloquea: `reintentarSonda` pinta sobre `this`; ventana entre `limpiar()` y
+    `marcarDetectando(true)`; dos detecciones al salir y volver a entrar enseguida.
 
 ## Regla que sale de estas vueltas
 

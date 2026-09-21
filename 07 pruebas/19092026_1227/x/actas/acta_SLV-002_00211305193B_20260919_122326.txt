@@ -1,0 +1,24 @@
+ACTA DE CALIBRACIÓN
+Equipo: SLV-002 (MAC 00:21:13:05:19:3B)
+Firmware: V3.6 2026-09-19 (3.6.2) DEF mascara 0000
+Abierta: 2026-09-19T12:04:31-0500
+Protocolo de disparos (fijo, P9-B3): 1 colocaciones × 9 disparos, 1 de asentamiento por colocación
+Ajuste contra patrones, no calibración trazable. Por debajo del patrón más bajo de cada código la lectura no está calibrada.
+
+Código 1 (blanco intenso)
+  Método: mínimos cuadrados, grado 1
+  Curva certificada = leída con #G tras #S (P9-B9): #G,1,0.00000000E+00,0.00000000E+00,2.98471571E-01,-1.62263885E+02#
+  Conformidad del superadministrador pese a incumplir RF-CAL-14: P3 (IV) residuo -10.7 % > 10 %; RF-CAL-16: en XI la curva nueva (RMS 2.8 %) no mejora a la de fábrica (2.6 %); RF-CAL-15: RMS de IV 10.0 % > 6 %. Nota: Ok
+  #E en 5 puntos: coincide con la curva enviada (±1)
+  Oscuro (x = 575): R 9.4 (fábrica 24.7), valor que acepta Diego (P9-B13)
+  Re-medida (RF-CAL-18): P28: R medida 497.8, R predicha 498.7 (curva #G, float32), diferencia -0.9; tolerancia máx(2 ; 2·s_rep) = 29.9 con s_rep 14.9 (supuesta) -> CONFORME
+Código 2 (amarillo intenso)
+  Método: recta anclada en oscuro (x = 565.4 ; R = 0), serie OSCURO S060 de la campaña, 5 colocaciones
+  Curva certificada = leída con #G tras #S (P9-B9): #G,2,0.00000000E+00,0.00000000E+00,3.65483810E-01,-2.06628295E+02#
+  Conformidad del superadministrador pese a incumplir RF-CAL-14: P23 (XI) residuo +11.1 % > 10 %; RF-CAL-14: P24 (IV) residuo -12.6 % > 10 %; RF-CAL-14: P30 (IV) residuo -11.2 % > 10 %; RF-CAL-15: RMS de IV 8.5 % > 6 %. Nota: Ok
+  #E en 5 puntos: coincide con la curva enviada (±1)
+  Oscuro (x = 575): R 3.5 (fábrica 20.9), valor que acepta Diego (P9-B13)
+  Re-medida (RF-CAL-18): P5: R medida 693.2, R predicha 693.3 (curva #G, float32), diferencia -0.1; tolerancia máx(2 ; 2·s_rep) = 41.6 con s_rep 20.8 (supuesta) -> CONFORME
+
+Estado: ACEPTADA 2026-09-19T12:23:26-0500
+Fecha de calibración en el equipo (#SC/#GC): 2026-09-19

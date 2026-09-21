@@ -1,0 +1,94 @@
+# RTV V3.6 - registro de tramas Bluetooth
+# fecha: 2026-09-19 11:46:21 -0500
+# movil: HONOR ABR-LX3 (Android 15, API 35)
+# dispositivo: COVIANDINA_SLV-002 00:21:13:05:19:3B
+# app: com.dpi.retrov36 3.6.9 (369)
+# formato: t_ms;TX|RX;hex;ascii  (t_ms desde la apertura; en ascii, '.' = no imprimible o ';')
+# 2 conectado con COVIANDINA_SLV-002 00:21:13:05:19:3B (socket inseguro)
+# 4 sesion nueva: equipo COVIANDINA_SLV-002 (serie SLV-002, MAC 00:21:13:05:19:3B), firmware sin detectar
+# 67 campana abierta: campana_SLV-002_00211305193B.csv, 56 series
+# 1439 === pruebas del equipo: inicio ===
+# 1440 prueba 1 (Enlace SPP abierto, nombre y MAC): OK
+# 1440   COVIANDINA_SLV-002  00:21:13:05:19:3B  (serie SLV-002)
+1441;TX;23 56 23;#V#
+1547;RX;23;#
+1548;RX;56 2C 33 2E 36 2C 32 30 32 36;V,3.6,2026
+1560;RX;2D 30 39 2D 31 39 2C 44 45 46;-09-19,DEF
+1572;RX;2C 30 30 30 30 23;,0000#
+# 1572 peticion #V# -> #V,3.6,2026-09-19,DEF,0000# en 131 ms
+1591;TX;23 47 43 23;#GC#
+1698;RX;23;#
+1700;RX;47 43 2C 4E 4F 4E 45 23;GC,NONE#
+# 1701 peticion #GC# -> #GC,NONE# en 110 ms
+1741;TX;23 47 4E 23;#GN#
+1823;RX;23;#
+1824;RX;47 4E 2C 4E 4F 4E 45 23;GN,NONE#
+# 1824 peticion #GN# -> #GN,NONE# en 83 ms
+# 1826 prueba 2 (Detección de versión (#V#, 9, 6, @LEERV,BLA,1@; nunca e)): OK
+# 1826   #V# -> #V,3.6,2026-09-19,DEF,0000# en 131 ms
+# 1826   Versión V3.6, fecha 2026-09-19, marca DEF, máscara 0000: ningún código ajustado; temperatura de fábrica
+# 1826   #GC# -> #GC,NONE# en 110 ms: firmware 3.6.2
+# 1826   #GN# -> #GN,NONE# en 83 ms
+# 1826   Serie en el equipo (#GN#): NONE; fecha de calibración (#GC#): NONE; vencimiento: -; estado: Sin fecha
+1891;TX;23 47 54 23;#GT#
+1957;RX;23;#
+1958;RX;47 54 2C;GT,
+1983;RX;30 2E 30 30 30 30 30;0.00000
+1984;RX;30 30 30 45 2B 30 30 2C;000E+00,
+1992;RX;34;4
+2003;RX;2E 33 32 31 32 30 30 33 39 45;.32120039E
+2014;RX;2D 30 34 2C;-04,
+2024;RX;39 2E 30 31 34;9.014
+2035;RX;38 36 34 38 30 45 2D 30 31 23;86480E-01#
+# 2036 peticion #GT# -> #GT,0.00000000E+00,4.32120039E-04,9.01486480E-01# en 145 ms
+2041;TX;23 47 2C 31 23;#G,1#
+2147;RX;23;#
+2159;RX;47 2C 31 2C;G,1,
+2169;RX;30 2E 30 30 30 30 30;0.00000
+2179;RX;30 30 30 45 2B 30 30 2C;000E+00,
+2220;RX;2D 38 2E 36 35 34 31 30;-8.65410
+2221;RX;30 36 36 45 2D 30 35 2C;066E-05,
+2224;RX;36 2E;6.
+2232;RX;31 39 36 36 38 31 30 32 45 2D;19668102E-
+2246;RX;30 31 2C 2D 33 2E;01,-3.
+2250;RX;30 33 30 30 30 30 30 30 45 2B 30;03000000E+0
+2261;RX;32 23;2#
+# 2263 peticion #G,1# -> #G,1,0.00000000E+00,-8.65410066E-05,6.19668102E-01,-3.03000000E+02# en 221 ms
+2265;TX;23 47 2C 32 23;#G,2#
+2373;RX;23;#
+2379;RX;47 2C 32 2C;G,2,
+2402;RX;2D 37 2E;-7.
+2415;RX;33 30 30 30 30 31 31 33 45 2D 30;30000113E-0
+2417;RX;38 2C;8,
+2432;RX;32 2E 38 32 35 30 38;2.82508
+2460;RX;30 33 30 45 2D 30 34 2C;030E-04,
+2461;RX;31;1
+2464;RX;2E 32 34 30 37 35 33 35 32 45;.24075352E
+2498;RX;2D 30 31 2C 2D 31 2E;-01,-1.
+2500;RX;33 30 30 30 30 30 30 30 45 2B 30;30000000E+0
+2501;RX;32 23;2#
+# 2502 peticion #G,2# -> #G,2,-7.30000113E-08,2.82508030E-04,1.24075352E-01,-1.30000000E+02# en 236 ms
+2503;TX;23 47 2C 33 23;#G,3#
+2617;RX;23;#
+2618;RX;47 2C 33 2C;G,3,
+2630;RX;31 2E 36;1.6
+2643;RX;33 30 30 30 30 31 38 45 2D 30;3000018E-0
+2652;RX;37 2C;7,
+2666;RX;2D 37 2E 35 36;-7.56
+2676;RX;36 39 35 30 38 32 45 2D 30 34;695082E-04
+2683;RX;2C;,
+2694;RX;31 2E 32 31 33 31 34 32 37 35;1.21314275
+2705;RX;45 2B 30 30 2C 2D;E+00,-
+2717;RX;34 2E 34 32 30 30 30 30 30 30;4.42000000
+2720;RX;45 2B 30;E+0
+2728;RX;32 23;2#
+# 2729 peticion #G,3# -> #G,3,1.63000018E-07,-7.56695082E-04,1.21314275E+00,-4.42000000E+02# en 226 ms
+# 2731 prueba 5 (Solo V3.6: #GT#, #G,k# de los 12 juegos, marca y máscara, #E en 5 puntos): FALLO
+# 2731   Interrumpida: cancelado por el operador
+# 2731 prueba 3 (Cada código de medida responde en menos de 2,5 s): FALLO
+# 2731   No ejecutada: pruebas canceladas.
+# 2732 prueba 4 (Coherencia de fórmulas: las 12 dan la misma x): FALLO
+# 2732   No ejecutada: pruebas canceladas.
+# 2733 prueba 6 (Repetibilidad: 5 lecturas del mismo código): FALLO
+# 2733   No ejecutada: pruebas canceladas.
+# 2734 === pruebas del equipo: NO APTO: pruebas incompletas (canceladas). equipo COVIANDINA_SLV-002 (serie SLV-002, MAC 00:21:13:05:19:3B), firmware V3.6 2026-09-19 (3.6.2) DEF mascara 0000 ===

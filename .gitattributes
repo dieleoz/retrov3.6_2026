@@ -26,3 +26,5 @@
 # de este catalogo; sin esta regla, un checkout de Windows con core.autocrlf=true lo entrega en
 # CRLF y el md5 declarado en la prueba (del blob LF) no cuadra.
 08_Senales/senales.csv text eol=lf
+
+07[[:space:]]pruebas/** -text
