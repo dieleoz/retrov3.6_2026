@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothSocket;
 import com.dpi.retrousuario.dominio.Canal;
 import com.dpi.retrousuario.dominio.EstadoEnlace;
 import com.dpi.retrousuario.dominio.FuenteBytes;
+import com.dpi.retrousuario.dominio.LectorDeFlujo;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,22 +76,12 @@ final class EnlaceBluetooth implements Canal, FuenteBytes {
         return estado.vivo(socket.isConnected());
     }
 
+    /** QA sobre 0.3.3: el bucle de lectura en sí vive en {@link LectorDeFlujo} (dominio puro, con
+     *  arnés de pruebas JVM contra un {@link InputStream} doble) — aquí sólo se cablea el socket
+     *  real. Antes el bucle vivía íntegro aquí, sin ninguna prueba que detectara quitar la llamada a
+     *  {@code estado.marcarCaido()} del catch (126/126 en verde con esa rotura). */
     private void leerSinParar(InputStream entrada) {
-        byte[] b = new byte[256];
-        try {
-            int n;
-            while ((n = entrada.read(b)) >= 0) {
-                for (int i = 0; i < n; i++) {
-                    bytesRecibidos.add(b[i] & 0xFF);
-                }
-            }
-            // Arq ALTO: fin de flujo sin excepcion (EOF) tambien es el enlace caido, no sólo la
-            // IOException del catch de abajo — el otro lado pudo cerrar limpio en vez de romper.
-            estado.marcarCaido();
-        } catch (IOException cerrado) {
-            // El socket se cerro (desconexion voluntaria o perdida de enlace): el hilo termina solo.
-            estado.marcarCaido();
-        }
+        LectorDeFlujo.leer(entrada, bytesRecibidos, estado);
     }
 
     @Override

@@ -25,6 +25,7 @@ import com.dpi.retrousuario.dominio.DeteccionYSonda;
 import com.dpi.retrousuario.dominio.DetectorEquipo;
 import com.dpi.retrousuario.dominio.Diario;
 import com.dpi.retrousuario.dominio.EstadoCalibracion;
+import com.dpi.retrousuario.dominio.EstadoDeteccion;
 import com.dpi.retrousuario.dominio.EstrategiaExportacion;
 import com.dpi.retrousuario.dominio.FechaISO;
 import com.dpi.retrousuario.dominio.GestorEnlace;
@@ -85,16 +86,31 @@ public final class MainActivity extends AppCompatActivity {
         diario = new Diario(new File(getFilesDir(), "diario_medidas.txt"));
 
         mostrarAvisoPrevio();
-        restaurarInterfaz(); // M-1: una Activity recreada (giro) no arranca "en blanco".
     }
 
     /**
-     * M-1 (arq, sobre 0.3.2): {@code detectando} vive en {@link SesionHolder}, no en un campo de
-     * esta Activity (se perdía al recrearla, giro de pantalla, dejando la lista habilitada a mitad
-     * de una detección en fondo). Esta Activity recreada pinta lo que {@link SesionHolder} ya sabe,
-     * en vez de arrancar como si nada estuviera en curso; el resultado de una detección que termina
-     * con la Activity anterior ya destruida lo publica {@link #mostrarResultadoDeteccion} sobre
-     * {@link SesionHolder}, y esta instancia lo recoge aquí en el siguiente {@code onCreate}.
+     * C2 (sobre 0.3.3, corrige el comentario falso de esta misma Activity a :94-97 de esa entrega):
+     * {@code onResume()} se llama SIEMPRE que esta Activity queda visible — tras {@code onCreate}
+     * (giro de pantalla, o arranque normal) y también si el proceso simplemente vuelve al primer
+     * plano — así que es el único sitio que hace falta para repintar desde {@link SesionHolder}, no
+     * {@code onCreate} a secas.
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        restaurarInterfaz();
+    }
+
+    /**
+     * M-1 (arq, sobre 0.3.2) + C1/C2 (arq, sobre 0.3.3): {@code detectando} y el resultado de una
+     * detección terminada viven en {@link SesionHolder} (dominio {@code EstadoDeteccion}), no en un
+     * campo de esta Activity (se perdía al recrearla, giro de pantalla) ni en el {@code
+     * runOnUiThread} de la Activity que lanzó el hilo de fondo (C2: pintaba sobre una instancia ya
+     * destruida si hubo un giro mientras la conexión seguía en curso, y la Activity nueva no se
+     * enteraba de nada — {@code MainActivity.hiloConectarYDetectar}). Esta Activity, viva, pinta
+     * aquí lo que {@link SesionHolder} ya sabe: si todavía hay una detección en curso, "Conectando";
+     * si no, y hay un resultado pendiente (publicado por el hilo de fondo, con o sin esta MISMA
+     * instancia viva en ese momento), lo recoge UNA vez y lo pinta.
      */
     private void restaurarInterfaz() {
         lvEquipos.setEnabled(!SesionHolder.detectando());
@@ -102,6 +118,11 @@ public final class MainActivity extends AppCompatActivity {
         btnContinuar.setVisibility(SesionHolder.sesion() != null ? View.VISIBLE : View.GONE);
         if (SesionHolder.detectando()) {
             tvEstado.setText(R.string.conectando);
+            return;
+        }
+        EstadoDeteccion.Resultado pendiente = SesionHolder.recogerResultadoDeteccionPendiente();
+        if (pendiente != null) {
+            mostrarResultadoDeteccion(pendiente.canal(), pendiente.deteccion());
         }
     }
 
@@ -180,6 +201,16 @@ public final class MainActivity extends AppCompatActivity {
         tvEstado.setText(R.string.conectando);
     }
 
+    /**
+     * C1 (sobre 0.3.3, MainActivity.java:192-194 de esa entrega): TODOS los caminos de salida de
+     * este hilo terminan la detección con {@code SesionHolder.marcarDetectando(false)} — antes, el
+     * {@code return} temprano de más abajo (Atrás a mitad de "Conectando", con la Activity ya
+     * terminando de verdad) no lo hacía, y la app se quedaba en "Conectando" para siempre. El
+     * {@code finally} lo garantiza sin repetir la llamada en cada rama; la única excepción real es la
+     * recursión de la línea de abajo (reintento con conexión nueva), que sigue "detectando" hasta que
+     * ESA vuelta también pase por este mismo {@code finally} — un solo booleano, sin ventana entre
+     * medias.
+     */
     private void hiloConectarYDetectar(BluetoothDevice dispositivo, boolean reutilizar) {
         try {
             EnlaceBluetooth enlaceLocal = reutilizar ? SesionHolder.enlace() : EnlaceBluetooth.conectar(dispositivo);
@@ -191,7 +222,7 @@ public final class MainActivity extends AppCompatActivity {
                 // true en un giro de pantalla, sólo en una salida real: MainActivity.onDestroy).
                 if (isFinishing()) {
                     enlaceLocal.desconectar();
-                    return;
+                    return; // C1: el finally, abajo, termina la detección — no un "return" mudo.
                 }
                 SesionHolder.registrarEnlaceAbierto(enlaceLocal); // C1: única fuente de verdad, desde antes de sondear.
             }
@@ -205,16 +236,35 @@ public final class MainActivity extends AppCompatActivity {
                 // arq ALTO, segunda parte: el REUTILIZADO puede estar muerto sin que vivo() lo supiera
                 // todavía — se cierra y se reintenta con conexión nueva antes de concluir "no compatible".
                 enlaceLocal.desconectar();
+                // Bajos (sobre 0.3.3): SesionHolder todavía apunta al enlace (y, si lo hubiera, a la
+                // sesión) que acabamos de cerrar arriba — sin este limpiar(), MedirActivity/AjustesActivity
+                // verían por un instante una sesión viva sobre un socket ya cerrado si preguntaran entre
+                // este desconectar() y que la vuelta de abajo registre el enlace nuevo.
+                SesionHolder.limpiar();
+                // C1, limpiar() también termina la detección (defensivo, para quien llame a limpiar()
+                // desde fuera de este hilo) — aquí SIGUE en curso, la vuelta de abajo apenas empieza:
+                // se repone antes de recursar, para no dejar un hueco con "Conectando" a false a mitad
+                // de un reintento (habilitaría la lista y una segunda pulsación durante la reconexión).
+                SesionHolder.marcarDetectando(true);
                 hiloConectarYDetectar(dispositivo, false); // UNA vez: la vuelta siguiente ya no es "reutilizado".
                 return;
             }
-            runOnUiThread(() -> mostrarResultadoDeteccion(canalRegistrado, resultado));
+            // C2 (sobre 0.3.3, corrige MainActivity.java:94-97/211 de esa entrega): el resultado se
+            // PUBLICA en SesionHolder — no se pinta con un runOnUiThread que capture canalRegistrado/
+            // resultado sobre "this" — porque "this" puede ser una Activity ya destruida (giro de
+            // pantalla a mitad de la conexión/sonda): esa Activity vieja pintaba sobre sí misma, sin
+            // que nadie más se enterara. Cualquier Activity viva (la misma, o una recreada) lo recoge y
+            // lo pinta desde SesionHolder en su propio onResume() → restaurarInterfaz().
+            SesionHolder.publicarResultadoDeteccion(canalRegistrado, resultado);
+            runOnUiThread(this::restaurarInterfaz);
         } catch (Exception e) {
-            SesionHolder.marcarDetectando(false);
+            String mensaje = e.getMessage();
             runOnUiThread(() -> {
-                tvEstado.setText("No se pudo conectar: " + e.getMessage());
+                tvEstado.setText("No se pudo conectar: " + mensaje);
                 lvEquipos.setEnabled(true);
             });
+        } finally {
+            SesionHolder.marcarDetectando(false); // C1: TODO camino de salida de este hilo termina "Conectando".
         }
     }
 
@@ -225,8 +275,11 @@ public final class MainActivity extends AppCompatActivity {
         return noCompatible && GestorEnlace.debeReintentarConexionNueva(reutilizar, resultado.deteccion().sinRespuesta());
     }
 
+    /** C2: pinta un resultado ya publicado en {@link SesionHolder} — se llama sólo desde
+     *  {@link #restaurarInterfaz()}, que ya comprobó que la detección terminó ({@code detectando() ==
+     *  false}, puesto por el {@code finally} de {@link #hiloConectarYDetectar}); no repite esa
+     *  llamada aquí. */
     private void mostrarResultadoDeteccion(Canal canalRegistrado, DeteccionYSonda.Resultado resultado) {
-        SesionHolder.marcarDetectando(false);
         if (resultado.deteccion().resultado() == DetectorEquipo.Resultado.NO_COMPATIBLE) {
             tvEstado.setText(R.string.equipo_no_compatible);
             lvEquipos.setEnabled(true); // A2: tras "no compatible", elegir otro (o el mismo, C1) sin reiniciar.

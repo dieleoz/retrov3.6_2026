@@ -1,32 +1,48 @@
 # RTV Usuario — app de USUARIO del retrorreflectómetro V3.6
 
-**Estado, 21-sep-2026: compila y pasa sus 126 tests JVM (checkout limpio). Nada probado contra un
-equipo ni un teléfono** (CLAUDE.md, cabecera). Cierra las condiciones de arquitecto-iot y qa-istqb
-sobre la 0.3.2, registradas en `05_Documentacion/REVISIONES-Apps-V3.6.md:33-37` (ambas APTO CON
-CONDICIONES): **arq ALTO** (`EnlaceBluetooth.vivo()` ya no es sólo `socket.isConnected()` — un
-equipo caído se reutilizaba como si siguiera vivo, "no compatible" en bucle; ahora
-`dominio.EstadoEnlace` lleva una bandera "caído" aparte, y una detección sobre un enlace REUTILIZADO
-que no recibe nada a `#V#` se reintenta UNA vez con conexión nueva antes de concluir "no
-compatible"), **arq M-1** (`detectando` en `SesionHolder`, no en un campo de `MainActivity`: una
-Activity recreada a mitad de una detección restaura la interfaz, no arranca "en blanco"), **arq M-2**
-(salir con Atrás desde la pantalla principal libera el equipo — cierra el enlace y limpia la sesión —
-para que otro teléfono pueda conectar), **arq B-3** (si la Activity terminó de verdad mientras
-`connect()` estaba en curso, el hilo cierra ese socket en vez de dejarlo huérfano en `SesionHolder`),
-**arq B-1** (`fuente.md5` cubre también `build.gradle`/`settings.gradle`/`gradle.properties` de la
-raíz de este proyecto, no sólo `app/build.gradle`), **QA D-1** (`PermisoUbicacion.java` citaba una
-sección de la SPEC sin `archivo:línea`; ahora cita `SPEC-App-Usuario-V3.6.md:608`) y **QA D-2**
-(pruebas que citan una condición de arquitecto/QA como fuente citan
-`05_Documentacion/REVISIONES-Apps-V3.6.md` con su línea; recuento requisito/comportamiento honesto
-abajo). Además, B-2 (QA): `GestorEnlaceTest` tenía 3 pares de métodos que repetían literalmente los
-mismos tres argumentos bajo un nombre de escenario distinto — deduplicados. Las condiciones de la
-0.3.0/0.3.1 (QA-1 a QA-10, arq C1, C2, B-1 a B-5 de esas vueltas) siguen cerradas, sin repetirse
-aquí. Incremento 1 "Medir y exportar" (`05_Documentacion/SPEC-App-Usuario-V3.6.md` r6, §0) completo;
-el incremento 2 "Señal a señal" no está aquí.
+**Estado, 21-sep-2026: compila y pasa sus 134 tests JVM (checkout limpio). Nada probado contra un
+equipo ni un teléfono** (CLAUDE.md, cabecera). Cierra las condiciones de arquitecto-iot sobre la
+0.3.3, registradas en `05_Documentacion/REVISIONES-Apps-V3.6.md` **C1** (`MainActivity.java:192-194`
+de la 0.3.3: la salida anticipada de `hiloConectarYDetectar` durante "Conectando" — Atrás a mitad de
+la conexión — no ponía `detectando = false`, ni tampoco `SesionHolder.limpiar()`: la app quedaba en
+"Conectando" para siempre. Se saca la máquina de estados a `dominio.EstadoDeteccion`, dominio puro
+con pruebas JVM propias, y `hiloConectarYDetectar` la termina con un `try/finally` — TODO camino de
+salida del hilo pasa por ahí, sin repetir la llamada en cada rama) y **C2** (`MainActivity.java:94-97`
+y `:211` de la 0.3.3: el resultado de una detección que termina con la Activity ya destruida — giro
+de pantalla — se pintaba con `runOnUiThread` sobre esa instancia vieja, capturando `canalRegistrado`/
+`resultado` en el cierre; la Activity nueva nunca se enteraba. Ahora el resultado se publica en
+`SesionHolder` (`EstadoDeteccion.publicar`) y CUALQUIER Activity viva lo recoge, una sola vez, en su
+propio `onResume()` → `restaurarInterfaz()`; corregido el comentario que describía mal ese mecanismo).
+Bajos de la misma revisión: el camino de reintento con conexión nueva (arq ALTO de la 0.3.2) llama a
+`SesionHolder.limpiar()` antes de reconectar, para no dejar la sesión/enlace viejos sobre un socket ya
+cerrado; la receta del hash por CONTENIDO del `.apk` (más abajo) fija el orden de `sort` con
+`LC_ALL=C`, y `fuente.md5` ahora también cubre `app/proguard-rules.pro`. Añadido de QA sobre la 0.3.3
+(obligatorio en esta entrega, no citado en ninguna revisión archivada todavía): el bucle de lectura de
+`EnlaceBluetooth.leerSinParar` no tenía ningún arnés de pruebas — quitar la llamada a
+`EstadoEnlace.marcarCaido()` del `catch` dejaba las 126 pruebas de la 0.3.3 en verde igual. Se saca a
+`dominio.LectorDeFlujo` (java.io.InputStream puro), con pruebas JVM de los tres casos (excepción, EOF,
+bytes en camino) vistas en rojo quitando esas llamadas del código de producción (no invirtiendo
+aserciones) — la salida real de las dos demostraciones de rojo está pegada en el Javadoc de
+`LectorDeFlujoTest` y `EstadoDeteccionTest`. Las condiciones de arquitecto-iot y qa-istqb sobre la
+0.3.2 (`REVISIONES-Apps-V3.6.md:33-37`, ambas APTO CON CONDICIONES) siguen cerradas, sin repetirse
+aquí: **arq ALTO** (`EnlaceBluetooth.vivo()` ya no es sólo `socket.isConnected()` — un equipo caído se
+reutilizaba como si siguiera vivo, "no compatible" en bucle; ahora `dominio.EstadoEnlace` lleva una
+bandera "caído" aparte, y una detección sobre un enlace REUTILIZADO que no recibe nada a `#V#` se
+reintenta UNA vez con conexión nueva antes de concluir "no compatible"), **arq M-1** (`detectando` en
+`SesionHolder`, no en un campo de `MainActivity`), **arq M-2** (salir con Atrás desde la pantalla
+principal libera el equipo), **arq B-3** (si la Activity terminó de verdad mientras `connect()` estaba
+en curso, el hilo cierra ese socket en vez de dejarlo huérfano), **arq B-1** (`fuente.md5` cubre
+también `build.gradle`/`settings.gradle`/`gradle.properties` de la raíz de este proyecto), **QA D-1**
+y **QA D-2** (recuento requisito/comportamiento honesto, abajo). Las condiciones de la 0.3.0/0.3.1
+(QA-1 a QA-10, arq C1, C2, B-1 a B-5 de esas vueltas — **distintas** de las C1/C2 de esta entrega,
+mismo nombre corto, revisión distinta) siguen cerradas, sin repetirse aquí. Incremento 1 "Medir y
+exportar" (`05_Documentacion/SPEC-App-Usuario-V3.6.md` r6, §0) completo; el incremento 2 "Señal a
+señal" no está aquí.
 
 No confundir con `03_App_Movil/RetroV36` (app de EMPRESA: DPI, por USB/Bluetooth, PIN, banco y
 calibración). Esta app va **con el equipo** y la usa el operador de campo, sin modo administrador.
 
-- `applicationId com.dpi.retrousuario.coviandina`, `versionCode 6`, `versionName "0.3.3"`.
+- `applicationId com.dpi.retrousuario.coviandina`, `versionCode 7`, `versionName "0.3.4"`.
 - `minSdk 24`, `targetSdk 30`, `compileSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`,
   `ACCESS_FINE_LOCATION`/`ACCESS_COARSE_LOCATION` (arq C2: pedido en tiempo de ejecución al entrar a
   medir, una vez por proceso — `MedirActivity`/`dominio.PermisoUbicacion`; se conceda o no, se mide
@@ -71,11 +87,19 @@ export JAVA_HOME="D:/@Proyect/Baliza/7 sw apk/jdk-11/jdk-11.0.24+8"
   `OutputStream`, A4); `EstrategiaExportacion` (API → vía de exportar, A4); `EstadoGps` (descarta una
   posición de más de 2 min o con precisión peor que 50 m, QA-7); `SesionMedicion` (orquesta todo,
   `medir` con cerrojo — A1 —, `filasCortadasIgnoradas` para que el exportador avise, B-4 de la
-  0.3.0).
+  0.3.0); `EstadoDeteccion` (arq C1/C2 sobre la 0.3.3: junta "hay una detección en curso" y "qué
+  resultado hay que pintar" en dominio puro — `iniciar`/`salir`/`publicar`/`recogerResultadoPendiente`
+  — para que `SesionHolder` no dependa de un `runOnUiThread` de la Activity que lanzó el hilo);
+  `LectorDeFlujo` (QA sobre la 0.3.3: el bucle de lectura del socket, java.io.InputStream puro, para
+  poder romperlo en la JVM con un flujo doble — antes vivía sólo en `EnlaceBluetooth`, sin pruebas).
 - Capa Android: `MainActivity` (aviso previo una sola vez por proceso — M-1 —, `restaurarInterfaz()`
-  en `onCreate` pinta lo que `SesionHolder` ya sabe — lista deshabilitada si `detectando()`,
-  `btnReintentar` visible si `canalSondaEnCurso()`, `btnContinuar` si `sesion()` — arq M-1 —,
-  detección con `CanalRegistrado` sobre el mismo `tramas.log` que los disparos — M2 —, cambio de
+  en `onResume()` (arq C2 sobre la 0.3.3: antes en `onCreate`, que no cubre volver al primer plano
+  sin recrear la Activity) pinta lo que `SesionHolder` ya sabe — lista deshabilitada si
+  `detectando()`, `btnReintentar` visible si `canalSondaEnCurso()`, `btnContinuar` si `sesion()`, y un
+  resultado de detección pendiente (arq C2) se recoge y se pinta ahí, una sola vez —, detección con
+  `CanalRegistrado` sobre el mismo `tramas.log` que los disparos — M2 —, `hiloConectarYDetectar`
+  termina la detección en un `try/finally` (arq C1 sobre la 0.3.3: antes el `return` de "Atrás a
+  mitad de Conectando" no lo hacía, y la app se quedaba en "Conectando" para siempre), cambio de
   equipo decidido por `dominio.GestorEnlace` sobre `SesionHolder.enlace()` — arq C1, corrige la fuga
   de socket de la 0.3.1 —, un enlace REUTILIZADO sin respuesta a `#V#` se reintenta con conexión
   nueva antes de "no compatible" — arq ALTO —, un socket recién abierto se cierra en vez de
@@ -90,17 +114,20 @@ export JAVA_HOME="D:/@Proyect/Baliza/7 sw apk/jdk-11/jdk-11.0.24+8"
   B-1 de la 0.3.0); `AjustesActivity` (`lecturasPorColor`, persistido en `SharedPreferences` — B3);
   `EnlaceBluetooth` (`Canal` y `FuenteBytes`, `ahoraMs()` relativo a la apertura del enlace — M2 —,
   expone la MAC realmente conectada — A2 —, `vivo()` delega en `dominio.EstadoEnlace` — arq ALTO,
-  ya no es sólo `socket.isConnected()` — para que `GestorEnlace` decida si reutilizar); `UbicacionGps`
+  ya no es sólo `socket.isConnected()` — para que `GestorEnlace` decida si reutilizar —,
+  `leerSinParar()` delega el bucle en `dominio.LectorDeFlujo` — QA sobre la 0.3.3); `UbicacionGps`
   (lee el `Location` del sistema, la decisión de si sirve vive en `dominio.EstadoGps` — QA-7 —, toma
   la posición MÁS RECIENTE de todos los proveedores antes de clasificar — arq B-3 de la 0.3.1 —, no
   pide el permiso, eso lo hace `MedirActivity` — arq C2); `ExportadorAndroid` (vía
   `MediaStore.Downloads`, con la colisión de nombre resuelta consultando el `ContentResolver` antes
   de insertar — QA-4 —, limpia `IS_PENDING` ante cualquier excepción, no sólo `IOException` — B-2);
   `SesionHolder` (única fuente de verdad del enlace desde que se abre el socket, no sólo si la sonda
-  tiene éxito — arq C1 —, `detectando()`/`marcarDetectando()` en vez de un campo de `MainActivity` —
-  arq M-1 —, estado de "Reintente" de la sonda en curso — arq B-1 de la 0.3.1 —, invalidación al
-  cambiar de equipo — A2 —, ajustes persistidos — B3 —, aviso previo y permiso de ubicación
-  aceptados una vez por proceso — M-1/arq C2).
+  tiene éxito — arq C1 de la 0.3.1 —, `detectando()`/`marcarDetectando()`/`publicarResultadoDeteccion()`/
+  `recogerResultadoDeteccionPendiente()` delegan en `dominio.EstadoDeteccion` en vez de un campo de
+  `MainActivity` — arq M-1, y arq C1/C2 sobre la 0.3.3 —, `limpiar()` también termina una detección
+  en curso, defensivo — arq C1 sobre la 0.3.3 —, estado de "Reintente" de la sonda en curso — arq
+  B-1 de la 0.3.1 —, invalidación al cambiar de equipo — A2 —, ajustes persistidos — B3 —, aviso
+  previo y permiso de ubicación aceptados una vez por proceso — M-1/arq C2 de la 0.3.1).
 - **Reloj inyectable, sin `Thread.sleep` en pruebas del dominio:** toda espera pasa por
   `FuenteBytes.leer(limiteMs)`; en producción bloquea de verdad, en pruebas un simulador avanza un
   reloj propio. Excepción deliberada: `Sonda362`/`DeteccionYSonda` sí usan un `Thread.sleep` real de
@@ -110,13 +137,36 @@ export JAVA_HOME="D:/@Proyect/Baliza/7 sw apk/jdk-11/jdk-11.0.24+8"
 
 ## Tests JVM
 
-126 tests, `dominio/*Test.java` (88 requisito / 38 comportamiento; los 120 de la 0.3.2, 83/37, menos
-3 duplicados de `GestorEnlaceTest` que ya contaban como requisito de arq C1 — mismos tres argumentos
-bajo un nombre de escenario distinto, B-2 — más 9 nuevos de esta vuelta, 8 requisito / 1
-comportamiento). **QA D-2:** desde esta entrega, una prueba cuenta como requisito sólo si la
+134 tests, `dominio/*Test.java` (88 requisito / 46 comportamiento; los 126 de la 0.3.3, 88/38, más 8
+nuevos de esta vuelta — `LectorDeFlujoTest` 3, `EstadoDeteccionTest` 5 —, los 8 **comportamiento**:
+citan las condiciones C1/C2 de arquitecto-iot y el encargo de QA sobre `EnlaceBluetooth.leerSinParar`
+de esta MISMA entrega (0.3.4), que todavía no están archivados en
+`05_Documentacion/REVISIONES-Apps-V3.6.md` — por la propia regla QA D-2 de abajo, no cuentan como
+requisito hasta que lo estén). **QA D-2:** desde la 0.3.3, una prueba cuenta como requisito sólo si la
 condición que cita está escrita en `05_Documentacion/REVISIONES-Apps-V3.6.md` (regla del propio
 fichero, `:39-42`) — no basta con que el analista recuerde el informe del arquitecto o QA, si no
-quedó archivado. Las 9 nuevas:
+quedó archivado.
+
+**Las 8 nuevas de esta entrega (0.3.4):**
+
+- **`LectorDeFlujoTest`** (3, comportamiento — ver arriba): los tres casos del encargo de QA sobre
+  `EnlaceBluetooth.leerSinParar` (rotura no detectada por las 126 pruebas de la 0.3.3): (a) `IOException`
+  → caído, (b) EOF (`read() == -1`) → caído, (c) bytes entregados → quedan en la cola y el estado
+  sigue vivo mientras el flujo no ha terminado (usa dos hilos y dos pestillos para observarlo a
+  mitad del bucle bloqueante). Rojo por comportamiento capturado quitando las dos llamadas a
+  `marcarCaido()` de `LectorDeFlujo` (código de producción): los tres caen — ver el Javadoc de la
+  clase para la traza completa.
+- **`EstadoDeteccionTest`** (5, comportamiento — ver arriba): `salirDuranteConexionDejaDetectandoEnFalso`
+  (C1: "salida durante conexión → detectando=false") y
+  `resultadoPublicadoTrasDestruirLaActivityLoMuestraLaNueva` (C2: "resultado publicado tras destruir
+  la Activity → la nueva lo muestra") son los dos casos que pide la condición literalmente; los otros
+  tres (`alCrearloNoHayDeteccionEnCurso`, `iniciarPoneDetectandoEnCurso`,
+  `salirSinPublicarNoDejaResultadoPendiente`) fijan el resto del contrato de la clase nueva. Rojo por
+  comportamiento capturado con `salir()` vacío (sin `detectando = false`, tal como estaba el camino
+  de MainActivity.java:192-194 de la 0.3.3 antes de esta entrega): sólo cae
+  `salirDuranteConexionDejaDetectandoEnFalso` — ver el Javadoc de la clase para la traza completa.
+
+Las 9 nuevas de la 0.3.3 (siguen contando, sin repetirse aquí):
 
 - **`GestorEnlaceTest.enlaceAnteriorMuertoConDistintaMac...`** (1, requisito, arq C1 — la quinta
   entrada de `decidir` que las 7 pruebas viejas nunca cubrían: enlace muerto Y otra MAC a la vez).
@@ -173,8 +223,11 @@ aapt dump badging "$APK" | grep -E "package: name|versionCode|versionName"
 apksigner verify --print-certs "$APK"
 
 # 3) contenido: hash de CADA entrada del ZIP (dex, recursos, manifiesto...), en orden de nombre —
-#    no el hash del .apk como blob, que zipflinger puede reordenar entre builds identicos.
-for f in $(unzip -Z1 "$APK" | sort); do
+#    no el hash del .apk como blob, que zipflinger puede reordenar entre builds identicos. LC_ALL=C
+#    fija el orden de "sort" (evita que el orden de "nombre" dependa del locale de quien lo corre:
+#    con un locale distinto, mayusculas/minusculas o acentos pueden ordenar distinto y dar un sha256
+#    final distinto sobre el MISMO contenido).
+for f in $(unzip -Z1 "$APK" | LC_ALL=C sort); do
   printf '%s  %s\n' "$(unzip -p "$APK" "$f" | sha256sum | cut -d' ' -f1)" "$f"
 done | sha256sum
 ```
@@ -205,17 +258,17 @@ que `.gitattributes` ya declara `eol=lf` pero que ese checkout nunca renormaliz�
 entradas de la 0.3.1). Receta, sobre el commit ya hecho:
 
 ```bash
-git ls-files app/src/main app/build.gradle build.gradle settings.gradle gradle.properties \
-    | sort | while IFS= read -r f; do
+git ls-files app/src/main app/build.gradle app/proguard-rules.pro build.gradle settings.gradle \
+    gradle.properties | LC_ALL=C sort | while IFS= read -r f; do
   h=$(git cat-file -p "HEAD:03_App_Movil/RetroUsuario/$f" | md5sum | cut -d' ' -f1)
   printf '%s *%s\n' "$h" "$f"
 done > fuente.md5
 ```
 
 Verificado en esta entrega con `git worktree add --detach <ruta> <commit>` (checkout limpio, sin
-nada del árbol de quien lo generó) + `md5sum -c fuente.md5`: 65/65 `OK` (61 de la 0.3.2 más
-`dominio/EstadoEnlace.java`, `build.gradle`, `settings.gradle` y `gradle.properties` de la raíz de
-este proyecto, arq ALTO/B-1).
+nada del árbol de quien lo generó) + `md5sum -c fuente.md5`: 68/68 `OK` (65 de la 0.3.3 más
+`dominio/EstadoDeteccion.java` y `dominio/LectorDeFlujo.java` — arq C1/C2 y QA sobre la 0.3.3 — y
+`app/proguard-rules.pro`, que no estaba cubierto hasta esta entrega, Bajos).
 
 ## Lo que NO verifica esta corrida
 

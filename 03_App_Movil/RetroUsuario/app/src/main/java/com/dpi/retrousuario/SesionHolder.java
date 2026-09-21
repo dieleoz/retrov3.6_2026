@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.dpi.retrousuario.dominio.Canal;
+import com.dpi.retrousuario.dominio.DeteccionYSonda;
+import com.dpi.retrousuario.dominio.EstadoDeteccion;
 import com.dpi.retrousuario.dominio.ParametrosRitmo;
 import com.dpi.retrousuario.dominio.RespuestaV;
 import com.dpi.retrousuario.dominio.SesionMedicion;
@@ -41,11 +43,13 @@ final class SesionHolder {
     private static boolean avisoAceptado = false;
     /** C2: el permiso de ubicación se pide una sola vez por proceso (mismo patrón que el aviso previo). */
     private static boolean permisoUbicacionPedido = false;
-    /** M-1 (arq, sobre 0.3.2): "una detección en curso" ya no es un campo de {@code MainActivity}
-     *  (se pierde al recrearla, giro de pantalla) — vive aquí, para que una Activity recreada a
-     *  mitad de una detección en fondo sepa que sigue en curso ({@code onCreate} restaura la
-     *  interfaz desde este valor, no arranca "en blanco"). */
-    private static volatile boolean detectando = false;
+    /** C1/C2 (arq, sobre 0.3.3): "una detección en curso" y "qué resultado hay que pintar" ya no son
+     *  un campo de {@code MainActivity} (se pierden al recrearla, giro de pantalla) ni una llamada a
+     *  {@code runOnUiThread} de la Activity que lanzó el hilo (pinta sobre una instancia ya destruida
+     *  — C2) — viven en {@link EstadoDeteccion}, dominio puro con pruebas JVM propias
+     *  ({@code EstadoDeteccionTest}): cualquier Activity viva pregunta {@link #detectando()} y
+     *  {@link #recogerResultadoDeteccionPendiente()} en su propio {@code onResume()}. */
+    private static final EstadoDeteccion ESTADO_DETECCION = new EstadoDeteccion();
 
     /** B-1: canal (envuelve el mismo {@link #enlace}), reintentos hechos y `#V#` ya confirmado de la
      *  sonda EN CURSO — mientras se espera a que el operador pulse "Reintentar" o continúe. Se limpia
@@ -79,11 +83,33 @@ final class SesionHolder {
     /** M-1: true mientras hay una detección (conexión + "#V#" + primera sonda) en curso en un hilo
      *  de fondo, con o sin la Activity que la lanzó todavía viva. */
     static boolean detectando() {
-        return detectando;
+        return ESTADO_DETECCION.detectando();
     }
 
+    /** C1: {@code true} arranca la detección (nada que pintar todavía); {@code false} la da por
+     *  terminada SIN resultado — el camino de "Atrás a mitad de Conectando"
+     *  ({@code MainActivity.hiloConectarYDetectar}) y el `catch` de una excepción llaman a esto, no a
+     *  {@link #publicarResultadoDeteccion}. */
     static void marcarDetectando(boolean valor) {
-        detectando = valor;
+        if (valor) {
+            ESTADO_DETECCION.iniciar();
+        } else {
+            ESTADO_DETECCION.salir();
+        }
+    }
+
+    /** C2: publica el resultado de una detección que SÍ terminó de sondear, para que lo repinte la
+     *  Activity viva en su {@code onResume()} — nunca la que lanzó el hilo directamente. También
+     *  termina la detección ({@link EstadoDeteccion#publicar} pone {@code detectando = false}). */
+    static void publicarResultadoDeteccion(Canal canal, DeteccionYSonda.Resultado resultado) {
+        ESTADO_DETECCION.publicar(canal, resultado);
+    }
+
+    /** C2: recoge, UNA vez, el resultado publicado por {@link #publicarResultadoDeteccion} — o
+     *  {@code null} si no hay ninguno pendiente (no hubo detección, ya se recogió, o terminó sin
+     *  resultado con {@link #marcarDetectando}({@code false})). */
+    static EstadoDeteccion.Resultado recogerResultadoDeteccionPendiente() {
+        return ESTADO_DETECCION.recogerResultadoPendiente();
     }
 
     static ParametrosRitmo parametros() {
@@ -102,6 +128,7 @@ final class SesionHolder {
     static void limpiar() {
         sesion = null;
         enlace = null;
+        ESTADO_DETECCION.salir(); // C1: defensivo, no queda "Conectando" colgado sobre un enlace que ya no existe.
         limpiarSondaEnCurso();
     }
 
