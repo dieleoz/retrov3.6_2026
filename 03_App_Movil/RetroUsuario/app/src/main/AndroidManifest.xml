@@ -2,17 +2,26 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.dpi.retrousuario">
 
-    <!-- targetSdkVersion 30: BLUETOOTH y BLUETOOTH_ADMIN se conceden en la instalacion.
-         Sin ACCESS_FINE_LOCATION: esta pantalla sólo lista equipos YA emparejados
-         (BluetoothAdapter.getBondedDevices()), no descubre nuevos, así que no hace falta
-         (RF-USR-15: "sin permiso o sin posición GPS, se mide igual" es de cuando exista medida). -->
+    <!-- targetSdkVersion 30: BLUETOOTH y BLUETOOTH_ADMIN se conceden en la instalacion. -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <!-- RF-USR-06/M-8: GPS es opcional, sin pedirlo en tiempo de ejecucion (UbicacionGps degrada a
+         sin_posicion si el sistema la niega); se declara para que el sistema pueda concederla si el
+         usuario la otorga por otra via. RF-USR-15: "sin permiso o sin posicion, se mide igual". -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- RF-USR-15 bis: exportar a Download/RetroUsuario/. API 29-30 con almacenamiento con ambito:
+         requestLegacyExternalStorage evita pedir SAF para esta primera version (README "algo que
+         funcione, no perfecto"); maxSdkVersion=28 porque desde 29 el permiso ya no hace falta con
+         ese flag. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
 
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
@@ -23,5 +32,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".MedirActivity" android:label="@string/app_name" />
+        <activity android:name=".AjustesActivity" android:label="@string/ajustes_titulo" />
     </application>
 </manifest>

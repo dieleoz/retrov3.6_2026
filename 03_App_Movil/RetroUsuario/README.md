@@ -1,19 +1,19 @@
 # RTV Usuario — app de USUARIO del retrorreflectómetro V3.6
 
 **Estado, 21-sep-2026: compila y pasa sus tests JVM. Nada probado contra un equipo ni un teléfono**
-(CLAUDE.md, cabecera). Primera parte del incremento 1 "Medir y exportar"
-(`05_Documentacion/SPEC-App-Usuario-V3.6.md` r4, §0): RF-USR-01 (detección + sonda 3.6.2), RF-USR-02
-(estado de calibración) y RF-USR-03 (mapa color → byte), con el parser de §3. **No** incluye la serie
-de disparos (`::<n>`, RF-USR-04), el modo "Medir y exportar" en pantalla (RF-USR-05/06) ni la
-exportación (RF-USR-15 bis): quedan para la siguiente parte de este incremento.
+(CLAUDE.md, cabecera). Incremento 1 "Medir y exportar" completo
+(`05_Documentacion/SPEC-App-Usuario-V3.6.md` r6, §0): detección y sonda 3.6.2 (RF-USR-01/02), mapa
+color→byte (RF-USR-03), serie de disparos con plazo/silencio/cuarentena/repetición
+(RF-USR-04/RF-USR-16), modo por defecto sin tecleo (RF-USR-05/06), sin modo administrador
+(RF-USR-15), exportación a ZIP (RF-USR-15 bis). El incremento 2 "Señal a señal" no está aquí.
 
 No confundir con `03_App_Movil/RetroV36` (app de EMPRESA: DPI, por USB/Bluetooth, PIN, banco y
-calibración). Esta app va **con el equipo** y la usa el operador de campo, sin modo administrador
-(RF-USR-15).
+calibración). Esta app va **con el equipo** y la usa el operador de campo, sin modo administrador.
 
-- `applicationId com.dpi.retrousuario.coviandina`, `versionCode 1`, `versionName "0.1.0"`.
-- `minSdk 24`, `targetSdk 30`, `compileSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN` (nada de
-  ubicación todavía: esta pantalla sólo lista equipos ya emparejados).
+- `applicationId com.dpi.retrousuario.coviandina`, `versionCode 2`, `versionName "0.2.0"`.
+- `minSdk 24`, `targetSdk 30`, `compileSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, ubicación
+  (opcional, sin pedirla en tiempo de ejecución: se mide igual sin ella, RF-USR-15/T-USR-23),
+  `WRITE_EXTERNAL_STORAGE` (≤ API 28, con `requestLegacyExternalStorage` para 29-30).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`. Catálogo de colores: `08_Senales/senales.csv`.
 
 ## Compilar
@@ -25,53 +25,55 @@ export JAVA_HOME="D:/@Proyect/Baliza/7 sw apk/jdk-11/jdk-11.0.24+8"
 ./gradlew assembleDebug --offline      # app/build/outputs/apk/debug/app-debug.apk
 ```
 
-`local.properties` lleva `sdk.dir=C:/android-sdk` y no se versiona.
-
 ## Estructura del código
 
-- `dominio/` (**Java puro, sin Android**, probado en la JVM): `Canal` (interfaz del enlace),
-  `RespuestaTrama` (parser §3), `RespuestaV` (respuesta de `#V#`), `DetectorEquipo` (RF-USR-01),
-  `Sonda362` (sonda `#GN#`/`#GC#`, M-3), `MapaColor` (RF-USR-03), `FechaISO` y `EstadoCalibracion`
-  (RF-USR-02, PA-02).
-- `EnlaceBluetooth` / `MainActivity` (Android): capa mínima, reescrita de
-  `rtv-1.0:.../EnlaceSerie.java` **sin `Registro.*`** (SPEC §3): un `enviar(trama, plazoMs)` síncrono
-  que acumula bytes hasta formar `"#...#"` o vencer el plazo. Sin la pacing fina de RF-USR-16
-  (silencio 180 ms, `Ritmo`) ni `tramas.log` (RF-USR-15 bis): no hacen falta para esta parte y quedan
-  para cuando se programe la serie de disparos.
-- **PA-02 sin `java.time`:** `minSdkVersion 24` (API < 26) no tiene `java.time`, y activar
-  desugaring de biblioteca añade una dependencia (`desugar_jdk_libs`) sin verificar en la caché
-  offline de esta máquina (README de RetroV36, "Sin INTERNET"). `FechaISO` hace la aritmética a
-  mano; la regla del 29-feb tiene su propia prueba de bisiesto.
+- `dominio/` (**Java puro, sin Android**, probado en la JVM): detección y sonda (RF-USR-01/02),
+  `MapaColor` (RF-USR-03); `FuenteBytes` + `LectorDisparo` + `EmisorRitmo` (RF-USR-16: silencio,
+  plazo, ritmo 1500/600 ms, cuarentena) + `SerieDisparos` (RF-USR-04: repetición por disparo anulado
+  y por cero persistente, media redondeada mitad hacia arriba); `Diario` (persistencia por disparo,
+  RF-USR-06 C5); `CsvMedidas`/`FilaMedida` (`medidas.csv`, RFC 4180, BOM, CRLF), `InventarioCsv`,
+  `NombreZip`, `ExportadorZip` (RF-USR-15 bis); `SesionMedicion` (orquesta todo lo anterior).
+- Capa Android: `MainActivity` (aviso, detección, sonda), `MedirActivity` (pantalla 4: color →
+  Medir, exportar, cero tecleo), `AjustesActivity` (pantalla 5: sólo `lecturasPorColor`),
+  `EnlaceBluetooth` (implementa `Canal` **y** `FuenteBytes` sobre el mismo socket), `UbicacionGps`
+  (última posición conocida, sin bloquear si no hay), `SesionHolder` (la `SesionMedicion` viva).
+- **Reloj inyectable, sin `Thread.sleep` en pruebas:** toda espera del dominio pasa por
+  `FuenteBytes.leer(limiteMs)`; en producción bloquea de verdad, en pruebas un simulador
+  (`EquipoSimuladoDisparos`) avanza un reloj propio de forma determinista.
+- **PA-02 sin `java.time`:** igual que en la primera parte (`FechaISO` propio); `fecha_hora` de
+  `medidas.csv` usa `SimpleDateFormat` con patrón `XXX` (offset con dos puntos), disponible desde
+  API 24.
 
 ## Tests JVM
 
-24 tests, `dominio/*Test.java`, contra `EquipoSimulado` (doble de pruebas, registra lo que RECIBE,
-no lo que la app dice enviar). **Recuento requisito/comportamiento (CLAUDE.md §7):** 19 aseveran un
-valor de fuente ajena (firmware, protocolo, catálogo, decisión); 5 fijan comportamiento de este
-trabajo sin cita externa (integridad del fixture de prueba, robustez del parser ante entradas raras,
-la regla general del calendario bisiesto). Cuatro pruebas se vieron en rojo a propósito, rompiendo el
-código y volviéndolo a dejar como estaba (sin rastro en el commit): confundir silencio con
-`#ERR,FORMATO#` en `Sonda362`, quitar el ajuste del 29-feb de `FechaISO`, mapear marrón a un código
-opaco en `MapaColor`, y enviar `9` tras un rechazo en `DetectorEquipo`.
-
-`./gradlew testDebugUnitTest` **no arranca en esta máquina** (`ñ` de `C:\Users\Diego.Zuñiga`,
-`GradleWorkerMain`; CLAUDE.md §8). Se compila con Gradle y se ejecuta con JUnit a mano:
+58 tests, `dominio/*Test.java`, contra `EquipoSimulado` (tramas `#...#`) y
+`EquipoSimuladoDisparos` (disparos `::<n>`, byte a byte, con reloj propio). **Recuento
+requisito/comportamiento (CLAUDE.md §7):** ~46 aseveran un valor de fuente ajena (firmware,
+protocolo, SPEC/TDD, decisión de Diego); ~12 fijan comportamiento de este trabajo sin cita externa
+(formato del diario, nombre del ZIP, redondeo). Vistas en rojo a propósito, con su salida
+comprobada: la cuarentena de RF-USR-16 (T-USR-24 b/d, `EmisorRitmo.cuarentena`), el redondeo mitad
+hacia arriba y la regla "media = 0" del cero persistente (T-USR-06), y la regla de comillas de `;`
+en `medidas.csv` (T-USR-21a).
 
 ```bash
 ./gradlew compileDebugUnitTestJavaWithJavac --offline
-mkdir -p libtest   # copiar aquí junit-4.13.2.jar y hamcrest-core-1.3.jar de ~/.gradle/caches
 cd app
 CP="build/intermediates/javac/debug/classes;build/intermediates/javac/debugUnitTest/classes"
 CP="$CP;src/test/resources;../libtest/junit-4.13.2.jar;../libtest/hamcrest-core-1.3.jar"
-"$JAVA_HOME/bin/java" -cp "$CP" \
-  org.junit.runner.JUnitCore com.dpi.retrousuario.dominio.DetectorEquipoTest \
-  com.dpi.retrousuario.dominio.Sonda362Test com.dpi.retrousuario.dominio.EstadoCalibracionTest \
-  com.dpi.retrousuario.dominio.MapaColorTest com.dpi.retrousuario.dominio.RespuestaTramaTest
+"$JAVA_HOME/bin/java" -cp "$CP" org.junit.runner.JUnitCore \
+  com.dpi.retrousuario.dominio.DetectorEquipoTest com.dpi.retrousuario.dominio.Sonda362Test \
+  com.dpi.retrousuario.dominio.EstadoCalibracionTest com.dpi.retrousuario.dominio.MapaColorTest \
+  com.dpi.retrousuario.dominio.RespuestaTramaTest com.dpi.retrousuario.dominio.SerieDisparosTest \
+  com.dpi.retrousuario.dominio.RitmoYCuarentenaTest com.dpi.retrousuario.dominio.DiarioTest \
+  com.dpi.retrousuario.dominio.RitmoDePacingTest com.dpi.retrousuario.dominio.CsvMedidasTest \
+  com.dpi.retrousuario.dominio.NombreZipTest com.dpi.retrousuario.dominio.SesionMedicionFlujoTest \
+  com.dpi.retrousuario.dominio.ListaBlancaYExportacionTest
 ```
 
-## Lo que NO verifica esta corrida (particularidades/verificar.md §7)
+## Lo que NO verifica esta corrida
 
-Nada de esto sale de un verde de la JVM: que el firmware real responda como `EquipoSimulado`; el
-Bluetooth de un equipo de verdad; el efecto de un byte no probado en campo; la pantalla (esta app no
-toca la STONE); ni que `EnlaceBluetooth` reconecte o sobreviva un corte real del enlace (no probado,
-ni en la JVM ni en un teléfono).
+Nada de esto sale de un verde de la JVM: que el firmware real responda como el simulador (incluida
+la hipótesis "latencia < plazo+Q" de T-B06, sin medir); el Bluetooth de un equipo de verdad; la
+pantalla (esta app no toca la STONE); GPS real (sólo última posición conocida, sin pedir un fix);
+exportar a `Download/RetroUsuario/` en un teléfono real (permisos de almacenamiento con ámbito,
+API 29-30); ni que `EnlaceBluetooth` reconecte o sobreviva un corte real del enlace.

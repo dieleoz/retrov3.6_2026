@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/tvResultado"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="12dp"
+        android:text="@string/medir_elija_color"
+        android:textSize="16sp" />
+
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="2">
+
+        <Button android:id="@+id/btnBlanco" style="?android:attr/buttonStyleSmall"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="@string/color_blanco" />
+        <Button android:id="@+id/btnAmarillo" style="?android:attr/buttonStyleSmall"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="@string/color_amarillo" />
+        <Button android:id="@+id/btnVerde" style="?android:attr/buttonStyleSmall"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="@string/color_verde" />
+        <Button android:id="@+id/btnRojo" style="?android:attr/buttonStyleSmall"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="@string/color_rojo" />
+        <Button android:id="@+id/btnAzul" style="?android:attr/buttonStyleSmall"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="@string/color_azul" />
+        <Button android:id="@+id/btnAnaranjado" style="?android:attr/buttonStyleSmall"
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_columnWeight="1" android:text="@string/color_anaranjado" />
+    </GridLayout>
+
+    <TextView
+        android:id="@+id/tvContador"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="@string/medir_cero_filas" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnAjustes"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/ajustes_titulo" />
+
+        <Button
+            android:id="@+id/btnExportar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/exportar" />
+    </LinearLayout>
+
+</LinearLayout>

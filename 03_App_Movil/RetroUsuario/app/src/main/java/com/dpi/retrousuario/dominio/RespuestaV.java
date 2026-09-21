@@ -11,6 +11,11 @@ package com.dpi.retrousuario.dominio;
  * {@code mascaraAjustes()} (bit i = codigo i ajustado, bit 12 = temperatura); esta app sólo usa si
  * es 0 (equivale a DEF, "x ? CAL : DEF" en el propio firmware) o distinto de 0 (CAL), no descompone
  * los bits todavia.
+ *
+ * <p><b>Tolera 4 o 5 campos (SPEC r6, corrige r5, C3).</b> {@code PROTOCOLO-V3.6.md:42} documenta
+ * {@code #V,3.6,<fecha>,<CAL|DEF>#} (4 campos), pero el firmware de hoy manda siempre el quinto
+ * (la máscara), tanto en CAL como en DEF ({@code calibracion_v36.c:635-642}). El parser acepta las
+ * dos formas; el quinto campo, si llega, no se usa para nada en esta ficha (T-USR-22).</p>
  */
 public final class RespuestaV {
 
@@ -35,13 +40,14 @@ public final class RespuestaV {
      */
     public static RespuestaV analizar(String respuesta) {
         RespuestaTrama t = RespuestaTrama.analizar(respuesta);
-        if (t.esInvalida() || t.esError() || t.numeroCampos() != 5 || !"V".equals(t.campo(0))) {
+        boolean numeroCamposValido = t.numeroCampos() == 4 || t.numeroCampos() == 5;
+        if (t.esInvalida() || t.esError() || !numeroCamposValido || !"V".equals(t.campo(0))) {
             return null;
         }
         String version = t.campo(1);
         String fecha = t.campo(2);
         String calDef = t.campo(3);
-        String mascara = t.campo(4);
+        String mascara = t.numeroCampos() == 5 ? t.campo(4) : "";
         EstadoAjuste estado;
         if ("CAL".equals(calDef)) {
             estado = EstadoAjuste.CAL;

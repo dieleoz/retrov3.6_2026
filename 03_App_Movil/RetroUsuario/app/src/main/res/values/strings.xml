@@ -9,4 +9,28 @@
     <string name="actualice_firmware">Actualice el firmware del equipo</string>
     <string name="sin_respuesta_reintente">El equipo no respondió. Reintente.</string>
     <string name="reintentar">Reintentar</string>
+    <string name="continuar_a_medir">Medir</string>
+
+    <string name="ajustes_titulo">Ajustes</string>
+    <string name="ajustes_lecturas_por_color">Disparos por color (lecturas_por_color)</string>
+    <string name="ajustes_valor_invalido">Escriba un número entero mayor que 0</string>
+    <string name="ajustes_guardado">Guardado</string>
+    <string name="guardar">Guardar</string>
+
+    <string name="exportar">Exportar</string>
+    <string name="medir_elija_color">Elija un color y toque Medir</string>
+    <string name="medir_cero_filas">0 medidas guardadas</string>
+    <string name="medir_sin_equipo">No hay equipo conectado</string>
+    <string name="medir_midiendo">Midiendo…</string>
+    <string name="medir_serie_anulada">Serie anulada: el equipo no respondió a 3 intentos</string>
+    <string name="medir_resultado">%1$s — media %2$d, mínimo %3$d, válido %4$s</string>
+    <string name="medir_filas_guardadas">%1$d medidas guardadas</string>
+    <string name="medir_exportado">Exportado a %1$s</string>
+
+    <string name="color_blanco">Blanco</string>
+    <string name="color_amarillo">Amarillo</string>
+    <string name="color_verde">Verde</string>
+    <string name="color_rojo">Rojo</string>
+    <string name="color_azul">Azul</string>
+    <string name="color_anaranjado">Anaranjado</string>
 </resources>

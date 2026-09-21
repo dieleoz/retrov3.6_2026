@@ -3,6 +3,7 @@ package com.dpi.retrousuario;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -13,20 +14,26 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.dpi.retrousuario.dominio.DetectorEquipo;
+import com.dpi.retrousuario.dominio.Diario;
 import com.dpi.retrousuario.dominio.EstadoCalibracion;
 import com.dpi.retrousuario.dominio.FechaISO;
+import com.dpi.retrousuario.dominio.RegistroTramas;
 import com.dpi.retrousuario.dominio.RespuestaV;
+import com.dpi.retrousuario.dominio.SesionMedicion;
 import com.dpi.retrousuario.dominio.Sonda362;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
 /**
- * Pantalla única de esta primera parte del incremento 1 (SPEC-App-Usuario-V3.6.md §1, pantallas 1 y
- * 2): aviso antes de conectar, lista de equipos emparejados y estado del equipo tras conectar. Las
- * pantallas 3 y 4 (elegir modo, medir y exportar) quedan para cuando se programe la serie de
- * disparos y la exportación (fuera de este encargo).
+ * Pantallas 1 y 2 (SPEC-App-Usuario-V3.6.md §1): aviso antes de conectar, lista de equipos
+ * emparejados, detección (RF-USR-01) y estado de calibración (RF-USR-02). Al terminar la sonda crea
+ * la {@link SesionMedicion} (con lo ya leído: serie, MAC, calibración) y ofrece "Medir" hacia
+ * {@link MedirActivity}. **Sin pantalla 3 propia** ("elegir modo", SPEC §1): en el incremento 1 el
+ * único modo entregado es "Medir y exportar" (RF-USR-05), así que no hay nada que elegir todavía; la
+ * pantalla se añade cuando exista una segunda opción real ("Señal a señal", incremento 2).
  *
  * Esta Activity sólo pinta y llama al dominio (CLAUDE.md, rules/modularidad.md "Capas"): toda la
  * decisión de RF-USR-01/02 vive en {@code dominio.*}, probado en la JVM.
@@ -36,6 +43,7 @@ public final class MainActivity extends AppCompatActivity {
     private TextView tvEstado;
     private ListView lvEquipos;
     private Button btnReintentar;
+    private Button btnContinuar;
     private EnlaceBluetooth enlace;
     private BluetoothDevice equipoActual;
 
@@ -47,6 +55,8 @@ public final class MainActivity extends AppCompatActivity {
         lvEquipos = findViewById(R.id.lvEquipos);
         btnReintentar = findViewById(R.id.btnReintentar);
         btnReintentar.setOnClickListener(v -> conectarYDetectar(equipoActual));
+        btnContinuar = findViewById(R.id.btnContinuar);
+        btnContinuar.setOnClickListener(v -> startActivity(new Intent(this, MedirActivity.class)));
         mostrarAvisoPrevio();
     }
 
@@ -130,6 +140,17 @@ public final class MainActivity extends AppCompatActivity {
         String serie = sonda.serieLeida() ? sonda.serie() : "SIN SERIE";
         String texto = "Serie: " + serie + "\n" + (estado.texto().isEmpty() ? "Calibración vigente" : estado.texto());
         tvEstado.setText(texto);
+
+        // RF-USR-04, RF-USR-05, RF-USR-06: la sesion de medir se crea aqui, una vez, con lo que ya sondeo esta pantalla.
+        RegistroTramas log = new RegistroTramas();
+        Diario diario = new Diario(new File(getFilesDir(), "diario_medidas.txt"));
+        SesionMedicion sesion = new SesionMedicion(enlace, SesionHolder.parametros(), log, diario);
+        String mac = equipoActual != null ? equipoActual.getAddress() : "";
+        sesion.registrarEquipo(mac, "#V," + v.version() + "," + v.fechaCompilacion() + ","
+                + (v.estadoAjuste() == RespuestaV.EstadoAjuste.CAL ? "CAL" : "DEF") + "#",
+                sonda.serie(), sonda.serieLeida(), v.estadoAjuste(), fechaGC, true, hoy);
+        SesionHolder.establecer(sesion, enlace);
+        btnContinuar.setVisibility(View.VISIBLE);
     }
 
     private static FechaISO hoyDelDispositivo() {

@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 
 import com.dpi.retrousuario.dominio.Canal;
+import com.dpi.retrousuario.dominio.FuenteBytes;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,21 +12,20 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Enlace SPP mínimo para esta app, reescrito de
  * {@code rtv-1.0:03_App_Movil/RetroV36/app/src/main/java/com/dpi/retrov36/EnlaceSerie.java} (308
  * líneas), **sin** {@code Registro.*} (SPEC-App-Usuario-V3.6.md §3: "se tocan EnlaceSerie.java (308
- * líneas, sin Registro.*, 9 llamadas :188-272)"). No copia el modelo de oyentes ni el hilo
- * permanente de esa clase: para esta primera parte del incremento 1 basta un {@link #enviar}
- * síncrono con plazo, que es todo lo que pide {@link Canal}. RF-USR-15 bis (tramas.log) y la
- * pacing fina de RF-USR-16 (silencio 180 ms, pausas de Ritmo) quedan para cuando se programe la
- * serie de disparos: no se implementan aquí (fuera de alcance de este incremento).
+ * líneas, sin Registro.*, 9 llamadas :188-272)"). Implementa {@link Canal} (tramas "#...#",
+ * RF-USR-01/02) **y** {@link FuenteBytes} (disparos {@code ::<n>}, RF-USR-04/16, segunda parte de
+ * este incremento): las dos comparten el mismo socket y la misma cola de bytes recibidos.
  *
- * "El búfer de recepción se vacía antes de cada envío" (RF-USR-16): se aplica aquí también, aunque
- * esta parte no mande "#...#" en ráfaga, para no arrastrar un resto de una trama anterior.
+ * "El búfer de recepción se vacía antes de cada envío" (RF-USR-16): se aplica en los dos, para no
+ * arrastrar un resto de una trama o un disparo anterior.
  */
-final class EnlaceBluetooth implements Canal {
+final class EnlaceBluetooth implements Canal, FuenteBytes {
 
     private static final UUID UUID_SPP = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private static final int LIMITE_TRAMA = 100; // PROTOCOLO-V3.6.md §4 bis O-01: buffer de 100.
@@ -116,6 +116,38 @@ final class EnlaceBluetooth implements Canal {
             }
         }
         return null;
+    }
+
+    // --- FuenteBytes: disparos "::<n>" (RF-USR-04/16). Comparte socket y cola con Canal, arriba. ---
+
+    @Override
+    public long ahoraMs() {
+        return System.currentTimeMillis();
+    }
+
+    @Override
+    public void enviarByte(int b) {
+        bytesRecibidos.clear(); // RF-USR-16: vaciar antes de cada envio.
+        try {
+            salida.write(b);
+            salida.flush();
+        } catch (IOException e) {
+            // Sin conexion: el disparo se trata como "sin respuesta" (plazo vencido), igual que un timeout.
+        }
+    }
+
+    @Override
+    public Integer leer(long limiteMs) {
+        long restante = limiteMs - System.currentTimeMillis();
+        if (restante <= 0) {
+            return null;
+        }
+        try {
+            return bytesRecibidos.poll(restante, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        }
     }
 
     void desconectar() {
