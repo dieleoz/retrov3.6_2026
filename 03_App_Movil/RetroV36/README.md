@@ -7,7 +7,7 @@ en ningún equipo. La V4.6 tampoco existe grabada: se prueba contra `EquipoSimul
 funcionar es la medida contra un V3 2020 (SLV-002) y contra un V4 original (`@LEERV`), y ninguna de las
 dos se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36` (no cambia), etiqueta "RTV", `versionCode 10005`, `versionName 1.0.0-rc6` (RTV 1.0.0, sucede a 3.6.16; decisión VERSION de Diego). rc5 = `10004`. La **rc1** se compiló con `10000`/`1.0.0` y es **anterior** a la mezcla de la 3.6.17 (`3dcaf41`): ese par no se reutiliza. Antes: `versionCode 3616`, `versionName 3.6.16` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.16 → 3616) (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36` (no cambia), etiqueta "RTV", `versionCode 10006`, `versionName 1.0.0-rc7` (RTV 1.0.0, sucede a 3.6.16; decisión VERSION de Diego). rc6 = `10005`, rc5 = `10004`. El APK de calibrar (buildType `coviandina`) es `com.dpi.retrov36.calibra`, `versionName Cov_3.6.1_calibrar`, `versionCode 10006` (nombre fijado por Diego el 21-sep-2026). La **rc1** se compiló con `10000`/`1.0.0` y es **anterior** a la mezcla de la 3.6.17 (`3dcaf41`): ese par no se reutiliza. Antes: `versionCode 3616`, `versionName 3.6.16` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.16 → 3616) (la 3.6.0 enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -79,20 +79,25 @@ se han visto instaladas a la vez. SPEC: `05_Documentacion/SPEC-App-Calibracion-C
 ./gradlew clean assembleDebug assembleCoviandina --offline
 ```
 
-Compilado el 21-sep-2026 sobre el árbol limpio de `0a849fe` (`aapt dump badging`, build-tools 30.0.3):
+Compilado el 21-sep-2026 con `clean assembleDebug assembleCoviandina --offline` sobre el árbol limpio de
+`2aa46e7` (`aapt dump badging`, build-tools 30.0.3). Las 31 clases `*Test.java` pasaron antes con JUnitCore:
+`OK (360 tests)`.
 
-| APK | md5 | package | versionCode | versionName | application-label |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| `app-debug.apk` | `037d4543c83f3c22d843398e03fda2b7` | `com.dpi.retrov36` | 10005 | `1.0.0-rc6` | RTV |
-| `app-coviandina.apk` | `101d95535250748d6096bfd5fd8637f9` | `com.dpi.retrov36.calibra` | 10005 | `1.0.0-rc6-calibra` | RTV Calibra |
+| APK | md5 | package | versionCode | versionName | application-label | Copia en `03_App_Movil/` |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `app-debug.apk` | `83d8ad85175038a92eb8e87d8eb9a195` | `com.dpi.retrov36` | 10006 | `1.0.0-rc7` | RTV | `RTV-V1.0.0-rc7.apk`, `RTV-V1.0.0-rc7-10006.apk` |
+| `app-coviandina.apk` | `0ece357f94d38b91b8df0767a426c771` | `com.dpi.retrov36.calibra` | 10006 | `Cov_3.6.1_calibrar` | RTV Calibra | `Cov_3.6.1_calibrar.apk`, `Cov_3.6.1_calibrar-10006.apk` |
 
-**Aviso: el `app-debug.apk` de aquí NO es la rc6 entregada** y lleva su mismo par `10005`/`1.0.0-rc6`. El
-`RTV-V1.0.0-rc6.apk` que hay en `D:\IT\wt_rtv10\03_App_Movil\` (19-sep 20:10) tiene md5
-`28354751b1f4c93aadef03d427478df4`; ningún registro del repositorio declara el md5 de la rc6, así que su
-atadura a `fd37cc7` (20:04) es por la hora, no por registro. Esta trae además los cambios de
-`72d00cd` que también tocan la app de campo (la línea `serie:` del acta, `CalibrarActivity.refrescarContexto`
-y el reenvío de `ConexionActivity`, inerte con `CORTO = false`). Contra RF-APP-41, antes de entregar hay que
-darle un par propio; eso es decisión de Diego (VERSION), no se toca aquí.
+El `versionName` del APK de calibrar se fija por partida doble en `app/build.gradle`: `versionNameOverride`
+para el manifiesto (lo que lee aapt y el teléfono) y `buildConfigField "String", "VERSION_NAME"` para lo que
+la app imprime en pantalla, acta y registro (`Base.java:55`, `Campanas.java:362,597`, `Registro.java:71`).
+Ninguna prueba JVM asevera ese valor: se comprobó en el `BuildConfig.java` generado de la variante y con aapt.
+
+Compilación anterior del 21-sep sobre `0a849fe`: `app-debug.apk` `037d4543c83f3c22d843398e03fda2b7` y
+`app-coviandina.apk` `101d95535250748d6096bfd5fd8637f9`, las dos con el par `10005`/`1.0.0-rc6(-calibra)`
+repetido de la rc6 entregada (`D:\IT\wt_rtv10\03_App_Movil\RTV-V1.0.0-rc6.apk`, md5
+`28354751b1f4c93aadef03d427478df4`, atada a `fd37cc7` por la hora, no por registro). Sustituidas por las de
+arriba (RF-APP-41).
 
 ## Uso por el operador
 
