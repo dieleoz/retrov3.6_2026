@@ -21,3 +21,8 @@
 # El md5 declarado, igual que la regla global *.md5 de arriba: byte a byte, sin normalizar EOL
 # (si no, el propio eol=lf de esta seccion se lo comeria: gana el ultimo patron que matchea la ruta).
 03_App_Movil/RetroUsuario/fuente.md5 -text
+
+# QA Medio (condicion sobre RetroUsuario 0.3.1): MapaColorTest.MD5_CATALOGO depende del fin de linea
+# de este catalogo; sin esta regla, un checkout de Windows con core.autocrlf=true lo entrega en
+# CRLF y el md5 declarado en la prueba (del blob LF) no cuadra.
+08_Senales/senales.csv text eol=lf

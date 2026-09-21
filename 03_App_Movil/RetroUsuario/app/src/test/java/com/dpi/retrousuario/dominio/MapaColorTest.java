@@ -27,7 +27,13 @@ import static org.junit.Assert.assertTrue;
  */
 public class MapaColorTest {
 
-    private static final String MD5_CATALOGO = "75bfb0f0bcd44ef15daa1674d02f870e";
+    // QA Medio (condición sobre 0.3.1): este md5 es del fin de línea LF del catálogo (el que
+    // declara el blob de git), no del CRLF que producía un checkout de Windows con
+    // core.autocrlf=true antes de que .gitattributes forzara `08_Senales/senales.csv text eol=lf`
+    // (y, para esta copia, `03_App_Movil/RetroUsuario/** text eol=lf`, ya vigente pero sin
+    // renormalizar la copia de pruebas cuando se escribió este valor): un checkout limpio da
+    // siempre LF para los dos ficheros, así que este valor es estable entre plataformas.
+    private static final String MD5_CATALOGO = "9f94297fcbfa504974f0a110239e9bbd";
 
     private List<Map<String, String>> leerCatalogo() throws IOException {
         List<Map<String, String>> filas = new ArrayList<>();
