@@ -25,7 +25,7 @@ y de la rama `rtv-1.0`, y la app legacy en `D:\@Proyect\IT\old\VERTICAL\4_Apps\`
    (RF-REG-19 de SPEC-REG). Señal nueva: alta mínima (código, familia, color); el resto del
    inventario georreferenciado de SPEC-REG §2.4 es opcional en esta versión (§6, C-USR-01).
 3. **Medir.** Confirmar color y tipo (I / no-I), disparos por color con media y mínimo (RF-USR-04,
-   RF-USR-05), botón único "Medir".
+   RF-USR-05), botón único "Medir", nivel de batería (RF-USR-12).
 4. **Guardar visita.** Identidad de equipo, ubicación, observación (RF-USR-06).
 5. **Ver datos / seguir midiendo.** Lista de la campaña abierta; consulta, no edición (RF-REG-13).
 6. **Exportar.** Paquete de SPEC-REG §4.1 por "Compartir" del teléfono (RF-USR-07).
@@ -50,15 +50,16 @@ resuelve solo (p. ej. `"superior a IV; XI"`). *Fuente:* `08_Senales/CATALOGO-Sen
 *CA:* elegido `SR-01`, propone fondo rojo y pide confirmar tipo.
 
 **RF-USR-04 — Código Bluetooth por RF-APP-04.** Color y tipo confirmados → un byte: tipo I → `7`,
-`8`, `a`-`d`; otro tipo → `1`-`6`. *Fuente:* `SPEC-V3.6.md:496-497`, tabla `:121-131`. *CA:* fondo
+`8`, `a`-`d`; otro tipo → `1`-`6`. *Fuente:* `SPEC-V3.6.md:496-497`, tabla `:109-116`. *CA:* fondo
 rojo, tipo I → byte `b` (0x0B); nunca sale otro byte para esa combinación.
 
-**RF-USR-05 — Disparos por color, nunca `e`.** 3 disparos por color (`medidasRealizar = 3` de la app
-legacy Ionic, `medir.page.ts:54`), media, mínimo, trama cruda; nunca `e`, con equipo identificado o
-no. Un `0` se muestra "0 (saturado o sin señal)". *Fuente:* `SPEC-REG:573` (RF-REG-08, media/mínimo);
-`SPEC-V3.6.md:501-509` (RF-APP-05); `ecuacionesCalibracion.c:49-54`. *CA:* con lecturas simuladas
-100, 110, 120 → media 110, mínimo 100, n = 3; `EquipoSimulado` respondiendo `::0` muestra la leyenda
-completa; 0 apariciones de `e` en el registro de toda la app.
+**RF-USR-05 — Disparos por color, nunca `e`.** `lecturas_por_color` disparos (4 por defecto), media,
+mínimo, trama cruda; nunca `e`, con equipo identificado o no. La app legacy Ionic usaba 3
+(`medidasRealizar = 3`, `medir.page.ts:54`): antecedente, no cifra vigente. Un `0` se muestra "0
+(saturado o sin señal)". *Fuente:* `SPEC-REG:573` (RF-REG-08, 4 por defecto, media/mínimo);
+`SPEC-V3.6.md:501-509` (RF-APP-05); `ecuacionesCalibracion.c:49-54`. *CA:* con 4 lecturas simuladas
+100, 110, 120, 130 → media 115, mínimo 100, n = 4; `EquipoSimulado` respondiendo `::0` muestra la
+leyenda completa; 0 apariciones de `e` en el registro de toda la app.
 
 **RF-USR-06 — Guardar visita con identidad de equipo.** MAC, nombre Bluetooth, serie (o "SIN SERIE"
 explícito si `#GN,NONE#`) y `#V#` completo en cada visita; nada se sobrescribe (una corrección es un
@@ -78,7 +79,7 @@ decisión de Diego (dos apps, no se mezclan). *CA:* `grep` del código de esta a
 
 **RF-USR-09 — Colores sin ecuación, fuera de la medida.** Café, lila y fluorescentes salen como "no
 medible con este equipo": el mapa de RF-APP-04 sólo cubre 6 colores. *Fuente:* `SPEC-REG:157`
-(C-10); `SPEC-V3.6.md:121-131`. *CA:* esos colores no ofrecen botón "Medir".
+(C-10); `SPEC-V3.6.md:109-116`. *CA:* esos colores no ofrecen botón "Medir".
 
 **RF-USR-10 — Sin red.** El ciclo completo (medir, guardar, exportar) funciona en modo avión.
 *Fuente:* `SPEC-REG:588` (RF-REG-23). *CA:* con el teléfono en modo avión, exportar produce el ZIP.
@@ -87,6 +88,11 @@ medible con este equipo": el mapa de RF-APP-04 sólo cubre 6 colores. *Fuente:* 
 `#V#`, `e` y `6` disparan una medida (luz y pitido): se avisa al operador antes de la primera sonda de
 RF-USR-01. *Fuente:* `SPEC-V3.6.md:484-486`; `PROTOCOLO-V3.6.md:22`. *CA:* al detectar F-2020 en
 `EquipoSimulado`, aparece el aviso antes de enviar la primera sonda, no después.
+
+**RF-USR-12 — Batería.** Orden `9` al conectar; aviso con `n < 19`, reutilizando `Bateria.java` de
+`rtv-1.0` (`AVISO_N`); nunca bloquea medir. *Fuente:* `git show rtv-1.0:.../Bateria.java:8-16`;
+`SPEC-Calibracion-V3.6.md` §12.8. *CA:* con `n=5`, aviso visible; con `n=40`, sin aviso; en ambos
+casos la medida se completa.
 
 ## 3. Qué reutiliza del código de `rtv-1.0` (capa Bluetooth / Protocolo / detección)
 
