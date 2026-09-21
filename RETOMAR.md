@@ -71,7 +71,7 @@ campaña. La rc3 escribe en el acta `firmado por Firmado por "…"` (arreglado e
    disco. Si Android rechaza la instalación, **no desinstalar**. Camino limpio de la campaña, igual en
    rc4 y rc6: "ZIP de soporte (todo)" → "Nueva campaña (archiva la actual)" → **sin abrir el Banco**,
    importar el ZIP de las 18:11 → comprobar REPRESENTATIVO con 80 pasos hechos. **Recomienda la rc4**
-   (`RTV-V1.0.0-rc4.apk`, md5 `a41fb09c…`, en `D:\IT\wt_rtv10wt_rtv10_App_Movil3_App_Movil\`) tras arquitecto y
+   (`RTV-V1.0.0-rc4.apk`, md5 `a41fb09c…`, en `D:\IT\wt_rtv10\03_App_Movil\`) tras arquitecto y
    QA del salto rc2 → rc4. Trae una lista de once cambios al procedimiento, sin aplicar.
 2. **App corta cerrada en la JVM**, rama local `rtv-1.0-cierre` (`0a849fe`, `7faaf38`), 360 pruebas.
    Arregla RF-COV-09: `Familia.compatibles` deja pasar una familia desconocida (`Familia.java:88`),
