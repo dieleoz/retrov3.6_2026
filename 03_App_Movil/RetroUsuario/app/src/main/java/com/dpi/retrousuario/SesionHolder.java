@@ -25,8 +25,19 @@ final class SesionHolder {
     private static final ParametrosRitmo PARAMETROS = new ParametrosRitmo();
     private static SesionMedicion sesion;
     private static EnlaceBluetooth enlace;
+    /** M-1 (giro): el aviso previo (T-USR-02) se acepta una sola vez por proceso, no por Activity. */
+    private static boolean avisoAceptado = false;
 
     private SesionHolder() {
+    }
+
+    /** M-1: true si el operador ya aceptó el aviso previo en este proceso (no vuelve a salir tras un giro). */
+    static boolean avisoAceptado() {
+        return avisoAceptado;
+    }
+
+    static void marcarAvisoAceptado() {
+        avisoAceptado = true;
     }
 
     static ParametrosRitmo parametros() {

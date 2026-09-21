@@ -8,6 +8,7 @@
     <string name="equipo_no_compatible">Equipo no compatible</string>
     <string name="actualice_firmware">Actualice el firmware del equipo</string>
     <string name="sin_respuesta_reintente">El equipo no respondió. Reintente.</string>
+    <string name="sin_datos_calibracion_serie">El equipo no respondió; sin datos de calibración/serie</string>
     <string name="reintentar">Reintentar</string>
     <string name="continuar_a_medir">Medir</string>
 
@@ -26,6 +27,8 @@
     <string name="medir_resultado">%1$s — lecturas: %2$s — media %3$s, mínimo %4$s, válido %5$s</string>
     <string name="medir_filas_guardadas">%1$d medidas guardadas</string>
     <string name="medir_exportado">Exportado a %1$s</string>
+    <string name="medir_exportado_con_filas_cortadas">Exportado a %1$s (aviso: %2$d fila(s) descartada(s) por línea cortada en el diario)</string>
+    <string name="medir_error">No se pudo medir: %1$s</string>
     <string name="exportar_error">No se pudo exportar: %1$s</string>
     <string name="exportar_permiso_necesario">Hace falta permiso de almacenamiento; toque Exportar otra vez tras concederlo</string>
     <string name="exportar_permiso_concedido">Permiso concedido; toque Exportar otra vez</string>

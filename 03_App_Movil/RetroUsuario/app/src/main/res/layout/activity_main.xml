@@ -34,4 +34,11 @@
         android:text="@string/continuar_a_medir"
         android:visibility="gone" />
 
+    <!-- M-2 (condicion QA-6): acceso a Exportar desde la pantalla principal, sin equipo conectado. -->
+    <Button
+        android:id="@+id/btnExportarPrincipal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/exportar" />
+
 </LinearLayout>

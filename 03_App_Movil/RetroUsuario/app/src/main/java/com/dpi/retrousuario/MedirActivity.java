@@ -93,7 +93,13 @@ public final class MedirActivity extends AppCompatActivity {
         btnExportar.setEnabled(habilitados);
     }
 
-    /** Cero tecleo (RF-USR-06): color → Medir, sin más entrada del operador. */
+    /**
+     * Cero tecleo (RF-USR-06): color → Medir, sin más entrada del operador.
+     *
+     * <p>B-1 (condición QA-8 sobre 32c785d): el hilo de medir captura cualquier excepción y la
+     * muestra, en vez de morir en silencio dejando los controles deshabilitados para siempre (un
+     * {@link Thread} sin manejador propio no propaga la excepción a ningún sitio visible).</p>
+     */
     private void medir(String color) {
         SesionMedicion sesion = SesionHolder.sesion();
         if (sesion == null) {
@@ -103,16 +109,24 @@ public final class MedirActivity extends AppCompatActivity {
         establecerControlesEnCurso(true);
         tvResultado.setText(R.string.medir_midiendo);
         new Thread(() -> {
-            double[] gps = UbicacionGps.ultimaConocida(getApplicationContext());
-            String fechaHora = fechaHoraIsoAhora();
-            String lat = gps != null ? CsvMedidas.formatearCoordenada(gps[0]) : "";
-            String lon = gps != null ? CsvMedidas.formatearCoordenada(gps[1]) : "";
-            String gpsEstado = gps != null ? "con_posicion" : "sin_posicion";
-            FilaMedida fila = sesion.medir(color, fechaHora, lat, lon, gpsEstado);
-            runOnUiThread(() -> {
-                mostrarResultado(fila);
-                establecerControlesEnCurso(false);
-            });
+            try {
+                UbicacionGps.Resultado gps = UbicacionGps.ultimaConocida(getApplicationContext());
+                String fechaHora = fechaHoraIsoAhora();
+                boolean conPosicion = "con_posicion".equals(gps.gpsEstado);
+                String lat = conPosicion ? CsvMedidas.formatearCoordenada(gps.latitud) : "";
+                String lon = conPosicion ? CsvMedidas.formatearCoordenada(gps.longitud) : "";
+                FilaMedida fila = sesion.medir(color, fechaHora, lat, lon, gps.gpsEstado);
+                runOnUiThread(() -> {
+                    mostrarResultado(fila);
+                    establecerControlesEnCurso(false);
+                });
+            } catch (Exception e) {
+                String mensaje = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                runOnUiThread(() -> {
+                    tvResultado.setText(getString(R.string.medir_error, mensaje));
+                    establecerControlesEnCurso(false);
+                });
+            }
         }, "medir-" + color).start();
     }
 
@@ -175,8 +189,14 @@ public final class MedirActivity extends AppCompatActivity {
         new Thread(() -> {
             try {
                 String destinoTexto = exportarSegunApi(sesion);
+                // B-4 (condición QA-8): avisa si el Diario descartó alguna línea FILA cortada (B-1);
+                // filasCortadasIgnoradas() sólo es fiable tras exportar/filas(), que ya releyó el
+                // fichero (SesionMedicion#filas -> Diario#filasGuardadas).
+                int cortadas = sesion.filasCortadasIgnoradas().size();
+                String mensaje = cortadas == 0 ? getString(R.string.medir_exportado, destinoTexto)
+                        : getString(R.string.medir_exportado_con_filas_cortadas, destinoTexto, cortadas);
                 runOnUiThread(() -> {
-                    tvResultado.setText(getString(R.string.medir_exportado, destinoTexto));
+                    tvResultado.setText(mensaje);
                     establecerControlesEnCurso(false);
                 });
             } catch (Exception e) {
