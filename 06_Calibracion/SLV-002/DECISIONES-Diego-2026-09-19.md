@@ -36,6 +36,7 @@ registrada, y no en una casilla del operador (P11 §3, QA-3612).
 | **SERIE-USR** | App de usuario: si el equipo no da la serie, la escribe el operador (nota 7) | 21-sep-2026 | nota 7 |
 | **SENAL-FILTRO** | App de usuario: filtro por familia y búsqueda al escribir (nota 7) | 21-sep-2026 | nota 7 |
 | **USR-ALCANCE** | App de usuario: sólo firmware V3.6; informe por señal (nota 8) | 21-sep-2026 | nota 8 |
+| **UMBRAL-LEY** | Umbral de cumplimiento: el que fije la norma (nota 9). Cierra D-9 | 21-sep-2026 | nota 9 |
 
 Notas de las filas del 21-sep-2026:
 
@@ -80,3 +81,8 @@ Notas de las filas del 21-sep-2026:
    "señal, ubicación, estado de la señal [...] si está limpia, en buen estado", y "algunas señales
    tienen un serial detrás para identificar la medida con el identificador de esa señal en campo".
    La V4.6 es otra app y otro cliente; lo que se salve de aquí pasa por el Orquestador.
+9. **UMBRAL-LEY.** Diego: "80 % (ANI) si es lo que dice la ANI o el manual 2024, lo que diga la ley".
+   ▸ Propuesta, sin confirmar: NO CUMPLE si la medida baja del mínimo absoluto del Manual de
+   Señalización Vial 2024 (Res. 20243040045005, Tablas 2-5 y 2-6) o del 80 % del valor de instalación
+   (ANI, Apéndice Técnico 4, E11); el 70 % de SFT no es norma y no se usa. Fuentes:
+   `05_Documentacion/SPEC-Registro-Indicador-Interventoria.md` §1.4 y §1.5 (C-01).
