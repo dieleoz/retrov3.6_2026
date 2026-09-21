@@ -48,3 +48,12 @@ Los errores concretos, con la errónea junto a la buena, en `HISTORIA.md`.
   `leer-planos-pcb` §0.3 y §6 llevan un estado fechado y cifras de otro proyecto;
   `verificar-pantalla-stone` no explica el formato del `.vt` de 2.ª generación.
 - **Destino:** SUBE a `entregar`, `leer-planos-pcb` y `verificar-pantalla-stone`.
+
+## A-08 — Tras compactar el contexto, las respuestas pasaron al inglés
+- **Pasó:** después de la compactación, todas las respuestas a Diego salieron en inglés. Ninguna skill ni
+  particularidad lo pide (búsqueda de "english"/"inglés" en `.claude/particularidades/` y en las skills
+  del Orquestador: sin resultados). El resumen de la compactación, las instrucciones del arnés, las
+  notificaciones de tareas y las salidas de herramientas están en inglés, y arrastraron el idioma.
+- **Lección:** el idioma de respuesta es el de Diego (español), no el del contexto. Al retomar tras una
+  compactación, comprobarlo en la primera respuesta; los encargos a subagentes, también en español.
+- **Destino:** SUBE al método global ("Tono") y a la skill que retoma sesión.
