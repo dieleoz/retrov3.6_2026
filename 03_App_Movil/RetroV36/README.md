@@ -7,13 +7,14 @@ en ningún equipo. La V4.6 tampoco existe grabada: se prueba contra `EquipoSimul
 funcionar es la medida contra un V3 2020 (SLV-002) y contra un V4 original (`@LEERV`), y ninguna de las
 dos se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36` (no cambia), etiqueta "RTV", `versionCode 10008`, `versionName 1.0.0-rc9`
-  (RTV 1.0.0, sucede a 3.6.16; decisión VERSION de Diego). rc8 = `10007`, rc7 = `10006`, rc6 = `10005`,
-  rc5 = `10004`. El APK de calibrar (buildType `coviandina`) es `com.dpi.retrov36.calibra`, `versionName
-  Cov_3.6.3_calibrar`, `versionCode 10008` (nombre fijado por Diego el 21-sep-2026; RF-COV-16). La **rc1**
-  se compiló con `10000`/`1.0.0` y es **anterior** a la mezcla de la 3.6.17 (`3dcaf41`): ese par no se
-  reutiliza. Antes: `versionCode 3616`, `versionName 3.6.16` (desde la 3.6.10 el versionCode sigue a
-  RF-APP-41: 3.6.10 → 3610, 3.6.16 → 3616) (la 3.6.0 enviaba `e` en la detección: no usar).
+- Paquete `com.dpi.retrov36` (no cambia), etiqueta "RTV", `versionCode 10010`, `versionName 1.0.0-rc11`
+  (RTV 1.0.0, sucede a 3.6.16; decisión VERSION de Diego). rc10 = `10009`, rc9 = `10008`, rc8 = `10007`,
+  rc7 = `10006`, rc6 = `10005`, rc5 = `10004`. El APK de calibrar (buildType `coviandina`) es
+  `com.dpi.retrov36.calibra`, `versionName Cov_3.6.5_calibrar`, `versionCode 10010` (nombre fijado por
+  Diego el 21-sep-2026; RF-COV-16). La **rc1** se compiló con `10000`/`1.0.0` y es **anterior** a la
+  mezcla de la 3.6.17 (`3dcaf41`): ese par no se reutiliza. Antes: `versionCode 3616`, `versionName
+  3.6.16` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.16 → 3616) (la 3.6.0
+  enviaba `e` en la detección: no usar).
 - `minSdk 24`, `targetSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`, `ACCESS_FINE_LOCATION`.
   **Sin `INTERNET`**: los ficheros salen por "Compartir" (`ACTION_SEND_MULTIPLE` + `FileProvider`).
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`, **revisión 1.1** (§4 bis).
@@ -86,6 +87,32 @@ se han visto instaladas a la vez. SPEC: `05_Documentacion/SPEC-App-Calibracion-C
 ```bash
 ./gradlew clean assembleDebug assembleCoviandina --offline
 ```
+
+**rc11 / Cov_3.6.5_calibrar (21-sep-2026), tres condiciones del arquitecto-iot** sobre "APTO CON
+CONDICIONES" a `Cov_3.6.4_calibrar` (SPEC-App-Calibracion-Coviandina.md §8): (1) RF-COV-17/21 —
+`Fabrica.elCodigo(k, corto)` en escribir() y rechazar() (antes mostraban "código k" en corto); (2)
+RF-COV-22 — `calibrarInterno` (110 líneas) partido en `CalibracionManual.validarYPreparar`/
+`escribirYVerificar` (59 y 58 líneas); `FlujoCalibracion.java`: 2003 líneas (`wc -l`), antes 2080; (3)
+RF-COV-20 — `Decisiones.texto(equipo, corto)` marca REMEDIDA-b "sustituida por VERIF-5-10 (RF-COV-12)"
+en el acta de la b en corto (antes citaba "se juzga con RF-CAL-18"). Bajo, RF-COV-18: el DATO del acta
+lleva la frase literal "no se pudo leer la fecha del equipo; reintente". Detalle en el commit
+"cierra las tres condiciones...".
+Compilado con `clean assembleDebug assembleCoviandina --offline` sobre el árbol de este commit (rama
+`rtv-1.0-cierre`, sobre `978dd0e`), `aapt dump badging`, build-tools 34.0.0. Las 36 clases `*Test.java`
+pasaron antes con JUnitCore: `OK (391 tests)`.
+
+| APK | md5 | versionCode | versionName | label |
+| :--- | :--- | :--- | :--- | :--- |
+| `app-debug.apk` | `c029abd3e6a5e42acc1d96d55b1e2605` | 10010 | `1.0.0-rc11` | RTV |
+| `app-coviandina.apk` | `dc0beaf5e110a72b7cbb288e4011cb68` | 10010 | `Cov_3.6.5_calibrar` | RTV Calibra |
+
+package: `com.dpi.retrov36` (campo) y `com.dpi.retrov36.calibra` (calibrar).
+
+Copia en `03_App_Movil/`: sólo el par de calibrar, `Cov_3.6.5_calibrar.apk` y
+`Cov_3.6.5_calibrar-10010.apk` (el encargo no pidió copiar el de campo); se borraron los `Cov_3.6.4_*`.
+
+**Sin arquitecto ni QA sobre ESTE par: sigue sin ser entregable** (§6 del CLAUDE.md: "a Diego sólo se le
+entrega una APK con el visto bueno escrito del arquitecto y de QA — los dos").
 
 **rc9 / Cov_3.6.3_calibrar (21-sep-2026), arreglos ALTO/MEDIO/BAJO** de las revisiones arquitecto-iot y
 qa-istqb a `Cov_3.6.2_calibrar`: MAX_NO_VALIDAS restaura (ALTO, QA); la b se juzga como el 8 en la app de
