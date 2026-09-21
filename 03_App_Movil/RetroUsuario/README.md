@@ -47,13 +47,19 @@ export JAVA_HOME="D:/@Proyect/Baliza/7 sw apk/jdk-11/jdk-11.0.24+8"
 ## Tests JVM
 
 58 tests, `dominio/*Test.java`, contra `EquipoSimulado` (tramas `#...#`) y
-`EquipoSimuladoDisparos` (disparos `::<n>`, byte a byte, con reloj propio). **Recuento
-requisito/comportamiento (CLAUDE.md §7):** ~46 aseveran un valor de fuente ajena (firmware,
-protocolo, SPEC/TDD, decisión de Diego); ~12 fijan comportamiento de este trabajo sin cita externa
-(formato del diario, nombre del ZIP, redondeo). Vistas en rojo a propósito, con su salida
-comprobada: la cuarentena de RF-USR-16 (T-USR-24 b/d, `EmisorRitmo.cuarentena`), el redondeo mitad
-hacia arriba y la regla "media = 0" del cero persistente (T-USR-06), y la regla de comillas de `;`
-en `medidas.csv` (T-USR-21a).
+`EquipoSimuladoDisparos` (disparos `::<n>`, byte a byte, con reloj propio): 24 de la primera parte
+(19 requisito / 5 comportamiento, ya contadas en su momento) más 34 de esta segunda parte (29
+requisito / 5 comportamiento) — **48 requisito / 10 comportamiento en total** (CLAUDE.md §7). Las 5
+de comportamiento nuevas: el formato del nombre del ZIP (`NombreZipTest`, 3, SPEC dice
+explícitamente "ficha que fija comportamiento de este trabajo") y dos de `CsvMedidasTest` (una fila
+de ejemplo sin GPS inventada por esta ficha, y un caso propio para no dejar sin cubrir la regla de
+comillas por `;` solo, sin `"` — ver el rojo de abajo). Vistas en rojo a propósito, con su salida
+comprobada: la cuarentena de RF-USR-16 (T-USR-24 b/d, `EmisorRitmo.cuarentena`, sin ella ambas
+fichas fallaban con "expected:<[::110]> but was:<[]>"), el redondeo mitad hacia arriba y la regla
+"media = 0" del cero persistente (T-USR-06), y la regla de comillas de `;` en `medidas.csv`
+(T-USR-21a: la primera versión de la prueba no distinguía `;` de `"`, y no detectó que el código
+olvidara citar por `;` solo — se añadió `unSoloPuntoYComaSinComillaTambienDisparaLaCita` para
+cerrar ese hueco, y esa sí se vio en rojo).
 
 ```bash
 ./gradlew compileDebugUnitTestJavaWithJavac --offline
