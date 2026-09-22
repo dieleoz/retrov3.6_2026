@@ -30,3 +30,14 @@ md5    fce014de4528fc9be88f1e0c1e6b4035
 sha256 15fa6ca4e483a31a553c79d0bc639c8362ed5580b9bfac4d3e72c43d905d2f7d
 Registro del HONOR ABR-LX3 con la app 1.0.0-rc3 (10002), NO la 3.6.17. Campana abierta con 0 series; importa el ZIP de las 18:11 en una campana de cola COMPLETO (129 series, 69 pasos hechos, quedan 64). Pruebas del equipo NO APTO (coherencia y repetibilidad). Bateria n = 0 bloquea escrituras; #L enviado, previsualizacion del 8 con recta anclada, #Q al final. No se envio #S: nada escrito. Copiado de Descargas el 21-sep-2026.
 Correccion 21-sep: las pruebas del equipo dieron NO APTO en la primera tanda (l.586) y APTO en la segunda (l.1170); la recta anclada del 8 que se ve es la vista previa de Avanzado, no la del flujo Calibrar.
+
+campana_SLV-002_20260922_104214.zip
+md5    c21ffb4efd427c17fdf423adcdd0c97f
+sha256 918fcaf2c7635be87fbee89d73492c8aa27e4df18208e13cc333e1cc27b885b3
+soporte_SLV-002_20260922_104214.zip
+md5    703f69e5aba012291ca4367a52a32b47
+sha256 d9ceefc47da1d21595876c620bc6696dd8dbd6f30e1a47e2dc04ed140755f2c3
+Intento del funcional (ITVIAL) con Cov_3.6.5_calibrar (10010), 22-sep 09:42-10:42. Importa el ZIP de las 18:11
+(md5 79b23590...). Pruebas del equipo NO APTO a las 09:42 (coherencia y repetibilidad) y APTO a las 10:31 y 10:38.
+Cuatro #L con respuesta ERR,PIN (dos en rtv36_20260922_103125, dos en _103817); ningun #S ni #P enviado:
+nada escrito. Mascara sigue en 0003 (8 y b de fabrica). Copiado de 07 pruebas/220920261043/ el 22-sep-2026.
