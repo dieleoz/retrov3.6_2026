@@ -31,10 +31,10 @@ app de usuario no certifica nada y va como segundo carril, sin quitarle turno a 
 **Carril A — app de calibrar.** `Cov_3.6.5_calibrar` (rama `rtv-1.0-cierre`, `316a6bc`, md5 en `RETOMAR.md`):
 QA APTO y arquitecto APTO CON CONDICIONES; entregable a Diego para calibrar el 8 y la b.
 
-1. **A4 (bloquea la certificación).** Diego instala por USB, carga el ZIP del banco archivado en
-   `06_Calibracion/SLV-002/campanas/` y calibra el 8 y la b; actas y ZIP resultante al repositorio.
+1. **A4 (bloquea la certificación; en manos del funcional, se espera su ZIP).** Con la 3.6.5 y el ZIP del
+   banco de `06_Calibracion/SLV-002/campanas/`, calibrar el 8 y la b; actas y ZIP resultante al repositorio.
 2. **A4b (bucle roto con A4B-FILTRO).** `Cov_3.6.8_calibrar` (`3f72367`): filtro único `TextoOperador` y acta
-   oculta en esta app. Una prueba en rojo (`Cov366Rf17Test`, regresión): se arregla; después, arquitecto y QA.
+   oculta en esta app; regresión de `Cov366Rf17Test` arreglada en `31e6214` (411/411). Arquitecto y QA en curso.
 3. **A5a.** Propuesta en `06_Calibracion/SLV-002/PROPUESTA-Toma-Corta.md` (simulación, sin medir): 46
    patrones, ajustar 6 y 4; 3 y 5 con dato invertido; café fuera con la curva del rojo. Aprobada
    (TOMA-SEL-LISTA).
@@ -46,7 +46,8 @@ QA APTO y arquitecto APTO CON CONDICIONES; entregable a Diego para calibrar el 8
 (0.3.4 y 0.3.5) se agotó con un Alto de ciclo de vida; bucle roto con el revisor Fable (FABLE-USR): la
 medida, la pregunta y el resultado viven en `dominio/EstadoMedida`, no en la pantalla (A-09).
 
-1. **B6.** `RetroUsuario` 0.3.6 (`6e59f7b`, 148/148): arquitecto y QA en curso. Sólo bloquea un requisito
+1. **B6.** `RetroUsuario` 0.3.6 (`6e59f7b`, 148/148): arquitecto APTO CON CONDICIONES (abandonar con la
+   pregunta del cero guarda fila; la SPEC dice sin fila); QA en curso. Vuelta corta 0.3.7. Sólo bloquea un requisito
    escrito de `SPEC-App-Usuario-V3.6.md` (r7 y §4 bis).
 2. **B7.** Prueba de Diego en dos teléfonos (Android ≤9 y ≥10): giro con la pregunta abierta, giro
    midiendo, Atrás desde Medir, apagar el equipo, exportar; después, al funcional.
