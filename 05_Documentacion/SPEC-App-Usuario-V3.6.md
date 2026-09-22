@@ -382,9 +382,9 @@ mientras mide y limpia el búfer al terminar (`clearBuffer()`, `bufferIndex = 0`
 - **Dos `::` en la misma ventana de espera.** Si llegan dos secuencias `::<n>` completas antes de que
   la app haya podido separar cuál pertenece a qué disparo (dos respuestas se solapan por temporización),
   **se descartan las dos**: no se adivina cuál es la buena. **Este disparo cuenta como anulado, igual que
-  uno anulado por plazo (RF-USR-04, corrige r5, C3):** entra en el límite de 2 repeticiones antes de
-  anular la serie entera, y **abre la misma cuarentena de `Q` ms de arriba** (no se envía nada mientras
-  dura) — el motivo es el mismo que el de un plazo vencido: la app no puede confiar en que el enlace ya
+  uno anulado por plazo (RF-USR-04, corrige r5, C3):** pregunta Repetir o Saltar como cualquier disparo
+  anulado (r7, REPETIR-PREGUNTA), y **abre la misma cuarentena de `Q` ms de arriba** (no se envía nada
+  mientras dura) — el motivo es el mismo que el de un plazo vencido: la app no puede confiar en que el enlace ya
   está limpio para el disparo siguiente. Ficha que fija comportamiento de este trabajo (▸ propuesta), sin
   cita de Diego.
 - Ficha de trama partida: `::1` llega, no hay silencio todavía (`Tramas.extraer` no la da por completa,
@@ -614,6 +614,9 @@ la SPEC no vaya por detrás del código; todo es ▸ propuesta de este trabajo, 
   conexión nueva antes de decir "no compatible" (0.3.3).
 - **Salir libera el equipo:** salir con Atrás cierra el enlace aunque haya una sesión de medida viva, para
   que otro teléfono pueda conectar; girar la pantalla no lo cierra (0.3.3).
+- **Girar a mitad de una medida o de una pregunta:** la medida en curso, la pregunta "Repetir o Saltar"
+  pendiente y el resultado viven fuera de la pantalla; la pantalla recreada vuelve a mostrar la pregunta,
+  mantiene los botones deshabilitados mientras se mide y pinta el resultado (arquitecto sobre 0.3.5, C1).
 - **Ajustes persistentes:** `lecturas_por_color` sobrevive a reiniciar la app (preferencias del sistema).
 - **Verificación del APK por contenido:** el md5 del ZIP del APK no se reproduce entre compilaciones
   (el empaquetador reordena entradas); se compara `classes*.dex`, recursos y certificado, y los fuentes
@@ -636,10 +639,9 @@ la SPEC no vaya por detrás del código; todo es ▸ propuesta de este trabajo, 
   las propuestas ▸ de esta ficha.
 - **Emparejamiento de inventario por GPS.** ▸ Propuesta pendiente de Diego: 15 m (RF-USR-13); sin
   confirmar.
-- **Cuarentena `Q`, repetición de disparo anulado (plazo o doble `::`) y reintentos de `#GN#`/`#GC#`,
-  sin cita de Diego.** El valor por defecto de `Q` (2500 ms, RF-USR-16), el límite de 2 repeticiones de
-  un disparo anulado antes de anular la serie (RF-USR-04, RF-USR-16) y el límite de 2 reintentos de
-  `#GN#`/`#GC#` (RF-USR-01, nuevo r6) son diseño de este trabajo: no están en
+- **Cuarentena `Q` y reintentos de `#GN#`/`#GC#`, sin cita de Diego** (la repetición de un disparo
+  anulado ya la decide el operador, r7). El valor por defecto de `Q` (2500 ms, RF-USR-16) y el límite
+  de 2 reintentos de `#GN#`/`#GC#` (RF-USR-01, nuevo r6) son diseño de este trabajo: no están en
   `DECISIONES-Diego-2026-09-19.md`. Quedan como parámetros, a confirmar o corregir en T-B06.
 - **Respuesta tardía más allá de `plazo+Q`: riesgo residual no detectable, nuevo r6, C1.** RF-USR-16
   declara la hipótesis "latencia del equipo < `plazo+Q`" (5000 ms con los valores por defecto) y **no
