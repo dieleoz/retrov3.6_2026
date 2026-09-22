@@ -1,7 +1,24 @@
 # RTV Usuario — app de USUARIO del retrorreflectómetro V3.6
 
-**Estado, 21-sep-2026: compila y pasa sus 134 tests JVM (checkout limpio). Nada probado contra un
-equipo ni un teléfono** (CLAUDE.md, cabecera). Cierra las condiciones de arquitecto-iot sobre la
+**Estado, 21-sep-2026: compila y pasa sus 141 tests JVM (checkout limpio). Nada probado contra un
+equipo ni un teléfono** (CLAUDE.md, cabecera). Última vuelta del presupuesto del incremento 1
+(ROADMAP del principal): cierra **C2** de `REVISIONES-Apps-V3.6.md` (entrada 0.3.4, Alto) —
+`runOnUiThread(this::restaurarInterfaz)` (`MainActivity.java:259` de la 0.3.4) corría sobre la
+Activity destruida tras un giro, consumía el resultado de un solo uso sin que la nueva se enterara, y
+se encolaba antes del `finally` que bajaba `detectando`; el camino de error tampoco publicaba. Ahora
+`dominio.EstadoDeteccion` baja `detectando` y publica (resultado, error o sonda de
+`reintentarSonda`, anotado por el arquitecto en la misma entrada) en el mismo bloque `synchronized`,
+ANTES de avisar a un `EstadoDeteccion.Oyente` registrado en `onResume()`/retirado en `onPause()`
+(nunca `runOnUiThread` sobre `this`) — con pruebas JVM que reproducen la carrera (`EstadoDeteccionTest`,
+5 nuevas). Cierra también **RF-USR-04 r7** (REPETIR-PREGUNTA, DECISIONES nota 18,
+`SPEC-App-Usuario-V3.6.md:167-197`): la app **ya no repite sola** — ni la serie con un cero (antes, un
+auto-repetir de una vez) ni un disparo anulado por plazo/doble `::` (antes, tope fijo de 2 reintentos)
+— `dominio.PreguntaOperador` (nueva interfaz) bloquea `SerieDisparos` hasta que el operador conteste
+"Repetir" o "Saltar", sin límite; `MedirActivity` la implementa con un diálogo modal que bloquea el
+HILO DE FONDO de medir (nunca el principal). `SerieDisparosTest` reescrita contra r7 (12 tests, 2
+nuevos) y `SesionMedicion.medir`/`MedirActivity.medir` reciben la pregunta como parámetro. `versionCode
+8`, `versionName "0.3.5"`.
+Cierra las condiciones de arquitecto-iot sobre la
 0.3.3, registradas en `05_Documentacion/REVISIONES-Apps-V3.6.md` **C1** (`MainActivity.java:192-194`
 de la 0.3.3: la salida anticipada de `hiloConectarYDetectar` durante "Conectando" — Atrás a mitad de
 la conexión — no ponía `detectando = false`, ni tampoco `SesionHolder.limpiar()`: la app quedaba en
@@ -42,7 +59,7 @@ señal" no está aquí.
 No confundir con `03_App_Movil/RetroV36` (app de EMPRESA: DPI, por USB/Bluetooth, PIN, banco y
 calibración). Esta app va **con el equipo** y la usa el operador de campo, sin modo administrador.
 
-- `applicationId com.dpi.retrousuario.coviandina`, `versionCode 7`, `versionName "0.3.4"`.
+- `applicationId com.dpi.retrousuario.coviandina`, `versionCode 8`, `versionName "0.3.5"`.
 - `minSdk 24`, `targetSdk 30`, `compileSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`,
   `ACCESS_FINE_LOCATION`/`ACCESS_COARSE_LOCATION` (arq C2: pedido en tiempo de ejecución al entrar a
   medir, una vez por proceso — `MedirActivity`/`dominio.PermisoUbicacion`; se conceda o no, se mide
@@ -137,34 +154,64 @@ export JAVA_HOME="D:/@Proyect/Baliza/7 sw apk/jdk-11/jdk-11.0.24+8"
 
 ## Tests JVM
 
-134 tests, `dominio/*Test.java` (88 requisito / 46 comportamiento; los 126 de la 0.3.3, 88/38, más 8
-nuevos de esta vuelta — `LectorDeFlujoTest` 3, `EstadoDeteccionTest` 5 —, los 8 **comportamiento**:
-citan las condiciones C1/C2 de arquitecto-iot y el encargo de QA sobre `EnlaceBluetooth.leerSinParar`
-de esta MISMA entrega (0.3.4), que todavía no están archivados en
-`05_Documentacion/REVISIONES-Apps-V3.6.md` — por la propia regla QA D-2 de abajo, no cuentan como
-requisito hasta que lo estén). **QA D-2:** desde la 0.3.3, una prueba cuenta como requisito sólo si la
-condición que cita está escrita en `05_Documentacion/REVISIONES-Apps-V3.6.md` (regla del propio
-fichero, `:39-42`) — no basta con que el analista recuerde el informe del arquitecto o QA, si no
-quedó archivado.
+141 tests, `dominio/*Test.java` (**100 requisito / 41 comportamiento**). Recuento recomputado contra
+`REVISIONES-Apps-V3.6.md` vigente (entrada 0.3.4, ya archivada): de las 8 nuevas de la 0.3.4 que este
+mismo README contaba como comportamiento a falta de archivo, QA dijo que **5 pasan a requisito** —
+`LectorDeFlujoTest` completa (3: la entrada 0.3.4 archiva literalmente "roturas de LectorDeFlujo...
+vistas en rojo") y, de `EstadoDeteccionTest`, las 2 que citan C1/C2 por su nombre
+(`salirDuranteConexionDejaDetectandoEnFalso`, `resultadoPublicadoTrasDestruirLaActivityLoMuestraLaNueva`
+— la entrada archiva "C1 cerrada" y describe C2 con detalle); las otras 3 de `EstadoDeteccionTest`
+(`alCrearloNoHayDeteccionEnCurso`, `iniciarPoneDetectandoEnCurso`,
+`salirSinPublicarNoDejaResultadoPendiente`) siguen comportamiento: fijan el contrato de la clase, no
+citan una condición. Base tras la corrección: 93 requisito / 41 comportamiento (134). **QA D-2:**
+desde la 0.3.3, una prueba cuenta como requisito sólo si la condición que cita está escrita en
+`05_Documentacion/REVISIONES-Apps-V3.6.md` (regla del propio fichero, `:58-59`) — no basta con que el
+analista recuerde el informe del arquitecto o QA, si no quedó archivado.
 
-**Las 8 nuevas de esta entrega (0.3.4):**
+**Las 7 nuevas de esta entrega (0.3.5), todas requisito** (el esperado de cada una sale de un
+documento escrito fuera del código que prueban — SPEC r7, DECISIONES, o la propia entrada 0.3.4 de
+REVISIONES —, CLAUDE.md §7):
 
-- **`LectorDeFlujoTest`** (3, comportamiento — ver arriba): los tres casos del encargo de QA sobre
-  `EnlaceBluetooth.leerSinParar` (rotura no detectada por las 126 pruebas de la 0.3.3): (a) `IOException`
-  → caído, (b) EOF (`read() == -1`) → caído, (c) bytes entregados → quedan en la cola y el estado
-  sigue vivo mientras el flujo no ha terminado (usa dos hilos y dos pestillos para observarlo a
-  mitad del bucle bloqueante). Rojo por comportamiento capturado quitando las dos llamadas a
-  `marcarCaido()` de `LectorDeFlujo` (código de producción): los tres caen — ver el Javadoc de la
-  clase para la traza completa.
-- **`EstadoDeteccionTest`** (5, comportamiento — ver arriba): `salirDuranteConexionDejaDetectandoEnFalso`
-  (C1: "salida durante conexión → detectando=false") y
+- **`EstadoDeteccionTest`** (5 nuevas): citan la entrada 0.3.4 de `REVISIONES-Apps-V3.6.md` ("Alto",
+  C2 sigue abierta) — `elOyenteSeAvisaConDetectandoYaEnFalso` reproduce en dominio puro la carrera que
+  describe la condición ("esa llamada se encola antes del finally que baja detectando"): el oyente ve
+  `detectando() == false` en el instante del aviso; `publicarErrorDejaDetectandoEnFalsoYAvisaUnaVez` y
+  `publicarSondaDejaDetectandoEnFalsoYSeEntregaUnaVez` cubren el camino de error y `reintentarSonda`
+  (anotado por el arquitecto en la misma entrada); `quitarOyenteConOtraInstanciaNoQuitaElVigente` y
+  `publicarSinOyenteRegistradoNoRevientaYDejaElResultadoPendiente` fijan el resto del contrato del
+  oyente. Rojo por comportamiento capturado forzando temporalmente a `publicar()` a avisar ANTES de
+  bajar `detectando` (un cambio de una línea, revertido después), corrido con `JUnitCore` sólo contra
+  esta clase — 1 caída (`elOyenteSeAvisaConDetectandoYaEnFalso`, el síntoma exacto de la condición);
+  traza completa en el Javadoc de la clase.
+- **`SerieDisparosTest`** (2 nuevas, de 12): `disparoAnuladoConSaltarAnulaLaSerieEntera` (renombrada de
+  `disparoAnuladoDosVecesAnulaLaSerieEntera`, reescrita: "Saltar" anula tras el PRIMER disparo sin
+  respuesta, sin tope fijo) y `disparoAnuladoSinLimiteDeRepeticionesSiElOperadorSigueRepitiendo` (r7,
+  "sin límite de repeticiones: decide el operador", DECISIONES nota 18) citan
+  `SPEC-App-Usuario-V3.6.md:167-197` (RF-USR-04 r7). Rojo por comportamiento: se restauró el
+  auto-repetir de la 0.3.4 dentro de `SerieDisparos` (ignorando a propósito la respuesta de
+  `PreguntaOperador`) y se corrió sólo esta clase con `JUnitCore` — 6 de 12 caídas (no sólo las 2
+  nuevas: el resto de la clase también prueba r7 aunque no sean métodos nuevos); traza completa en el
+  Javadoc de la clase.
+
+Las 8 de la 0.3.4 (contexto, no se repiten aquí; recuento requisito/comportamiento YA corregido arriba):
+
+- **`LectorDeFlujoTest`** (3, requisito tras la corrección de arriba): los tres casos del encargo de QA
+  sobre `EnlaceBluetooth.leerSinParar` (rotura no detectada por las 126 pruebas de la 0.3.3): (a)
+  `IOException` → caído, (b) EOF (`read() == -1`) → caído, (c) bytes entregados → quedan en la cola y
+  el estado sigue vivo mientras el flujo no ha terminado (usa dos hilos y dos pestillos para
+  observarlo a mitad del bucle bloqueante). Rojo por comportamiento capturado quitando las dos
+  llamadas a `marcarCaido()` de `LectorDeFlujo` (código de producción): los tres caen — ver el Javadoc
+  de la clase para la traza completa.
+- **`EstadoDeteccionTest`** (5 de la 0.3.4; 2 requisito, 3 comportamiento tras la corrección de arriba):
+  `salirDuranteConexionDejaDetectandoEnFalso` (C1: "salida durante conexión → detectando=false") y
   `resultadoPublicadoTrasDestruirLaActivityLoMuestraLaNueva` (C2: "resultado publicado tras destruir
-  la Activity → la nueva lo muestra") son los dos casos que pide la condición literalmente; los otros
-  tres (`alCrearloNoHayDeteccionEnCurso`, `iniciarPoneDetectandoEnCurso`,
-  `salirSinPublicarNoDejaResultadoPendiente`) fijan el resto del contrato de la clase nueva. Rojo por
-  comportamiento capturado con `salir()` vacío (sin `detectando = false`, tal como estaba el camino
-  de MainActivity.java:192-194 de la 0.3.3 antes de esta entrega): sólo cae
-  `salirDuranteConexionDejaDetectandoEnFalso` — ver el Javadoc de la clase para la traza completa.
+  la Activity → la nueva lo muestra") son los dos casos que pide la condición literalmente (requisito);
+  los otros tres (`alCrearloNoHayDeteccionEnCurso`, `iniciarPoneDetectandoEnCurso`,
+  `salirSinPublicarNoDejaResultadoPendiente`) fijan el resto del contrato de la clase, sin citar una
+  condición (comportamiento). Rojo por comportamiento capturado con `salir()` vacío (sin
+  `detectando = false`, tal como estaba el camino de MainActivity.java:192-194 de la 0.3.3 antes de
+  esta entrega): sólo cae `salirDuranteConexionDejaDetectandoEnFalso` — ver el Javadoc de la clase
+  para la traza completa.
 
 Las 9 nuevas de la 0.3.3 (siguen contando, sin repetirse aquí):
 
@@ -266,9 +313,8 @@ done > fuente.md5
 ```
 
 Verificado en esta entrega con `git worktree add --detach <ruta> <commit>` (checkout limpio, sin
-nada del árbol de quien lo generó) + `md5sum -c fuente.md5`: 68/68 `OK` (65 de la 0.3.3 más
-`dominio/EstadoDeteccion.java` y `dominio/LectorDeFlujo.java` — arq C1/C2 y QA sobre la 0.3.3 — y
-`app/proguard-rules.pro`, que no estaba cubierto hasta esta entrega, Bajos).
+nada del árbol de quien lo generó) + `md5sum -c fuente.md5`: 69/69 `OK` (68 de la 0.3.4 más
+`dominio/PreguntaOperador.java`, nuevo de esta entrega, RF-USR-04 r7).
 
 ## Lo que NO verifica esta corrida
 
@@ -303,3 +349,14 @@ A2, M3, M6, M7, QA-1, QA-3, QA-4 (la parte de `ContentResolver`), QA-5, QA-6, QA
 cambios de la capa Android: se verificaron por lectura y por compilación contra el SDK real
 (`compileDebugJavaWithJavac`/`assembleDebug`), no con una prueba JVM (esa capa no tiene arnés de
 pruebas en este árbol, "Tests JVM" arriba: sólo `dominio/`).
+
+**Nuevo de la 0.3.5, sin arnés (capa Android), para la prueba de Diego en dos teléfonos:** que el
+`EstadoDeteccion.Oyente` de `MainActivity` (registrado en `onResume`, retirado en `onPause`) repinte
+de verdad en un giro de pantalla real sobre un `Handler(Looper.getMainLooper())` real — la decisión
+"detectando baja antes de avisar" sí tiene prueba JVM (`EstadoDeteccionTest`), el cableado con un
+`Handler`/ciclo de vida real de Android no; que un giro de pantalla A MITAD del diálogo "Repetir o
+Saltar" de `MedirActivity` deja el hilo de fondo que mide bloqueado para siempre (el diálogo del
+sistema se pierde con la Activity vieja, y nada libera el `ArrayBlockingQueue.take()` que espera la
+respuesta — documentado en el Javadoc de `MedirActivity.preguntaOperador`, sin arnés ni mitigación en
+esta vuelta: presupuesto cerrado); que el diálogo real se vea, sea legible y sus botones "Repetir"/
+"Saltar" respondan al toque en un teléfono.
