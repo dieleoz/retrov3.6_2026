@@ -66,8 +66,16 @@ public final class MedirActivity extends AppCompatActivity {
     /** FABLE-USR (SPEC-App-Usuario-V3.6.md:617-625): salta del hilo de fondo (donde vive el oyente de {@link EstadoMedida}) al
      *  hilo principal antes de tocar cualquier vista — mismo patrón que {@code MainActivity}. */
     private final Handler handlerPrincipal = new Handler(Looper.getMainLooper());
-    /** Instancia estable: {@link EstadoMedida#quitarOyente} compara por referencia. */
-    private final com.dpi.retrousuario.dominio.Oyente oyenteMedida = () -> handlerPrincipal.post(this::restaurarInterfaz);
+    /** Instancia estable: {@link EstadoMedida#quitarOyente} compara por referencia.
+     *  arq Medio (0.3.6): el {@code post()} puede ejecutarse ya con esta Activity destruida (un aviso
+     *  llega tras {@code onPause()}/{@code onDestroy()} pero antes de que el {@link Handler} lo entregue) —
+     *  {@link #restaurarInterfaz()} usa {@link AlertDialog#show()}, que sobre una Activity muerta lanza
+     *  {@code BadTokenException}; no pinta si {@link #isFinishing()} o {@link #isDestroyed()}. */
+    private final com.dpi.retrousuario.dominio.Oyente oyenteMedida = () -> handlerPrincipal.post(() -> {
+        if (!isFinishing() && !isDestroyed()) {
+            restaurarInterfaz();
+        }
+    });
     /** Un solo diálogo vivo a la vez (FABLE-USR (SPEC-App-Usuario-V3.6.md:617-625)): se cierra en {@link #onPause()} para que un
      *  giro de pantalla no deje dos diálogos del sistema apilados (uno de la Activity vieja, otro de
      *  la nueva) — la pregunta sigue pendiente en {@link EstadoMedida}, la Activity nueva la re-muestra
@@ -173,6 +181,10 @@ public final class MedirActivity extends AppCompatActivity {
         }
         tvResultado.setText(R.string.medir_midiendo);
         establecerControlesEnCurso(true);
+        // arq Bajo (0.3.6): fase a MIDIENDO YA, desde este hilo (pantalla), antes de lanzar el hilo de
+        // fondo — sin esto quedaba una ventana en LIBRE entre la pulsación y que ese hilo llegara a
+        // EstadoMedida#ejecutar (MedirActivity.java:174-183 frente a EstadoMedida.java:146-148 de esa entrega).
+        SesionHolder.medida().marcarMidiendo();
         Context contexto = getApplicationContext();
         new Thread(() -> {
             UbicacionGps.Resultado gps = UbicacionGps.ultimaConocida(contexto);

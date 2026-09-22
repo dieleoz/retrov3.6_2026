@@ -74,9 +74,10 @@ public final class MainActivity extends AppCompatActivity {
     /** C2 sobre 0.3.4: salta del hilo de fondo (donde vive el {@link Oyente}) al
      *  hilo principal antes de tocar cualquier vista — nunca se pinta desde el hilo que publicó. */
     private final Handler handlerPrincipal = new Handler(Looper.getMainLooper());
-    /** Instancia estable (no una lambda nueva cada vez): {@link SesionHolder#quitarOyenteDeteccion}
-     *  compara por referencia, así que registrar y quitar tienen que usar el mismo objeto. */
-    private final Oyente oyenteDeteccion = () -> handlerPrincipal.post(this::restaurarInterfaz);
+    /** Instancia estable ({@link SesionHolder#quitarOyenteDeteccion} compara por referencia). arq
+     *  Medio (0.3.6, igual que {@code MedirActivity.oyenteMedida}): post() puede llegar con la Activity ya muerta. */
+    private final Oyente oyenteDeteccion = () -> handlerPrincipal.post(
+            () -> { if (!isFinishing() && !isDestroyed()) restaurarInterfaz(); });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
