@@ -13,11 +13,15 @@ Estado vigente; se reescribe en cada sesión. Reglas en `CLAUDE.md`; orden en `R
   - Actas de calibración aceptadas y archivadas en `06_Calibracion/SLV-002/actas/`:
     `acta_SLV-002_00211305193B_20260922_143520.txt` y `144317.txt`.
   - Acta formal ITVIAL con membrete y firmas emitida: `ACTA-Calibracion-SLV-002-20260922.pdf` y `.docx`.
-  - Contradicción de #ERR,FORMATO cerrada: la misma trama de 66 B falló 3 veces y entró a las 14:32; era desborde
-    transitorio del buffer UART circular (64 B) al recibir ráfagas continuas con el bucle del PIC ocupado.
-- **App de calibrar en rama `rtv-1.0-simple` (`6d307a2`):**
-  - `Cov_3.6.8_calibrar.apk` (versionCode 10013, 414/414 tests OK). Pacing UART en bloques ≤24 B con 30 ms de pausa
-    en `EnlaceSerie`, reintento con trama corta de 58 B (`tramaSCorta`) y diálogo T-C41 guiado con cuenta atrás.
+  - #ERR,FORMATO: **es transitorio y la causa sigue sin identificar.** La misma trama de 66 B, con los mismos
+    coeficientes, fue rechazada 3 veces (11:41, 13:35 y 13:55) y aceptada a las 14:32; el 19-sep otras dos
+    iguales entraron a la primera (`campanas/HUELLAS.txt`). Descartadas la notación, el signo y la longitud;
+    el desbordamiento del anillo RX de 64 B (`uart_module.c:57`) es hipótesis **sin medir**, no la conclusión.
+- **App de calibrar en rama `rtv-1.0-simple` (`6d307a2`), sin entregar:** pacing UART en bloques ≤24 B con 30 ms
+  en `EnlaceSerie`, reintento con trama corta de 58 B (`tramaSCorta`) y diálogo T-C41 con cuenta atrás.
+  - **Dos defectos antes de tocarla:** sale de `31e6214` (la 3.6.8 que QA dejó NO APTO) y repite su mismo par
+    `versionCode 10013` / `Cov_3.6.8_calibrar` (CLAUDE.md §6). Sin arquitecto ni QA; el "414/414" está sin
+    comprobar. Ya no bloquea a nadie: el equipo está calibrado.
 - **Usuario 0.3.7** (`b8a299d`, rama `retro-usuario`): arquitecto APTO; QA sin hacer.
 - **A5a:** lista de 46 patrones aprobada (TOMA-SEL-LISTA). A5b siguiente.
 
