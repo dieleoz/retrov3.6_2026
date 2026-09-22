@@ -59,19 +59,19 @@ sha256 ee69f866c75ce86735d103f8305e688b088051f66b0f1c5784d79c502123b434
 soporte_SLV-002_20260922_105602.zip
 md5    58cf3b066b161d720d0b2c6b9e2e34ed
 sha256 6dcd3de33e969325fb79cda87282c6b039bd53fb82a771ef0a4ba85b9bf71775
-Tercer intento del funcional, 22-sep 10:54-10:56, Cov_3.6.5_calibrar. #L aceptado (OK en 201 ms).
-T-C41 falla de nuevo: el operador pulsó OK a los 5.5 s sin dar tiempo a que el socket Bluetooth
-cayera (el enlace cae a los 12 s, rtv36_20260922_105411 l. 87941). Acta 20260922_105532 RECHAZADA,
-vacía; ningún #S enviado: nada escrito. Máscara sigue en 0003. Copiado de 07 pruebas/220920261056/
-el 22-sep-2026.
-
-campana_SLV-002_20260922_105602.zip
-md5    d8d6ed00bdaedd0ef61191a383ff0f74
-sha256 ee69f866c75ce86735d103f8305e688b088051f66b0f1c5784d79c502123b434
-soporte_SLV-002_20260922_105602.zip
-md5    58cf3b066b161d720d0b2c6b9e2e34ed
-sha256 6dcd3de33e969325fb79cda87282c6b039bd53fb82a771ef0a4ba85b9bf71775
 Tercer intento del funcional, 22-sep 10:54-10:56, Cov_3.6.5_calibrar. #L aceptado (201 ms). OK en "Apagar y encender"
 a los 5,6 s; el equipo aun contesta #Q# -> #OK# (rtv36_20260922_105411 l. 579-582): estaba encendido al pulsar OK.
 El enlace cae a las 87941 ms, 6,1 s despues. Acta 20260922_105532 RECHAZADA, vacia; ningun #S: nada escrito.
 Copiado de 07 pruebas/220920261056/ el 22-sep-2026.
+
+campana_SLV-002_20260922_114230.zip
+md5    1b7b68538b22cd3ac4299bbadca7645a
+sha256 fca2caf92312d5692c8fb7d741353231452daed31770e88fd097e49d7c9d2522
+soporte_SLV-002_20260922_114231.zip
+md5    fecc02f0fafa3a2e844b66775e8586ca
+sha256 53a761f4737d08e8ba0e15eb29ae4ec9576a47b4eaad6dba6a4f82803edaf672
+Cuarto intento del funcional, 22-sep 11:37-11:42, Cov_3.6.5_calibrar. T-C41 PASA (apagado propio y heredados 1 y 2
+confirmados). #L aceptado (52 ms). Escritura #S,8 rechazada con #ERR,FORMATO# en 139 ms; la app restaura con #F,8#
+(#OK# en 167 ms). Curva 8 sigue de fabrica. Acta 20260922_114210 RECHAZADA (vacia). Mascara 0003. Copiado de
+07 pruebas/220920261143/ el 22-sep-2026.
+
