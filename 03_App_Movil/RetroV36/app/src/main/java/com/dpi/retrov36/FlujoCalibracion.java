@@ -821,20 +821,20 @@ public final class FlujoCalibracion {
                 + (protocoloAjuste() == null ? "; 5×4 es la recomendación provisional de P14 §3" : "");
     }
 
-    /** Motivo por el que el codigo k de ESTA acta no admite escritura (independiente de otros codigos). */
+    /** Motivo por el que el codigo k de ESTA acta no admite escritura (independiente de otros codigos).
+     *  A4B-FILTRO: senal ESTRUCTURAL (estado de Acta.Codigo, Acta.java:394-408), no el texto devuelto
+     *  (el filtro de texto de e9d6e65 podia colar o perder un motivo segun la redaccion de Acta). */
     String motivoCodigo(char k) {
         if (acta == null) {
             return null;
         }
-        if (acta.cerrada() || acta.invalidada()) {
+        if (acta.cerrada() || acta.invalidada() || acta.escribiendo() == k) {
             return acta.motivoNoEscribir(k);
         }
         Acta.Codigo c = acta.codigo(k);
-        if (c == null) {
-            return null;
-        }
-        String m = acta.motivoNoEscribir(k);
-        return m != null && m.contains("código " + k) ? m : null;
+        boolean esDeEsteCodigo = c != null
+                && (c.conforme() || c.restauracionFallida != null || c.restaurado != null || c.validos() > 0);
+        return esDeEsteCodigo ? acta.motivoNoEscribir(k) : null;
     }
 
     public List<Tarjeta> tarjetas(Map<Character, Ecuacion> vigentes) {

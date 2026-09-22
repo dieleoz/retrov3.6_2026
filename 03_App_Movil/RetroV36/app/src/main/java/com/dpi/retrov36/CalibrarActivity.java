@@ -109,10 +109,11 @@ public class CalibrarActivity extends Base {
             // valvula de seguridad para una sesion que quedo a medias (rechazo pendiente, cierre sin restaurar).
             btnPersistencia.setVisibility(android.view.View.GONE);
             btnAceptar.setVisibility(android.view.View.GONE);
+        } else {   // RF-COV-21: el acta (documento tecnico) queda OCULTA en corto: sin titulo ni vista.
+            titulo("Acta");
+            txtActa = texto("");
+            txtActa.setTypeface(Typeface.MONOSPACE);
         }
-        titulo("Acta");
-        txtActa = texto("");
-        txtActa.setTypeface(Typeface.MONOSPACE);
         construir();
     }
 
@@ -160,7 +161,7 @@ public class CalibrarActivity extends Base {
                 campana = Campanas.abrir(this, s.serie(), s.mac);
             }
         } catch (IOException | RuntimeException e) {
-            alerta("Campaña", "No se pudo abrir: " + e.getMessage());
+            alerta("Campaña", TextoOperador.limpiar(BuildConfig.CORTO, "No se pudo abrir: " + e.getMessage()));
         }
         final CalibrarActivity yo = this;
         FlujoCalibracion.AlmacenActa almacen = new FlujoCalibracion.AlmacenActa() {
@@ -232,7 +233,7 @@ public class CalibrarActivity extends Base {
                     Decisiones.leer(asset(Decisiones.ASSET)), ctx, reloj, BuildConfig.CORTO);
             flujo.pin(s.pinAdmin);
         } catch (IOException | RuntimeException e) {
-            alerta("Acta", "No se pudo leer el acta en curso: " + e.getMessage());
+            alerta("Acta", TextoOperador.limpiar(BuildConfig.CORTO, "No se pudo leer el acta en curso: " + e.getMessage()));
         }
         pintar();
     }
@@ -258,7 +259,7 @@ public class CalibrarActivity extends Base {
             @Override
             public void progreso(String texto) {
                 Registro.nota("calibrar: " + texto);
-                enUi(() -> txtProgreso.setText(texto));
+                enUi(() -> txtProgreso.setText(TextoOperador.limpiar(BuildConfig.CORTO, texto)));
             }
 
             @Override
@@ -336,7 +337,7 @@ public class CalibrarActivity extends Base {
             sb.append(p.ok ? "OK  " : "NO  ").append(p.texto).append('\n');
             ok &= p.ok;
         }
-        txtPrevias.setText(sb.toString());
+        txtPrevias.setText(TextoOperador.limpiar(BuildConfig.CORTO, sb.toString()));
         txtPrevias.setBackgroundColor(ok ? VERDE : ROJO);
         Set<Character> antes = seleccion();
         tarjetas.removeAllViews();
@@ -366,10 +367,9 @@ public class CalibrarActivity extends Base {
             }
         }
         pintarBotones();
-        Acta a = flujo.acta();
-        txtActa.setText(a == null ? "Sin acta en curso." : a.texto() + "\nPara aceptar: "
-                + (flujo.motivoNoAceptar() == null ? "listo (la verificación final se hace al pulsar)"
-                : flujo.motivoNoAceptar()));
+        String ta = TextoOperador.actaParaPantalla(BuildConfig.CORTO, flujo.acta(), flujo.motivoNoAceptar());
+        // RF-COV-21: null en corto (acta oculta; txtActa tambien es null ahi: no se toca).
+        if (ta != null) { txtActa.setText(ta); }
     }
 
     private void pintarBotones() {
@@ -478,7 +478,7 @@ public class CalibrarActivity extends Base {
             enUi(() -> {
                 ocupado = false;
                 pantallaEncendida(false);
-                txtProgreso.setText(f);
+                txtProgreso.setText(TextoOperador.limpiar(BuildConfig.CORTO, f));   // RF-COV-21: "f" sigue crudo para huboExito/contains.
                 // 3.6.17 (principio de Diego): si faltan muestras, se dice cuales y se ofrece ir a tomarlas.
                 // RF-COV-11 (H-1): en la app de calibrar NO HAY Banco (no se instala): el aviso dice qué hacer
                 // sin ofrecer ese camino, que en esta app no existe (CalibrarActivity.java:441-446 en 9435f69).
@@ -489,7 +489,7 @@ public class CalibrarActivity extends Base {
                 boolean huboExito = BuildConfig.CORTO && CalibracionAutomatica.huboExito(f);
                 if (!huboExito && (f.contains("no se escribe") || f.contains("falta") || f.contains("Falta"))) {
                     if (BuildConfig.CORTO) {
-                        alerta("No se puede calibrar", f);
+                        alerta("No se puede calibrar", TextoOperador.limpiar(BuildConfig.CORTO, f));
                     } else {
                         new AlertDialog.Builder(this).setTitle("Faltan muestras").setMessage(f)
                                 .setPositiveButton("Tomar muestras", (d, w) -> startActivity(
