@@ -1,6 +1,6 @@
 # ROADMAP — V3.6: qué falta hasta certificar SLV-002, y en qué orden
 
-**A4 CERRADO (22-sep): SLV-002 calibrado con códigos 1, 2, 8 y b (máscara 0283); actas aceptadas y PDF emitido.**
+**SLV-002: calibrados 1, 2, 8 y b (máscara 0283). Faltan 3, 4, 5 y 6, y la APK de cliente.**
 Este fichero dice qué falta, en qué orden y quién lo hace; no es una bitácora. Las cifras del día van en
 [`RETOMAR.md`](RETOMAR.md); lo que pasó, en `git log` y [`HISTORIA.md`](HISTORIA.md). Reglas en
 [`CLAUDE.md`](CLAUDE.md); mapa en `ARQUITECTURA.map` §M2-§M3; decisiones en
@@ -25,20 +25,17 @@ nueva (usuario). Modelos: **opus sólo para `arquitecto-iot`; el resto sonnet o 
 autorización de Diego.** Cada paso empieza cuando llega el informe del anterior; un Alto se reabre en el
 código antes de darlo por bueno.
 
-**Hasta el 25-sep (límite semanal):** sólo lo que desbloquea A4; revisiones con sonnet y primera pasada
-en `orquestador:segunda-opinion`. En espera: QA de la 0.3.7 y la 3.6.9 (filtro en `Base`).
+**Hasta el 25-sep (límite semanal):** sólo lo que desbloquea la entrega al cliente, que ahora es la QA de
+la 0.3.7; revisiones con sonnet y primera pasada en `orquestador:segunda-opinion`.
 
-**Primero, la certificación de SLV-002.** A4 quedó completado en el banco el 22-sep (actas aceptadas);
-la app de usuario no certifica nada y va como segundo carril, sin quitarle turno a A4.
-
-**Carril A — app de calibrar.** `Cov_3.6.5_calibrar` (rama `rtv-1.0-cierre`, `316a6bc`, md5 en `RETOMAR.md`):
-calibró con éxito el 8 y la b en campo el 22-sep (máscara 0283).
+**Carril A — app de calibrar.** La entregada es `Cov_3.6.5_calibrar` (rama `rtv-1.0-cierre`, `316a6bc`,
+md5 en `RETOMAR.md`); es la única con arquitecto y QA, y la que usa el funcional.
 
 1. **A4b.** `Cov_3.6.8_calibrar` (`31e6214`, rama `rtv-1.0-cierre`): QA **NO APTO** (filtro fuera de la
    frontera). La rama `rtv-1.0-simple` (`6d307a2`) añade pacing UART, trama corta y T-C41 guiado, pero
    sale de ese mismo `31e6214` y repite su par `versionCode 10013` / `Cov_3.6.8_calibrar`
    (defecto, `CLAUDE.md` §6). Antes de tocarla: rebasar sobre `316a6bc` y darle versión propia.
-2. **A4c (nuevo, del campo el 22-sep).** Defectos que vio el funcional y que van a la SPEC antes que el
+2. **A4c.** Defectos vistos por el funcional que van a la SPEC antes que al
    código: la app vuelve a ofrecer códigos ya aceptados; no dice en qué paso va y el operador acaba
    forzando el cierre (pierde el acta, `Base.java:254-262`); T-C41 depende de cuándo se pulse OK y manda
    a reconectar a mano; el `pruebas.txt` del ZIP es el de la tanda anterior. Encargo redactado.
@@ -49,9 +46,8 @@ calibró con éxito el 8 y la b en campo el 22-sep (máscara 0283).
    arquitecto, código y QA. Toda repetición dice el motivo y ofrece Repetir o Saltar (REPETIR-PREGUNTA);
    firma DPI (FIRMA-DPI); y se elige **el tipo de lámina**, que el acta dice por tipo y color.
 
-**Carril B — app de usuario (segundo carril).** Incremento 1 "Medir y exportar". El presupuesto de vueltas
-(0.3.4 y 0.3.5) se agotó con un Alto de ciclo de vida; bucle roto con el revisor Fable (FABLE-USR): la
-medida, la pregunta y el resultado viven en `dominio/EstadoMedida`, no en la pantalla (A-09).
+**Carril B — app de usuario.** Incremento 1 "Medir y exportar". Regla que dejó el revisor Fable
+(FABLE-USR, A-09): la medida, la pregunta y el resultado viven en `dominio/EstadoMedida`, no en la pantalla.
 
 1. **B6. Es la APK que va con el equipo al cliente, y hoy NO se puede entregar.** `RetroUsuario` 0.3.7
    (`b8a299d`, rama `retro-usuario`): arquitecto APTO, **QA sin hacer**. Sin QA no sale (`CLAUDE.md` §6).
@@ -82,7 +78,7 @@ contra el otro patrón antes de ajustarlos.
 
 No se eligen: se cierran midiendo o con registro. Las cerradas están en `HISTORIA.md`.
 
-- **Catálogo de patrones azules y verdes (C-08), 22-sep.** Bloquea los códigos 3, 4, 5 y 6. Medido: el
+- **Catálogo de patrones azules y verdes (C-08).** Bloquea los códigos 3, 4, 5 y 6. Medido: el
   equipo repite (9 patrones, ±2 cuentas entre el 19 y el 22-sep) y en amarillo y rojo correlaciona a
   +0,98 y +0,96; en azul y verde, con certificado ≥ 40, la correlación es **negativa** (−0,68 y −0,42).
   P18 (XI, cert 84) lee 36 y P112 (XI, cert 101) lee 25: más certificado, menos señal. Ni una curva por

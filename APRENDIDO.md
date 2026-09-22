@@ -66,3 +66,19 @@ Los errores concretos, con la errónea junto a la buena, en `HISTORIA.md`.
   operación (medir, preguntar, detectar) viven en un objeto de proceso probado en JVM, y la pantalla sólo
   pinta lo que ese objeto sabe al quedar visible.
 - **Destino:** SUBE a `verificar` (apps Android) y a la V4.6 por su `APRENDIDO-DE-V3.6.md`.
+
+## A-10 — Antes de que el funcional toque el equipo, cinco comprobaciones
+- **Pasó:** el 22-sep hicieron falta seis sesiones para escribir el 8 y la b. Las cinco primeras no
+  escribieron nada y ninguna falló por el código: PIN que el operador no tenía (cuatro `ERR,PIN`, y el
+  firmware se bloquea al quinto, `calibracion_v36.c:645-656`); dos veces T-C41 porque pulsó OK antes de
+  apagar; y dos `#S,8` → `#ERR,FORMATO#` transitorios. Detalle en `HISTORIA.md`.
+- **Lección:** antes de mandar a alguien a medir, por escrito y comprobado: **(1)** que tiene el PIN del
+  equipo y sabe que el firmware se bloquea a los cinco fallos; **(2)** qué APK lleva su teléfono, de la
+  cabecera `# app:` de su último registro (A-01); **(3)** que el ZIP está guardado en el almacenamiento
+  del teléfono, no en el chat: la app lo abre con el selector del sistema y no recibe ficheros
+  compartidos; **(4)** el orden exacto de los pasos que dependen de apagar el equipo, porque la app
+  decide por lo que ve en el enlace, no por lo que el operador cree que hizo; **(5)** que exporte los
+  ZIP **antes** de cerrar la app, y que si algo se atasca no la fuerce: se pierde el acta a medias.
+- **Y una del diagnóstico:** un fallo que no se repite no tiene causa hasta que se mida. Ese día se dio
+  por buena tres veces una causa distinta y ninguna resistió el registro.
+- **Destino:** SUBE a `entregar` (instrucciones de campo) y a la V4.6 por `APRENDIDO-DE-V3.6.md`.
