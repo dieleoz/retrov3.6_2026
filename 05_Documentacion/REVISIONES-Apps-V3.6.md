@@ -17,6 +17,9 @@ completos quedaron en el directorio temporal de la sesión; aquí se archiva lo 
 - **Cov_3.6.5_calibrar** — **APTO con condiciones / APTO. Entregable a Diego.** Pendiente: número de
   código en mensajes de fallo (`FlujoCalibracion.java:1190,1230,1452-1456,1499-1502`) antes de darla a
   un operador de Coviandina.
+- **Cov_3.6.6_calibrar** (`4ea680c`) — arquitecto NO APTO; QA parada. Siguen llegando números de código al
+  operador: restauración (`Ops.java:237`), `#S,k` de `escribir` (`FlujoCalibracion.java:1261`), heredados
+  (`:1087`, `:1102-1104`), protocolo y re-medida (`:819`, `:1313`). Las pruebas sólo buscaban "código 8".
 
 ## App de usuario (`03_App_Movil/RetroUsuario`)
 
