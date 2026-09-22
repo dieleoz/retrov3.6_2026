@@ -614,9 +614,15 @@ la SPEC no vaya por detrás del código; todo es ▸ propuesta de este trabajo, 
   conexión nueva antes de decir "no compatible" (0.3.3).
 - **Salir libera el equipo:** salir con Atrás cierra el enlace aunque haya una sesión de medida viva, para
   que otro teléfono pueda conectar; girar la pantalla no lo cierra (0.3.3).
-- **Girar a mitad de una medida o de una pregunta:** la medida en curso, la pregunta "Repetir o Saltar"
-  pendiente y el resultado viven fuera de la pantalla; la pantalla recreada vuelve a mostrar la pregunta,
-  mantiene los botones deshabilitados mientras se mide y pinta el resultado (arquitecto sobre 0.3.5, C1).
+- **Operaciones que sobreviven a la pantalla (detectar, medir, preguntar):** una operación con hilo de
+  fondo vive en el proceso, nunca en la pantalla. La pantalla, al quedar visible, sólo pinta lo que el
+  proceso sabe: "Conectando" o "Midiendo" con los controles deshabilitados; la pregunta "Repetir o Saltar"
+  si hay una pendiente, que se vuelve a mostrar tras un giro y se contesta desde la pantalla viva; y el
+  resultado, una sola vez. Atrás desde Medir no interrumpe la medida: sigue en el proceso y se retoma al
+  volver. Salir de la app o cambiar de equipo con una medida en curso la abandona como si el operador
+  hubiera contestado "Saltar" a todo (serie anulada, sin fila) y libera el equipo. Un giro durante
+  Exportar puede perder el mensaje en pantalla, no el ZIP (aceptado). (Revisor Fable sobre 0.3.5,
+  FABLE-USR.)
 - **Ajustes persistentes:** `lecturas_por_color` sobrevive a reiniciar la app (preferencias del sistema).
 - **Verificación del APK por contenido:** el md5 del ZIP del APK no se reproduce entre compilaciones
   (el empaquetador reordena entradas); se compara `classes*.dex`, recursos y certificado, y los fuentes

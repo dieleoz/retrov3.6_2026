@@ -51,7 +51,8 @@ bucle: revisor Fable (con autorización de Diego) y sesión limpia.
 
 1. **B5.** 0.3.5 revisada (C2 y Repetir o Saltar cerrados); presupuesto agotado con un Alto: girar con la
    pregunta abierta cuelga la medida.
-2. **B6.** Revisor Fable sobre ese defecto (FABLE-USR); después, prueba de Diego en dos teléfonos.
+2. **B6.** 0.3.6 con el diseño del revisor Fable (FABLE-USR): la medida y la pregunta viven en un objeto
+   de proceso (`EstadoMedida`); después, prueba de Diego en dos teléfonos.
 3. **B7.** Incremento 2 "señal a señal" (indicador por norma, histórico, inventario por CSV): tras las
    propuestas ▸ pendientes de Diego (geometría, umbral doble, cero, 3.6.2 obligatoria).
 
