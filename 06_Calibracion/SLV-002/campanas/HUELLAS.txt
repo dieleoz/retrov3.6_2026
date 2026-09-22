@@ -106,3 +106,11 @@ El funcional volvio a pulsar Calibrar: "Calibrado: ninguno"; los unicos codigos 
 por RF-CAL-14/15 (azul, verde, rojo y naranja intensos). Ningun #S: nada escrito, el equipo sigue en 0283.
 La app volvio a listar el 8 y la b como "listos para calibrar" pese a estar ya escritos y aceptados (defecto).
 Copiado de 07 pruebas/220920260517/ el 22-sep-2026.
+
+ACTA-Calibracion-SLV-002-20260922.docx
+md5    977c934d4809a8f7a64058ca7a1d4170
+ACTA-Calibracion-SLV-002-20260922.pdf
+md5    bd08ee9e69521dfcf4fba4fb99984f90
+Acta formal para el cliente, en el formato de ITVIAL (membrete y pie de PLANTILLA ACTA DE ENTREGA.docx,
+D:\@Proyect\IT\old\...\WORD\INFRAESTRUCTURA Y TECNOLOGIA\IT VIAL SAS\). Transcribe las dos actas .txt de la app;
+cotejadas cifra a cifra el 22-sep. Sin rellenar: ciudad de firma, cedula y cargo del firmante y datos del cliente.
