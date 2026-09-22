@@ -49,42 +49,26 @@ public final class FlujoCalibracion {
         boolean apagarYEncender() throws IOException, InterruptedException;
 
         /** 3.6.16 (P14-07, -B02): un acta acaba de quedar ACEPTADA: la pantalla exporta el ZIP de soporte. */
-        default void actaAceptada(Acta a) {
-        }
+        default void actaAceptada(Acta a) {}
     }
 
     /** Donde vive el acta en curso (en la app, en disco: Campanas). */
     public interface AlmacenActa {
         Acta enCurso() throws IOException;
-
         void adjuntar(Acta a) throws IOException;
-
         void cerrar(Acta a) throws IOException;
-
         /** true si el codigo k ya tiene un acta ACEPTADA de este equipo (P12 §6.3: el 8 antes que el b y el 5). */
         boolean aceptadoAntes(char k) throws IOException;
-
         /** 3.6.16 (P14-02): las actas ACEPTADAS de este equipo, de la mas antigua a la mas reciente. */
-        default List<Acta> aceptadas() throws IOException {
-            return new ArrayList<>();
-        }
-
+        default List<Acta> aceptadas() throws IOException { return new ArrayList<>(); }
         /** 3.6.17 (F-03): la ultima acta cerrada (archivada) de este equipo; null si no hay. */
-        default Acta ultimaCerrada() throws IOException {
-            return null;
-        }
-
+        default Acta ultimaCerrada() throws IOException { return null; }
         /** 3.6.17 (F-03): anade una linea al diario archivado de la ultima acta cerrada (append-only). */
-        default void anadirAUltimaCerrada(String linea) throws IOException {
-        }
-
+        default void anadirAUltimaCerrada(String linea) throws IOException {}
         /**
-         * 3.6.17 (P14-B02): exporta el ZIP de soporte justo antes de cerrar el acta aceptada y devuelve su SHA-256,
-         * que el acta cita; null si no se pudo (o en las pruebas).
+         * 3.6.17 (P14-B02): exporta el ZIP de soporte justo antes de cerrar el acta aceptada y devuelve su SHA-256.
          */
-        default String soporteSha256(Acta a) {
-            return null;
-        }
+        default String soporteSha256(Acta a) { return null; }
     }
 
     public interface Reloj {
@@ -154,9 +138,7 @@ public final class FlujoCalibracion {
             this.motivoNo = motivoNo;
         }
 
-        public boolean escribible() {
-            return motivoNo == null;
-        }
+        public boolean escribible() { return motivoNo == null; }
 
         boolean anclada() {
             return propuesta != null && propuesta.metodo != null && propuesta.metodo.contains("anclada");
@@ -254,13 +236,8 @@ public final class FlujoCalibracion {
     }
 
     /** PIN del equipo: se pide una vez por sesion (QA-3612-14) y solo vive en memoria. */
-    public void pin(String p) {
-        this.pin = p;
-    }
-
-    public Acta acta() {
-        return acta;
-    }
+    public void pin(String p) { this.pin = p; }
+    public Acta acta() { return acta; }
 
     // ------------------------------------------- de paquete: para CalibracionAutomatica (modularidad)
 
@@ -271,9 +248,7 @@ public final class FlujoCalibracion {
      * SOLO lo que esa orquestación necesita de los campos de sesión; el acta, el canal y el resto de campos
      * privados siguen siendo dueños de esta clase.
      */
-    Operador operador() {
-        return operador;
-    }
+    Operador operador() { return operador; }
 
     /** Como el try/finally de {@code calibrarTodo} (P14-01): el atajo de T-C41 solo vale dentro de la sesión. */
     void iniciarSesionAutomatica() {
@@ -1249,14 +1224,32 @@ public final class FlujoCalibracion {
         operador.progreso(Fabrica.elCodigoCap(k, corto) + ": #S...");
         encendidoReciente = false;
         acta.escribiendo(k, anterior, ts.enviada, metodo, osc, conformidad);
-        Cliente.Respuesta r = ops.escribir(ts.texto);
-        Ecuacion e = ops.leerG(k);
-        boolean igual = e != null && e.igualFloat32(ts.enviada, Ecuacion.ULP_S);
-        String porE = igual ? ops.comprobarPorE(k, ts.enviada) : "la relectura #G no coincide con lo enviado";
-        acta.dato("#V# posterior", Ops.texto(ops.leerV()));
-        if (Tramas.esOk(r.trama) && igual && porE == null) {
-            acta.escrito(k, Tramas.tramaG(k, e), e, osc, metodo, conformidad);
-            return null;
+        Cliente.Respuesta r = null;
+        Ecuacion e = null;
+        boolean igual = false;
+        String porE = null;
+        Tramas.TramaS[] intentos = {ts, Tramas.tramaSCorta(k, p.propuesta.ajuste.ecuacion),
+                Tramas.tramaSCorta(k, p.propuesta.ajuste.ecuacion)};
+        for (int intento = 0; intento < intentos.length; intento++) {
+            Tramas.TramaS candidata = intentos[intento];
+            if (candidata == null) continue;
+            if (intento > 0) {
+                operador.progreso(Fabrica.elCodigoCap(k, corto) + ": reintento " + (intento + 1) + " #S...");
+                entrar();
+            }
+            r = ops.escribir(candidata.texto);
+            e = ops.leerG(k);
+            igual = e != null && e.igualFloat32(candidata.enviada, Ecuacion.ULP_S);
+            porE = igual ? ops.comprobarPorE(k, candidata.enviada) : "la relectura #G no coincide con lo enviado";
+            acta.dato("#V# posterior", Ops.texto(ops.leerV()));
+            if (Tramas.esOk(r.trama) && igual) {
+                if (porE == null) {
+                    acta.escrito(k, Tramas.tramaG(k, e), e, osc, metodo, conformidad);
+                    return null;
+                }
+                break;
+            }
+            if (r.trama == null || !r.trama.contains("FORMATO")) break;
         }
         String t = "#S," + k + " -> " + r.describir() + (porE == null ? "" : "; " + porE);
         Ops.Restauracion res = ops.restaurar(k, anterior, corto);

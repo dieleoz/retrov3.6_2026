@@ -420,9 +420,8 @@ public final class Tramas {
     }
 
     /** Coeficiente en el formato de la revision 1.1 (O-02): %.8E, 9 cifras. */
-    public static String coeficiente(double v) {
-        return String.format(Locale.US, "%.8E", v);
-    }
+    public static String coeficiente(double v) { return String.format(Locale.US, "%.8E", v); }
+    public static String coeficienteCorto(double v) { return String.format(Locale.US, "%.6E", v); }
 
     /** "#G,k,c3,c2,c1,c0#" con %.8E (lo que el acta cita como curva certificada). */
     public static String tramaG(char k, Ecuacion e) {
@@ -571,20 +570,21 @@ public final class Tramas {
         }
     }
 
-    /**
-     * "#S,k,c3,c2,c1,c0#" con 9 cifras (%.8E), revision 1.1. Ocupa como mucho
-     * 5 + 4*15 + 3 + 1 = 69 bytes, dentro del limite de 96. null si no cabe.
-     */
-    public static TramaS tramaS(char k, Ecuacion e) {
-        String a = coeficiente(e.c3);
-        String b = coeficiente(e.c2);
-        String c = coeficiente(e.c1);
-        String d = coeficiente(e.c0);
+    private static TramaS armarS(char k, String a, String b, String c, String d) {
         String t = "#S," + k + "," + a + "," + b + "," + c + "," + d + "#";
-        if (t.length() > MAX_TRAMA) {
-            return null;
-        }
+        if (t.length() > MAX_TRAMA) return null;
         return new TramaS(t, new Ecuacion(Double.parseDouble(a), Double.parseDouble(b),
                 Double.parseDouble(c), Double.parseDouble(d)));
+    }
+
+    /** "#S,k,c3,c2,c1,c0#" con 9 cifras (%.8E). Max 69 bytes, dentro de 96. null si no cabe. */
+    public static TramaS tramaS(char k, Ecuacion e) {
+        return armarS(k, coeficiente(e.c3), coeficiente(e.c2), coeficiente(e.c1), coeficiente(e.c0));
+    }
+
+    /** "#S,k,c3,c2,c1,c0#" con 7 cifras (%.6E). Max 61 B, < 64 B del buffer UART (uart1.c:57). */
+    public static TramaS tramaSCorta(char k, Ecuacion e) {
+        return armarS(k, coeficienteCorto(e.c3), coeficienteCorto(e.c2),
+                coeficienteCorto(e.c1), coeficienteCorto(e.c0));
     }
 }

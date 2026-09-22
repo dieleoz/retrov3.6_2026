@@ -253,8 +253,25 @@ public final class EnlaceSerie {
             }
             long t = Registro.ahora();
             try {
-                out.write(datos);
-                out.flush();
+                if (datos.length > 32) {
+                    int offset = 0;
+                    while (offset < datos.length) {
+                        int bloque = Math.min(24, datos.length - offset);
+                        out.write(datos, offset, bloque);
+                        out.flush();
+                        offset += bloque;
+                        if (offset < datos.length) {
+                            try {
+                                Thread.sleep(30);
+                            } catch (InterruptedException ignored) {
+                                Thread.currentThread().interrupt();
+                            }
+                        }
+                    }
+                } else {
+                    out.write(datos);
+                    out.flush();
+                }
             } catch (IOException e) {
                 Registro.nota("fallo al enviar " + Hex.hex(Hex.ocultarPin(datos)) + ": " + descripcion(e));
                 cerrar();

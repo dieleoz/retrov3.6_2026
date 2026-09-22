@@ -308,6 +308,16 @@ public class CalculoTest {
         assertTrue(t.texto.startsWith("#S,d,-1.23456789E-07,-8.76543211E-05,"));
     }
 
+    @Test
+    public void tramaSCortaOcupaMenosDe64Bytes() {
+        for (char k : Fabrica.CODIGOS) {
+            Tramas.TramaS t = Tramas.tramaSCorta(k, Fabrica.ecuacion(k));
+            assertNotNull(t);
+            assertTrue(t.texto, t.texto.length() < 64);
+            assertTrue(t.texto, t.enviada.igualFloat32(Fabrica.ecuacion(k), Ecuacion.ULP_S));
+        }
+    }
+
     private static float ulpsArriba(float v, int n) {
         for (int i = 0; i < n; i++) {
             v = Math.nextUp(v);

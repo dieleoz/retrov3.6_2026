@@ -282,31 +282,28 @@ public class CalibrarActivity extends Base {
                     }
                 });
                 vigia.start();
-                if (CalibrarActivity.this.preguntar("Apagar y encender", "Apague el equipo (la app verá caer la conexión), "
-                        + "espere 5 s y enciéndalo. Pulse OK cuando esté encendido: la app vuelve a conectar sola.", "OK",
-                        "Cancelar", null) != 0) {
+                String msg = "1. APAGUE el equipo ahora.\n2. Espere 5 s.\n3. ENCIENDA el equipo.\n"
+                        + "4. Pulse OK cuando esté encendido (la app reconectará sola).";
+                if (CalibrarActivity.this.preguntar("Apagar y encender", msg, "OK", "Cancelar", null) != 0) {
                     vigia.interrupt();
                     return false;
                 }
                 vigia.join(1000);
                 vigia.interrupt();
-                if (!cayo[0] && en.estaConectado()) {
-                    return false;   // no se vio caer el enlace: no se apago de verdad
-                }
+                if (!cayo[0] && en.estaConectado()) return false;
                 Sesion s = Sesion.get();
                 long limite = SystemClock.elapsedRealtime() + 45000;
                 while (!en.estaConectado() && SystemClock.elapsedRealtime() < limite) {
+                    long r = Math.max(0, (limite - SystemClock.elapsedRealtime()) / 1000);
+                    enUi(() -> txtProgreso.setText("Reconectando con " + s.serie() + "... (" + r + " s)"));
                     if (!en.estaConectando()) {
                         BluetoothAdapter ad = EnlaceSerie.adaptador();
-                        if (ad != null) {
-                            en.conectar(CalibrarActivity.this, ad.getRemoteDevice(s.mac));
-                        }
+                        if (ad != null) en.conectar(CalibrarActivity.this, ad.getRemoteDevice(s.mac));
                     }
                     Thread.sleep(1000);
                 }
-                if (!en.estaConectado()) {
-                    return false;
-                }
+                if (!en.estaConectado()) return false;
+                enUi(() -> txtProgreso.setText("Conectado con éxito. Reanudando..."));
                 Thread.sleep(2500);   // margen tras el arranque del equipo: provisional, sin medir
                 return true;
             }

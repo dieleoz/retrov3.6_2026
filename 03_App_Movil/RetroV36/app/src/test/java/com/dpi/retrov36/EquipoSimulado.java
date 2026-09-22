@@ -48,7 +48,7 @@ import java.util.Map;
  */
 final class EquipoSimulado implements Canal {
 
-    enum Falla { CORTE_ANTES, CORTE_DESPUES, ERR, MUDO, OK_SIN_HACER }
+    enum Falla { CORTE_ANTES, CORTE_DESPUES, ERR, ERR_FORMATO, MUDO, OK_SIN_HACER }
 
     private static final class Inyeccion {
         final String prefijo;
@@ -333,9 +333,8 @@ final class EquipoSimulado implements Canal {
                     responder(t);
                     conectado = false;
                     throw new IOException("enlace perdido (simulado) tras " + t);
-                case ERR:
-                    marcarTrama(t);
-                    return valida(t, "#ERR,EEPROM#");
+                case ERR: marcarTrama(t); return valida(t, "#ERR,EEPROM#");
+                case ERR_FORMATO: marcarTrama(t); return valida(t, "#ERR,FORMATO#");
                 case MUDO:
                     return timeout(t);
                 case OK_SIN_HACER:
