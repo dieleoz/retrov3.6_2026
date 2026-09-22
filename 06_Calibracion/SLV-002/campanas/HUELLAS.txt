@@ -74,6 +74,7 @@ Cuarto intento del funcional, 22-sep 11:37-11:42, Cov_3.6.5_calibrar. T-C41 PASA
 confirmados). #L aceptado (52 ms). Escritura #S,8 rechazada con #ERR,FORMATO# en 139 ms; la app restaura con #F,8#
 (#OK# en 167 ms). Curva 8 sigue de fabrica. Acta 20260922_114210 RECHAZADA (vacia). Mascara 0003. Copiado de
 07 pruebas/220920261143/ el 22-sep-2026.
-Trama enviada: #S,8,0.00000000E+00,0.00000000E+00,2.11652640E-01,-1.20446226E+02# (rtv36_20260922_114159 l.107-111); la relectura #G no coincidia con lo enviado.
+Trama enviada: #S,8,0.00000000E+00,0.00000000E+00,2.11652640E-01,-1.20446226E+02#
+(rtv36_20260922_114159 l.107-111); la relectura #G no coincidia con lo enviado.
 CONTRADICCION ABIERTA: con el fuente 6a32ca3 esa curva pasa curvaValida (R(600)=+6.5, R(4300)=+789.7, c3=c2=0;
 calibracion_v36.c:407-421) y la trama son 66 bytes < ADMIN_MAX 96 (uart_module.c:61). Se cierra midiendo.
