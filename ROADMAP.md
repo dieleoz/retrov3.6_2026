@@ -33,28 +33,24 @@ QA APTO y arquitecto APTO CON CONDICIONES; entregable a Diego para calibrar el 8
 
 1. **A4 (bloquea la certificación).** Diego instala por USB, carga el ZIP del banco archivado en
    `06_Calibracion/SLV-002/campanas/` y calibra el 8 y la b; actas y ZIP resultante al repositorio.
-2. **A4b (3.6.8, filtro único: A4B-FILTRO).** Condición del arquitecto, antes de darla a un operador: ningún mensaje de
-   fallo con número de código (`FlujoCalibracion.java:1190,1230,1452-1456,1499-1502`); prueba en rojo.
+2. **A4b (bucle roto con A4B-FILTRO).** `Cov_3.6.8_calibrar` (`3f72367`): filtro único `TextoOperador` y acta
+   oculta en esta app. Una prueba en rojo (`Cov366Rf17Test`, regresión): se arregla; después, arquitecto y QA.
 3. **A5a.** Propuesta en `06_Calibracion/SLV-002/PROPUESTA-Toma-Corta.md` (simulación, sin medir): 46
-   patrones, ajustar 6 y 4; 3 y 5 con dato invertido; café fuera con la curva del rojo. Lista aprobada (TOMA-SEL-LISTA).
-4. **A5b.** Certificado PDF, verificación de 10 patrones y toma corta: SPEC, arquitecto, código y QA.
-   Toda repetición dice el motivo y ofrece Repetir o Saltar (REPETIR-PREGUNTA); firma DPI (FIRMA-DPI).
+   patrones, ajustar 6 y 4; 3 y 5 con dato invertido; café fuera con la curva del rojo. Aprobada
+   (TOMA-SEL-LISTA).
+4. **A5b (siguiente, al cerrar A4b).** Certificado PDF, verificación de 10 patrones y toma corta: SPEC,
+   arquitecto, código y QA. Toda repetición dice el motivo y ofrece Repetir o Saltar
+   (REPETIR-PREGUNTA); firma DPI (FIRMA-DPI).
 
-**Carril B — app de usuario (segundo carril).** `RetroUsuario` 0.3.3: incremento 1 "Medir y exportar";
-arquitecto y QA APTO CON CONDICIONES (`REVISIONES-Apps-V3.6.md`).
+**Carril B — app de usuario (segundo carril).** Incremento 1 "Medir y exportar". El presupuesto de vueltas
+(0.3.4 y 0.3.5) se agotó con un Alto de ciclo de vida; bucle roto con el revisor Fable (FABLE-USR): la
+medida, la pregunta y el resultado viven en `dominio/EstadoMedida`, no en la pantalla (A-09).
 
-**Presupuesto del incremento 1.** Acabado = arquitecto y QA sin ningún hallazgo que rompa un requisito
-escrito de `SPEC-App-Usuario-V3.6.md` (r6 y §4 bis) y la prueba de Diego en dos teléfonos sin fallo.
-Vueltas permitidas: la 0.3.4 y una más (0.3.5). Los revisores sólo bloquean con lo que rompe un requisito
-escrito; el resto se anota en `REVISIONES-Apps-V3.6.md` y no bloquea. Si la 0.3.5 no cierra, es un
-bucle: revisor Fable (con autorización de Diego) y sesión limpia.
-
-1. **B5.** 0.3.5 revisada (C2 y Repetir o Saltar cerrados); presupuesto agotado con un Alto: girar con la
-   pregunta abierta cuelga la medida.
-2. **B6.** 0.3.6 con el diseño del revisor Fable (FABLE-USR): la medida y la pregunta viven en un objeto
-   de proceso (`EstadoMedida`); después, prueba de Diego en dos teléfonos.
-3. **B7.** Incremento 2 "señal a señal" (indicador por norma, histórico, inventario por CSV): tras las
-   propuestas ▸ pendientes de Diego (geometría, umbral doble, cero, 3.6.2 obligatoria).
+1. **B6.** `RetroUsuario` 0.3.6 (`6e59f7b`, 148/148): arquitecto y QA en curso. Sólo bloquea un requisito
+   escrito de `SPEC-App-Usuario-V3.6.md` (r7 y §4 bis).
+2. **B7.** Prueba de Diego en dos teléfonos (Android ≤9 y ≥10): giro con la pregunta abierta, giro
+   midiendo, Atrás desde Medir, apagar el equipo, exportar; después, al funcional.
+3. **B8.** Incremento 2 "señal a señal" (histórico e inventario por CSV; sin dictamen, UMBRAL-CSV).
 
 ## Puertas P1-P12
 
