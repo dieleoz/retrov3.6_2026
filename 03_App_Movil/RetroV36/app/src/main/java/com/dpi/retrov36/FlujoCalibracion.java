@@ -822,13 +822,13 @@ public final class FlujoCalibracion {
     }
 
     /** Motivo por el que el codigo k de ESTA acta no admite escritura (independiente de otros codigos).
-     *  A4B-FILTRO: senal ESTRUCTURAL (estado de Acta.Codigo, Acta.java:394-408), no el texto devuelto
-     *  (el filtro de texto de e9d6e65 podia colar o perder un motivo segun la redaccion de Acta). */
+     *  A4B-FILTRO: senal ESTRUCTURAL (Acta.Codigo, Acta.java:394-408), no el texto. NO mira
+     *  acta.escribiendo(): un #S sin resolver no tiene Acta.Codigo; eso lo resuelve resolverCorte(). */
     String motivoCodigo(char k) {
         if (acta == null) {
             return null;
         }
-        if (acta.cerrada() || acta.invalidada() || acta.escribiendo() == k) {
+        if (acta.cerrada() || acta.invalidada()) {
             return acta.motivoNoEscribir(k);
         }
         Acta.Codigo c = acta.codigo(k);
