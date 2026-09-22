@@ -25,6 +25,11 @@ completos quedaron en el directorio temporal de la sesión; aquí se archiva lo 
   `CalibrarActivity.java:113-115,370-372`) sin guarda de corto, y `motivoNoEscribir` alcanzable en corto
   (`FlujoCalibracion.java:836-837`, filtro `"código " + k`). Propuesta del arquitecto para romper el bucle:
   ocultar el acta en corto y un único filtro en la frontera de la app corta, no más arreglos punto a punto.
+- **Cov_3.6.8_calibrar** (`31e6214`) — arquitecto APTO con condiciones; QA NO APTO. C1-C2 de la 3.6.7
+  cerradas; 411/411; las 6 roturas del filtro cazadas. El filtro no está en la frontera: `CortoActivity.java:184`
+  pinta "va después del acta ACEPTADA del código 8" (`AppCorta.java:145`) sin filtrar; `preguntar` de
+  `CalibrarActivity.java:244-246` y la pantalla de Pruebas (`PruebasActivity.java:223,304-305`) tampoco pasan.
+  Cierre: el filtro en `Base` (toda escritura a pantalla en corto), no por Activity.
 
 ## App de usuario (`03_App_Movil/RetroUsuario`)
 
@@ -50,7 +55,8 @@ completos quedaron en el directorio temporal de la sesión; aquí se archiva lo 
   - **QA:** quitar `marcarCaido()` del catch de `EnlaceBluetooth.leerSinParar` no lo detecta ninguna prueba
     (126/126 en verde): la capa Android no tiene arnés. Pide prueba con un `InputStream` doble y, en
     campo, reconexión tras apagar el equipo. El rojo por aserción invertida no vale.
-- **0.3.6** (`6e59f7b`) — arquitecto APTO con condiciones; QA en curso. Diseño del revisor Fable implementado
+- **0.3.6** (`6e59f7b`) — APTO con condiciones / APTO con condiciones (QA: 148/148, APK reproducible; recuento
+  real 105/43; falta la prueba del aviso con fase LIBRE). Diseño del revisor Fable implementado
   (`dominio/EstadoMedida`). **C1:** salir o cambiar de equipo con la pregunta del cero abierta guarda una fila
   con media 0 (`SerieDisparos.java:98-99`, `SesionMedicion.java:108-114`); la SPEC §4 bis dice "sin fila".
   Anotado: `post(restaurarInterfaz)` sobre una Activity destruida puede lanzar BadTokenException; fase LIBRE
