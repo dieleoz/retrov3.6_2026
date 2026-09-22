@@ -41,3 +41,14 @@ Intento del funcional (ITVIAL) con Cov_3.6.5_calibrar (10010), 22-sep 09:42-10:4
 (md5 79b23590...). Pruebas del equipo NO APTO a las 09:42 (coherencia y repetibilidad) y APTO a las 10:31 y 10:38.
 Cuatro #L con respuesta ERR,PIN (dos en rtv36_20260922_103125, dos en _103817); ningun #S ni #P enviado:
 nada escrito. Mascara sigue en 0003 (8 y b de fabrica). Copiado de 07 pruebas/220920261043/ el 22-sep-2026.
+
+campana_SLV-002_20260922_104910.zip
+md5    9e016dd8ce27d2bdb5ae47cba501cfa4
+sha256 bf0df78ffb2ba55b12e2e0b39a92f7a1818b1674a43a43072214814ce510587a
+soporte_SLV-002_20260922_104910.zip
+md5    e572929291d63a792c0d0b4c2cf39943
+sha256 66368bba58664f914df53ef6f31dae3c67e371206b154fb299b95e15ae487145
+Segundo intento del funcional, 22-sep 10:46-10:49, Cov_3.6.5_calibrar. #L aceptado (OK en 252 ms). T-C41 falla:
+el operador pulso OK en "Apagar y encender" sin haber apagado (el enlace cae 2 s despues del #Q, rtv36_20260922_104644
+l. 101030). Acta 20260922_104823 RECHAZADA, vacia; ningun #S enviado: nada escrito. Mascara sigue en 0003.
+Copiado de 07 pruebas/220920261049/ el 22-sep-2026.
