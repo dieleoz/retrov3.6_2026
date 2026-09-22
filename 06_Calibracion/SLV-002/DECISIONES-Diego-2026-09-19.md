@@ -133,3 +133,6 @@ Notas de las filas del 21-sep-2026:
     en las dos apps: la app dice el motivo y ofrece Repetir o Saltar.
 19. **FIRMA-DPI (cierra D-8).** Las APK entregadas se firman con una clave propia de DPI, guardada fuera
     del repositorio y con copia de seguridad.
+20. **TOMA-SEL-LISTA (cierra TOMA-SEL).** Diego da por buena la lista de 46 patrones, 1 colocación × 4
+    tomas, de `06_Calibracion/SLV-002/PROPUESTA-Toma-Corta.md`: "ok, procede". Es simulación sobre el
+    banco, sin medir; las muestras nuevas que propone ese fichero quedan como petición, no como decisión.
