@@ -296,4 +296,32 @@ public class SerieDisparosTest {
     public void mensajeDeSerieAnuladaSinToqueDeIntentos() {
         assertEquals("serie anulada: el equipo no respondió", SerieDisparos.MENSAJE_SERIE_ANULADA);
     }
+
+    /** arq C1 (REVISIONES-Apps-V3.6.md, entrada 0.3.6): {@link PreguntaOperador.Decision#ABANDONAR}
+     *  ante la pregunta CERO anula la serie entera (sin fila, {@code r.guardada == false}) — a
+     *  diferencia de {@link PreguntaOperador.Decision#SALTAR}, que SÍ guarda la fila con
+     *  {@code media = 0} ({@link #unCeroSoloSeMuestraComoValorSaturadoONegativo}, arriba). Antes de
+     *  esta corrección {@code SerieDisparos} sólo distinguía REPETIR de "cualquier otra cosa" y trataba
+     *  ABANDONAR igual que SALTAR: {@code r.guardada} salía {@code true} y esta aserción fallaba. */
+    @Test
+    public void abandonarAntePreguntaCeroAnulaLaSerieSinFila() {
+        params.lecturasPorColor(1);
+        sim.programarValor(50, 0);
+        PreguntaOperadorFalsa pregunta = PreguntaOperadorFalsa.cero(PreguntaOperador.Decision.ABANDONAR);
+        SerieDisparos.Resultado r = medir('4', pregunta);
+        assertFalse("ABANDONAR ante un cero no debe guardar fila (SPEC §4 bis: sin fila)", r.guardada);
+        assertEquals(1, pregunta.vecesPreguntadoCero);
+    }
+
+    /** arq C1: {@link PreguntaOperador.Decision#ABANDONAR} ante un disparo anulado se comporta igual
+     *  que SALTAR — serie entera anulada, sin fila (RF-USR-16 ya no distingue el motivo). */
+    @Test
+    public void abandonarAntePreguntaDisparoAnuladoAnulaLaSerieIgualQueSaltar() {
+        sim.programarValor(50, 100);
+        sim.programarSinRespuesta();
+        PreguntaOperadorFalsa pregunta = PreguntaOperadorFalsa.anulado(PreguntaOperador.Decision.ABANDONAR);
+        SerieDisparos.Resultado r = medir('4', pregunta);
+        assertFalse(r.guardada);
+        assertEquals(1, pregunta.vecesPreguntadoAnulado);
+    }
 }

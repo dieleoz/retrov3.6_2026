@@ -243,11 +243,16 @@ public class EstadoMedidaTest {
         assertNull("el error se entrega una sola vez", medida.recogerErrorPendiente());
     }
 
-    /** T5: {@code abandonar()} con una pregunta pendiente contesta SALTAR y deja terminar
+    /** T5: {@code abandonar()} con una pregunta pendiente contesta {@link
+     *  com.dpi.retrousuario.dominio.PreguntaOperador.Decision#ABANDONAR} y deja terminar
      *  {@code sesion.medir()} (suelta el monitor de {@code SesionMedicion.java:100}) — y un
      *  {@code medir()} POSTERIOR, desde otro hilo, no queda condenado a auto-saltar para siempre: si
      *  vuelve a traer un cero, vuelve a preguntar y a bloquear normalmente (confirma que
-     *  {@code ejecutar()} resetea el abandono de la medida anterior). Las dos partes, en menos de 10 s. */
+     *  {@code ejecutar()} resetea el abandono de la medida anterior). Las dos partes, en menos de 10 s.
+     *  arq C1 (REVISIONES-Apps-V3.6.md, entrada 0.3.6): abandonar con la pregunta CERO abierta no deja
+     *  fila (SPEC §4 bis, "serie anulada, sin fila") — antes de esta corrección, {@code abandonar()}
+     *  contestaba SALTAR, indistinguible de un "Saltar" real del operador, y {@code SerieDisparos}
+     *  guardaba la fila con {@code media = 0} igual que ante un "Saltar" de verdad. */
     @Test
     public void abandonarConPreguntaPendienteTerminaMedirYNoCondenaAlSiguiente() throws InterruptedException, IOException {
         params.lecturasPorColor(1);
@@ -265,6 +270,11 @@ public class EstadoMedidaTest {
         assertFalse("abandonar() no liberó el hilo de medir", hiloMedir.isAlive());
         long elapsedAbandono = System.currentTimeMillis() - t0;
         assertTrue("abandonar() tardó " + elapsedAbandono + " ms", elapsedAbandono < TIMEOUT_JOIN_MS);
+
+        EstadoMedida.Resultado resultadoAbandonado = medida.recogerResultadoPendiente();
+        assertNotNull("abandonar() debe dejar un resultado pendiente (serie anulada)", resultadoAbandonado);
+        assertNull("arq C1: abandonar con la pregunta CERO abierta no guarda fila", resultadoAbandonado.fila());
+        assertTrue("arq C1: una medida abandonada no deja fila en el diario", sesion.filas().isEmpty());
 
         // Medir posterior, desde otro hilo, sobre un equipo distinto: si vuelve a bloquear en una
         // pregunta normal (no auto-SALTAR), abandonar() no dejó la bandera pegada para siempre.
@@ -347,5 +357,46 @@ public class EstadoMedidaTest {
 
         assertNull(medida.preguntaPendiente());
         assertTrue("el oyente no fue avisado al terminar la medida", avisos[0] > avisosAlPreguntar);
+    }
+
+    /** T8, arq Bajo (REVISIONES-Apps-V3.6.md, entrada 0.3.6): {@link EstadoMedida#marcarMidiendo()}
+     *  deja la fase en MIDIENDO de inmediato, en el mismo hilo que la llama — sin arrancar ningún hilo
+     *  de medir. Confirma que {@code MedirActivity.medir()} puede fijar la fase ANTES de lanzar su
+     *  hilo de fondo, cerrando la ventana en LIBRE entre la pulsación y {@link EstadoMedida#ejecutar}
+     *  (`MedirActivity.java:174-183` frente a `EstadoMedida.java:146-148` de la 0.3.6). */
+    @Test
+    public void marcarMidiendoPoneFaseMidiendoDeInmediato() {
+        EstadoMedida medida = new EstadoMedida();
+        assertEquals(EstadoMedida.Fase.LIBRE, medida.fase());
+        medida.marcarMidiendo();
+        assertEquals("marcarMidiendo() debe fijar MIDIENDO sin depender de ningún hilo de fondo",
+                EstadoMedida.Fase.MIDIENDO, medida.fase());
+    }
+
+    /** T9, QA (recuento comportamiento): el oyente se avisa DESPUÉS de que la fase ya bajó a LIBRE, no
+     *  antes — mismo orden que exige el Javadoc de {@link EstadoMedida#ejecutar} ("la fase baja a LIBRE
+     *  ANTES de avisar, mismo orden que EstadoDeteccion#publicar"). El propio oyente comprueba
+     *  {@code medida.fase()} SÍNCRONAMENTE dentro de su callback: T7 sólo contaba avisos, así que una
+     *  mutación que avisara antes de bajar la fase seguía en verde (7/7) — con esta prueba, en rojo. */
+    @Test
+    public void oyenteEsAvisadoConFaseYaLibreAlTerminarSinPregunta() throws InterruptedException {
+        params.lecturasPorColor(1);
+        sim.programarValor(50, 100); // sin cero ni disparo anulado: UN solo aviso, el de terminar.
+        EstadoMedida medida = new EstadoMedida();
+        java.util.concurrent.atomic.AtomicBoolean faseEraLibreAlAvisar = new java.util.concurrent.atomic.AtomicBoolean(false);
+        java.util.concurrent.CountDownLatch avisado = new java.util.concurrent.CountDownLatch(1);
+        medida.registrarOyente(() -> {
+            faseEraLibreAlAvisar.set(medida.fase() == EstadoMedida.Fase.LIBRE);
+            avisado.countDown();
+        });
+
+        Thread hiloMedir = new Thread(
+                () -> medida.ejecutar(sesion, "blanco", "x", "", "", "sin_posicion"), "medir-blanco-t9");
+        hiloMedir.start();
+
+        assertTrue("el oyente no fue avisado al terminar", avisado.await(TIMEOUT_ESPERA_MS, TimeUnit.MILLISECONDS));
+        hiloMedir.join(TIMEOUT_JOIN_MS);
+        assertFalse(hiloMedir.isAlive());
+        assertTrue("el oyente vio la fase MIDIENDO en vez de LIBRE al ser avisado", faseEraLibreAlAvisar.get());
     }
 }
