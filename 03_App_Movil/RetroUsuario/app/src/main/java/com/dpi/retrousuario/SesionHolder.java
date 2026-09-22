@@ -6,6 +6,8 @@ import android.content.SharedPreferences;
 import com.dpi.retrousuario.dominio.Canal;
 import com.dpi.retrousuario.dominio.DeteccionYSonda;
 import com.dpi.retrousuario.dominio.EstadoDeteccion;
+import com.dpi.retrousuario.dominio.EstadoMedida;
+import com.dpi.retrousuario.dominio.Oyente;
 import com.dpi.retrousuario.dominio.ParametrosRitmo;
 import com.dpi.retrousuario.dominio.RespuestaV;
 import com.dpi.retrousuario.dominio.SesionMedicion;
@@ -51,6 +53,13 @@ final class SesionHolder {
      *  ({@code EstadoDeteccionTest}): cualquier Activity viva pregunta {@link #detectando()} y
      *  {@link #recogerResultadoDeteccionPendiente()} en su propio {@code onResume()}. */
     private static final EstadoDeteccion ESTADO_DETECCION = new EstadoDeteccion();
+
+    /** FABLE-USR (SPEC-App-Usuario-V3.6.md:617-625) (revisor Fable, opción A, sobre 0.3.5): "hay una medida en curso"/"qué
+     *  pregunta hay que repintar" tampoco vivía aquí (vivía repartida en {@code MedirActivity}, ver su
+     *  Javadoc) — mismo patrón que {@link #ESTADO_DETECCION}: dominio puro, con pruebas JVM propias
+     *  ({@code EstadoMedidaTest}), UNA instancia para todo el proceso (una sola medida en vuelo a la
+     *  vez, como ya garantizaba el cerrojo de {@code SesionMedicion#medir}). */
+    private static final EstadoMedida ESTADO_MEDIDA = new EstadoMedida();
 
     /** B-1: canal (envuelve el mismo {@link #enlace}), reintentos hechos y `#V#` ya confirmado de la
      *  sonda EN CURSO — mientras se espera a que el operador pulse "Reintentar" o continúe. Se limpia
@@ -138,13 +147,20 @@ final class SesionHolder {
     }
 
     /** C2: la Activity viva se registra aquí en su {@code onResume()} y se retira en su {@code
-     *  onPause()} — ver el Javadoc de {@link EstadoDeteccion.Oyente}. */
-    static void registrarOyenteDeteccion(EstadoDeteccion.Oyente oyente) {
+     *  onPause()} — ver el Javadoc de {@link Oyente}. */
+    static void registrarOyenteDeteccion(Oyente oyente) {
         ESTADO_DETECCION.registrarOyente(oyente);
     }
 
-    static void quitarOyenteDeteccion(EstadoDeteccion.Oyente oyente) {
+    static void quitarOyenteDeteccion(Oyente oyente) {
         ESTADO_DETECCION.quitarOyente(oyente);
+    }
+
+    /** FABLE-USR (SPEC-App-Usuario-V3.6.md:617-625): la única instancia de {@link EstadoMedida} del proceso — {@code
+     *  MedirActivity} llama a {@link EstadoMedida#ejecutar}/{@link EstadoMedida#responder} sobre ella,
+     *  nunca crea la suya (una Activity recreada por un giro no es dueña de la medida, el dominio sí). */
+    static EstadoMedida medida() {
+        return ESTADO_MEDIDA;
     }
 
     static ParametrosRitmo parametros() {
@@ -158,12 +174,16 @@ final class SesionHolder {
      * la referencia real, MainActivity, antes de llamar a esto): esto sólo quita la referencia
      * compartida, para que {@link MedirActivity}/{@link AjustesActivity} dejen de ver la sesión vieja
      * de inmediato, y para no dejar en {@link #canalSondaEnCurso} un canal que envuelve un enlace ya
-     * cerrado (B-1).
+     * cerrado (B-1). FABLE-USR (SPEC-App-Usuario-V3.6.md:617-625) (sobre 0.3.5): antes esto cerraba el socket con una medida
+     * todavía en vuelo (el hilo de medir se quedaba bloqueado para siempre en el enlace ya cerrado) —
+     * {@link EstadoMedida#abandonar()} contesta SALTAR a cualquier pregunta pendiente para que {@code
+     * sesion.medir()} termine y suelte su cerrojo antes de que esta sesión deje de ser la actual.
      */
     static void limpiar() {
         sesion = null;
         enlace = null;
         ESTADO_DETECCION.salir(); // C1: defensivo, no queda "Conectando" colgado sobre un enlace que ya no existe.
+        ESTADO_MEDIDA.abandonar(); // FABLE-USR (SPEC-App-Usuario-V3.6.md:617-625): no deja una medida en vuelo bloqueada para siempre.
         limpiarSondaEnCurso();
     }
 

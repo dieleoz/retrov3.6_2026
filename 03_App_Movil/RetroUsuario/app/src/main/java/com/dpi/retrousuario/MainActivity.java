@@ -31,6 +31,7 @@ import com.dpi.retrousuario.dominio.EstadoDeteccion;
 import com.dpi.retrousuario.dominio.EstrategiaExportacion;
 import com.dpi.retrousuario.dominio.FechaISO;
 import com.dpi.retrousuario.dominio.GestorEnlace;
+import com.dpi.retrousuario.dominio.Oyente;
 import com.dpi.retrousuario.dominio.RegistroTramas;
 import com.dpi.retrousuario.dominio.RespuestaV;
 import com.dpi.retrousuario.dominio.SesionMedicion;
@@ -70,12 +71,12 @@ public final class MainActivity extends AppCompatActivity {
     private RegistroTramas log;
     private Diario diario;
 
-    /** C2 sobre 0.3.4: salta del hilo de fondo (donde vive el {@link EstadoDeteccion.Oyente}) al
+    /** C2 sobre 0.3.4: salta del hilo de fondo (donde vive el {@link Oyente}) al
      *  hilo principal antes de tocar cualquier vista — nunca se pinta desde el hilo que publicó. */
     private final Handler handlerPrincipal = new Handler(Looper.getMainLooper());
     /** Instancia estable (no una lambda nueva cada vez): {@link SesionHolder#quitarOyenteDeteccion}
      *  compara por referencia, así que registrar y quitar tienen que usar el mismo objeto. */
-    private final EstadoDeteccion.Oyente oyenteDeteccion = () -> handlerPrincipal.post(this::restaurarInterfaz);
+    private final Oyente oyenteDeteccion = () -> handlerPrincipal.post(this::restaurarInterfaz);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

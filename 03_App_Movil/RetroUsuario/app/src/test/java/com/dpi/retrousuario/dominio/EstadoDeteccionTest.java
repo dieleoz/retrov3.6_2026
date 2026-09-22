@@ -211,8 +211,8 @@ public class EstadoDeteccionTest {
     public void quitarOyenteConOtraInstanciaNoQuitaElVigente() {
         EstadoDeteccion estado = new EstadoDeteccion();
         int[] avisos = { 0 };
-        EstadoDeteccion.Oyente vigente = () -> avisos[0]++;
-        EstadoDeteccion.Oyente otro = () -> avisos[0] += 100;
+        Oyente vigente = () -> avisos[0]++;
+        Oyente otro = () -> avisos[0] += 100;
         estado.registrarOyente(vigente);
 
         estado.quitarOyente(otro); // no es el mismo objeto: no debe quitar a "vigente".

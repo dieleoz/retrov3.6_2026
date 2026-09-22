@@ -54,14 +54,6 @@ public final class EstadoDeteccion {
         }
     }
 
-    /** C2 sobre 0.3.4: a quién avisar cuando hay algo nuevo que pintar — sin Android (ni Handler ni
-     *  Activity), para que esta clase se siga probando en la JVM. Quien implemente esto (MainActivity)
-     *  es responsable de saltar al hilo principal (con {@code Handler(Looper.getMainLooper())}) antes
-     *  de tocar ninguna vista: {@link #avisar()} llama a esto en el mismo hilo que publicó. */
-    public interface Oyente {
-        void avisar();
-    }
-
     private boolean detectando = false;
     private Resultado resultadoPendiente;
     private String errorPendiente;
@@ -141,7 +133,8 @@ public final class EstadoDeteccion {
     }
 
     /** C2: la Activity viva se registra en su {@code onResume()} y se retira en su {@code onPause()}
-     *  — nunca queda más de un oyente (una Activity nueva reemplaza al de la vieja). */
+     *  — nunca queda más de un oyente (una Activity nueva reemplaza al de la vieja). {@link Oyente}
+     *  (FABLE-USR (SPEC-App-Usuario-V3.6.md:617-625), sobre 0.3.5) es dominio compartido con {@link EstadoMedida}. */
     public synchronized void registrarOyente(Oyente o) {
         oyente = o;
     }

@@ -2,12 +2,15 @@ package com.dpi.retrousuario;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -16,6 +19,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.dpi.retrousuario.dominio.CsvMedidas;
+import com.dpi.retrousuario.dominio.EstadoMedida;
 import com.dpi.retrousuario.dominio.EstrategiaExportacion;
 import com.dpi.retrousuario.dominio.FilaMedida;
 import com.dpi.retrousuario.dominio.PermisoUbicacion;
@@ -28,13 +32,25 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
-import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * RF-USR-04, RF-USR-05, RF-USR-06, pantalla 4 (SPEC §1): color → Medir, cada disparo se guarda solo, **cero
  * tecleo**. Sin selector de disparos (RF-USR-04, T-USR-28): el único control de
  * {@code lecturasPorColor} está en {@link AjustesActivity}, a la que se llega por
  * {@link R.id#btnAjustes}, nunca desde aquí.
+ *
+ * <p><b>FABLE-USR, revisor Fable opción A sobre 0.3.5 (SPEC-App-Usuario-V3.6.md:617-625):</b> hasta la 0.3.5 esta Activity era
+ * la DUEÑA de la operación "medir" — el hilo de fondo capturaba {@code this} (una cola local
+ * alimentada por un diálogo sobre {@code this}, y {@code runOnUiThread} sobre {@code this} para pintar
+ * el resultado): un giro de pantalla a mitad de la pregunta "Repetir o Saltar" perdía el diálogo del
+ * sistema y dejaba el hilo de fondo bloqueado para siempre, y la Activity nueva nacía con los botones
+ * habilitados aunque hubiera una medida en curso (su {@code onResume} no sabía nada de ella). Ahora la
+ * dueña es {@link EstadoMedida} (dominio puro, {@code SesionHolder.medida()}, mismo patrón que
+ * {@link com.dpi.retrousuario.dominio.EstadoDeteccion} para la detección): el hilo de medir sólo
+ * referencia {@link SesionHolder#medida()} y {@link #getApplicationContext()}, nunca {@code this}; esta
+ * Activity sólo PINTA lo que {@link EstadoMedida} ya sabe, en {@link #restaurarInterfaz()} — llamado en
+ * {@code onResume()} y, mientras la Activity está viva, cuando {@link EstadoMedida} avisa (vía
+ * {@link Handler#post}, nunca directamente desde el hilo de fondo).</p>
  */
 public final class MedirActivity extends AppCompatActivity {
 
@@ -47,44 +63,16 @@ public final class MedirActivity extends AppCompatActivity {
     private Button btnAjustes;
     private Button btnExportar;
 
-    /**
-     * RF-USR-04 r7 (REPETIR-PREGUNTA): implementación Android de la pregunta "Repetir o Saltar" —
-     * bloquea el HILO DE FONDO que está midiendo (nunca el principal) con un diálogo modal, sin
-     * cancelar con Atrás ({@code setCancelable(false)}: la SPEC exige una de las dos respuestas, no
-     * una tercera "ninguna"). Un giro de pantalla a mitad de esta pregunta reinicia la Activity con
-     * el diálogo del sistema perdido: el hilo de fondo queda esperando para siempre — sin arnés de
-     * capa Android (igual que giro/Atrás en otras pantallas, README); queda para la prueba de Diego.
-     */
-    private final PreguntaOperador preguntaOperador = new PreguntaOperador() {
-        @Override
-        public Decision preguntarCero() {
-            return preguntarBloqueante(R.string.medir_pregunta_cero);
-        }
-
-        @Override
-        public Decision preguntarDisparoAnulado() {
-            return preguntarBloqueante(R.string.medir_pregunta_disparo_anulado);
-        }
-    };
-
-    /** Muestra el diálogo en el hilo principal y bloquea EL HILO QUE LLAMA (el de "medir-" + color,
-     *  nunca el principal: este método no se llama nunca desde onCreate/onClick) hasta que el
-     *  operador toque "Repetir" o "Saltar". */
-    private PreguntaOperador.Decision preguntarBloqueante(int mensajeResId) {
-        ArrayBlockingQueue<PreguntaOperador.Decision> respuesta = new ArrayBlockingQueue<>(1);
-        runOnUiThread(() -> new AlertDialog.Builder(this)
-                .setMessage(mensajeResId)
-                .setCancelable(false)
-                .setPositiveButton(R.string.medir_repetir, (d, w) -> respuesta.offer(PreguntaOperador.Decision.REPETIR))
-                .setNegativeButton(R.string.medir_saltar, (d, w) -> respuesta.offer(PreguntaOperador.Decision.SALTAR))
-                .show());
-        try {
-            return respuesta.take();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return PreguntaOperador.Decision.SALTAR; // defensivo: nunca deja el hilo de fondo colgado si lo interrumpen.
-        }
-    }
+    /** FABLE-USR (SPEC-App-Usuario-V3.6.md:617-625): salta del hilo de fondo (donde vive el oyente de {@link EstadoMedida}) al
+     *  hilo principal antes de tocar cualquier vista — mismo patrón que {@code MainActivity}. */
+    private final Handler handlerPrincipal = new Handler(Looper.getMainLooper());
+    /** Instancia estable: {@link EstadoMedida#quitarOyente} compara por referencia. */
+    private final com.dpi.retrousuario.dominio.Oyente oyenteMedida = () -> handlerPrincipal.post(this::restaurarInterfaz);
+    /** Un solo diálogo vivo a la vez (FABLE-USR (SPEC-App-Usuario-V3.6.md:617-625)): se cierra en {@link #onPause()} para que un
+     *  giro de pantalla no deje dos diálogos del sistema apilados (uno de la Activity vieja, otro de
+     *  la nueva) — la pregunta sigue pendiente en {@link EstadoMedida}, la Activity nueva la re-muestra
+     *  en su propio {@link #onResume()}. */
+    private AlertDialog dialogoPregunta;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,10 +119,25 @@ public final class MedirActivity extends AppCompatActivity {
         }
     }
 
+    /** FABLE-USR (SPEC-App-Usuario-V3.6.md:617-625): el oyente se registra en {@code onResume()} (retirado en {@link #onPause()},
+     *  mismo patrón que {@code MainActivity}/{@code EstadoDeteccion}) — así una medida que termina, o
+     *  que queda esperando una pregunta, mientras esta Activity está en segundo plano se repinta en
+     *  cuanto vuelve a primer plano, sin depender de que el hilo de fondo siga vivo para avisar. */
     @Override
     protected void onResume() {
         super.onResume();
-        actualizarContador();
+        SesionHolder.medida().registrarOyente(oyenteMedida);
+        restaurarInterfaz();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        SesionHolder.medida().quitarOyente(oyenteMedida);
+        if (dialogoPregunta != null) {
+            dialogoPregunta.dismiss();
+            dialogoPregunta = null;
+        }
     }
 
     private void enlazarBotonColor(int idBoton, String color) {
@@ -157,11 +160,10 @@ public final class MedirActivity extends AppCompatActivity {
     }
 
     /**
-     * Cero tecleo (RF-USR-06): color → Medir, sin más entrada del operador.
-     *
-     * <p>B-1 (condición QA-8 sobre 32c785d): el hilo de medir captura cualquier excepción y la
-     * muestra, en vez de morir en silencio dejando los controles deshabilitados para siempre (un
-     * {@link Thread} sin manejador propio no propaga la excepción a ningún sitio visible).</p>
+     * Cero tecleo (RF-USR-06): color → Medir, sin más entrada del operador. FABLE-USR (SPEC-App-Usuario-V3.6.md:617-625): el hilo
+     * de fondo sólo referencia {@link SesionHolder#medida()} y {@link #getApplicationContext()} — ni
+     * {@code this} ni ninguna vista; {@link EstadoMedida#ejecutar} captura cualquier excepción de
+     * {@code sesion.medir()} (B-1 de la 0.3.0) y la publica, {@link #restaurarInterfaz()} la pinta.
      */
     private void medir(String color) {
         SesionMedicion sesion = SesionHolder.sesion();
@@ -169,28 +171,76 @@ public final class MedirActivity extends AppCompatActivity {
             tvResultado.setText(R.string.medir_sin_equipo);
             return;
         }
-        establecerControlesEnCurso(true);
         tvResultado.setText(R.string.medir_midiendo);
+        establecerControlesEnCurso(true);
+        Context contexto = getApplicationContext();
         new Thread(() -> {
-            try {
-                UbicacionGps.Resultado gps = UbicacionGps.ultimaConocida(getApplicationContext());
-                String fechaHora = fechaHoraIsoAhora();
-                boolean conPosicion = "con_posicion".equals(gps.gpsEstado);
-                String lat = conPosicion ? CsvMedidas.formatearCoordenada(gps.latitud) : "";
-                String lon = conPosicion ? CsvMedidas.formatearCoordenada(gps.longitud) : "";
-                FilaMedida fila = sesion.medir(color, fechaHora, lat, lon, gps.gpsEstado, preguntaOperador);
-                runOnUiThread(() -> {
-                    mostrarResultado(fila);
-                    establecerControlesEnCurso(false);
-                });
-            } catch (Exception e) {
-                String mensaje = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
-                runOnUiThread(() -> {
-                    tvResultado.setText(getString(R.string.medir_error, mensaje));
-                    establecerControlesEnCurso(false);
-                });
-            }
+            UbicacionGps.Resultado gps = UbicacionGps.ultimaConocida(contexto);
+            String fechaHora = fechaHoraIsoAhora();
+            boolean conPosicion = "con_posicion".equals(gps.gpsEstado);
+            String lat = conPosicion ? CsvMedidas.formatearCoordenada(gps.latitud) : "";
+            String lon = conPosicion ? CsvMedidas.formatearCoordenada(gps.longitud) : "";
+            SesionHolder.medida().ejecutar(sesion, color, fechaHora, lat, lon, gps.gpsEstado);
         }, "medir-" + color).start();
+    }
+
+    /**
+     * FABLE-USR (SPEC-App-Usuario-V3.6.md:617-625): pinta lo que {@link EstadoMedida} ya sabe — controles deshabilitados mientras
+     * MIDIENDO o PREGUNTANDO, el diálogo "Repetir o Saltar" re-mostrado si hay una pregunta pendiente
+     * (tras un giro, o si esta Activity vuelve de segundo plano con una pregunta que dejó pendiente),
+     * y el resultado (o el error) de una medida terminada, una sola vez. Atrás desde esta pantalla NO
+     * interrumpe la medida: no hay ningún camino aquí que llame a {@link EstadoMedida#abandonar()} (lo
+     * hace {@code SesionHolder.limpiar()}, al cambiar de equipo o salir de verdad).
+     */
+    private void restaurarInterfaz() {
+        EstadoMedida medida = SesionHolder.medida();
+        EstadoMedida.Fase fase = medida.fase();
+        establecerControlesEnCurso(fase != EstadoMedida.Fase.LIBRE);
+
+        EstadoMedida.TipoPregunta pregunta = medida.preguntaPendiente();
+        if (pregunta != null) {
+            mostrarDialogoPregunta(pregunta);
+            actualizarContador();
+            return;
+        }
+        if (dialogoPregunta != null) {
+            dialogoPregunta.dismiss();
+            dialogoPregunta = null;
+        }
+
+        EstadoMedida.Resultado resultado = medida.recogerResultadoPendiente();
+        if (resultado != null) {
+            mostrarResultado(resultado.fila());
+            actualizarContador();
+            return;
+        }
+        String error = medida.recogerErrorPendiente();
+        if (error != null) {
+            tvResultado.setText(getString(R.string.medir_error, error));
+        }
+        actualizarContador();
+    }
+
+    /** Un solo diálogo vivo (ver el Javadoc de {@link #dialogoPregunta}): si ya hay uno mostrado para
+     *  esta Activity, no crea otro encima. */
+    private void mostrarDialogoPregunta(EstadoMedida.TipoPregunta tipo) {
+        if (dialogoPregunta != null) {
+            return;
+        }
+        int mensajeResId = tipo == EstadoMedida.TipoPregunta.CERO
+                ? R.string.medir_pregunta_cero : R.string.medir_pregunta_disparo_anulado;
+        dialogoPregunta = new AlertDialog.Builder(this)
+                .setMessage(mensajeResId)
+                .setCancelable(false)
+                .setPositiveButton(R.string.medir_repetir, (d, w) -> {
+                    dialogoPregunta = null;
+                    SesionHolder.medida().responder(PreguntaOperador.Decision.REPETIR);
+                })
+                .setNegativeButton(R.string.medir_saltar, (d, w) -> {
+                    dialogoPregunta = null;
+                    SesionHolder.medida().responder(PreguntaOperador.Decision.SALTAR);
+                })
+                .show();
     }
 
     private void mostrarResultado(FilaMedida fila) {
@@ -203,7 +253,6 @@ public final class MedirActivity extends AppCompatActivity {
             tvResultado.setText(getString(R.string.medir_resultado, fila.color, lecturasCrudasTexto(fila),
                     formatoValor(fila.media), formatoValor(fila.minimo), fila.valido ? "SI" : "NO"));
         }
-        actualizarContador();
     }
 
     private static String lecturasCrudasTexto(FilaMedida fila) {
