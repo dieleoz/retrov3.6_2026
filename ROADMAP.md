@@ -34,24 +34,27 @@ la app de usuario no certifica nada y va como segundo carril, sin quitarle turno
 **Carril A — app de calibrar.** `Cov_3.6.5_calibrar` (rama `rtv-1.0-cierre`, `316a6bc`, md5 en `RETOMAR.md`):
 calibró con éxito el 8 y la b en campo el 22-sep (máscara 0283).
 
-1. **A4 (CERRADO el 22-sep-2026).** Códigos 8 y b escritos en EEPROM y verificados con P43 (±5 %) y P49 (±10 %);
-   fecha 2026-09-22; máscara 0283; actas aceptadas y archivadas; acta formal ITVIAL en PDF generada.
-2. **A4b (bucle roto con A4B-FILTRO).** `Cov_3.6.8_calibrar` (`3f72367`): filtro único `TextoOperador` y acta
-   oculta en esta app; regresión de `Cov366Rf17Test` arreglada en `31e6214` (411/411). Arquitecto y QA en curso.
+1. **A4b.** `Cov_3.6.8_calibrar` (`31e6214`, rama `rtv-1.0-cierre`): QA **NO APTO** (filtro fuera de la
+   frontera). La rama `rtv-1.0-simple` (`6d307a2`) añade pacing UART, trama corta y T-C41 guiado, pero
+   sale de ese mismo `31e6214` y repite su par `versionCode 10013` / `Cov_3.6.8_calibrar`
+   (defecto, `CLAUDE.md` §6). Antes de tocarla: rebasar sobre `316a6bc` y darle versión propia.
+2. **A4c (nuevo, del campo el 22-sep).** Defectos que vio el funcional y que van a la SPEC antes que el
+   código: la app vuelve a ofrecer códigos ya aceptados; no dice en qué paso va y el operador acaba
+   forzando el cierre (pierde el acta, `Base.java:254-262`); T-C41 depende de cuándo se pulse OK y manda
+   a reconectar a mano; el `pruebas.txt` del ZIP es el de la tanda anterior. Encargo redactado.
 3. **A5a.** Propuesta en `06_Calibracion/SLV-002/PROPUESTA-Toma-Corta.md` (simulación, sin medir): 46
    patrones, ajustar 6 y 4; 3 y 5 con dato invertido; café fuera con la curva del rojo. Aprobada
    (TOMA-SEL-LISTA).
-4. **A5b (siguiente, al cerrar A4b).** Certificado PDF, verificación de 10 patrones y toma corta: SPEC,
-   arquitecto, código y QA. Toda repetición dice el motivo y ofrece Repetir o Saltar
-   (REPETIR-PREGUNTA); firma DPI (FIRMA-DPI).
+4. **A5b (siguiente, al cerrar A4b).** Certificado PDF, verificación de 10 patrones y toma corta, con SPEC,
+   arquitecto, código y QA. Toda repetición dice el motivo y ofrece Repetir o Saltar (REPETIR-PREGUNTA);
+   firma DPI (FIRMA-DPI); y se elige **el tipo de lámina**, que el acta dice por tipo y color.
 
 **Carril B — app de usuario (segundo carril).** Incremento 1 "Medir y exportar". El presupuesto de vueltas
 (0.3.4 y 0.3.5) se agotó con un Alto de ciclo de vida; bucle roto con el revisor Fable (FABLE-USR): la
 medida, la pregunta y el resultado viven en `dominio/EstadoMedida`, no en la pantalla (A-09).
 
-1. **B6.** `RetroUsuario` 0.3.6 (`6e59f7b`, 148/148): arquitecto APTO CON CONDICIONES (abandonar con la
-   pregunta del cero guarda fila; la SPEC dice sin fila); QA en curso. Vuelta corta 0.3.7. Sólo bloquea un requisito
-   escrito de `SPEC-App-Usuario-V3.6.md` (r7 y §4 bis).
+1. **B6. Es la APK que va con el equipo al cliente, y hoy NO se puede entregar.** `RetroUsuario` 0.3.7
+   (`b8a299d`, rama `retro-usuario`): arquitecto APTO, **QA sin hacer**. Sin QA no sale (`CLAUDE.md` §6).
 2. **B7.** Prueba de Diego en dos teléfonos (Android ≤9 y ≥10): giro con la pregunta abierta, giro
    midiendo, Atrás desde Medir, apagar el equipo, exportar; después, al funcional.
 3. **B8.** Incremento 2 "señal a señal" (histórico e inventario por CSV; sin dictamen, UMBRAL-CSV).
@@ -63,7 +66,7 @@ medida, la pregunta y el resultado viven en `dominio/EstadoMedida`, no en la pan
 | P1 Especificación · P2 Arquitectura · P3 Compilación reproducible · P6 Autorización | Cerradas |
 | P4 Firmware · P7 Grabación | Cerradas para la 3.6.2 |
 | P5 App · P9 Validación del arquitecto | **Abiertas** (carriles A y B) |
-| P8 Calibración de SLV-002 | Cerrada para 1 y 2; **abierta** para 8 y b (y 3, 4, 5, 6) |
+| P8 Calibración de SLV-002 | Cerrada para 1, 2, 8 y b (máscara 0283); **abierta** para 3, 4, 5 y 6 |
 | P10-P11 Producción · P12 Informe y registros | Pendientes (A5, B) |
 
 ## Decisiones pendientes (Diego)
@@ -79,6 +82,13 @@ contra el otro patrón antes de ajustarlos.
 
 No se eligen: se cierran midiendo o con registro. Las cerradas están en `HISTORIA.md`.
 
+- **Catálogo de patrones azules y verdes (C-08), 22-sep.** Bloquea los códigos 3, 4, 5 y 6. Medido: el
+  equipo repite (9 patrones, ±2 cuentas entre el 19 y el 22-sep) y en amarillo y rojo correlaciona a
+  +0,98 y +0,96; en azul y verde, con certificado ≥ 40, la correlación es **negativa** (−0,68 y −0,42).
+  P18 (XI, cert 84) lee 36 y P112 (XI, cert 101) lee 25: más certificado, menos señal. Ni una curva por
+  color y tipo lo arregla (azul XI −37 %, verde IX +103 %). Se cierra leyendo las etiquetas y el origen
+  de los valores de **P112** (debería rondar 56 o 149) y **P124** (debería rondar 251, el catálogo dice
+  51). Hasta entonces no se ajusta nada: forzarlo sería escribir una calibración falsa.
 - **Geometría del equipo (C-06)** sin documentar: el mínimo del Manual 2024 queda sin dictamen hasta
   saber qué fila de ángulo aplica.
 - **Manual 2024 frente a NTC 4739 (C-07)** en una celda de la tabla.
