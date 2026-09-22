@@ -1,8 +1,23 @@
 # RTV Usuario — app de USUARIO del retrorreflectómetro V3.6
 
-**Estado, 21-sep-2026: compila y pasa sus 141 tests JVM (checkout limpio). Nada probado contra un
-equipo ni un teléfono** (CLAUDE.md, cabecera). Última vuelta del presupuesto del incremento 1
-(ROADMAP del principal): cierra **C2** de `REVISIONES-Apps-V3.6.md` (entrada 0.3.4, Alto) —
+**Estado, 21-sep-2026: compila y pasa sus 148 tests JVM (checkout limpio). Nada probado contra un
+equipo ni un teléfono** (CLAUDE.md, cabecera). Cierra **FABLE-USR** (revisor Fable, opción A,
+`SPEC-App-Usuario-V3.6.md:617-625`, "Operaciones que sobreviven a la pantalla"): hasta la 0.3.5
+`MedirActivity` era la dueña de la operación "medir" (hilo con una cola local alimentada por un
+diálogo sobre `this`, `runOnUiThread` sobre `this` para pintar) — un giro de pantalla a mitad de la
+pregunta "Repetir o Saltar" perdía el diálogo del sistema y dejaba el hilo de fondo bloqueado para
+siempre, sin arnés, y la Activity nueva nacía con los botones habilitados aunque hubiera una medida en
+curso. Ahora la dueña es `dominio.EstadoMedida` (fase LIBRE/MIDIENDO/PREGUNTANDO, implementa
+`PreguntaOperador`, oyente registrado en `onResume`/retirado en `onPause`), mismo patrón que
+`dominio.EstadoDeteccion` — cuyo `Oyente` se extrae a `dominio.Oyente`, compartido por las dos.
+`SesionHolder.limpiar()` llama a `medida().abandonar()`: cambiar de equipo o salir con una medida en
+curso ya no deja el hilo de medir colgado sobre un enlace cerrado (antes, `MainActivity.java:219-221`
+de la 0.3.5 cerraba el socket sin avisar a nadie). `dominio.EstadoMedidaTest` (7 nuevas, todas
+requisito, T1-T7 de la SPEC citada) recuento recomputado: **107 requisito / 41 comportamiento** (148).
+`versionCode 9`, `versionName "0.3.6"`.
+
+Vuelta anterior (0.3.5, presupuesto del incremento 1, ROADMAP del principal): cierra **C2** de
+`REVISIONES-Apps-V3.6.md` (entrada 0.3.4, Alto) —
 `runOnUiThread(this::restaurarInterfaz)` (`MainActivity.java:259` de la 0.3.4) corría sobre la
 Activity destruida tras un giro, consumía el resultado de un solo uso sin que la nueva se enterara, y
 se encolaba antes del `finally` que bajaba `detectando`; el camino de error tampoco publicaba. Ahora
@@ -59,7 +74,7 @@ señal" no está aquí.
 No confundir con `03_App_Movil/RetroV36` (app de EMPRESA: DPI, por USB/Bluetooth, PIN, banco y
 calibración). Esta app va **con el equipo** y la usa el operador de campo, sin modo administrador.
 
-- `applicationId com.dpi.retrousuario.coviandina`, `versionCode 8`, `versionName "0.3.5"`.
+- `applicationId com.dpi.retrousuario.coviandina`, `versionCode 9`, `versionName "0.3.6"`.
 - `minSdk 24`, `targetSdk 30`, `compileSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`,
   `ACCESS_FINE_LOCATION`/`ACCESS_COARSE_LOCATION` (arq C2: pedido en tiempo de ejecución al entrar a
   medir, una vez por proceso — `MedirActivity`/`dominio.PermisoUbicacion`; se conceda o no, se mide
@@ -108,7 +123,11 @@ export JAVA_HOME="D:/@Proyect/Baliza/7 sw apk/jdk-11/jdk-11.0.24+8"
   resultado hay que pintar" en dominio puro — `iniciar`/`salir`/`publicar`/`recogerResultadoPendiente`
   — para que `SesionHolder` no dependa de un `runOnUiThread` de la Activity que lanzó el hilo);
   `LectorDeFlujo` (QA sobre la 0.3.3: el bucle de lectura del socket, java.io.InputStream puro, para
-  poder romperlo en la JVM con un flujo doble — antes vivía sólo en `EnlaceBluetooth`, sin pruebas).
+  poder romperlo en la JVM con un flujo doble — antes vivía sólo en `EnlaceBluetooth`, sin pruebas);
+  `EstadoMedida` (FABLE-USR sobre la 0.3.5, `SPEC-App-Usuario-V3.6.md:617-625`: dueña de "medir" —
+  fase LIBRE/MIDIENDO/PREGUNTANDO, implementa `PreguntaOperador`, `ejecutar`/`responder`/`abandonar` —
+  mismo patrón que `EstadoDeteccion`, para que `MedirActivity` deje de serlo); `Oyente` (extraída de
+  `EstadoDeteccion.Oyente` sobre la 0.3.5, la comparten `EstadoDeteccion` y `EstadoMedida`).
 - Capa Android: `MainActivity` (aviso previo una sola vez por proceso — M-1 —, `restaurarInterfaz()`
   en `onResume()` (arq C2 sobre la 0.3.3: antes en `onCreate`, que no cubre volver al primer plano
   sin recrear la Activity) pinta lo que `SesionHolder` ya sabe — lista deshabilitada si
@@ -125,10 +144,15 @@ export JAVA_HOME="D:/@Proyect/Baliza/7 sw apk/jdk-11/jdk-11.0.24+8"
   "Exportar" desde la pantalla principal sin sesión viva — QA-6 —, `onDestroy` libera el equipo
   (cierra el enlace y limpia la sesión) al salir de verdad con Atrás desde la Activity raíz — arq M-2,
   corrige M7/arq B-1 de la 0.3.1, que no lo hacía si había sesión viva); `MedirActivity` (pantalla 4,
-  botones deshabilitados mientras mide o exporta — A1 —, exportar por API — A4 —, pide
-  `ACCESS_FINE_LOCATION` al entrar, una vez por proceso — arq C2 —, `0` mostrado como "saturado o
-  negativo" con las lecturas crudas — M3 —, hilo de medir captura cualquier excepción y la muestra —
-  B-1 de la 0.3.0); `AjustesActivity` (`lecturasPorColor`, persistido en `SharedPreferences` — B3);
+  FABLE-USR sobre la 0.3.5: ya no es la dueña de "medir" — el hilo de fondo sólo referencia
+  `SesionHolder.medida()` y `getApplicationContext()`, `restaurarInterfaz()` en `onResume()` y en el
+  aviso del oyente de `EstadoMedida` pinta desde `fase()`/`preguntaPendiente()`/`recoger*()`: botones
+  deshabilitados mientras MIDIENDO/PREGUNTANDO — A1 —, el diálogo "Repetir o Saltar" se re-muestra si
+  hay una pregunta pendiente (un solo diálogo vivo, cerrado en `onPause()`), exportar por API — A4 —,
+  pide `ACCESS_FINE_LOCATION` al entrar, una vez por proceso — arq C2 —, `0` mostrado como "saturado o
+  negativo" con las lecturas crudas — M3 —, cualquier excepción de `sesion.medir()` la captura y
+  publica `EstadoMedida.ejecutar` — B-1 de la 0.3.0); `AjustesActivity` (`lecturasPorColor`,
+  persistido en `SharedPreferences` — B3);
   `EnlaceBluetooth` (`Canal` y `FuenteBytes`, `ahoraMs()` relativo a la apertura del enlace — M2 —,
   expone la MAC realmente conectada — A2 —, `vivo()` delega en `dominio.EstadoEnlace` — arq ALTO,
   ya no es sólo `socket.isConnected()` — para que `GestorEnlace` decida si reutilizar —,
@@ -144,7 +168,9 @@ export JAVA_HOME="D:/@Proyect/Baliza/7 sw apk/jdk-11/jdk-11.0.24+8"
   `MainActivity` — arq M-1, y arq C1/C2 sobre la 0.3.3 —, `limpiar()` también termina una detección
   en curso, defensivo — arq C1 sobre la 0.3.3 —, estado de "Reintente" de la sonda en curso — arq
   B-1 de la 0.3.1 —, invalidación al cambiar de equipo — A2 —, ajustes persistidos — B3 —, aviso
-  previo y permiso de ubicación aceptados una vez por proceso — M-1/arq C2 de la 0.3.1).
+  previo y permiso de ubicación aceptados una vez por proceso — M-1/arq C2 de la 0.3.1 —, `medida()`
+  expone la única instancia de `dominio.EstadoMedida` del proceso, y `limpiar()` le llama a
+  `abandonar()` — FABLE-USR sobre la 0.3.5, antes cerraba el socket con una medida en vuelo).
 - **Reloj inyectable, sin `Thread.sleep` en pruebas del dominio:** toda espera pasa por
   `FuenteBytes.leer(limiteMs)`; en producción bloquea de verdad, en pruebas un simulador avanza un
   reloj propio. Excepción deliberada: `Sonda362`/`DeteccionYSonda` sí usan un `Thread.sleep` real de
@@ -154,7 +180,9 @@ export JAVA_HOME="D:/@Proyect/Baliza/7 sw apk/jdk-11/jdk-11.0.24+8"
 
 ## Tests JVM
 
-141 tests, `dominio/*Test.java` (**100 requisito / 41 comportamiento**). Recuento recomputado contra
+148 tests, `dominio/*Test.java` (**107 requisito / 41 comportamiento**). Las 7 nuevas de esta entrega
+(0.3.6) son todas requisito (abajo); base heredada de la 0.3.5, sin recomputar: 100 requisito / 41
+comportamiento (141), recuento recomputado contra
 `REVISIONES-Apps-V3.6.md` vigente (entrada 0.3.4, ya archivada): de las 8 nuevas de la 0.3.4 que este
 mismo README contaba como comportamiento a falta de archivo, QA dijo que **5 pasan a requisito** —
 `LectorDeFlujoTest` completa (3: la entrada 0.3.4 archiva literalmente "roturas de LectorDeFlujo...
@@ -168,9 +196,33 @@ desde la 0.3.3, una prueba cuenta como requisito sólo si la condición que cita
 `05_Documentacion/REVISIONES-Apps-V3.6.md` (regla del propio fichero, `:58-59`) — no basta con que el
 analista recuerde el informe del arquitecto o QA, si no quedó archivado.
 
-**Las 7 nuevas de esta entrega (0.3.5), todas requisito** (el esperado de cada una sale de un
-documento escrito fuera del código que prueban — SPEC r7, DECISIONES, o la propia entrada 0.3.4 de
-REVISIONES —, CLAUDE.md §7):
+**Las 7 nuevas de esta entrega (0.3.6), todas requisito** (el esperado de cada una sale de
+`SPEC-App-Usuario-V3.6.md:617-625`, "Operaciones que sobreviven a la pantalla", FABLE-USR — documento
+escrito fuera del código que prueban, CLAUDE.md §7):
+
+- **`EstadoMedidaTest`** (7 nuevas, clase nueva): T1 `serieConCeroDejaPreguntaCeroPendienteYSaltarGuardaLaFila`
+  (una serie con un 0 deja CERO pendiente, visible desde otro hilo; "Saltar" guarda media=0,
+  válido=NO, motivo `saturado_o_negativo`, entregado una sola vez); T2
+  `disparoAnuladoDejaPreguntaAnuladoPendienteYSaltarAnulaLaSerie` (disparo anulado → ANULADO pendiente;
+  "Saltar" anula la serie entera, sin fila); T3 `faseEsMidiendoMientrasMideYLibreAlTerminar` (fase
+  MIDIENDO desde que arranca hasta que publica, LIBRE después, confirmado con concurrencia real —
+  `CountDownLatch`, no temporización supuesta); T4 `excepcionEnMedirDejaErrorPendienteYFaseLibre`
+  (B-1 de la 0.3.0: una excepción de `sesion.medir()` queda como error pendiente, fase LIBRE); T5
+  `abandonarConPreguntaPendienteTerminaMedirYNoCondenaAlSiguiente` (`abandonar()` contesta SALTAR y
+  suelta el monitor de `SesionMedicion.java:100`; un medir posterior, desde otro hilo, no queda
+  condenado a auto-saltar — confirma que `ejecutar()` resetea el abandono de la medida anterior); T6
+  `responderSinPreguntaPendienteSeDescartaYNoContestaLaSiguiente` (una respuesta sin pregunta
+  pendiente se descarta, no se cuela en la pregunta que viene después); T7
+  `trasResponderNoQuedaPreguntaPendienteYElOyenteFueAvisado` (tras `responder()`, pendiente `null` y
+  el oyente avisado del cambio de fase). Rojo por comportamiento: se anuló el cuerpo de `responder()`
+  (no hace nada) y de `abandonar()` (no contesta nada), se recompiló y se corrió sólo esta clase con
+  `JUnitCore` bajo `timeout` (los hilos de medir de las pruebas afectadas quedan bloqueados para
+  siempre en su `ArrayBlockingQueue.take()`; `JUnitCore` los mata igual al llamar a `System.exit()` al
+  terminar) — 5 de 7 caídas (T3 y T4 siguen en verde, correcto: no dependen de esos dos métodos); traza
+  completa en el Javadoc de la clase.
+
+**Las 7 nuevas de la 0.3.5 (contexto, no se repiten aquí; recuento requisito/comportamiento ya
+corregido arriba):**
 
 - **`EstadoDeteccionTest`** (5 nuevas): citan la entrada 0.3.4 de `REVISIONES-Apps-V3.6.md` ("Alto",
   C2 sigue abierta) — `elOyenteSeAvisaConDetectandoYaEnFalso` reproduce en dominio puro la carrera que
@@ -313,8 +365,10 @@ done > fuente.md5
 ```
 
 Verificado en esta entrega con `git worktree add --detach <ruta> <commit>` (checkout limpio, sin
-nada del árbol de quien lo generó) + `md5sum -c fuente.md5`: 69/69 `OK` (68 de la 0.3.4 más
-`dominio/PreguntaOperador.java`, nuevo de esta entrega, RF-USR-04 r7).
+nada del árbol de quien lo generó) + `md5sum -c fuente.md5`: 71/71 `OK` (69 de la 0.3.5 más
+`dominio/EstadoMedida.java` y `dominio/Oyente.java`, nuevos de esta entrega, FABLE-USR). El mismo
+checkout limpio compila `assembleDebug` sin tocar nada del árbol de quien lo generó (D:\ sin `ñ`: la
+misma ruta bajo el perfil de usuario rompe AGP igual que rompe `testDebugUnitTest`, CLAUDE.md §8).
 
 ## Lo que NO verifica esta corrida
 
@@ -350,13 +404,22 @@ cambios de la capa Android: se verificaron por lectura y por compilación contra
 (`compileDebugJavaWithJavac`/`assembleDebug`), no con una prueba JVM (esa capa no tiene arnés de
 pruebas en este árbol, "Tests JVM" arriba: sólo `dominio/`).
 
-**Nuevo de la 0.3.5, sin arnés (capa Android), para la prueba de Diego en dos teléfonos:** que el
-`EstadoDeteccion.Oyente` de `MainActivity` (registrado en `onResume`, retirado en `onPause`) repinte
-de verdad en un giro de pantalla real sobre un `Handler(Looper.getMainLooper())` real — la decisión
-"detectando baja antes de avisar" sí tiene prueba JVM (`EstadoDeteccionTest`), el cableado con un
-`Handler`/ciclo de vida real de Android no; que un giro de pantalla A MITAD del diálogo "Repetir o
-Saltar" de `MedirActivity` deja el hilo de fondo que mide bloqueado para siempre (el diálogo del
-sistema se pierde con la Activity vieja, y nada libera el `ArrayBlockingQueue.take()` que espera la
-respuesta — documentado en el Javadoc de `MedirActivity.preguntaOperador`, sin arnés ni mitigación en
-esta vuelta: presupuesto cerrado); que el diálogo real se vea, sea legible y sus botones "Repetir"/
-"Saltar" respondan al toque en un teléfono.
+**De la 0.3.5, sin arnés (capa Android):** que el `Oyente` de `MainActivity` (registrado en
+`onResume`, retirado en `onPause`) repinte de verdad en un giro de pantalla real sobre un
+`Handler(Looper.getMainLooper())` real — la decisión "detectando baja antes de avisar" sí tiene
+prueba JVM (`EstadoDeteccionTest`), el cableado con un `Handler`/ciclo de vida real de Android no.
+
+**Nuevo de la 0.3.6 (FABLE-USR), sin arnés (capa Android), para la prueba de Diego en dos teléfonos:**
+el bug de la 0.3.5 (un giro de pantalla A MITAD del diálogo "Repetir o Saltar" dejaba el hilo de medir
+bloqueado para siempre) está corregido en dominio con prueba JVM (`EstadoMedidaTest`, T5:
+`abandonar()`/`responder()` desde otro hilo, no una Activity real), pero el cableado con Android real
+no se ha visto: que `MedirActivity` re-muestre de verdad el diálogo "Repetir o Saltar" tras un giro
+real (Activity nueva, `EstadoMedida.preguntaPendiente()` no nulo, `onResume()` la re-muestra) y que
+"Saltar"/"Repetir" tocado en la Activity NUEVA desbloquee de verdad el hilo de medir que arrancó la
+Activity VIEJA; que los botones de color nazcan deshabilitados en la Activity nueva si el giro
+ocurrió a mitad de una medida sin pregunta (fase MIDIENDO); que `onPause()` cierre el diálogo del
+sistema sin que quede un segundo diálogo apilado al volver a `onResume()`; que cambiar de equipo o
+salir con Atrás desde `MainActivity` mientras `MedirActivity` tiene una pregunta pendiente la
+abandone de verdad (serie anulada) y libere el hilo de medir en un teléfono real, no sólo en la JVM;
+que Atrás desde `MedirActivity` (sin cambiar de equipo) no interrumpa una medida en curso, y que al
+volver se vea "Midiendo…" o el resultado, según toque.
