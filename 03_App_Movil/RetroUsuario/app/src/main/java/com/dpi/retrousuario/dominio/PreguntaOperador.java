@@ -14,7 +14,13 @@ public interface PreguntaOperador {
 
     enum Decision {
         REPETIR,
-        SALTAR
+        SALTAR,
+        /** arq C1 (REVISIONES-Apps-V3.6.md, entrada 0.3.6): salir o cambiar de equipo con esta
+         *  pregunta abierta NO es un "Saltar" del operador — {@link SerieDisparos} lo distingue para
+         *  no guardar la fila con media = 0 que sí produce un "Saltar" real ante un cero
+         *  (SPEC-App-Usuario-V3.6.md §4 bis: "serie anulada, sin fila"). Sólo {@code EstadoMedida}
+         *  emite esta decisión (desde {@code abandonar()}); ningún diálogo de operador la ofrece. */
+        ABANDONAR
     }
 
     /**

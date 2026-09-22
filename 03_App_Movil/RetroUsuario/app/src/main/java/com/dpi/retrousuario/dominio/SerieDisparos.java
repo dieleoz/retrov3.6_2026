@@ -95,7 +95,14 @@ final class SerieDisparos {
         }
         // r7: nunca se repite sola. Mientras la serie traiga un 0, se pregunta; sin límite.
         while (serie.contains(0)) {
-            if (pregunta.preguntarCero() == PreguntaOperador.Decision.SALTAR) {
+            PreguntaOperador.Decision decision = pregunta.preguntarCero();
+            // arq C1 (0.3.6): ABANDONAR (salir/cambiar de equipo con la pregunta abierta) no es un
+            // "Saltar" del operador — serie anulada, SIN fila (SPEC §4 bis), a diferencia de un
+            // "Saltar" real, que sí guarda la fila con media=0.
+            if (decision == PreguntaOperador.Decision.ABANDONAR) {
+                return Resultado.anulada();
+            }
+            if (decision == PreguntaOperador.Decision.SALTAR) {
                 return Resultado.de(serie, false); // última serie medida, media=0, motivo saturado_o_negativo.
             }
             List<Integer> nueva = medirSerieCompleta(n);
@@ -135,7 +142,9 @@ final class SerieDisparos {
                 return r.valor();
             }
             anotarAnulacionYCuarentena(r);
-            if (pregunta.preguntarDisparoAnulado() == PreguntaOperador.Decision.SALTAR) {
+            // arq C1 (0.3.6): ABANDONAR y SALTAR anulan igual la serie entera aquí (ya sin fila los
+            // dos, RF-USR-16); sólo preguntarCero() necesita distinguirlos.
+            if (pregunta.preguntarDisparoAnulado() != PreguntaOperador.Decision.REPETIR) {
                 return null;
             }
         }
