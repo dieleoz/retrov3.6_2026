@@ -523,13 +523,16 @@ cambiar el PIN de fábrica** (`#P`) si el equipo sigue con `2026`. El PIN nuevo 
 
 ### 8.3 El informe en PDF
 
-**RF-CAL-30 — Título.** Mientras el laboratorio no esté acreditado (ISO/IEC 17025) y no haya
-incertidumbre calculada (§9), el documento **no puede llamarse "certificado de calibración"** ni
-usar "calibración" en sentido metrológico en su título.
+**RF-CAL-30 — Título.** El documento se titula **"CERTIFICADO DE CALIBRACIÓN"** (CERT-TITULO-2,
+Diego 22-sep-2026; cierra P-CAL-02). Como el laboratorio no está acreditado (ISO/IEC 17025) y no hay
+incertidumbre calculada (§9), ese título **sólo es admisible con su declaración de alcance**:
 
-- **Título propuesto:** *"Informe de ajuste y verificación contra patrones certificados"*.
-- **Decisión abierta de Diego (P-CAL-02).**
-- El texto de la declaración de §7 va en la primera página, bajo el título.
+- **Bajo el título, en la primera página**, y sin excepción: ajuste y verificación contra patrones
+  certificados, laboratorio no acreditado en ISO/IEC 17025 y sin cálculo de incertidumbre.
+- El certificado se emite **junto con el ZIP de soporte** de esa campaña, que lleva las actas, el
+  diario y las tramas.
+- Formato: el de ITVIAL, con su membrete y su pie; cada cifra cotejada contra el acta `.txt` que
+  emitió la app antes de emitirlo.
 
 **RF-CAL-31 — Generación.**
 

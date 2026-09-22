@@ -33,6 +33,7 @@ registrada, y no en una casilla del operador (P11 §3, QA-3612).
 | **CERT-TITULO** | "Certificado de calibración", firmado por ITVIAL SAS (nota 4) | 21-sep-2026 | nota 4 |
 | **FECHA-EQUIPO** | Una sola fecha en el equipo: la del día en que se calibra (nota 5) | 21-sep-2026 | nota 5 |
 | **USR-SIMPLE** | App de usuario simple: señal por icono y medir (nota 6) | 21-sep-2026 | nota 6 |
+| **CERT-TITULO-2** | **Cierra P-CAL-02 y deroga RF-CAL-30**: el documento que va al cliente se titula "CERTIFICADO DE CALIBRACIÓN". Bajo el título, en la primera página, la declaración de alcance: ajuste y verificación contra patrones certificados, laboratorio no acreditado en ISO/IEC 17025 y sin cálculo de incertidumbre. Se emite junto con el ZIP de soporte de la campaña | 22-sep-2026 | "certificado, y sería a compartir junto con el .zip en el formato que ya encontraste" |
 | **SERIE-USR** | App de usuario: si el equipo no da la serie, la escribe el operador (nota 7) | 21-sep-2026 | nota 7 |
 | **SENAL-FILTRO** | App de usuario: filtro por familia y búsqueda al escribir (nota 7) | 21-sep-2026 | nota 7 |
 | **USR-ALCANCE** | App de usuario: sólo firmware V3.6; informe por señal (nota 8) | 21-sep-2026 | nota 8 |
