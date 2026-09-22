@@ -52,3 +52,26 @@ Segundo intento del funcional, 22-sep 10:46-10:49, Cov_3.6.5_calibrar. #L acepta
 el operador pulso OK en "Apagar y encender" sin haber apagado (el enlace cae 2 s despues del #Q, rtv36_20260922_104644
 l. 101030). Acta 20260922_104823 RECHAZADA, vacia; ningun #S enviado: nada escrito. Mascara sigue en 0003.
 Copiado de 07 pruebas/220920261049/ el 22-sep-2026.
+
+campana_SLV-002_20260922_105602.zip
+md5    d8d6ed00bdaedd0ef61191a383ff0f74
+sha256 ee69f866c75ce86735d103f8305e688b088051f66b0f1c5784d79c502123b434
+soporte_SLV-002_20260922_105602.zip
+md5    58cf3b066b161d720d0b2c6b9e2e34ed
+sha256 6dcd3de33e969325fb79cda87282c6b039bd53fb82a771ef0a4ba85b9bf71775
+Tercer intento del funcional, 22-sep 10:54-10:56, Cov_3.6.5_calibrar. #L aceptado (OK en 201 ms).
+T-C41 falla de nuevo: el operador pulsó OK a los 5.5 s sin dar tiempo a que el socket Bluetooth
+cayera (el enlace cae a los 12 s, rtv36_20260922_105411 l. 87941). Acta 20260922_105532 RECHAZADA,
+vacía; ningún #S enviado: nada escrito. Máscara sigue en 0003. Copiado de 07 pruebas/220920261056/
+el 22-sep-2026.
+
+campana_SLV-002_20260922_105602.zip
+md5    d8d6ed00bdaedd0ef61191a383ff0f74
+sha256 ee69f866c75ce86735d103f8305e688b088051f66b0f1c5784d79c502123b434
+soporte_SLV-002_20260922_105602.zip
+md5    58cf3b066b161d720d0b2c6b9e2e34ed
+sha256 6dcd3de33e969325fb79cda87282c6b039bd53fb82a771ef0a4ba85b9bf71775
+Tercer intento del funcional, 22-sep 10:54-10:56, Cov_3.6.5_calibrar. #L aceptado (201 ms). OK en "Apagar y encender"
+a los 5,6 s; el equipo aun contesta #Q# -> #OK# (rtv36_20260922_105411 l. 579-582): estaba encendido al pulsar OK.
+El enlace cae a las 87941 ms, 6,1 s despues. Acta 20260922_105532 RECHAZADA, vacia; ningun #S: nada escrito.
+Copiado de 07 pruebas/220920261056/ el 22-sep-2026.
