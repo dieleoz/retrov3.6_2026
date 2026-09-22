@@ -1,6 +1,6 @@
-93632f10800d4cb38e9ea3904522a0f5 *app/build.gradle
+a36273eac5a986aaf03e3271edbc57ad *app/build.gradle
 37893f7e5796f16e8e285846f2a370b6 *app/proguard-rules.pro
-a51ab6b8fd4b0c7bd0584bf5ef4de69e *app/src/main/AndroidManifest.xml
+ea83368ee04c38c488291f58d14bab8e *app/src/main/AndroidManifest.xml
 ef3078f83d84f8adef93a1b54f07258c *app/src/main/java/com/dpi/retrousuario/AjustesActivity.java
 9c1e778dea1930badcf4dd558ee977f5 *app/src/main/java/com/dpi/retrousuario/EnlaceBluetooth.java
 77d69a11a10b7f15d03539e6b8de4ffa *app/src/main/java/com/dpi/retrousuario/ExportadorAndroid.java

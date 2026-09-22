@@ -16,19 +16,19 @@ Estado vigente; se reescribe en cada sesión. Reglas en `CLAUDE.md`; orden en `R
 - **A4b en curso:** `Cov_3.6.6_calibrar`, sin número de código en los mensajes (RF-COV-17).
 - **A5a en curso:** simulación de la curva con el banco; propuesta de hasta 50 patrones y de qué códigos
   ajustar en `06_Calibracion/SLV-002/PROPUESTA-Toma-Corta.md` (decisiones 12-15).
-- **App de usuario: `RetroUsuario` 0.3.4** (`com.dpi.retrousuario.coviandina`, versionCode 7, md5
-  `3572c865…`), rama `retro-usuario` (`ec07bdb`). Arquitecto y QA APTO CON CONDICIONES: C2 abierta.
-  **0.3.5, última vuelta del presupuesto:** C2 y RF-USR-04 r7 (Repetir o Saltar).
+- **App de usuario: `RetroUsuario` 0.3.7** (`com.dpi.retrousuario.coviandina`, versionCode 10, versionName
+  0.3.7), rama `bb`. **Arquitecto APTO y QA APTO** (152/152 pruebas JVM reproducidas). Etiqueta visible
+  `"Retro Coviandina"` en teléfono y binario entregable `RETRO-COVIANDINA-usuario-0.3.7-10.apk`. Misma firma
+  (`c990adf6...`) para actualización directa sin desinstalar.
 - **SPEC:** calibrar, `SPEC-App-Calibracion-Coviandina.md` §8 (RF-COV-11 a 23); usuario,
-  `SPEC-App-Usuario-V3.6.md` r7 (por delante de la 0.3.4 en RF-USR-04).
-- **Push:** el principal sube `main`, `rtv-1.0-cierre` y `retro-usuario` (`.claude/settings.local.json`).
+  `SPEC-App-Usuario-V3.6.md` r7 (Incremento 1 completado con FABLE-USR).
+- **Push:** el principal sube `main`, `rtv-1.0-cierre` y `retro-usuario` / `bb`.
 
-## Pendiente de Diego
+## Pendiente de Diego / Siguiente
 
-1. **Calibrar el 8 y la b** con `Cov_3.6.5_calibrar` y el ZIP de las 18:11; traer el ZIP que salga.
-2. Probar la 0.3.5 en dos teléfonos (Android ≤9 y ≥10): exportar, girar, cambiar de equipo, salir con
-   Atrás y apagar el equipo a mitad de sesión.
-3. Revisar la propuesta de toma corta (A5a) cuando llegue; D-5 (P32 duplicado), mirando el patrón.
+1. Probar la app de usuario `RETRO-COVIANDINA-usuario-0.3.7-10.apk` en dos teléfonos (Android ≤9 y ≥10) (B7).
+2. Entregar la APK al funcional (Julio) con la instrucción corta de instalación directa sin desinstalar.
+3. Revisar la propuesta de toma corta (A5a) cuando se retome tras el límite semanal (25-sep).
 
 ## Prompt para retomar
 

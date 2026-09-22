@@ -13,6 +13,7 @@ android {
         targetSdkVersion 30
         versionCode 10
         versionName "0.3.7"
+        manifestPlaceholders = [etiqueta: "Retro Coviandina"]
     }
 
     buildTypes {

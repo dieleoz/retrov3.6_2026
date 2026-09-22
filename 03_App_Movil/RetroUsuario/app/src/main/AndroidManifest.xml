@@ -21,19 +21,19 @@
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
+        android:label="${etiqueta}"
         android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
 
-        <activity android:name=".MainActivity" android:label="@string/app_name">
+        <activity android:name=".MainActivity" android:label="${etiqueta}">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MedirActivity" android:label="@string/app_name" />
+        <activity android:name=".MedirActivity" android:label="${etiqueta}" />
         <activity android:name=".AjustesActivity" android:label="@string/ajustes_titulo" />
     </application>
 </manifest>

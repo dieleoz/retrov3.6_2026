@@ -42,15 +42,17 @@ QA APTO y arquitecto APTO CON CONDICIONES; entregable a Diego para calibrar el 8
    arquitecto, código y QA. Toda repetición dice el motivo y ofrece Repetir o Saltar
    (REPETIR-PREGUNTA); firma DPI (FIRMA-DPI).
 
-**Carril B — app de usuario (segundo carril).** Incremento 1 "Medir y exportar". El presupuesto de vueltas
-(0.3.4 y 0.3.5) se agotó con un Alto de ciclo de vida; bucle roto con el revisor Fable (FABLE-USR): la
-medida, la pregunta y el resultado viven en `dominio/EstadoMedida`, no en la pantalla (A-09).
+**Carril B — app de usuario (segundo carril).** Incremento 1 "Medir y exportar". Regla que dejó el
+revisor Fable (FABLE-USR, A-09): la medida, la pregunta y el resultado viven en `dominio/EstadoMedida`, no
+en la pantalla.
 
-1. **B6.** `RetroUsuario` 0.3.6 (`6e59f7b`, 148/148): arquitecto APTO CON CONDICIONES (abandonar con la
-   pregunta del cero guarda fila; la SPEC dice sin fila); QA en curso. Vuelta corta 0.3.7. Sólo bloquea un requisito
-   escrito de `SPEC-App-Usuario-V3.6.md` (r7 y §4 bis).
-2. **B7.** Prueba de Diego en dos teléfonos (Android ≤9 y ≥10): giro con la pregunta abierta, giro
-   midiendo, Atrás desde Medir, apagar el equipo, exportar; después, al funcional.
+1. **B6 (CERRADO en rama `bb`).** `RetroUsuario` 0.3.7 (`com.dpi.retrousuario.coviandina`, versionCode 10,
+   versionName 0.3.7): **arquitecto APTO y QA APTO** (152/152 pruebas JVM reproducidas: 107 requisito /
+   45 comportamiento). Etiqueta visible `"Retro Coviandina"` en teléfono y binario entregable
+   `RETRO-COVIANDINA-usuario-0.3.7-10.apk`. Misma firma (`c990adf6...`) para actualización directa
+   sin desinstalar.
+2. **B7 (Siguiente).** Prueba de Diego en dos teléfonos (Android ≤9 y ≥10): giro con la pregunta abierta, giro
+   midiendo, Atrás desde Medir, apagar el equipo, exportar; después, entrega al funcional (Julio).
 3. **B8.** Incremento 2 "señal a señal" (histórico e inventario por CSV; sin dictamen, UMBRAL-CSV).
 
 ## Puertas P1-P12

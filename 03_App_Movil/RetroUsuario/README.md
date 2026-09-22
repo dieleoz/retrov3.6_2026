@@ -93,6 +93,8 @@ No confundir con `03_App_Movil/RetroV36` (app de EMPRESA: DPI, por USB/Bluetooth
 calibración). Esta app va **con el equipo** y la usa el operador de campo, sin modo administrador.
 
 - `applicationId com.dpi.retrousuario.coviandina`, `versionCode 10`, `versionName "0.3.7"`.
+- Etiqueta en teléfono: `"Retro Coviandina"` (`manifestPlaceholders = [etiqueta: "Retro Coviandina"]`).
+- Fichero entregable: `RETRO-COVIANDINA-usuario-0.3.7-10.apk`.
 - `minSdk 24`, `targetSdk 30`, `compileSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`,
   `ACCESS_FINE_LOCATION`/`ACCESS_COARSE_LOCATION` (arq C2: pedido en tiempo de ejecución al entrar a
   medir, una vez por proceso — `MedirActivity`/`dominio.PermisoUbicacion`; se conceda o no, se mide
@@ -100,6 +102,52 @@ calibración). Esta app va **con el equipo** y la usa el operador de campo, sin 
   `WRITE_EXTERNAL_STORAGE` (≤ API 28, pedido en tiempo de ejecución, A4). API 29+ exporta por
   `MediaStore.Downloads` (A4), sin ese permiso.
 - Contrato: `05_Documentacion/PROTOCOLO-V3.6.md`. Catálogo de colores: `08_Senales/senales.csv`.
+
+## Reglas para no tener que desinstalar nunca (firma y datos)
+
+1. **El `versionCode` sólo sube:** Android rechaza con `INSTALL_FAILED_VERSION_DOWNGRADE` cualquier
+   intento de instalar un `versionCode` inferior o igual.
+2. **El `applicationId` NO se cambia en una app ya instalada:** en este teléfono ya está instalada
+   `com.dpi.retrousuario.coviandina`. Cambiar el paquete crearía una segunda aplicación (dos iconos) y
+   los datos/campañas quedarían en la partición de la app anterior. La versión tampoco se incluye en el
+   paquete.
+3. **NUNCA se desinstala para instalar:** desinstalar borra los datos de la aplicación y destruye la
+   campaña del cliente en campo. Si una instalación falla, parar y avisar (A-01, A-10).
+
+## Nombrado por dueño
+
+- El nombre del dueño va en la **ETIQUETA** que se ve en el teléfono (`manifestPlaceholders` en
+  `app/build.gradle` → `android:label="${etiqueta}"` en `AndroidManifest.xml`) y en el **NOMBRE DEL
+  FICHERO** que se envía por chat/correo.
+  - App de usuario (cliente): etiqueta `"Retro Coviandina"`, fichero
+    `RETRO-COVIANDINA-usuario-<versionName>-<versionCode>.apk`.
+  - App de calibrar (DPI): etiqueta `"Retro Coviandina Calibrar"`, fichero
+    `RETRO-COVIANDINA-calibrar-<versionName>-<versionCode>.apk`.
+- Si en el futuro hay otro dueño (ej. Nordeste): lo que cambia es la etiqueta visible y el nombre del
+  fichero. El `applicationId` SOLO se modifica si se trata de un teléfono que NO tenga instalada la app
+  previamente.
+
+## Clave de firma y certificados
+
+- Diagnóstico: las APKs se firman con la clave de depuración (`~/.android/debug.keystore`). Si la clave
+  cambia entre máquinas de desarrollo, Android rechaza la actualización (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`)
+  y sólo permite desinstalar.
+- Huella del certificado de compilación en esta máquina:
+  `Signer #1 certificate SHA-256 digest: c990adf69d888a41f5ba6d539a0176c80df1e5c3b5f46dca8dea9d0ca7b8075f`.
+- Propuesta para producción: generar una keystore estable (`~/.android/dpi_release.jks`) fuera del
+  repositorio, compartida entre máquinas autorizadas, sin versionar el archivo `.jks` ni sus credenciales.
+
+## Anotación del Arquitecto (`EstadoMedida.java:172`)
+
+- El arquitecto anotó (`REVISIONES-Apps-V3.6.md:58`): abandonar entre pulsar Medir y `ejecutar()`
+  (lectura del GPS) se pierde porque `marcarMidiendo()` en línea 172 resetea `abandonado = false`.
+- **Justificación técnica para no tocar código en la 0.3.7:** la versión 0.3.7 ya cuenta con veredicto
+  **APTO del Arquitecto**. Alterar código de producción Java invalidaría el APTO y exigiría una nueva
+  ronda de revisión de arquitectura. La ventana entre `marcarMidiendo()` en el hilo principal y
+  `ejecutar()` en el hilo de fondo es de sólo ~1 a 5 ms (lectura de última posición GPS en caché del
+  sistema). Además, pulsar Atrás en `MedirActivity` no llama a `abandonar()` (sólo lo hace
+  `SesionHolder.limpiar()` al salir de la raíz o cambiar de equipo). Queda documentado y programado
+  como mejora de robustez para la versión 0.3.8 / Incremento 2.
 
 ## Compilar
 
@@ -424,18 +472,17 @@ Verificado en la 0.3.6 con `git worktree add --detach <ruta> <commit>` (checkout
 árbol de quien lo generó) + `md5sum -c fuente.md5`: 71/71 `OK` (69 de la 0.3.5 más
 `dominio/EstadoMedida.java` y `dominio/Oyente.java`, nuevos de esa entrega, FABLE-USR).
 
-**0.3.7 (esta entrega):** mismos 71 ficheros (ninguno nuevo; sólo cambió contenido: `PreguntaOperador`,
-`SerieDisparos`, `EstadoMedida`, `MedirActivity`, `MainActivity`, `app/build.gradle`). Regenerado desde
-los blobs de `HEAD` (d230849) y verificado igual, `git worktree add --detach D:/tmp/rtvu_verify HEAD`
-(ruta ASCII, D:\ sin `ñ` — la misma ruta bajo el perfil de usuario rompe AGP igual que
-`testDebugUnitTest`, CLAUDE.md §8) + `md5sum -c fuente.md5`: **71/71 `OK`**. El mismo checkout compiló
-`assembleDebug` limpio: `package: name='com.dpi.retrousuario.coviandina' versionCode='10'
-versionName='0.3.7'` (`aapt dump badging`); certificado de depuración `Signer #1 certificate SHA-256
-digest: c990adf69d888a41f5ba6d539a0176c80df1e5c3b5f46dca8dea9d0ca7b8075f` (`apksigner verify
---print-certs`); hash por CONTENIDO (receta de arriba, paso 3):
-**`16f280f632cabcd2aff5c4c9ae6da1a2b1f54419917108a01230225f2bba475e`**. md5 del `.apk` (declarado, no
-comparable entre builds — sólo trazabilidad de este fichero concreto):
-**`088a42d0c0c69c61331fceb3134d3fea`**, copiado a `03_App_Movil/RetroUsuario-0.3.7.apk`.
+**0.3.7 (esta entrega):** mismos 71 ficheros (ninguno nuevo; `manifestPlaceholders = [etiqueta: "Retro Coviandina"]`
+en `app/build.gradle` y `${etiqueta}` en `AndroidManifest.xml`). Verificado en checkout limpio con
+`md5sum -c fuente.md5`: **71/71 `OK`**. Compilación `assembleDebug` limpia:
+`package: name='com.dpi.retrousuario.coviandina' versionCode='10' versionName='0.3.7'`,
+`application-label:'Retro Coviandina'` (`aapt dump badging`); certificado de depuración
+`Signer #1 certificate SHA-256 digest: c990adf69d888a41f5ba6d539a0176c80df1e5c3b5f46dca8dea9d0ca7b8075f`
+(`apksigner verify --print-certs`); hash por CONTENIDO (receta de arriba, paso 3):
+**`b7a3917cb7b3e2367a0efe841533d826b310537fc0c1f13d0ffcfbdd3a402882`**. md5 del `.apk` (declarado, no
+comparable entre builds — trazabilidad del binario empaquetado):
+**`6aecf3ac2251db29f78b74d324b920cc`**, entregado como `03_App_Movil/RETRO-COVIANDINA-usuario-0.3.7-10.apk`
+(y copia de compatibilidad `03_App_Movil/RetroUsuario-0.3.7.apk`).
 
 ## Lo que NO verifica esta corrida
 

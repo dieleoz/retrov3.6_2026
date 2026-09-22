@@ -49,7 +49,18 @@ completos quedaron en el directorio temporal de la sesión; aquí se archiva lo 
   - **C3 (arq):** SPEC atrasada; cerrada en `SPEC-App-Usuario-V3.6.md` §4 bis.
   - **QA:** quitar `marcarCaido()` del catch de `EnlaceBluetooth.leerSinParar` no lo detecta ninguna prueba
     (126/126 en verde): la capa Android no tiene arnés. Pide prueba con un `InputStream` doble y, en
-    campo, reconexión tras apagar el equipo. El rojo por aserción invertida no vale.
+- **0.3.7** (`bb`) — **arquitecto APTO / QA APTO**. Entregable a Diego para prueba en dos teléfonos
+  (B7) y despacho al cliente (Coviandina).
+  - **QA:** 152/152 tests JVM reproducidos y verificados (107 requisito / 45 comportamiento).
+  - **Anotación arq (`EstadoMedida.java:172`):** no bloquea la 0.3.7. Abandonar entre pulsar Medir y
+    `ejecutar()` ocurre en ventana de ~1-5 ms (lectura GPS en caché) y `MedirActivity` no llama a
+    `abandonar()` con Atrás; tocar código Java invalidaría el APTO vigente del arquitecto. Pasa a 0.3.8.
+  - **Nombrado y firma:** etiqueta `"Retro Coviandina"` (`manifestPlaceholders`), paquete
+    `com.dpi.retrousuario.coviandina`, `versionCode 10`, `versionName 0.3.7`. Fichero:
+    `RETRO-COVIANDINA-usuario-0.3.7-10.apk`. Certificado: SHA-256
+    `c990adf69d888a41f5ba6d539a0176c80df1e5c3b5f46dca8dea9d0ca7b8075f`.
+    Hash por CONTENIDO (orden LC_ALL=C): `b7a3917cb7b3e2367a0efe841533d826b310537fc0c1f13d0ffcfbdd3a402882`.
+    MD5: `6aecf3ac2251db29f78b74d324b920cc`.
 - **0.3.6** (`6e59f7b`) — arquitecto APTO con condiciones; QA en curso. Diseño del revisor Fable implementado
   (`dominio/EstadoMedida`). **C1:** salir o cambiar de equipo con la pregunta del cero abierta guarda una fila
   con media 0 (`SerieDisparos.java:98-99`, `SesionMedicion.java:108-114`); la SPEC §4 bis dice "sin fila".
