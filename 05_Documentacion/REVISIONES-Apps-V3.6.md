@@ -50,6 +50,11 @@ completos quedaron en el directorio temporal de la sesión; aquí se archiva lo 
   - **QA:** quitar `marcarCaido()` del catch de `EnlaceBluetooth.leerSinParar` no lo detecta ninguna prueba
     (126/126 en verde): la capa Android no tiene arnés. Pide prueba con un `InputStream` doble y, en
     campo, reconexión tras apagar el equipo. El rojo por aserción invertida no vale.
+- **0.3.6** (`6e59f7b`) — arquitecto APTO con condiciones; QA en curso. Diseño del revisor Fable implementado
+  (`dominio/EstadoMedida`). **C1:** salir o cambiar de equipo con la pregunta del cero abierta guarda una fila
+  con media 0 (`SerieDisparos.java:98-99`, `SesionMedicion.java:108-114`); la SPEC §4 bis dice "sin fila".
+  Anotado: `post(restaurarInterfaz)` sobre una Activity destruida puede lanzar BadTokenException; fase LIBRE
+  entre la pulsación y `ejecutar()`.
 - **0.3.5** — APTO con condiciones / APTO con condiciones. QA: 69/69, 141/141, APK reproducible bit a bit;
   recuento real 98 requisito / 43 comportamiento (no 100/41: dos pruebas de `EstadoDeteccionTest` no citan
   requisito). La contradicción del "límite de 2 repeticiones" en la SPEC queda corregida. Arquitecto: C2 de
