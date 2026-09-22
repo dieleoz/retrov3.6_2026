@@ -41,7 +41,8 @@ public class RitmoDePacingTest {
         sim.programarValor(50, 110);
         sim.programarValor(50, 120);
 
-        new SerieDisparos(sim, new EmisorRitmo(), params, log, diario, '4').medir();
+        new SerieDisparos(sim, new EmisorRitmo(), params, log, diario, '4',
+                PreguntaOperadorFalsa.siempre(PreguntaOperador.Decision.SALTAR)).medir();
 
         for (long[] delta : sim.deltasDeRitmo()) {
             long desdeEnvioAnterior = delta[0];

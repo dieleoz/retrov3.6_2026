@@ -2,6 +2,7 @@ package com.dpi.retrousuario.dominio;
 
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -41,7 +42,33 @@ import static org.junit.Assert.assertTrue;
  * <p>— capturado tal cual con JUnitCore contra esta misma clase (README "Tests JVM"), rojo por
  * comportamiento (una aserción real que falló con {@code salir()} vacío, no un símbolo que faltara),
  * corregida de vuelta a la implementación real (que sí pone {@code detectando = false}) en
- * {@link EstadoDeteccion}; con ella, verde (134 tests en la suite completa).</p>
+ * {@link EstadoDeteccion}; con ella, verde.</p>
+ *
+ * <p><b>C2 sobre 0.3.4 (REVISIONES-Apps-V3.6.md, entrada 0.3.4, "Alto"):</b> los 5 métodos de abajo a
+ * partir de {@link #elOyenteSeAvisaConDetectandoYaEnFalso()} prueban el arreglo del bug real —
+ * {@code runOnUiThread(this::restaurarInterfaz)} encolado antes del {@code finally} que bajaba
+ * {@code detectando}. Demostración de rojo real: se hizo que {@link EstadoDeteccion#publicar} avisara
+ * al oyente ANTES de bajar {@code detectando} (un cambio de una línea, revertido después), se
+ * recompiló y se corrió sólo esta clase con {@code JUnitCore}:</p>
+ * <pre>
+ * JUnit version 4.13.2
+ * .........E.
+ * Time: 0,011
+ * There was 1 failure:
+ * 1) elOyenteSeAvisaConDetectandoYaEnFalso(com.dpi.retrousuario.dominio.EstadoDeteccionTest)
+ * java.lang.AssertionError: el oyente vio detectando()==true: el aviso llegó antes que el cambio de estado
+ *     at org.junit.Assert.fail(Assert.java:89)
+ *     at org.junit.Assert.assertTrue(Assert.java:42)
+ *     at org.junit.Assert.assertFalse(Assert.java:65)
+ *     at com.dpi.retrousuario.dominio.EstadoDeteccionTest.elOyenteSeAvisaConDetectandoYaEnFalso(EstadoDeteccionTest.java:141)
+ *
+ * FAILURES!!!
+ * Tests run: 10,  Failures: 1
+ * </pre>
+ * <p>— rojo por comportamiento (el oyente vio {@code detectando() == true} en el instante del aviso,
+ * justo el síntoma de "pinta 'Conectando' y no recoge nada" que describe REVISIONES 0.3.4), corregida
+ * de vuelta a {@code publicar()} bajando {@code detectando} dentro del mismo bloque
+ * {@code synchronized}, antes de avisar; con ella, verde (141 tests en la suite completa).</p>
  */
 public class EstadoDeteccionTest {
 
@@ -111,5 +138,103 @@ public class EstadoDeteccionTest {
         // C2, "UNA vez": una segunda Activity que pregunte después de la primera no ve nada (no
         // repinta el mismo resultado dos veces, ni uno viejo de una detección anterior).
         assertNull(estado.recogerResultadoPendiente());
+    }
+
+    /**
+     * C2 sobre 0.3.4 (REVISIONES-Apps-V3.6.md, entrada 0.3.4): "esa llamada [runOnUiThread] se
+     * encola antes del finally que baja detectando: si el hilo principal la ejecuta antes, pinta
+     * 'Conectando' y no recoge nada". Esta prueba demuestra la mitad de ese arreglo que puede
+     * probarse en dominio puro, sin Activity ni hilos: cuando el oyente se avisa, {@code detectando}
+     * YA está en {@code false} — el aviso nunca puede llegar antes que el cambio de estado, porque
+     * {@link EstadoDeteccion#publicar} los deja en el mismo bloque {@code synchronized} antes de
+     * llamar al oyente.
+     */
+    @Test
+    public void elOyenteSeAvisaConDetectandoYaEnFalso() {
+        EstadoDeteccion estado = new EstadoDeteccion();
+        estado.iniciar();
+        boolean[] detectandoAlAvisar = { true }; // valor centinela: si el oyente no se llama, la prueba falla abajo.
+        boolean[] avisado = { false };
+        estado.registrarOyente(() -> {
+            detectandoAlAvisar[0] = estado.detectando();
+            avisado[0] = true;
+        });
+
+        Canal canal = (trama, plazoMs) -> null;
+        estado.publicar(canal, DeteccionYSonda.ejecutar(canal, new ParametrosRitmo()));
+
+        assertTrue("el oyente nunca se llamó", avisado[0]);
+        assertFalse("el oyente vio detectando()==true: el aviso llegó antes que el cambio de estado",
+                detectandoAlAvisar[0]);
+    }
+
+    /** C2 sobre 0.3.4: el camino de error (antes pintaba "No se pudo conectar: " + mensaje sobre
+     *  {@code this} sin publicar nada) también publica, deja {@code detectando} en falso y avisa. */
+    @Test
+    public void publicarErrorDejaDetectandoEnFalsoYAvisaUnaVez() {
+        EstadoDeteccion estado = new EstadoDeteccion();
+        estado.iniciar();
+        int[] avisos = { 0 };
+        estado.registrarOyente(() -> avisos[0]++);
+
+        estado.publicarError("el equipo se desconectó");
+
+        assertFalse(estado.detectando());
+        assertEquals(1, avisos[0]);
+        assertEquals("el equipo se desconectó", estado.recogerErrorPendiente());
+        assertNull("se entrega una sola vez", estado.recogerErrorPendiente());
+        assertNull("un error no deja un resultado de detección pendiente", estado.recogerResultadoPendiente());
+    }
+
+    /** C2 sobre 0.3.4, aplicado a {@code reintentarSonda} (anotado por el arquitecto, REVISIONES
+     *  0.3.4: "reintentarSonda pinta sobre this"): mismo mecanismo de publicar/avisar/recoger-una-vez. */
+    @Test
+    public void publicarSondaDejaDetectandoEnFalsoYSeEntregaUnaVez() {
+        EstadoDeteccion estado = new EstadoDeteccion();
+        estado.iniciar();
+        int[] avisos = { 0 };
+        estado.registrarOyente(() -> avisos[0]++);
+        Sonda362.ResultadoSonda sonda = Sonda362.vacio();
+
+        estado.publicarSonda(sonda);
+
+        assertFalse(estado.detectando());
+        assertEquals(1, avisos[0]);
+        assertSame(sonda, estado.recogerSondaPendiente());
+        assertNull(estado.recogerSondaPendiente());
+    }
+
+    /** C2 sobre 0.3.4: {@code quitarOyente} retira SÓLO el oyente que se pasa (la Activity vieja no
+     *  puede desregistrar por accidente al oyente de la Activity nueva, si por error las dos llaman a
+     *  quitar con su propia instancia — comparación por referencia, no "el último que se registró"). */
+    @Test
+    public void quitarOyenteConOtraInstanciaNoQuitaElVigente() {
+        EstadoDeteccion estado = new EstadoDeteccion();
+        int[] avisos = { 0 };
+        EstadoDeteccion.Oyente vigente = () -> avisos[0]++;
+        EstadoDeteccion.Oyente otro = () -> avisos[0] += 100;
+        estado.registrarOyente(vigente);
+
+        estado.quitarOyente(otro); // no es el mismo objeto: no debe quitar a "vigente".
+        estado.iniciar();
+        Canal canal = (trama, plazoMs) -> null;
+        estado.publicar(canal, DeteccionYSonda.ejecutar(canal, new ParametrosRitmo()));
+
+        assertEquals(1, avisos[0]);
+    }
+
+    /** Sin oyente registrado (Activity en {@code onPause}, o ninguna Activity viva todavía),
+     *  publicar no revienta y el resultado sigue disponible para quien pregunte después. */
+    @Test
+    public void publicarSinOyenteRegistradoNoRevientaYDejaElResultadoPendiente() {
+        EstadoDeteccion estado = new EstadoDeteccion();
+        estado.iniciar();
+        Canal canal = (trama, plazoMs) -> null;
+        DeteccionYSonda.Resultado resultado = DeteccionYSonda.ejecutar(canal, new ParametrosRitmo());
+
+        estado.publicar(canal, resultado); // sin registrarOyente(): no debe lanzar nada.
+
+        assertFalse(estado.detectando());
+        assertSame(resultado, estado.recogerResultadoPendiente().deteccion());
     }
 }

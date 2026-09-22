@@ -9,6 +9,8 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -68,6 +70,13 @@ public final class MainActivity extends AppCompatActivity {
     private RegistroTramas log;
     private Diario diario;
 
+    /** C2 sobre 0.3.4: salta del hilo de fondo (donde vive el {@link EstadoDeteccion.Oyente}) al
+     *  hilo principal antes de tocar cualquier vista — nunca se pinta desde el hilo que publicó. */
+    private final Handler handlerPrincipal = new Handler(Looper.getMainLooper());
+    /** Instancia estable (no una lambda nueva cada vez): {@link SesionHolder#quitarOyenteDeteccion}
+     *  compara por referencia, así que registrar y quitar tienen que usar el mismo objeto. */
+    private final EstadoDeteccion.Oyente oyenteDeteccion = () -> handlerPrincipal.post(this::restaurarInterfaz);
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -93,24 +102,35 @@ public final class MainActivity extends AppCompatActivity {
      * {@code onResume()} se llama SIEMPRE que esta Activity queda visible — tras {@code onCreate}
      * (giro de pantalla, o arranque normal) y también si el proceso simplemente vuelve al primer
      * plano — así que es el único sitio que hace falta para repintar desde {@link SesionHolder}, no
-     * {@code onCreate} a secas.
+     * {@code onCreate} a secas. C2 sobre 0.3.4: además se registra aquí como {@link
+     * EstadoDeteccion.Oyente} (retirado en {@link #onPause()}), para repintar SIN esperar a que esta
+     * Activity vuelva a pasar por {@code onResume} si el hilo de fondo termina mientras ya está viva.
      */
     @Override
     protected void onResume() {
         super.onResume();
+        SesionHolder.registrarOyenteDeteccion(oyenteDeteccion);
         restaurarInterfaz();
     }
 
+    /** C2 sobre 0.3.4: retira el oyente antes de que esta instancia deje de estar viva (giro de
+     *  pantalla, o pasar a segundo plano) — así un aviso posterior no intenta pintar sobre ella. */
+    @Override
+    protected void onPause() {
+        super.onPause();
+        SesionHolder.quitarOyenteDeteccion(oyenteDeteccion);
+    }
+
     /**
-     * M-1 (arq, sobre 0.3.2) + C1/C2 (arq, sobre 0.3.3): {@code detectando} y el resultado de una
-     * detección terminada viven en {@link SesionHolder} (dominio {@code EstadoDeteccion}), no en un
-     * campo de esta Activity (se perdía al recrearla, giro de pantalla) ni en el {@code
-     * runOnUiThread} de la Activity que lanzó el hilo de fondo (C2: pintaba sobre una instancia ya
-     * destruida si hubo un giro mientras la conexión seguía en curso, y la Activity nueva no se
-     * enteraba de nada — {@code MainActivity.hiloConectarYDetectar}). Esta Activity, viva, pinta
+     * M-1 (arq, sobre 0.3.2) + C1/C2 (arq, sobre 0.3.3 y 0.3.4): {@code detectando}, el resultado de
+     * una detección terminada, un error de conexión y el resultado de un reintento de sonda viven en
+     * {@link SesionHolder} (dominio {@code EstadoDeteccion}), no en un campo de esta Activity (se
+     * perdía al recrearla, giro de pantalla) ni en un {@code runOnUiThread} que capture {@code this}
+     * (C2 sobre 0.3.4: pintaba sobre una instancia ya destruida tras un giro, consumiendo el
+     * resultado de un solo uso sin que la Activity nueva se enterara). Esta Activity, viva, pinta
      * aquí lo que {@link SesionHolder} ya sabe: si todavía hay una detección en curso, "Conectando";
-     * si no, y hay un resultado pendiente (publicado por el hilo de fondo, con o sin esta MISMA
-     * instancia viva en ese momento), lo recoge UNA vez y lo pinta.
+     * si no, recoge —UNA vez cada uno— lo primero que haya pendiente, en este orden: error, resultado
+     * de detección, resultado de un reintento de sonda.
      */
     private void restaurarInterfaz() {
         lvEquipos.setEnabled(!SesionHolder.detectando());
@@ -120,9 +140,20 @@ public final class MainActivity extends AppCompatActivity {
             tvEstado.setText(R.string.conectando);
             return;
         }
+        String error = SesionHolder.recogerErrorDeteccionPendiente();
+        if (error != null) {
+            tvEstado.setText("No se pudo conectar: " + error);
+            lvEquipos.setEnabled(true);
+            return;
+        }
         EstadoDeteccion.Resultado pendiente = SesionHolder.recogerResultadoDeteccionPendiente();
         if (pendiente != null) {
             mostrarResultadoDeteccion(pendiente.canal(), pendiente.deteccion());
+            return;
+        }
+        Sonda362.ResultadoSonda sondaPendiente = SesionHolder.recogerSondaPendiente();
+        if (sondaPendiente != null) {
+            mostrarResultadoSonda(sondaPendiente);
         }
     }
 
@@ -249,20 +280,19 @@ public final class MainActivity extends AppCompatActivity {
                 hiloConectarYDetectar(dispositivo, false); // UNA vez: la vuelta siguiente ya no es "reutilizado".
                 return;
             }
-            // C2 (sobre 0.3.3, corrige MainActivity.java:94-97/211 de esa entrega): el resultado se
-            // PUBLICA en SesionHolder — no se pinta con un runOnUiThread que capture canalRegistrado/
-            // resultado sobre "this" — porque "this" puede ser una Activity ya destruida (giro de
-            // pantalla a mitad de la conexión/sonda): esa Activity vieja pintaba sobre sí misma, sin
-            // que nadie más se enterara. Cualquier Activity viva (la misma, o una recreada) lo recoge y
-            // lo pinta desde SesionHolder en su propio onResume() → restaurarInterfaz().
+            // C2 (sobre 0.3.3 y 0.3.4): el resultado se PUBLICA en SesionHolder — nunca con un
+            // runOnUiThread que capture canalRegistrado/resultado sobre "this", porque "this" puede
+            // ser una Activity ya destruida (giro de pantalla a mitad de la conexión/sonda): esa
+            // Activity vieja pintaba sobre sí misma y consumía el resultado de un solo uso sin que la
+            // nueva se enterara (el bug de 0.3.4). publicar() ya baja "detectando" y avisa al oyente
+            // vivo (si lo hay, EstadoDeteccion.Oyente); si no hay ninguno vivo en este instante, la
+            // próxima Activity que pase por su propio onResume() → restaurarInterfaz() lo recoge igual.
             SesionHolder.publicarResultadoDeteccion(canalRegistrado, resultado);
-            runOnUiThread(this::restaurarInterfaz);
         } catch (Exception e) {
-            String mensaje = e.getMessage();
-            runOnUiThread(() -> {
-                tvEstado.setText("No se pudo conectar: " + mensaje);
-                lvEquipos.setEnabled(true);
-            });
+            // C2 sobre 0.3.4: el camino de error también se publica (antes pintaba "No se pudo
+            // conectar: " + mensaje sobre "this" con runOnUiThread, sin publicar nada — se perdía
+            // igual que el resultado si hubo un giro).
+            SesionHolder.publicarErrorDeteccion(e.getMessage());
         } finally {
             SesionHolder.marcarDetectando(false); // C1: TODO camino de salida de este hilo termina "Conectando".
         }
@@ -295,7 +325,10 @@ public final class MainActivity extends AppCompatActivity {
     /**
      * QA-1 (RF-USR-01, T-USR-01b(d)(e)): el reintento lo dispara EL OPERADOR (este método sólo se
      * llama desde el click de {@link #btnReintentar}), nunca la app sola; reutiliza el canal de
-     * {@link SesionHolder#canalSondaEnCurso()} para no reenviar "#V#".
+     * {@link SesionHolder#canalSondaEnCurso()} para no reenviar "#V#". C2 sobre 0.3.4 (anotado por el
+     * arquitecto en REVISIONES 0.3.4, "reintentarSonda pinta sobre this"): mismo arreglo que {@link
+     * #hiloConectarYDetectar} — el resultado se publica en {@link SesionHolder}, nunca con {@code
+     * runOnUiThread(() -> mostrarResultadoSonda(sonda))} capturando {@code this}.
      */
     private void reintentarSonda() {
         Canal canal = SesionHolder.canalSondaEnCurso();
@@ -309,8 +342,7 @@ public final class MainActivity extends AppCompatActivity {
         tvEstado.setText(R.string.conectando);
         new Thread(() -> {
             Sonda362.ResultadoSonda sonda = reintentos.intentar(canal);
-            SesionHolder.marcarDetectando(false);
-            runOnUiThread(() -> mostrarResultadoSonda(sonda));
+            SesionHolder.publicarSondaPendiente(sonda); // baja "detectando" y avisa al oyente vivo, si hay uno.
         }, "reintento-sonda-usuario").start();
     }
 

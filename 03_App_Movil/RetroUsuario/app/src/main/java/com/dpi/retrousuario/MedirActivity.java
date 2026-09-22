@@ -1,6 +1,7 @@
 package com.dpi.retrousuario;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -18,6 +19,7 @@ import com.dpi.retrousuario.dominio.CsvMedidas;
 import com.dpi.retrousuario.dominio.EstrategiaExportacion;
 import com.dpi.retrousuario.dominio.FilaMedida;
 import com.dpi.retrousuario.dominio.PermisoUbicacion;
+import com.dpi.retrousuario.dominio.PreguntaOperador;
 import com.dpi.retrousuario.dominio.SesionMedicion;
 
 import java.io.File;
@@ -26,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * RF-USR-04, RF-USR-05, RF-USR-06, pantalla 4 (SPEC §1): color → Medir, cada disparo se guarda solo, **cero
@@ -43,6 +46,45 @@ public final class MedirActivity extends AppCompatActivity {
     private Button[] botonesColor;
     private Button btnAjustes;
     private Button btnExportar;
+
+    /**
+     * RF-USR-04 r7 (REPETIR-PREGUNTA): implementación Android de la pregunta "Repetir o Saltar" —
+     * bloquea el HILO DE FONDO que está midiendo (nunca el principal) con un diálogo modal, sin
+     * cancelar con Atrás ({@code setCancelable(false)}: la SPEC exige una de las dos respuestas, no
+     * una tercera "ninguna"). Un giro de pantalla a mitad de esta pregunta reinicia la Activity con
+     * el diálogo del sistema perdido: el hilo de fondo queda esperando para siempre — sin arnés de
+     * capa Android (igual que giro/Atrás en otras pantallas, README); queda para la prueba de Diego.
+     */
+    private final PreguntaOperador preguntaOperador = new PreguntaOperador() {
+        @Override
+        public Decision preguntarCero() {
+            return preguntarBloqueante(R.string.medir_pregunta_cero);
+        }
+
+        @Override
+        public Decision preguntarDisparoAnulado() {
+            return preguntarBloqueante(R.string.medir_pregunta_disparo_anulado);
+        }
+    };
+
+    /** Muestra el diálogo en el hilo principal y bloquea EL HILO QUE LLAMA (el de "medir-" + color,
+     *  nunca el principal: este método no se llama nunca desde onCreate/onClick) hasta que el
+     *  operador toque "Repetir" o "Saltar". */
+    private PreguntaOperador.Decision preguntarBloqueante(int mensajeResId) {
+        ArrayBlockingQueue<PreguntaOperador.Decision> respuesta = new ArrayBlockingQueue<>(1);
+        runOnUiThread(() -> new AlertDialog.Builder(this)
+                .setMessage(mensajeResId)
+                .setCancelable(false)
+                .setPositiveButton(R.string.medir_repetir, (d, w) -> respuesta.offer(PreguntaOperador.Decision.REPETIR))
+                .setNegativeButton(R.string.medir_saltar, (d, w) -> respuesta.offer(PreguntaOperador.Decision.SALTAR))
+                .show());
+        try {
+            return respuesta.take();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return PreguntaOperador.Decision.SALTAR; // defensivo: nunca deja el hilo de fondo colgado si lo interrumpen.
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -136,7 +178,7 @@ public final class MedirActivity extends AppCompatActivity {
                 boolean conPosicion = "con_posicion".equals(gps.gpsEstado);
                 String lat = conPosicion ? CsvMedidas.formatearCoordenada(gps.latitud) : "";
                 String lon = conPosicion ? CsvMedidas.formatearCoordenada(gps.longitud) : "";
-                FilaMedida fila = sesion.medir(color, fechaHora, lat, lon, gps.gpsEstado);
+                FilaMedida fila = sesion.medir(color, fechaHora, lat, lon, gps.gpsEstado, preguntaOperador);
                 runOnUiThread(() -> {
                     mostrarResultado(fila);
                     establecerControlesEnCurso(false);

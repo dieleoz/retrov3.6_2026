@@ -74,7 +74,7 @@ public class ListaBlancaYExportacionTest {
         sim.programarValor(50, 100);
         sim.programarValor(50, 110);
         sim.programarValor(50, 120);
-        FilaMedida fila = sesion.medir("rojo", "2026-09-21T14:32:07-05:00", "", "", "sin_posicion");
+        FilaMedida fila = sesion.medir("rojo", "2026-09-21T14:32:07-05:00", "", "", "sin_posicion", PreguntaOperadorFalsa.siempre(PreguntaOperador.Decision.SALTAR));
         assertTrue(fila.valido);
 
         // (b) lista blanca aseverada sobre lo que RECIBIO el simulador (M-6, corrige r3).

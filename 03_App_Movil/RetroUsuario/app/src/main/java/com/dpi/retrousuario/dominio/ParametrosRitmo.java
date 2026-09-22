@@ -28,9 +28,6 @@ public final class ParametrosRitmo {
     /** RF-USR-04: 3 disparos por color por defecto (DECISIONES nota 11a, "leído 3 veces promedio"). */
     private int lecturasPorColor = 3;
 
-    /** RF-USR-04: un disparo anulado se repite hasta 2 veces antes de anular la serie entera. */
-    private int maxRepeticionesDisparoAnulado = 2;
-
     /** RF-USR-01: `#GN#`/`#GC#` se reintentan hasta 2 veces si no contestan nada. */
     private int maxReintentosSonda = 2;
 
@@ -95,10 +92,6 @@ public final class ParametrosRitmo {
             throw new IllegalArgumentException("lecturasPorColor debe ser >= 1");
         }
         lecturasPorColor = v;
-    }
-
-    public int maxRepeticionesDisparoAnulado() {
-        return maxRepeticionesDisparoAnulado;
     }
 
     public int maxReintentosSonda() {

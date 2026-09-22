@@ -55,7 +55,7 @@ public class SesionMedicionFlujoTest {
         sim.programarValor(50, 100);
         sim.programarValor(50, 110);
         sim.programarValor(50, 120);
-        FilaMedida fila = sesion.medir("blanco", "2026-09-21T10:00:00-05:00", "", "", "sin_posicion");
+        FilaMedida fila = sesion.medir("blanco", "2026-09-21T10:00:00-05:00", "", "", "sin_posicion", PreguntaOperadorFalsa.siempre(PreguntaOperador.Decision.SALTAR));
         assertEquals("", fila.serieEquipo);
         assertEquals("ninguna", fila.serieOrigen);
     }
@@ -70,7 +70,7 @@ public class SesionMedicionFlujoTest {
         sim.programarValor(10, 100);
         sim.programarValor(10, 100);
         sim.programarValor(10, 100);
-        FilaMedida fila = sesion.medir("rojo", "x", "", "", "sin_posicion");
+        FilaMedida fila = sesion.medir("rojo", "x", "", "", "sin_posicion", PreguntaOperadorFalsa.siempre(PreguntaOperador.Decision.SALTAR));
         assertEquals("DEF", fila.estadoCalibracion);
         assertEquals("", fila.fechaCalibracion);
         assertEquals("", fila.vencimiento);
@@ -86,7 +86,7 @@ public class SesionMedicionFlujoTest {
         sim.programarValor(10, 100);
         sim.programarValor(10, 100);
         sim.programarValor(10, 100);
-        FilaMedida fila = sesion.medir("rojo", "x", "", "", "sin_posicion");
+        FilaMedida fila = sesion.medir("rojo", "x", "", "", "sin_posicion", PreguntaOperadorFalsa.siempre(PreguntaOperador.Decision.SALTAR));
         assertEquals("CAL", fila.estadoCalibracion);
         assertEquals("2026-09-19", fila.fechaCalibracion);
     }
@@ -109,7 +109,7 @@ public class SesionMedicionFlujoTest {
         sim.programarValor(10, 100);
         sim.programarValor(10, 100);
         sim.programarValor(10, 100);
-        FilaMedida fila = sesion.medir("rojo", "x", "", "", "sin_posicion");
+        FilaMedida fila = sesion.medir("rojo", "x", "", "", "sin_posicion", PreguntaOperadorFalsa.siempre(PreguntaOperador.Decision.SALTAR));
         assertNotNull(fila);
         assertEquals("", fila.latitud);
         assertEquals("", fila.longitud);
@@ -127,7 +127,7 @@ public class SesionMedicionFlujoTest {
             sim.programarValor(10, 100);
             sim.programarValor(10, 100);
             sim.programarValor(10, 100);
-            sesion.medir("rojo", "x" + i, "", "", "sin_posicion");
+            sesion.medir("rojo", "x" + i, "", "", "sin_posicion", PreguntaOperadorFalsa.siempre(PreguntaOperador.Decision.SALTAR));
         }
         File zip1 = sesion.exportar(carpeta, new Date(1000), TimeZone.getTimeZone("UTC"));
         assertEquals(2, sesion.filas().size()); // exportar no borra.
@@ -135,7 +135,7 @@ public class SesionMedicionFlujoTest {
         sim.programarValor(10, 100);
         sim.programarValor(10, 100);
         sim.programarValor(10, 100);
-        sesion.medir("rojo", "x2", "", "", "sin_posicion");
+        sesion.medir("rojo", "x2", "", "", "sin_posicion", PreguntaOperadorFalsa.siempre(PreguntaOperador.Decision.SALTAR));
         File zip2 = sesion.exportar(carpeta, new Date(2000), TimeZone.getTimeZone("UTC"));
 
         assertTrue(zip1.exists());
@@ -156,7 +156,7 @@ public class SesionMedicionFlujoTest {
         sim.programarValor(10, 100);
         sim.programarValor(10, 100);
         sim.programarValor(10, 100);
-        sesion.medir("rojo", "x1", "", "", "sin_posicion");
+        sesion.medir("rojo", "x1", "", "", "sin_posicion", PreguntaOperadorFalsa.siempre(PreguntaOperador.Decision.SALTAR));
 
         Date mismoInstante = new Date(1758470400000L);
         TimeZone utc = TimeZone.getTimeZone("UTC");
@@ -205,7 +205,7 @@ public class SesionMedicionFlujoTest {
         sim.programarValor(10, 100);
         sim.programarValor(10, 105);
         sim.programarValor(10, 110);
-        FilaMedida fila = sesion.medir("rojo", "x", "", "", "sin_posicion");
+        FilaMedida fila = sesion.medir("rojo", "x", "", "", "sin_posicion", PreguntaOperadorFalsa.siempre(PreguntaOperador.Decision.SALTAR));
 
         assertEquals("DEF", fila.estadoCalibracion);
         assertEquals("", fila.fechaCalibracion);
@@ -240,7 +240,7 @@ public class SesionMedicionFlujoTest {
         sim.programarValor(10, 100);
         sim.programarValor(10, 100);
         sim.programarValor(10, 100);
-        FilaMedida fila = sesion.medir("rojo", "x", "", "", "sin_posicion");
+        FilaMedida fila = sesion.medir("rojo", "x", "", "", "sin_posicion", PreguntaOperadorFalsa.siempre(PreguntaOperador.Decision.SALTAR));
 
         assertEquals(crudoV, fila.firmwareV); // el mismo texto crudo, con la mascara 1A7F intacta.
         byte[] csv = CsvMedidas.generar(sesion.filas());
@@ -271,7 +271,7 @@ public class SesionMedicionFlujoTest {
         sim.programarValor(10, 100);
         sim.programarValor(10, 100);
         sim.programarValor(10, 100);
-        sesion.medir("rojo", "x1", "", "", "sin_posicion");
+        sesion.medir("rojo", "x1", "", "", "sin_posicion", PreguntaOperadorFalsa.siempre(PreguntaOperador.Decision.SALTAR));
 
         // "cambia de equipo": otra sesion sobre el MISMO diario, otra serie (el diario es la fuente de verdad).
         SesionMedicion sesion2 = new SesionMedicion(sim, new ParametrosRitmo(), new RegistroTramas(), new Diario(ficheroDiario));
@@ -280,7 +280,7 @@ public class SesionMedicionFlujoTest {
         sim.programarValor(10, 100);
         sim.programarValor(10, 100);
         sim.programarValor(10, 100);
-        sesion2.medir("rojo", "x2", "", "", "sin_posicion");
+        sesion2.medir("rojo", "x2", "", "", "sin_posicion", PreguntaOperadorFalsa.siempre(PreguntaOperador.Decision.SALTAR));
 
         assertEquals("RTVU_VARIOS_19700101-000001.zip",
                 sesion2.nombreZipSugerido(new Date(1000), TimeZone.getTimeZone("UTC")));
@@ -305,7 +305,7 @@ public class SesionMedicionFlujoTest {
         sim.programarValor(10, 100);
         sim.programarValor(10, 100);
         sim.programarValor(10, 100);
-        sesion.medir("rojo", "x", "", "", "sin_posicion");
+        sesion.medir("rojo", "x", "", "", "sin_posicion", PreguntaOperadorFalsa.siempre(PreguntaOperador.Decision.SALTAR));
 
         sesion.exportar(carpeta, new Date(1000), TimeZone.getTimeZone("UTC"));
         assertEquals(1, sesion.filasCortadasIgnoradas().size());
@@ -323,7 +323,7 @@ public class SesionMedicionFlujoTest {
         sim.programarValor(10, 100);
         sim.programarValor(10, 100);
         sim.programarValor(10, 100);
-        sesion.medir("rojo", "x1", "", "", "sin_posicion");
+        sesion.medir("rojo", "x1", "", "", "sin_posicion", PreguntaOperadorFalsa.siempre(PreguntaOperador.Decision.SALTAR));
 
         Date mismoInstante = new Date(1758470400000L);
         TimeZone utc = TimeZone.getTimeZone("UTC");
@@ -352,7 +352,7 @@ public class SesionMedicionFlujoTest {
         for (int i = 0; i < 5; i++) {
             sim.programarValor(10, 100 + i);
         }
-        FilaMedida fila = sesion.medir("rojo", "x", "", "", "sin_posicion");
+        FilaMedida fila = sesion.medir("rojo", "x", "", "", "sin_posicion", PreguntaOperadorFalsa.siempre(PreguntaOperador.Decision.SALTAR));
         assertEquals(5, fila.n);
     }
 }

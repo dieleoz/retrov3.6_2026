@@ -95,11 +95,11 @@ public class SesionMedicionConcurrenciaTest {
 
         CountDownLatch salida = new CountDownLatch(2);
         Thread hiloRojo = new Thread(() -> {
-            sesion.medir("rojo", "x", "", "", "sin_posicion");
+            sesion.medir("rojo", "x", "", "", "sin_posicion", PreguntaOperadorFalsa.siempre(PreguntaOperador.Decision.SALTAR));
             salida.countDown();
         }, "medir-rojo");
         Thread hiloAzul = new Thread(() -> {
-            sesion.medir("azul", "x", "", "", "sin_posicion");
+            sesion.medir("azul", "x", "", "", "sin_posicion", PreguntaOperadorFalsa.siempre(PreguntaOperador.Decision.SALTAR));
             salida.countDown();
         }, "medir-azul");
         hiloRojo.start();

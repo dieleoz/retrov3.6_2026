@@ -23,7 +23,11 @@
     <string name="medir_cero_filas">0 medidas guardadas</string>
     <string name="medir_sin_equipo">No hay equipo conectado</string>
     <string name="medir_midiendo">Midiendo…</string>
-    <string name="medir_serie_anulada">Serie anulada: el equipo no respondió a 3 intentos</string>
+    <string name="medir_serie_anulada">Serie anulada: el equipo no respondió</string>
+    <string name="medir_pregunta_cero">La lectura dio 0 (saturada o negativa: lámina muy degradada, sucia o mal colocada). ¿Repetir la serie o saltar?</string>
+    <string name="medir_pregunta_disparo_anulado">El equipo no respondió a este disparo. ¿Repetir o saltar?</string>
+    <string name="medir_repetir">Repetir</string>
+    <string name="medir_saltar">Saltar</string>
     <string name="medir_resultado">%1$s — lecturas: %2$s — media %3$s, mínimo %4$s, válido %5$s</string>
     <string name="medir_filas_guardadas">%1$d medidas guardadas</string>
     <string name="medir_exportado">Exportado a %1$s</string>

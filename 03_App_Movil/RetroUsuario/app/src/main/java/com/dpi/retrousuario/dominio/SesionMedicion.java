@@ -84,8 +84,10 @@ public final class SesionMedicion {
     }
 
     /**
-     * Mide una serie completa del color dado (RF-USR-04) y, si se guarda, la persiste y la devuelve;
-     * {@code null} si la serie se anuló (RF-USR-16: no produce fila, T-USR-06b).
+     * Mide una serie completa del color dado (RF-USR-04 r7) y, si se guarda, la persiste y la
+     * devuelve; {@code null} si el operador anuló la serie tras un disparo sin respuesta (RF-USR-16,
+     * REPETIR-PREGUNTA: no produce fila). {@code pregunta} es quien conteste "Repetir o Saltar" ante
+     * un cero o un disparo anulado — este método nunca decide solo (DECISIONES nota 18).
      *
      * <p><b>A1 (ALTO), cerrojo de una sola medida en vuelo.</b> {@code synchronized} sobre este
      * objeto: dos llamadas concurrentes (dos hilos pulsando "Medir" a la vez, o una segunda
@@ -96,12 +98,12 @@ public final class SesionMedicion {
      * quede a medias mezclada con otra aunque la interfaz falle.</p>
      */
     public synchronized FilaMedida medir(String colorFondo, String fechaHoraIso, String latitud, String longitud,
-            String gpsEstado) {
+            String gpsEstado, PreguntaOperador pregunta) {
         Character codigo = MapaColor.byteParaColor(colorFondo);
         if (codigo == null) {
             throw new IllegalArgumentException("Color no medible: " + colorFondo);
         }
-        SerieDisparos serie = new SerieDisparos(fuente, ritmo, params, log, diario, codigo);
+        SerieDisparos serie = new SerieDisparos(fuente, ritmo, params, log, diario, codigo, pregunta);
         SerieDisparos.Resultado r = serie.medir();
         if (!r.guardada) {
             return null;

@@ -10,6 +10,7 @@ import com.dpi.retrousuario.dominio.ParametrosRitmo;
 import com.dpi.retrousuario.dominio.RespuestaV;
 import com.dpi.retrousuario.dominio.SesionMedicion;
 import com.dpi.retrousuario.dominio.SondaReintentable;
+import com.dpi.retrousuario.dominio.Sonda362;
 
 /**
  * Punto único de acceso a la sesión de medición en curso (RF-USR-04, RF-USR-05, RF-USR-06): {@link MainActivity} la
@@ -100,9 +101,22 @@ final class SesionHolder {
 
     /** C2: publica el resultado de una detección que SÍ terminó de sondear, para que lo repinte la
      *  Activity viva en su {@code onResume()} — nunca la que lanzó el hilo directamente. También
-     *  termina la detección ({@link EstadoDeteccion#publicar} pone {@code detectando = false}). */
+     *  termina la detección ({@link EstadoDeteccion#publicar} pone {@code detectando = false}) y
+     *  avisa al oyente registrado, si hay uno vivo en ese momento. */
     static void publicarResultadoDeteccion(Canal canal, DeteccionYSonda.Resultado resultado) {
         ESTADO_DETECCION.publicar(canal, resultado);
+    }
+
+    /** C2 sobre 0.3.4: publica un error de conexión/detección (antes se pintaba sobre {@code this}
+     *  desde el hilo de fondo, sin publicar). */
+    static void publicarErrorDeteccion(String mensaje) {
+        ESTADO_DETECCION.publicarError(mensaje);
+    }
+
+    /** C2 sobre 0.3.4: mismo mecanismo para el resultado de {@code reintentarSonda} (anotado por el
+     *  arquitecto, REVISIONES 0.3.4). */
+    static void publicarSondaPendiente(Sonda362.ResultadoSonda sonda) {
+        ESTADO_DETECCION.publicarSonda(sonda);
     }
 
     /** C2: recoge, UNA vez, el resultado publicado por {@link #publicarResultadoDeteccion} — o
@@ -110,6 +124,27 @@ final class SesionHolder {
      *  resultado con {@link #marcarDetectando}({@code false})). */
     static EstadoDeteccion.Resultado recogerResultadoDeteccionPendiente() {
         return ESTADO_DETECCION.recogerResultadoPendiente();
+    }
+
+    /** Igual que {@link #recogerResultadoDeteccionPendiente()} pero para el error publicado con
+     *  {@link #publicarErrorDeteccion}. */
+    static String recogerErrorDeteccionPendiente() {
+        return ESTADO_DETECCION.recogerErrorPendiente();
+    }
+
+    /** Igual que {@link #recogerResultadoDeteccionPendiente()} pero para {@link #publicarSondaPendiente}. */
+    static Sonda362.ResultadoSonda recogerSondaPendiente() {
+        return ESTADO_DETECCION.recogerSondaPendiente();
+    }
+
+    /** C2: la Activity viva se registra aquí en su {@code onResume()} y se retira en su {@code
+     *  onPause()} — ver el Javadoc de {@link EstadoDeteccion.Oyente}. */
+    static void registrarOyenteDeteccion(EstadoDeteccion.Oyente oyente) {
+        ESTADO_DETECCION.registrarOyente(oyente);
+    }
+
+    static void quitarOyenteDeteccion(EstadoDeteccion.Oyente oyente) {
+        ESTADO_DETECCION.quitarOyente(oyente);
     }
 
     static ParametrosRitmo parametros() {
