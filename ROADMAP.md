@@ -1,6 +1,6 @@
 # ROADMAP — V3.6: qué falta hasta certificar SLV-002, y en qué orden
 
-**SLV-002: calibrados 1, 2, 8 y b (máscara 0283). Faltan 3, 4, 5 y 6, y la APK de cliente.**
+**SLV-002: calibrados 1, 2, 8 y b (máscara 0283) y certificado emitido. Faltan 3, 4, 5 y 6.**
 Este fichero dice qué falta, en qué orden y quién lo hace; no es una bitácora. Las cifras del día van en
 [`RETOMAR.md`](RETOMAR.md); lo que pasó, en `git log` y [`HISTORIA.md`](HISTORIA.md). Reglas en
 [`CLAUDE.md`](CLAUDE.md); mapa en `ARQUITECTURA.map` §M2-§M3; decisiones en
@@ -49,13 +49,11 @@ md5 en `RETOMAR.md`); es la única con arquitecto y QA, y la que usa el funciona
 **Carril B — app de usuario.** Incremento 1 "Medir y exportar". Regla que dejó el revisor Fable
 (FABLE-USR, A-09): la medida, la pregunta y el resultado viven en `dominio/EstadoMedida`, no en la pantalla.
 
-1. **B6 (CERRADO).** `RetroUsuario` 0.3.7 (`com.dpi.retrousuario.coviandina`, versionCode 10, versionName
-   0.3.7, rama `retro-usuario` `418991f`): **arquitecto APTO y QA APTO** (152/152 pruebas JVM reproducidas).
-   Etiqueta visible `"Retro Coviandina"` en teléfono y binario `RETRO-COVIANDINA-usuario-0.3.7-10.apk`.
-   Misma firma (`c990adf6...`) para actualización directa sin desinstalar.
-2. **B7 (Siguiente).** Prueba de Diego en dos teléfonos (Android ≤9 y ≥10): giro con la pregunta abierta,
-   giro midiendo, Atrás desde Medir, apagar el equipo, exportar; después, entrega al funcional (Julio).
-3. **B8.** Incremento 2 "señal a señal" (histórico e inventario por CSV; sin dictamen, UMBRAL-CSV).
+1. **B7 (siguiente).** La APK está lista: `RETRO-COVIANDINA-usuario-0.3.7-10.apk` (`418991f`, arquitecto
+   y QA APTO, misma firma que la instalada: se actualiza sin desinstalar). Prueba de Diego en dos
+   teléfonos (Android ≤9 y ≥10): giro con la pregunta abierta, giro midiendo, Atrás desde Medir, apagar
+   el equipo, exportar; después, entrega a Julio.
+2. **B8.** Incremento 2 "señal a señal" (histórico e inventario por CSV; sin dictamen, UMBRAL-CSV).
 
 ## Puertas P1-P12
 
@@ -72,6 +70,9 @@ md5 en `RETOMAR.md`); es la única con arquitecto y QA, y la que usa el funciona
 | ID | Qué hay que decidir |
 | :--- | :--- |
 | D-5 | P32a/P32b: identidad del P32 duplicado |
+| D-11 | Clave de firma estable para las dos apps, fuera del repositorio. Hoy se firma con la de depuración: si cambia de máquina, hay que desinstalar y se pierde la campaña. Propuesta hecha y sin crear |
+| D-12 | Las cuatro propuestas abiertas de `SPEC-App-Usuario-V3.6.md` §5 (GPS a 15 m, separador y decimal del CSV, nombre del ZIP con varios equipos, cuarentena con reintentos): bloquean el incremento 2 |
+| D-13 | `campanas/salida/`: el pre-commit rechaza su informe generado por tres líneas de más de 120 caracteres. O se arregla el generador, o queda fuera del repositorio |
 
 Los códigos 1 y 2 no se reescriben. Los certificados de los códigos 3 y 5 (dato invertido) se cotejan
 contra el otro patrón antes de ajustarlos.
