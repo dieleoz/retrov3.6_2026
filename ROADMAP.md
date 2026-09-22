@@ -1,6 +1,6 @@
 # ROADMAP — V3.6: qué falta hasta certificar SLV-002, y en qué orden
 
-**Los códigos 8 y b siguen sin escribir en el equipo; ninguna APK tiene aún arquitecto y QA aptos.**
+**A4 CERRADO (22-sep): SLV-002 calibrado con códigos 1, 2, 8 y b (máscara 0283); actas aceptadas y PDF emitido.**
 Este fichero dice qué falta, en qué orden y quién lo hace; no es una bitácora. Las cifras del día van en
 [`RETOMAR.md`](RETOMAR.md); lo que pasó, en `git log` y [`HISTORIA.md`](HISTORIA.md). Reglas en
 [`CLAUDE.md`](CLAUDE.md); mapa en `ARQUITECTURA.map` §M2-§M3; decisiones en
@@ -28,14 +28,14 @@ código antes de darlo por bueno.
 **Hasta el 25-sep (límite semanal):** sólo lo que desbloquea A4; revisiones con sonnet y primera pasada
 en `orquestador:segunda-opinion`. En espera: QA de la 0.3.7 y la 3.6.9 (filtro en `Base`).
 
-**Primero, la certificación de SLV-002.** Lo que la bloquea es A4, en el banco y en manos de Diego; la
-app de usuario no certifica nada y va como segundo carril, sin quitarle turno a A4.
+**Primero, la certificación de SLV-002.** A4 quedó completado en el banco el 22-sep (actas aceptadas);
+la app de usuario no certifica nada y va como segundo carril, sin quitarle turno a A4.
 
 **Carril A — app de calibrar.** `Cov_3.6.5_calibrar` (rama `rtv-1.0-cierre`, `316a6bc`, md5 en `RETOMAR.md`):
-QA APTO y arquitecto APTO CON CONDICIONES; entregable a Diego para calibrar el 8 y la b.
+calibró con éxito el 8 y la b en campo el 22-sep (máscara 0283).
 
-1. **A4 (bloquea la certificación; en manos del funcional, se espera su ZIP).** Con la 3.6.5 y el ZIP del
-   banco de `06_Calibracion/SLV-002/campanas/`, calibrar el 8 y la b; actas y ZIP resultante al repositorio.
+1. **A4 (CERRADO el 22-sep-2026).** Códigos 8 y b escritos en EEPROM y verificados con P43 (±5 %) y P49 (±10 %);
+   fecha 2026-09-22; máscara 0283; actas aceptadas y archivadas; acta formal ITVIAL en PDF generada.
 2. **A4b (bucle roto con A4B-FILTRO).** `Cov_3.6.8_calibrar` (`3f72367`): filtro único `TextoOperador` y acta
    oculta en esta app; regresión de `Cov366Rf17Test` arreglada en `31e6214` (411/411). Arquitecto y QA en curso.
 3. **A5a.** Propuesta en `06_Calibracion/SLV-002/PROPUESTA-Toma-Corta.md` (simulación, sin medir): 46
