@@ -1,4 +1,4 @@
-Orquestador: f04a336
+Orquestador: 6d8be47
 
 # CLAUDE.md — Reglas permanentes del repositorio V3.6
 
