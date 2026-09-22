@@ -11,8 +11,8 @@ android {
         applicationId "com.dpi.retrousuario.coviandina"
         minSdkVersion 24
         targetSdkVersion 30
-        versionCode 9
-        versionName "0.3.6"
+        versionCode 10
+        versionName "0.3.7"
     }
 
     buildTypes {
