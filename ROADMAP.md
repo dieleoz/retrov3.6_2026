@@ -25,8 +25,8 @@ nueva (usuario). Modelos: **opus sólo para `arquitecto-iot`; el resto sonnet o 
 autorización de Diego.** Cada paso empieza cuando llega el informe del anterior; un Alto se reabre en el
 código antes de darlo por bueno.
 
-**Hasta el 25-sep (límite semanal):** sólo lo que desbloquea la entrega al cliente, que ahora es la QA de
-la 0.3.7; revisiones con sonnet y primera pasada en `orquestador:segunda-opinion`.
+**Hasta el 25-sep (límite semanal):** entrega de la APK de usuario al cliente (0.3.7, B6 cerrado);
+revisiones con sonnet y primera pasada en `orquestador:segunda-opinion`.
 
 **Carril A — app de calibrar.** La entregada es `Cov_3.6.5_calibrar` (rama `rtv-1.0-cierre`, `316a6bc`,
 md5 en `RETOMAR.md`); es la única con arquitecto y QA, y la que usa el funcional.
@@ -49,10 +49,12 @@ md5 en `RETOMAR.md`); es la única con arquitecto y QA, y la que usa el funciona
 **Carril B — app de usuario.** Incremento 1 "Medir y exportar". Regla que dejó el revisor Fable
 (FABLE-USR, A-09): la medida, la pregunta y el resultado viven en `dominio/EstadoMedida`, no en la pantalla.
 
-1. **B6. Es la APK que va con el equipo al cliente, y hoy NO se puede entregar.** `RetroUsuario` 0.3.7
-   (`b8a299d`, rama `retro-usuario`): arquitecto APTO, **QA sin hacer**. Sin QA no sale (`CLAUDE.md` §6).
-2. **B7.** Prueba de Diego en dos teléfonos (Android ≤9 y ≥10): giro con la pregunta abierta, giro
-   midiendo, Atrás desde Medir, apagar el equipo, exportar; después, al funcional.
+1. **B6 (CERRADO).** `RetroUsuario` 0.3.7 (`com.dpi.retrousuario.coviandina`, versionCode 10, versionName
+   0.3.7, rama `retro-usuario` `418991f`): **arquitecto APTO y QA APTO** (152/152 pruebas JVM reproducidas).
+   Etiqueta visible `"Retro Coviandina"` en teléfono y binario `RETRO-COVIANDINA-usuario-0.3.7-10.apk`.
+   Misma firma (`c990adf6...`) para actualización directa sin desinstalar.
+2. **B7 (Siguiente).** Prueba de Diego en dos teléfonos (Android ≤9 y ≥10): giro con la pregunta abierta,
+   giro midiendo, Atrás desde Medir, apagar el equipo, exportar; después, entrega al funcional (Julio).
 3. **B8.** Incremento 2 "señal a señal" (histórico e inventario por CSV; sin dictamen, UMBRAL-CSV).
 
 ## Puertas P1-P12
