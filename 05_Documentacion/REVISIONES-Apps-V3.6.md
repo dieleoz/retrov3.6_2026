@@ -17,6 +17,14 @@ completos quedaron en el directorio temporal de la sesión; aquí se archiva lo 
 - **Cov_3.6.5_calibrar** — **APTO con condiciones / APTO. Entregable a Diego.** Pendiente: número de
   código en mensajes de fallo (`FlujoCalibracion.java:1190,1230,1452-1456,1499-1502`) antes de darla a
   un operador de Coviandina.
+- **Cov_3.6.6_calibrar** (`4ea680c`) — arquitecto NO APTO; QA parada. Siguen llegando números de código al
+  operador: restauración (`Ops.java:237`), `#S,k` de `escribir` (`FlujoCalibracion.java:1261`), heredados
+  (`:1087`, `:1102-1104`), protocolo y re-medida (`:819`, `:1313`). Las pruebas sólo buscaban "código 8".
+- **Cov_3.6.7_calibrar** (`e9d6e65`) — arquitecto NO APTO, **bucle declarado** (segunda corrección fallida
+  sobre RF-COV-17/21); QA parada. C1-C4 de la 3.6.6 cerradas. Siguen: el acta en pantalla (`txtActa`,
+  `CalibrarActivity.java:113-115,370-372`) sin guarda de corto, y `motivoNoEscribir` alcanzable en corto
+  (`FlujoCalibracion.java:836-837`, filtro `"código " + k`). Propuesta del arquitecto para romper el bucle:
+  ocultar el acta en corto y un único filtro en la frontera de la app corta, no más arreglos punto a punto.
 
 ## App de usuario (`03_App_Movil/RetroUsuario`)
 
@@ -42,6 +50,13 @@ completos quedaron en el directorio temporal de la sesión; aquí se archiva lo 
   - **QA:** quitar `marcarCaido()` del catch de `EnlaceBluetooth.leerSinParar` no lo detecta ninguna prueba
     (126/126 en verde): la capa Android no tiene arnés. Pide prueba con un `InputStream` doble y, en
     campo, reconexión tras apagar el equipo. El rojo por aserción invertida no vale.
+- **0.3.5** — APTO con condiciones / APTO con condiciones. QA: 69/69, 141/141, APK reproducible bit a bit;
+  recuento real 98 requisito / 43 comportamiento (no 100/41: dos pruebas de `EstadoDeteccionTest` no citan
+  requisito). La contradicción del "límite de 2 repeticiones" en la SPEC queda corregida. Arquitecto: C2 de
+  la 0.3.4 cerrada; RF-USR-04 r7 cumple.
+  **C1 (Alto):** girar con "Repetir o Saltar" abierto deja el hilo de medida colgado en
+  `MedirActivity.java:73-87` con el cerrojo de `SesionMedicion.medir`; no se vuelve a medir. SPEC §4 bis
+  lo recoge ya ("Girar a mitad de una medida o de una pregunta").
 - **0.3.4** — APTO con condiciones / APTO con condiciones.
   - QA: 68/68 `fuente.md5`, 134/134; roturas de `LectorDeFlujo` y `EstadoDeteccion.salir()` vistas en rojo;
     ningún requisito roto. Sin arnés: capa Android (giro, Atrás, socket real, GPS, exportación).

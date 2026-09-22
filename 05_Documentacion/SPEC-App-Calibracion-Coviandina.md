@@ -268,7 +268,12 @@ anterior leída, no se envía nada y el acta lo dice. Nunca se borra una fecha q
 conforme, se rechaza sola y el resumen no pide pulsar Rechazar. El motivo de cada restauración es el real
 ("colocaciones no válidas" o "re-medida fuera de ±10 %"). El contador de colocaciones no válidas es de
 **seguidas**: una válida lo pone a cero. Al terminar, `#Q#` cierra el modo administrador (PROTOCOLO:44).
-Ningún texto que vea el operador lleva el número de código (RF-COV-17).
+Ningún texto que vea el operador lleva el número de código (RF-COV-17). El acta guardada y el ZIP de
+soporte son documentos técnicos: llevan código y tramas (P11-M1) y **en esta app no se muestran en
+pantalla** (el acta queda oculta). Todo texto que llega a la pantalla pasa por **un único filtro** en la
+frontera de la app, que sustituye cualquier forma del número de código (`código k`, `del k`, `#S,k`, `#G,k`,
+`#F,k#`) por el nombre del color; no se arregla texto a texto (bucle declarado en la 3.6.7, decisión
+A4B-FILTRO de Diego).
 
 **RF-COV-22 — Estructura.** La secuencia automática vive en `CalibracionAutomatica`; la lectura, escritura y
 devolución de la fecha, en una clase propia. Ningún arreglo hace crecer `FlujoCalibracion.java` ni

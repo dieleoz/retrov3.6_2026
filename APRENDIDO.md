@@ -57,3 +57,12 @@ Los errores concretos, con la errónea junto a la buena, en `HISTORIA.md`.
 - **Lección:** el idioma de respuesta es el de Diego (español), no el del contexto. Al retomar tras una
   compactación, comprobarlo en la primera respuesta; los encargos a subagentes, también en español.
 - **Destino:** SUBE al método global ("Tono") y a la skill que retoma sesión.
+
+## A-09 — En Android, una operación con hilo de fondo no puede ser de la Activity
+- **Pasó:** de la 0.3.0 a la 0.3.5 de la app de usuario, cada revisión encontró un defecto de giro nuevo
+  (pintar sobre una Activity destruida, "detectando" colgado, pregunta que muere con la pantalla). Cada
+  arreglo sacaba un campo de la Activity, nunca la regla; el revisor Fable lo diagnosticó (FABLE-USR).
+- **Lección:** ningún hilo lanzado por una Activity retiene `this`; el estado y los canales de una
+  operación (medir, preguntar, detectar) viven en un objeto de proceso probado en JVM, y la pantalla sólo
+  pinta lo que ese objeto sabe al quedar visible.
+- **Destino:** SUBE a `verificar` (apps Android) y a la V4.6 por su `APRENDIDO-DE-V3.6.md`.
