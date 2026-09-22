@@ -136,3 +136,8 @@ Notas de las filas del 21-sep-2026:
 20. **TOMA-SEL-LISTA (cierra TOMA-SEL).** Diego da por buena la lista de 46 patrones, 1 colocación × 4
     tomas, de `06_Calibracion/SLV-002/PROPUESTA-Toma-Corta.md`: "ok, procede". Es simulación sobre el
     banco, sin medir; las muestras nuevas que propone ese fichero quedan como petición, no como decisión.
+21. **A4B-FILTRO.** Tras dos correcciones fallidas de RF-COV-17/21 (3.6.6 y 3.6.7), Diego elige cambiar
+    de enfoque sin Fable: en la app de calibrar se oculta el acta en pantalla y todo texto al operador
+    pasa por un único filtro. Si esa versión tampoco cierra, revisor Fable.
+22. **FABLE-USR.** Para el defecto de la 0.3.5 (girar con "Repetir o Saltar" abierto cuelga la medida),
+    con el presupuesto de vueltas agotado, Diego autoriza un revisor Fable antes de otra vuelta.

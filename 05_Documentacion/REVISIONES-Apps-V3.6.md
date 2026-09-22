@@ -50,7 +50,10 @@ completos quedaron en el directorio temporal de la sesión; aquí se archiva lo 
   - **QA:** quitar `marcarCaido()` del catch de `EnlaceBluetooth.leerSinParar` no lo detecta ninguna prueba
     (126/126 en verde): la capa Android no tiene arnés. Pide prueba con un `InputStream` doble y, en
     campo, reconexión tras apagar el equipo. El rojo por aserción invertida no vale.
-- **0.3.5** — arquitecto APTO con condiciones; QA en curso. C2 de la 0.3.4 cerrada; RF-USR-04 r7 cumple.
+- **0.3.5** — APTO con condiciones / APTO con condiciones. QA: 69/69, 141/141, APK reproducible bit a bit;
+  recuento real 98 requisito / 43 comportamiento (no 100/41: dos pruebas de `EstadoDeteccionTest` no citan
+  requisito). La contradicción del "límite de 2 repeticiones" en la SPEC queda corregida. Arquitecto: C2 de
+  la 0.3.4 cerrada; RF-USR-04 r7 cumple.
   **C1 (Alto):** girar con "Repetir o Saltar" abierto deja el hilo de medida colgado en
   `MedirActivity.java:73-87` con el cerrojo de `SesionMedicion.medir`; no se vuelve a medir. SPEC §4 bis
   lo recoge ya ("Girar a mitad de una medida o de una pregunta").

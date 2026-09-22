@@ -33,7 +33,7 @@ QA APTO y arquitecto APTO CON CONDICIONES; entregable a Diego para calibrar el 8
 
 1. **A4 (bloquea la certificación).** Diego instala por USB, carga el ZIP del banco archivado en
    `06_Calibracion/SLV-002/campanas/` y calibra el 8 y la b; actas y ZIP resultante al repositorio.
-2. **A4b (bucle en la 3.6.7; decide Diego).** Condición del arquitecto, antes de darla a un operador: ningún mensaje de
+2. **A4b (3.6.8, filtro único: A4B-FILTRO).** Condición del arquitecto, antes de darla a un operador: ningún mensaje de
    fallo con número de código (`FlujoCalibracion.java:1190,1230,1452-1456,1499-1502`); prueba en rojo.
 3. **A5a.** Propuesta en `06_Calibracion/SLV-002/PROPUESTA-Toma-Corta.md` (simulación, sin medir): 46
    patrones, ajustar 6 y 4; 3 y 5 con dato invertido; café fuera con la curva del rojo. Lista aprobada (TOMA-SEL-LISTA).
@@ -49,9 +49,9 @@ Vueltas permitidas: la 0.3.4 y una más (0.3.5). Los revisores sólo bloquean co
 escrito; el resto se anota en `REVISIONES-Apps-V3.6.md` y no bloquea. Si la 0.3.5 no cierra, es un
 bucle: revisor Fable (con autorización de Diego) y sesión limpia.
 
-1. **B5.** 0.3.4 revisada: arquitecto y QA APTO CON CONDICIONES; C2 sigue abierta (arquitecto).
-2. **B6.** 0.3.5, última vuelta: C2, lo que QA marque como requisito roto y la SPEC r7 (RF-USR-04,
-   Repetir o Saltar). Después, prueba de Diego en dos teléfonos (Android ≤9 y ≥10).
+1. **B5.** 0.3.5 revisada (C2 y Repetir o Saltar cerrados); presupuesto agotado con un Alto: girar con la
+   pregunta abierta cuelga la medida.
+2. **B6.** Revisor Fable sobre ese defecto (FABLE-USR); después, prueba de Diego en dos teléfonos.
 3. **B7.** Incremento 2 "señal a señal" (indicador por norma, histórico, inventario por CSV): tras las
    propuestas ▸ pendientes de Diego (geometría, umbral doble, cero, 3.6.2 obligatoria).
 
