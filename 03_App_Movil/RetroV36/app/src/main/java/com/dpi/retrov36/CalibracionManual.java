@@ -54,7 +54,7 @@ final class CalibracionManual {
         for (char k : sel) {
             Acta vig = flujo.aceptadaVigente(k);
             if (vig != null && flujo.serieAnuladaDe(vig, k) == null && (acta == null || acta.codigo(k) == null)) {
-                return "El código " + k + " ya tiene un acta ACEPTADA vigente: no se vuelve a escribir.";
+                return "El " + Fabrica.elCodigo(k, flujo.corto()) + " ya tiene un acta ACEPTADA vigente: no se vuelve a escribir.";
             }
         }
         for (char k : Fabrica.CODIGOS) {
@@ -63,7 +63,7 @@ final class CalibracionManual {
             }
             FlujoCalibracion.Plan p = flujo.plan(k, null);
             if (!p.escribible()) {
-                return "El código " + k + " no se escribe: " + p.motivoNo;
+                return "El " + Fabrica.elCodigo(k, flujo.corto()) + " no se escribe: " + p.motivoNo;
             }
             String mc = flujo.motivoCodigo(k);
             if (mc != null) {

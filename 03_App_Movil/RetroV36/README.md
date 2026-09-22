@@ -69,10 +69,10 @@ cd app && "$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;bui
   com.dpi.retrov36.Rc6DefectosTest com.dpi.retrov36.AppCortaTest com.dpi.retrov36.Cov362DefectosTest
 ```
 
-Más seguro que copiar la lista: pasar todas las `*Test.java` de `app/src/test/java/com/dpi/retrov36/` (37 clases,
-**395 tests**, 21-sep-2026: 391 de `316a6bc` + `Cov366Rf17Test`, 4 nuevas — tarea A4b, RF-COV-17 en cuatro sitios
-más de `FlujoCalibracion.java` que el mecanismo `Fabrica.elCodigo`/`elCodigoCap` no cubría: resolverCorte(),
-escribir(), persistencia() y aceptar()).
+Más seguro que copiar la lista: pasar todas las `*Test.java` de `app/src/test/java/com/dpi/retrov36/` (38 clases,
+**399 tests**, 21-sep-2026: 395 de `4ea680c` + `Cov367Rf17Test`, 4 nuevas — tarea A4b revisión 2, RF-COV-17 en
+Ops.restaurar(), cotejarHeredados()/motivoMascara() (T-C41), protocoloIncumplido() y remedida(), que el
+mecanismo `Fabrica.elCodigo`/`elCodigoCap` tampoco cubría).
 
 `FabricaTest` compara las 12 ecuaciones de la app con el **texto** de
 `01_Firmware/base_2020_d089f962/RetroVertical1.X/ecuacionesCalibracion.c`: si alguien cambia una
@@ -87,6 +87,34 @@ se han visto instaladas a la vez. SPEC: `05_Documentacion/SPEC-App-Calibracion-C
 ```bash
 ./gradlew clean assembleDebug assembleCoviandina --offline
 ```
+
+**rc12(2) / Cov_3.6.7_calibrar (21-sep-2026), tarea A4b revisión 2 — NO APTO a la 3.6.6, cuatro sitios más**
+(RF-COV-17/21, SPEC-App-Calibracion-Coviandina.md de `main`, :224-225 y :271): el arquitecto abrió el código y
+verificó que aún llegaban textos con el número al operador de RTV Calibra por cuatro caminos que
+`Fabrica.elCodigo`/`elCodigoCap` no cubrían: (1) `Ops.restaurar()` (`Ops.java:219-241`) formaba "restauración
+con #F,%c# ... relectura #G,%c" con el número SIEMPRE, sin parámetro `corto`; llega por
+`FlujoCalibracion.restaurarCodigo()`/`escribir()`; (2) `escribir()` (java:1261-1270) embebía la trama cruda `t`
+("#S,k -> ...") en el "return" del operador mirara o no `corto`; (3) `cotejarHeredados()`/`motivoMascara()`
+(T-C41, java:1074-1108), alcanzables desde el mismo `calibrar()` que usa `CalibracionAutomatica`; (4)
+`protocoloIncumplido()` (java:800-819) y `remedida()` (java:1296-1314). Cierre: `Ops.Restauracion` lleva ahora
+`texto` (la trama cruda, sin cambio, para el acta y los registros) y `resumen` (lo que ve el operador; en
+corto, sin número ni trama, vía `Fabrica.elCodigo(k, corto)`); los cuatro sitios de `FlujoCalibracion.java`
+más dos del mismo barrido en `CalibracionManual.java` (validarYPreparar: "código ya tiene acta ACEPTADA"/"no
+se escribe", alcanzables por el mismo `calibrar()`) se convierten. `FlujoCalibracion.java` no creció: 2003
+líneas antes y después (`wc -l`); barrido propio de toda la UI en corto documentado en `Cov367Rf17Test.java`,
+incluido lo que se miró y se dejó (Acta.texto()/Acta.motivoNoEscribir() sí llevan el número, pero son un frente
+propio: Acta no conoce `corto` y tocarla exige repartir el parámetro por toda la clase — pendiente, señalado a
+Diego, no cerrado aquí para no abrir un quinto frente).
+Compilado con `clean assembleDebug assembleCoviandina --offline` sobre el árbol de este commit (rama
+`rtv-1.0-cierre`, sobre `4ea680c`), `aapt dump badging`, build-tools 34.0.0. Las 38 clases `*Test.java`
+pasaron antes con JUnitCore: `OK (399 tests)`. Sin copiar a `03_App_Movil/` (el encargo lo prohibió).
+
+| APK | md5 | versionCode | versionName | label |
+| :--- | :--- | :--- | :--- | :--- |
+| `app-coviandina.apk` | `7bcdf9ed7a98c9355772ff561d55e9f0` | 10012 | `Cov_3.6.7_calibrar` | RTV Calibra |
+
+**Sin arquitecto ni QA sobre ESTE par: sigue sin ser entregable** (§6 del CLAUDE.md: "a Diego sólo se le
+entrega una APK con el visto bueno escrito del arquitecto y de QA — los dos").
 
 **rc12 / Cov_3.6.6_calibrar (21-sep-2026), tarea A4b — RF-COV-17 en cuatro sitios más** de
 `FlujoCalibracion.java` que un agente anterior (solo lectura) había señalado sin comprobar si eran

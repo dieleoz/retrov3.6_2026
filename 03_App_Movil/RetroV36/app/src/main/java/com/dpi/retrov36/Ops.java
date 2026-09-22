@@ -201,24 +201,34 @@ public final class Ops {
         return new LecturaT(v, v.motivo);
     }
 
-    /** Resultado de una restauracion: ok solo si la relectura #G coincide con lo que habia. */
+    /**
+     * Resultado de una restauracion: ok solo si la relectura #G coincide con lo que habia.
+     * {@code texto}: la trama cruda, para el acta y los registros (P11-M1, siempre igual, campo o corto).
+     * {@code resumen}: lo que puede llegar a ver el operador; en corto (RF-COV-17/21, H-3, arquitecto-iot
+     * a Cov_3.6.6_calibrar) va sin el numero de codigo ni la trama cruda.
+     */
     public static final class Restauracion {
         public final boolean ok;
         public final String texto;
+        public final String resumen;
 
-        Restauracion(boolean ok, String texto) {
+        Restauracion(boolean ok, String texto, String resumen) {
             this.ok = ok;
             this.texto = texto;
+            this.resumen = resumen;
         }
     }
 
     /**
      * Restaura el codigo k a 'anterior': #F,k# si es la de fabrica (RF-APP-18), #S con la copia si no.
      * Relee con #G y lo compara (P11-M1): una restauracion sin relectura igual NO es una restauracion.
+     * `corto` (RF-COV-17/21): si el resumen para el operador lleva el numero de codigo o no.
      */
-    public Restauracion restaurar(char k, Ecuacion anterior) throws IOException, InterruptedException {
+    public Restauracion restaurar(char k, Ecuacion anterior, boolean corto) throws IOException, InterruptedException {
         if (anterior == null) {
-            return new Restauracion(false, "no se conoce la curva anterior del código " + k + ": no se restaura");
+            String t = "no se conoce la curva anterior del código " + k + ": no se restaura";
+            return new Restauracion(false, t, corto
+                    ? "no se conoce la curva anterior de " + Fabrica.elCodigo(k, true) + ": no se restaura" : t);
         }
         boolean fab = anterior.igualFloat32(Fabrica.ecuacion(k));
         String trama;
@@ -227,15 +237,19 @@ public final class Ops {
         } else {
             Tramas.TramaS ts = Tramas.tramaS(k, anterior);
             if (ts == null) {
-                return new Restauracion(false, "no se pudo formar la trama de restauración");
+                return new Restauracion(false, "no se pudo formar la trama de restauración",
+                        "no se pudo formar la trama de restauración");
             }
             trama = ts.texto;
         }
         Cliente.Respuesta r = escribir(trama);
         Ecuacion e = leerG(k);
         boolean ok = e != null && e.igualFloat32(anterior, fab ? Ecuacion.ULP_G : Ecuacion.ULP_S + Ecuacion.ULP_G);
-        return new Restauracion(ok, String.format(Locale.US, "restauración con %s -> %s; relectura #G,%c %s",
-                fab ? "#F," + k + "#" : "#S (copia anterior)", r.describir(), k,
-                ok ? "igual a la anterior" : e == null ? "SIN RESPUESTA: estado desconocido" : "DISTINTA de la anterior: " + e));
+        String estado = ok ? "igual a la anterior" : e == null ? "SIN RESPUESTA: estado desconocido" : "DISTINTA de la anterior: " + e;
+        String crudo = String.format(Locale.US, "restauración con %s -> %s; relectura #G,%c %s",
+                fab ? "#F," + k + "#" : "#S (copia anterior)", r.describir(), k, estado);
+        String resumen = corto ? "restauración de " + Fabrica.elCodigo(k, true) + ": "
+                + (ok ? "verificada" : e == null ? "SIN RESPUESTA: estado desconocido" : "NO verificada") : crudo;
+        return new Restauracion(ok, crudo, resumen);
     }
 }

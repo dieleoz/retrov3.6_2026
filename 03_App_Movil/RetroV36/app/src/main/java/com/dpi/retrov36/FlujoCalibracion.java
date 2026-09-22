@@ -816,7 +816,7 @@ public final class FlujoCalibracion {
         if (mal.length() == 0) {
             return null;
         }
-        return "el banco del " + k + " no está en " + req[0] + "×" + req[1] + ": " + mal + ". Repítalo en preciso en el "
+        return "el banco del " + Fabrica.elCodigo(k, corto) + " no está en " + req[0] + "×" + req[1] + ": " + mal + ". Repítalo en preciso en el "
                 + "Banco (\"Rehacer patrón\"), o que Diego acepte otro protocolo en decisiones.csv (PROTOCOLO-AJUSTE)"
                 + (protocoloAjuste() == null ? "; 5×4 es la recomendación provisional de P14 §3" : "");
     }
@@ -1084,7 +1084,7 @@ public final class FlujoCalibracion {
         }
         for (char k : requeridos) {
             if (!v.codigoAjustado(Fabrica.indice(k))) {
-                return String.format(Locale.US, "la máscara de #V# (%04X) no tiene el código %c", v.mascara, k);
+                return String.format(Locale.US, "la máscara de #V# (%04X) no tiene %s", v.mascara, Fabrica.elCodigo(k, corto));
             }
         }
         return null;
@@ -1101,7 +1101,7 @@ public final class FlujoCalibracion {
             boolean igual = g != null && esperado != null && g.igualFloat32(esperado, Ecuacion.ULP_G);
             t.append("#G,").append(k).append(igual ? " igual al acta; " : " DISTINTO del acta (" + g + "); ");
             if (!igual && mal == null) {
-                mal = "el código " + k + " no coincide con " + origenHeredados();
+                mal = "el " + Fabrica.elCodigo(k, corto) + " no coincide con " + origenHeredados();
             }
         }
         return mal;
@@ -1176,9 +1176,9 @@ public final class FlujoCalibracion {
                 acta.dato("#V# posterior", Ops.texto(ops.leerV()));
                 return null;
             }
-            Ops.Restauracion r = ops.restaurar(k, acta.escribiendoAnterior());
+            Ops.Restauracion r = ops.restaurar(k, acta.escribiendoAnterior(), corto);
             if (!r.ok) {
-                return "Corte durante " + marcaS + ": " + porE + ". RESTAURACIÓN NO VERIFICADA (" + r.texto
+                return "Corte durante " + marcaS + ": " + porE + ". RESTAURACIÓN NO VERIFICADA (" + r.resumen
                         + "): sigue sin resolver.";
             }
             acta.sinEscribir(k, "corte durante #S: " + porE + "; " + r.texto);
@@ -1200,10 +1200,10 @@ public final class FlujoCalibracion {
             }
             return "El #S del " + Fabrica.elCodigo(k, corto) + " no entró; no se ha repetido.";
         }
-        Ops.Restauracion r = ops.restaurar(k, acta.escribiendoAnterior());
+        Ops.Restauracion r = ops.restaurar(k, acta.escribiendoAnterior(), corto);
         if (!r.ok) {
             return "Corte durante " + marcaS + ": la curva no es ni la enviada ni la anterior. RESTAURACIÓN NO "
-                    + "VERIFICADA (" + r.texto + "): sigue sin resolver.";
+                    + "VERIFICADA (" + r.resumen + "): sigue sin resolver.";
         }
         acta.sinEscribir(k, "corte durante #S: curva desconocida; " + r.texto);
         return "Corte durante " + marcaS + ": la curva no era ni la enviada ni la anterior; restaurada. Vuelva a marcarlo.";
@@ -1259,14 +1259,14 @@ public final class FlujoCalibracion {
             return null;
         }
         String t = "#S," + k + " -> " + r.describir() + (porE == null ? "" : "; " + porE);
-        Ops.Restauracion res = ops.restaurar(k, anterior);
+        Ops.Restauracion res = ops.restaurar(k, anterior, corto);
         if (!res.ok) {
-            // RF-COV-17/21 (H-3, arquitecto-iot a Cov_3.6.4_calibrar): en corto, sin el número de código.
-            return "Escritura del " + Fabrica.elCodigo(k, corto) + " fallida (" + t + ") y RESTAURACIÓN NO VERIFICADA ("
-                    + res.texto + "). El #S queda sin resolver: vuelva a pulsar Calibrar para reintentarlo.";
+            // RF-COV-17/21 (H-3, Cov_3.6.6_calibrar): en corto, ni el número de código ni la trama cruda.
+            return "Escritura del " + Fabrica.elCodigo(k, corto) + " fallida" + (corto ? "" : " (" + t + ")")
+                    + " y RESTAURACIÓN NO VERIFICADA (" + res.resumen + "). El #S queda sin resolver: reintente.";
         }
         acta.sinEscribir(k, t + "; " + res.texto);
-        return "Escritura del " + Fabrica.elCodigo(k, corto) + " fallida: " + t + ". Restaurado.";
+        return "Escritura del " + Fabrica.elCodigo(k, corto) + " fallida" + (corto ? "" : ": " + t) + ". Restaurado.";
     }
 
     /** P11-M1: restauracion verificada, o el codigo queda sin resolver. `motivo` es el real (Cov364, B-2/
@@ -1279,7 +1279,7 @@ public final class FlujoCalibracion {
             return e0;
         }
         encendidoReciente = false;
-        Ops.Restauracion r = ops.restaurar(k, c.anterior);
+        Ops.Restauracion r = ops.restaurar(k, c.anterior, corto);
         acta.dato("#V# posterior", Ops.texto(ops.leerV()));
         if (r.ok) {
             acta.restaurado(k, r.texto);
@@ -1288,11 +1288,11 @@ public final class FlujoCalibracion {
                 alguno |= x.conforme();
             }
             // B-1 (Cov364): en corto el acta sin conforme se rechaza SOLA justo despues (anotarNoCalibrado).
-            return Fabrica.elCodigoCap(k, corto) + " restaurado (" + motivo + "): " + r.texto + ". La secuencia se detiene."
+            return Fabrica.elCodigoCap(k, corto) + " restaurado (" + motivo + "): " + r.resumen + ". La secuencia se detiene."
                     + (alguno || corto ? "" : " El acta no tiene ningún código conforme: pulse Rechazar.");
         }
         acta.restauracionFallida(k, r.texto);
-        return "RESTAURACIÓN NO VERIFICADA del " + Fabrica.elCodigo(k, corto) + " (" + motivo + "): " + r.texto
+        return "RESTAURACIÓN NO VERIFICADA del " + Fabrica.elCodigo(k, corto) + " (" + motivo + "): " + r.resumen
                 + ". El acta no se puede aceptar; vuelva a pulsar Calibrar para reintentarla.";
     }
 
@@ -1310,7 +1310,7 @@ public final class FlujoCalibracion {
         Patron pat = campana.patron(f.remedida);
         Campana.Serie banco = pat == null ? null : campana.elegida(pat.nombre);
         if (banco == null) {
-            return "Falta la serie del banco de " + f.remedida + " (re-medida del " + k + ").";
+            return "Falta la serie del banco de " + f.remedida + " (re-medida del " + Fabrica.elCodigo(k, corto) + ").";
         }
         double xBanco = banco.media();
         int kBanco = Math.max(1, banco.colocaciones().size());
@@ -1556,12 +1556,12 @@ public final class FlujoCalibracion {
             if (acta.escribiendo() != 0) {
                 // QA-3613-01: el codigo con un #S sin resolver tambien se restaura.
                 char k = acta.escribiendo();
-                Ops.Restauracion r = ops.restaurar(k, acta.escribiendoAnterior());
+                Ops.Restauracion r = ops.restaurar(k, acta.escribiendoAnterior(), corto);
                 if (r.ok) {
                     acta.sinEscribir(k, "al rechazar, con el #S sin resolver: " + r.texto);
                     t.append(Fabrica.elCodigo(k, corto)).append(" (#S sin resolver) restaurado; ");
                 } else {
-                    t.append(Fabrica.elCodigo(k, corto)).append(" (#S sin resolver) SIN RESTAURAR (").append(r.texto)
+                    t.append(Fabrica.elCodigo(k, corto)).append(" (#S sin resolver) SIN RESTAURAR (").append(r.resumen)
                             .append("); ");
                     fallos.append(k);
                     fallosTexto.append(Fabrica.elCodigo(k, corto)).append(", ");
@@ -1571,7 +1571,7 @@ public final class FlujoCalibracion {
                 if (c.restaurado != null || c.anterior == null) {
                     continue;
                 }
-                Ops.Restauracion r = ops.restaurar(c.k, c.anterior);
+                Ops.Restauracion r = ops.restaurar(c.k, c.anterior, corto);
                 if (r.ok) {
                     acta.restaurado(c.k, "al rechazar: " + r.texto);
                 } else {
@@ -1579,7 +1579,7 @@ public final class FlujoCalibracion {
                     fallos.append(c.k);
                     fallosTexto.append(Fabrica.elCodigo(c.k, corto)).append(", ");
                 }
-                t.append(Fabrica.elCodigo(c.k, corto)).append(r.ok ? " restaurado; " : " SIN RESTAURAR (" + r.texto + "); ");
+                t.append(Fabrica.elCodigo(c.k, corto)).append(r.ok ? " restaurado; " : " SIN RESTAURAR (" + r.resumen + "); ");
             }
             // RF-COV-19 (H-1): si esta acta emitio #SC, devuelve la fecha REALMENTE leida (FechaCalibracion).
             t.append(FechaCalibracion.devolver(ops, acta));
