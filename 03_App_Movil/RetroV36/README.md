@@ -7,10 +7,10 @@ en ningún equipo. La V4.6 tampoco existe grabada: se prueba contra `EquipoSimul
 funcionar es la medida contra un V3 2020 (SLV-002) y contra un V4 original (`@LEERV`), y ninguna de las
 dos se ha comprobado aún con esta app.
 
-- Paquete `com.dpi.retrov36` (no cambia), etiqueta "RTV", `versionCode 10010`, `versionName 1.0.0-rc11`
-  (RTV 1.0.0, sucede a 3.6.16; decisión VERSION de Diego). rc10 = `10009`, rc9 = `10008`, rc8 = `10007`,
-  rc7 = `10006`, rc6 = `10005`, rc5 = `10004`. El APK de calibrar (buildType `coviandina`) es
-  `com.dpi.retrov36.calibra`, `versionName Cov_3.6.5_calibrar`, `versionCode 10010` (nombre fijado por
+- Paquete `com.dpi.retrov36` (no cambia), etiqueta "RTV", `versionCode 10011`, `versionName 1.0.0-rc12`
+  (RTV 1.0.0, sucede a 3.6.16; decisión VERSION de Diego). rc11 = `10010`, rc10 = `10009`, rc9 = `10008`,
+  rc8 = `10007`, rc7 = `10006`, rc6 = `10005`, rc5 = `10004`. El APK de calibrar (buildType `coviandina`) es
+  `com.dpi.retrov36.calibra`, `versionName Cov_3.6.6_calibrar`, `versionCode 10011` (nombre fijado por
   Diego el 21-sep-2026; RF-COV-16). La **rc1** se compiló con `10000`/`1.0.0` y es **anterior** a la
   mezcla de la 3.6.17 (`3dcaf41`): ese par no se reutiliza. Antes: `versionCode 3616`, `versionName
   3.6.16` (desde la 3.6.10 el versionCode sigue a RF-APP-41: 3.6.10 → 3610, 3.6.16 → 3616) (la 3.6.0
@@ -69,10 +69,10 @@ cd app && "$JAVA_HOME/bin/java" -cp "build/intermediates/javac/debug/classes;bui
   com.dpi.retrov36.Rc6DefectosTest com.dpi.retrov36.AppCortaTest com.dpi.retrov36.Cov362DefectosTest
 ```
 
-Más seguro que copiar la lista: pasar todas las `*Test.java` de `app/src/test/java/com/dpi/retrov36/` (33 clases,
-**377 tests**, 21-sep-2026: 368 de `7b4391b` + `Cov363ArreglosTest`, 9 nuevas — los arreglos ALTO/MEDIO/BAJO de
-las revisiones arquitecto-iot y qa-istqb a `Cov_3.6.2_calibrar`, más 3 aserciones actualizadas en
-`AppCortaTest` y `Cov362DefectosTest`, RF-COV-17 "nunca el código").
+Más seguro que copiar la lista: pasar todas las `*Test.java` de `app/src/test/java/com/dpi/retrov36/` (37 clases,
+**395 tests**, 21-sep-2026: 391 de `316a6bc` + `Cov366Rf17Test`, 4 nuevas — tarea A4b, RF-COV-17 en cuatro sitios
+más de `FlujoCalibracion.java` que el mecanismo `Fabrica.elCodigo`/`elCodigoCap` no cubría: resolverCorte(),
+escribir(), persistencia() y aceptar()).
 
 `FabricaTest` compara las 12 ecuaciones de la app con el **texto** de
 `01_Firmware/base_2020_d089f962/RetroVertical1.X/ecuacionesCalibracion.c`: si alguien cambia una
@@ -87,6 +87,43 @@ se han visto instaladas a la vez. SPEC: `05_Documentacion/SPEC-App-Calibracion-C
 ```bash
 ./gradlew clean assembleDebug assembleCoviandina --offline
 ```
+
+**rc12 / Cov_3.6.6_calibrar (21-sep-2026), tarea A4b — RF-COV-17 en cuatro sitios más** de
+`FlujoCalibracion.java` que un agente anterior (solo lectura) había señalado sin comprobar si eran
+alcanzables desde el camino corto: (1) `resolverCorte()` (java:1164-1210) — el diálogo "El #S del código k
+no entró" y el "Corte durante #S,k: ..." no miraban `corto`, aunque SÍ es alcanzable en corto (`calibrar()`
+→ `CalibracionManual.escribirYVerificar()` → `resolverCorte()`, el mismo `calibrar()` que usa
+`CalibracionAutomatica`); (2) `escribir()` (java:1230,1234) — dos `return` sin `Fabrica.elCodigo`, aunque el
+resto del método ya lo usaba; (3) `persistencia()` (java:1452,1455) y (4) `aceptar()` (java:1499,1501,1503) —
+el `StringBuilder t`/`mal` que arman esos dos métodos, que `CalibracionAutomatica.persistirYAceptarAuto`
+devuelve tal cual al resumen de "Calibrar" cuando algo falla después de escribir. Los cuatro, con
+`Fabrica.elCodigo(k, corto)`, sin cambiar el texto de la app de campo (regresión probada en cada test).
+**Comprobado y descartado** (no forma parte de RF-COV-17 en la práctica, no se tocó): `calibrarTodoInterno`
+(java:1786-1827) y `persistirConfirmarYAceptar` (java:1853-1875) sólo los llama "Calibrar todo"/"Continuar",
+botones que no existen cuando `BuildConfig.CORTO` (`CalibrarActivity.java:88-96`); `bloqueoRehacer`
+(java:1881-1899) es del botón "Rehacer" de Banco, inalcanzable desde RTV Calibra por RF-COV-11.
+`FlujoCalibracion.java` ya estaba por encima del tope de 500 líneas del pre-commit (2003, excepción de
+"fichero existente" de rules/modularidad.md); el hook rechaza tocarlo si además CRECE. El arreglo se
+mantuvo a líneas netas iguales (2003 antes y después: la declaración de `marcaS` en `resolverCorte()`
+comparte línea con `char k = acta.escribiendo();`, y las demás conversiones reemplazan texto en la misma
+línea) para no forzar aquí el corte que pide la regla; el corte queda pendiente para la próxima vez que
+haga falta crecer el fichero de verdad.
+Compilado con `clean assembleDebug assembleCoviandina --offline` sobre el árbol de este commit (rama
+`rtv-1.0-cierre`, sobre `316a6bc`), `aapt dump badging`, build-tools 34.0.0. Las 37 clases `*Test.java`
+pasaron antes con JUnitCore: `OK (395 tests)`.
+
+| APK | md5 | versionCode | versionName | label |
+| :--- | :--- | :--- | :--- | :--- |
+| `app-debug.apk` | `b0a57a079d40aa2f0f7ae1fdea54b93e` | 10011 | `1.0.0-rc12` | RTV |
+| `app-coviandina.apk` | `b4da005d21368cc8b6499384a0ff7340` | 10011 | `Cov_3.6.6_calibrar` | RTV Calibra |
+
+package: `com.dpi.retrov36` (campo) y `com.dpi.retrov36.calibra` (calibrar).
+
+Sin copiar a `03_App_Movil/` (el encargo lo prohibió expresamente): los dos APK quedan sólo en
+`app/build/outputs/apk/{debug,coviandina}/` de este worktree.
+
+**Sin arquitecto ni QA sobre ESTE par: sigue sin ser entregable** (§6 del CLAUDE.md: "a Diego sólo se le
+entrega una APK con el visto bueno escrito del arquitecto y de QA — los dos").
 
 **rc11 / Cov_3.6.5_calibrar (21-sep-2026), tres condiciones del arquitecto-iot** sobre "APTO CON
 CONDICIONES" a `Cov_3.6.4_calibrar` (SPEC-App-Calibracion-Coviandina.md §8): (1) RF-COV-17/21 —

@@ -1162,11 +1162,11 @@ public final class FlujoCalibracion {
 
     /** RF-APP-37: resuelve un corte entre #S y la relectura. null si se puede seguir. */
     String resolverCorte() throws IOException, InterruptedException {
-        char k = acta.escribiendo();
-        operador.progreso("Resolviendo el corte durante #S," + k + "...");
+        char k = acta.escribiendo(); String marcaS = corto ? ("la escritura del " + Fabrica.elCodigo(k, corto)) : ("#S," + k);
+        operador.progreso("Resolviendo el corte durante " + marcaS + "...");
         Ecuacion g = ops.leerG(k);
         if (g == null) {
-            return "Corte durante #S," + k + ": el equipo no responde a #G. Sigue sin resolver; vuelva a intentarlo.";
+            return "Corte durante " + marcaS + ": el equipo no responde a #G. Sigue sin resolver; vuelva a intentarlo.";
         }
         if (g.igualFloat32(acta.escribiendoEnviada(), Ecuacion.ULP_S)) {
             String porE = ops.comprobarPorE(k, acta.escribiendoEnviada());
@@ -1178,35 +1178,35 @@ public final class FlujoCalibracion {
             }
             Ops.Restauracion r = ops.restaurar(k, acta.escribiendoAnterior());
             if (!r.ok) {
-                return "Corte durante #S," + k + ": " + porE + ". RESTAURACIÓN NO VERIFICADA (" + r.texto
+                return "Corte durante " + marcaS + ": " + porE + ". RESTAURACIÓN NO VERIFICADA (" + r.texto
                         + "): sigue sin resolver.";
             }
             acta.sinEscribir(k, "corte durante #S: " + porE + "; " + r.texto);
-            return "Corte durante #S," + k + ": " + porE + ". Restaurado. Vuelva a marcar el código para escribirlo.";
+            return "Corte durante " + marcaS + ": " + porE + ". Restaurado. Vuelva a marcar el código para escribirlo.";
         }
         if (g.igualFloat32(acta.escribiendoAnterior(), Ecuacion.ULP_G)) {
             String conf = acta.escribiendoConformidad();
             acta.sinEscribir(k, "corte durante #S: el #S no entró; el código sigue como estaba");
-            int q = operador.preguntar("El #S del código " + k + " no entró",
-                    "El código " + k + " sigue como estaba. ¿Repetir la escritura ahora (misma conformidad)?",
-                    "Repetir", "No");
+            int q = operador.preguntar("El #S del " + Fabrica.elCodigo(k, corto) + " no entró",
+                    "El " + Fabrica.elCodigo(k, corto) + " sigue como estaba. ¿Repetir la escritura ahora (misma "
+                            + "conformidad)?", "Repetir", "No");
             if (q == 0) {
                 Plan p = plan(k, g);
                 if (!p.escribible()) {
-                    return "No se puede repetir el código " + k + ": " + p.motivoNo;
+                    return "No se puede repetir el " + Fabrica.elCodigo(k, corto) + ": " + p.motivoNo;
                 }
                 String r = escribir(p, conf);
                 return r != null ? r : remedida(k);
             }
-            return "El #S del código " + k + " no entró; no se ha repetido.";
+            return "El #S del " + Fabrica.elCodigo(k, corto) + " no entró; no se ha repetido.";
         }
         Ops.Restauracion r = ops.restaurar(k, acta.escribiendoAnterior());
         if (!r.ok) {
-            return "Corte durante #S," + k + ": la curva no es ni la enviada ni la anterior. RESTAURACIÓN NO VERIFICADA ("
-                    + r.texto + "): sigue sin resolver.";
+            return "Corte durante " + marcaS + ": la curva no es ni la enviada ni la anterior. RESTAURACIÓN NO "
+                    + "VERIFICADA (" + r.texto + "): sigue sin resolver.";
         }
         acta.sinEscribir(k, "corte durante #S: curva desconocida; " + r.texto);
-        return "Corte durante #S," + k + ": la curva no era ni la enviada ni la anterior; restaurada. Vuelva a marcarlo.";
+        return "Corte durante " + marcaS + ": la curva no era ni la enviada ni la anterior; restaurada. Vuelva a marcarlo.";
     }
 
     /** #S del plan. null si fue bien; si no, el motivo para parar. */
@@ -1227,11 +1227,11 @@ public final class FlujoCalibracion {
         }
         Tramas.TramaS ts = Tramas.tramaS(k, p.propuesta.ajuste.ecuacion);
         if (ts == null || Asistente.criterioFirmwareS(ts.enviada) != null) {
-            return "El código " + k + " no pasa el criterio de #S.";
+            return "El " + Fabrica.elCodigo(k, corto) + " no pasa el criterio de #S.";
         }
         Ecuacion anterior = ops.leerG(k);
         if (anterior == null) {
-            return "No se pudo leer el estado anterior del código " + k + " (#G): no se escribe.";
+            return "No se pudo leer el estado anterior del " + Fabrica.elCodigo(k, corto) + " (#G): no se escribe.";
         }
         if (p.anclada()) {
             acta.dato("oscuro " + k, p.origenOscuro);
@@ -1449,10 +1449,10 @@ public final class FlujoCalibracion {
             Ecuacion g = ops.leerG(c.k);
             boolean igual = g != null && g.igualFloat32(c.leida, Ecuacion.ULP_G);
             String porE = ops.comprobarPorE(c.k, c.leida);
-            t.append("código ").append(c.k).append(": #G ").append(igual ? "igual" : "DISTINTO")
+            t.append(Fabrica.elCodigo(c.k, corto)).append(": #G ").append(igual ? "igual" : "DISTINTO")
                     .append(", #E ").append(porE == null ? "coincide" : porE).append("; ");
             if (mal == null && (!igual || porE != null)) {
-                mal = "el código " + c.k + " no se conserva tras apagar";
+                mal = "el " + Fabrica.elCodigo(c.k, corto) + " no se conserva tras apagar";
             }
         }
         String h = cotejarHeredados(t);
@@ -1496,9 +1496,9 @@ public final class FlujoCalibracion {
         for (Acta.Codigo c : acta.certificados()) {
             Ecuacion g = ops.leerG(c.k);
             boolean igual = g != null && g.igualFloat32(c.leida, Ecuacion.ULP_G);
-            t.append("código ").append(c.k).append(igual ? " igual a lo certificado; " : " DISTINTO de lo certificado; ");
+            t.append(Fabrica.elCodigo(c.k, corto)).append(igual ? " igual a lo certificado; " : " DISTINTO de lo certificado; ");
             if (mal == null && !igual) {
-                mal = "el código " + c.k + " no es el certificado";
+                mal = "el " + Fabrica.elCodigo(c.k, corto) + " no es el certificado";
             }
         }
         String h = cotejarHeredados(t);
