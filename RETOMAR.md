@@ -13,15 +13,14 @@ Estado vigente; se reescribe en cada sesión. Reglas en `CLAUDE.md`; orden en `R
   QA APTO; arquitecto APTO CON CONDICIONES (mensajes de fallo con número de código, antes de darla a un
   operador de Coviandina). **Entregable a Diego** en `03_App_Movil/Cov_3.6.5_calibrar.apk`. Cargar el ZIP →
   un botón "Calibrar" → re-medida ±10 % frente al certificado → fecha del día (se lee antes y se relee).
-- **A4b en curso:** `Cov_3.6.6_calibrar`, sin número de código en los mensajes (RF-COV-17).
-- **A5a en curso:** simulación de la curva con el banco; propuesta de hasta 50 patrones y de qué códigos
-  ajustar en `06_Calibracion/SLV-002/PROPUESTA-Toma-Corta.md` (decisiones 12-15).
-- **App de usuario: `RetroUsuario` 0.3.4** (`com.dpi.retrousuario.coviandina`, versionCode 7, md5
-  `3572c865…`), rama `retro-usuario` (`ec07bdb`). Arquitecto y QA APTO CON CONDICIONES: C2 abierta.
-  **0.3.5, última vuelta del presupuesto:** C2 y RF-USR-04 r7 (Repetir o Saltar).
-- **SPEC:** calibrar, `SPEC-App-Calibracion-Coviandina.md` §8 (RF-COV-11 a 23); usuario,
-  `SPEC-App-Usuario-V3.6.md` r7 (por delante de la 0.3.4 en RF-USR-04).
-- **Push:** el principal sube `main`, `rtv-1.0-cierre` y `retro-usuario` (`.claude/settings.local.json`).
+- **Pausa por límite semanal hasta el 25-sep:** sólo lo que desbloquea A4 (el funcional calibra el 8 y la
+  b con la 3.6.5). Revisores con sonnet; primera pasada en `orquestador:segunda-opinion`.
+- **Calibrar `Cov_3.6.8`** (`31e6214`): QA NO APTO; falta la 3.6.9 con el filtro en `Base` y la pantalla de
+  Pruebas en palabras (pendiente del sí de Diego). Para calibrar vale la 3.6.5.
+- **Usuario 0.3.7** (`b8a299d`, rama `retro-usuario`): arquitecto APTO; QA sin hacer. Después, prueba de
+  Diego en dos teléfonos.
+- **A5a:** lista de 46 patrones aprobada (TOMA-SEL-LISTA). A5b sin empezar.
+- **Veredictos:** `05_Documentacion/REVISIONES-Apps-V3.6.md`. Decisiones 12-22 en DECISIONES.
 
 ## Pendiente de Diego
 
@@ -35,5 +34,5 @@ Estado vigente; se reescribe en cada sesión. Reglas en `CLAUDE.md`; orden en `R
 ```
 Retomamos la V3.6 (D:\IT\P_RetroVertical_V3.6, github.com/dieleoz/retrov3.6_2026). Lee CLAUDE.md,
 RETOMAR.md y ROADMAP.md; comprueba con git log. Dos apps: calibrar (Cov_3.6.5_calibrar, entregada) y
-usuario (RetroUsuario 0.3.x). Siguiente: el resultado de Diego al calibrar el 8 y la b; 0.3.5, 3.6.6 y A5a.
+usuario (RetroUsuario 0.3.x). Siguiente: el ZIP del funcional (8 y b); después del 25-sep, QA de la 0.3.7 y la 3.6.9.
 ```

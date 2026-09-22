@@ -25,6 +25,9 @@ nueva (usuario). Modelos: **opus sólo para `arquitecto-iot`; el resto sonnet o 
 autorización de Diego.** Cada paso empieza cuando llega el informe del anterior; un Alto se reabre en el
 código antes de darlo por bueno.
 
+**Hasta el 25-sep (límite semanal):** sólo lo que desbloquea A4; revisiones con sonnet y primera pasada
+en `orquestador:segunda-opinion`. En espera: QA de la 0.3.7 y la 3.6.9 (filtro en `Base`).
+
 **Primero, la certificación de SLV-002.** Lo que la bloquea es A4, en el banco y en manos de Diego; la
 app de usuario no certifica nada y va como segundo carril, sin quitarle turno a A4.
 

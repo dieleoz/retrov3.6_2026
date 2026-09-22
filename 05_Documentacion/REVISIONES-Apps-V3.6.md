@@ -55,6 +55,8 @@ completos quedaron en el directorio temporal de la sesión; aquí se archiva lo 
   - **QA:** quitar `marcarCaido()` del catch de `EnlaceBluetooth.leerSinParar` no lo detecta ninguna prueba
     (126/126 en verde): la capa Android no tiene arnés. Pide prueba con un `InputStream` doble y, en
     campo, reconexión tras apagar el equipo. El rojo por aserción invertida no vale.
+- **0.3.7** (`b8a299d`) — arquitecto APTO; QA parada por el límite semanal (152/152 declarado). Anotado:
+  abandonar entre pulsar Medir y `ejecutar()` (lectura del GPS) se pierde (`EstadoMedida.java:172`).
 - **0.3.6** (`6e59f7b`) — APTO con condiciones / APTO con condiciones (QA: 148/148, APK reproducible; recuento
   real 105/43; falta la prueba del aviso con fase LIBRE). Diseño del revisor Fable implementado
   (`dominio/EstadoMedida`). **C1:** salir o cambiar de equipo con la pregunta del cero abierta guarda una fila
