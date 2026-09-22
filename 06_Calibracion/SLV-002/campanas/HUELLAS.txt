@@ -94,3 +94,15 @@ Acta 20260922_144317 (codigo b) ACEPTADA: P49 certificado 81, medido 75.7 (-6.5 
 CIERRA LA CONTRADICCION DEL ERR,FORMATO: la MISMA trama de 66 bytes, con los mismos coeficientes, fue rechazada
 tres veces (11:41, 13:35 y la de las 13:55 sin ZIP) y aceptada a las 14:32. No era la curva, ni la notacion, ni
 la longitud, ni el anillo de 64 bytes por si solo: es transitorio. Copiado de 07 pruebas/220920261445/ el 22-sep-2026.
+
+campana_SLV-002_20260922_145615.zip
+md5    e7301148c07e95f322752e1ec6eab968
+sha256 b23664062ec5b06eb7d81d7774b2a051e66539834c62abac540d1f87022fb6e0
+soporte_SLV-002_20260922_145615.zip
+md5    0f61b37fba6484f5cbbdc8e828e98aa3
+sha256 65e95a8debfde257eb336e841510fbe3543d0c19a7ace71c93fe1c8a169ee5f5
+Sesion posterior a la calibracion, 22-sep 14:53-14:56. Pruebas del equipo APTO con mascara ya en 0283.
+El funcional volvio a pulsar Calibrar: "Calibrado: ninguno"; los unicos codigos que la app ofrecia se rechazan
+por RF-CAL-14/15 (azul, verde, rojo y naranja intensos). Ningun #S: nada escrito, el equipo sigue en 0283.
+La app volvio a listar el 8 y la b como "listos para calibrar" pese a estar ya escritos y aceptados (defecto).
+Copiado de 07 pruebas/220920260517/ el 22-sep-2026.
