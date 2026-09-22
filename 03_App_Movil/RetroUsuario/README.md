@@ -1,7 +1,24 @@
 # RTV Usuario — app de USUARIO del retrorreflectómetro V3.6
 
-**Estado, 21-sep-2026: compila y pasa sus 148 tests JVM (checkout limpio). Nada probado contra un
-equipo ni un teléfono** (CLAUDE.md, cabecera). Cierra **FABLE-USR** (revisor Fable, opción A,
+**Estado, 22-sep-2026: compila y pasa sus 152 tests JVM (checkout limpio). Nada probado contra un
+equipo ni un teléfono** (CLAUDE.md, cabecera). Cierra **arq C1** (REVISIONES-Apps-V3.6.md, entrada
+0.3.6): salir o cambiar de equipo con la pregunta CERO abierta guardaba una fila con `media = 0`
+(`SerieDisparos.java:98-99` de la 0.3.6) — la SPEC §4 bis pide "sin fila". `PreguntaOperador.Decision`
+gana un tercer valor, `ABANDONAR` (sólo lo emite `EstadoMedida.abandonar()`; ningún diálogo de operador
+lo ofrece): `SerieDisparos` ya no lo trata como un "Saltar" real. Cierra **arq Medio**: el `Runnable` de
+`handlerPrincipal.post()` (`MedirActivity.java:70`, mismo patrón en `MainActivity.java:79`) no pinta si
+la Activity ya está `isFinishing()`/`isDestroyed()` cuando el `Handler` lo entrega (evita
+`AlertDialog.show()` → `BadTokenException` sobre una Activity muerta). Cierra **arq Bajo**:
+`EstadoMedida.marcarMidiendo()` (nuevo, mismo patrón que `EstadoDeteccion.iniciar()`) pone la fase en
+MIDIENDO desde el hilo de la pantalla, ANTES de lanzar el hilo de fondo — cerraba la ventana en LIBRE
+entre la pulsación y `EstadoMedida.ejecutar()` (`MedirActivity.java:174-183` frente a
+`EstadoMedida.java:146-148` de la 0.3.6). **QA:** recuento corregido — la base heredada de la 0.3.5 es
+**98 requisito / 43 comportamiento** (141), no 100/41 (`REVISIONES-Apps-V3.6.md:58-59`, ya lo decía);
+el "107/41 (148)" de esta misma cabecera en la 0.3.6 arrastraba el número viejo. 4 pruebas nuevas de
+esta vuelta (abajo): **107 requisito / 45 comportamiento** (152). `versionCode 10`, `versionName
+"0.3.7"`.
+
+Vuelta anterior (0.3.6, ROADMAP del principal): cierra **FABLE-USR** (revisor Fable, opción A,
 `SPEC-App-Usuario-V3.6.md:617-625`, "Operaciones que sobreviven a la pantalla"): hasta la 0.3.5
 `MedirActivity` era la dueña de la operación "medir" (hilo con una cola local alimentada por un
 diálogo sobre `this`, `runOnUiThread` sobre `this` para pintar) — un giro de pantalla a mitad de la
@@ -13,8 +30,9 @@ curso. Ahora la dueña es `dominio.EstadoMedida` (fase LIBRE/MIDIENDO/PREGUNTAND
 `SesionHolder.limpiar()` llama a `medida().abandonar()`: cambiar de equipo o salir con una medida en
 curso ya no deja el hilo de medir colgado sobre un enlace cerrado (antes, `MainActivity.java:219-221`
 de la 0.3.5 cerraba el socket sin avisar a nadie). `dominio.EstadoMedidaTest` (7 nuevas, todas
-requisito, T1-T7 de la SPEC citada) recuento recomputado: **107 requisito / 41 comportamiento** (148).
-`versionCode 9`, `versionName "0.3.6"`.
+requisito, T1-T7 de la SPEC citada) recuento de esa vuelta: 107 requisito / 41 comportamiento (148) —
+**corregido en la 0.3.7 (arriba): 105 requisito / 43 comportamiento (148)**, la base heredada de la
+0.3.5 ya era 98/43, no 100/41. `versionCode 9`, `versionName "0.3.6"`.
 
 Vuelta anterior (0.3.5, presupuesto del incremento 1, ROADMAP del principal): cierra **C2** de
 `REVISIONES-Apps-V3.6.md` (entrada 0.3.4, Alto) —
@@ -74,7 +92,7 @@ señal" no está aquí.
 No confundir con `03_App_Movil/RetroV36` (app de EMPRESA: DPI, por USB/Bluetooth, PIN, banco y
 calibración). Esta app va **con el equipo** y la usa el operador de campo, sin modo administrador.
 
-- `applicationId com.dpi.retrousuario.coviandina`, `versionCode 9`, `versionName "0.3.6"`.
+- `applicationId com.dpi.retrousuario.coviandina`, `versionCode 10`, `versionName "0.3.7"`.
 - `minSdk 24`, `targetSdk 30`, `compileSdk 30`. Permisos: `BLUETOOTH`, `BLUETOOTH_ADMIN`,
   `ACCESS_FINE_LOCATION`/`ACCESS_COARSE_LOCATION` (arq C2: pedido en tiempo de ejecución al entrar a
   medir, una vez por proceso — `MedirActivity`/`dominio.PermisoUbicacion`; se conceda o no, se mide
@@ -180,9 +198,14 @@ export JAVA_HOME="D:/@Proyect/Baliza/7 sw apk/jdk-11/jdk-11.0.24+8"
 
 ## Tests JVM
 
-148 tests, `dominio/*Test.java` (**107 requisito / 41 comportamiento**). Las 7 nuevas de esta entrega
-(0.3.6) son todas requisito (abajo); base heredada de la 0.3.5, sin recomputar: 100 requisito / 41
-comportamiento (141), recuento recomputado contra
+152 tests, `dominio/*Test.java` (**107 requisito / 45 comportamiento**). Las 4 nuevas de esta entrega
+(0.3.7, abajo) son 2 requisito / 2 comportamiento. Base heredada de la 0.3.6: 105 requisito / 43
+comportamiento (148) — las 7 nuevas de esa entrega eran todas requisito, pero la base que arrastraban
+de la 0.3.5 estaba mal (100/41): **QA sobre la 0.3.7:** `REVISIONES-Apps-V3.6.md:58-59` (entrada 0.3.5,
+ya archivada) declara la cifra correcta desde entonces, **98 requisito / 43 comportamiento (141)** — el
+"100/41" que este README repetía en la cabecera y aquí no se había corregido contra el propio archivo
+que lo desmentía. Base tras la corrección de la 0.3.7: 105 requisito / 43 comportamiento (148),
+recuento recomputado contra
 `REVISIONES-Apps-V3.6.md` vigente (entrada 0.3.4, ya archivada): de las 8 nuevas de la 0.3.4 que este
 mismo README contaba como comportamiento a falta de archivo, QA dijo que **5 pasan a requisito** —
 `LectorDeFlujoTest` completa (3: la entrada 0.3.4 archiva literalmente "roturas de LectorDeFlujo...
@@ -196,6 +219,38 @@ desde la 0.3.3, una prueba cuenta como requisito sólo si la condición que cita
 `05_Documentacion/REVISIONES-Apps-V3.6.md` (regla del propio fichero, `:58-59`) — no basta con que el
 analista recuerde el informe del arquitecto o QA, si no quedó archivado.
 
+**Las 4 nuevas de esta entrega (0.3.7):**
+
+- **`EstadoMedidaTest`** (2 nuevas): T8 `marcarMidiendoPoneFaseMidiendoDeInmediato` (requisito, cita
+  arq Bajo, `REVISIONES-Apps-V3.6.md:56-57`, "fase LIBRE entre la pulsación y `ejecutar()`"): llamar a
+  `marcarMidiendo()` deja la fase en MIDIENDO sin arrancar ningún hilo. Rojo real: el método no existía
+  contra 6e59f7b ("cannot find symbol", `EstadoMedidaTest.java:371`); demostrado también sin ese "no
+  compila" quitando la llamada de `ejecutar()` y dejando la fase en LIBRE hasta que el hilo de fondo
+  arranca — mismo síntoma que describe la condición. T9
+  `oyenteEsAvisadoConFaseYaLibreAlTerminarSinPregunta` (comportamiento: fija el orden interno "fase
+  baja ANTES de avisar", ya exigido por el Javadoc de `ejecutar()`, sin condición archivada propia).
+  QA: T7 (0.3.5) sólo cuenta avisos, así que mutar el orden a "avisar antes de bajar la fase" seguía en
+  verde (7/7); T9 lee `medida.fase()` DESDE DENTRO del propio callback del oyente y falla con esa
+  mutación — capturado forzándola en una copia aislada del árbol (`ejecutar()` reordenado a
+  avisar→bajar fase): 1/9 caída (`oyenteEsAvisadoConFaseYaLibreAlTerminarSinPregunta`); T7 sigue en
+  verde con la misma mutación, confirmando el hueco que cierra T9.
+- **`SerieDisparosTest`** (2 nuevas, de 14): `abandonarAntePreguntaCeroAnulaLaSerieSinFila` (requisito,
+  cita arq C1, `REVISIONES-Apps-V3.6.md:54-55`): `Decision.ABANDONAR` ante la pregunta CERO anula la
+  serie sin fila (`r.guardada == false`), a diferencia de SALTAR. Rojo real, en una copia aislada del
+  árbol con `SerieDisparos` revertido a distinguir sólo `== SALTAR`: `IllegalStateException:
+  preguntarDisparoAnulado() llamado sin respuesta programada` (la serie, al no anularse, intentaba
+  medir un segundo disparo no programado). `abandonarAntePreguntaDisparoAnuladoAnulaLaSerieIgualQueSaltar`
+  (comportamiento, robustez: ABANDONAR y SALTAR se comportan igual ante un disparo anulado — RF-USR-16
+  no distingue el motivo). Misma reversión: `IllegalStateException` igual.
+  `EstadoMedidaTest.abandonarConPreguntaPendienteTerminaMedirYNoCondenaAlSiguiente` (T5, ya existente)
+  gana la aserción `assertNull(resultadoAbandonado.fila())`/`assertTrue(sesion.filas().isEmpty())`:
+  rojo real revirtiendo sólo `EstadoMedida.abandonar()`/`preguntar()` a `Decision.SALTAR` (el estado de
+  6e59f7b) — `AssertionError: expected null, but was: FilaMedida@...` (1/23 de la clase).
+
+Producción, sin prueba nueva propia (cubiertas por lectura, capa Android sin arnés — README "Lo que NO
+verifica esta corrida"): **arq Medio**, el `Runnable` de `oyenteMedida`/`oyenteDeteccion` no pinta si
+`isFinishing()`/`isDestroyed()` (`MedirActivity.java:70`, `MainActivity.java:79`).
+
 **Las 7 nuevas de esta entrega (0.3.6), todas requisito** (el esperado de cada una sale de
 `SPEC-App-Usuario-V3.6.md:617-625`, "Operaciones que sobreviven a la pantalla", FABLE-USR — documento
 escrito fuera del código que prueban, CLAUDE.md §7):
@@ -208,7 +263,8 @@ escrito fuera del código que prueban, CLAUDE.md §7):
   MIDIENDO desde que arranca hasta que publica, LIBRE después, confirmado con concurrencia real —
   `CountDownLatch`, no temporización supuesta); T4 `excepcionEnMedirDejaErrorPendienteYFaseLibre`
   (B-1 de la 0.3.0: una excepción de `sesion.medir()` queda como error pendiente, fase LIBRE); T5
-  `abandonarConPreguntaPendienteTerminaMedirYNoCondenaAlSiguiente` (`abandonar()` contesta SALTAR y
+  `abandonarConPreguntaPendienteTerminaMedirYNoCondenaAlSiguiente` (`abandonar()` contestaba SALTAR en
+  la 0.3.6 — desde la 0.3.7 contesta `Decision.ABANDONAR`, arq C1, ver arriba — y
   suelta el monitor de `SesionMedicion.java:100`; un medir posterior, desde otro hilo, no queda
   condenado a auto-saltar — confirma que `ejecutar()` resetea el abandono de la medida anterior); T6
   `responderSinPreguntaPendienteSeDescartaYNoContestaLaSiguiente` (una respuesta sin pregunta
@@ -364,11 +420,22 @@ git ls-files app/src/main app/build.gradle app/proguard-rules.pro build.gradle s
 done > fuente.md5
 ```
 
-Verificado en esta entrega con `git worktree add --detach <ruta> <commit>` (checkout limpio, sin
-nada del árbol de quien lo generó) + `md5sum -c fuente.md5`: 71/71 `OK` (69 de la 0.3.5 más
-`dominio/EstadoMedida.java` y `dominio/Oyente.java`, nuevos de esta entrega, FABLE-USR). El mismo
-checkout limpio compila `assembleDebug` sin tocar nada del árbol de quien lo generó (D:\ sin `ñ`: la
-misma ruta bajo el perfil de usuario rompe AGP igual que rompe `testDebugUnitTest`, CLAUDE.md §8).
+Verificado en la 0.3.6 con `git worktree add --detach <ruta> <commit>` (checkout limpio, sin nada del
+árbol de quien lo generó) + `md5sum -c fuente.md5`: 71/71 `OK` (69 de la 0.3.5 más
+`dominio/EstadoMedida.java` y `dominio/Oyente.java`, nuevos de esa entrega, FABLE-USR).
+
+**0.3.7 (esta entrega):** mismos 71 ficheros (ninguno nuevo; sólo cambió contenido: `PreguntaOperador`,
+`SerieDisparos`, `EstadoMedida`, `MedirActivity`, `MainActivity`, `app/build.gradle`). Regenerado desde
+los blobs de `HEAD` (d230849) y verificado igual, `git worktree add --detach D:/tmp/rtvu_verify HEAD`
+(ruta ASCII, D:\ sin `ñ` — la misma ruta bajo el perfil de usuario rompe AGP igual que
+`testDebugUnitTest`, CLAUDE.md §8) + `md5sum -c fuente.md5`: **71/71 `OK`**. El mismo checkout compiló
+`assembleDebug` limpio: `package: name='com.dpi.retrousuario.coviandina' versionCode='10'
+versionName='0.3.7'` (`aapt dump badging`); certificado de depuración `Signer #1 certificate SHA-256
+digest: c990adf69d888a41f5ba6d539a0176c80df1e5c3b5f46dca8dea9d0ca7b8075f` (`apksigner verify
+--print-certs`); hash por CONTENIDO (receta de arriba, paso 3):
+**`16f280f632cabcd2aff5c4c9ae6da1a2b1f54419917108a01230225f2bba475e`**. md5 del `.apk` (declarado, no
+comparable entre builds — sólo trazabilidad de este fichero concreto):
+**`088a42d0c0c69c61331fceb3134d3fea`**, copiado a `03_App_Movil/RetroUsuario-0.3.7.apk`.
 
 ## Lo que NO verifica esta corrida
 
