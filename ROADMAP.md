@@ -38,24 +38,26 @@ md5 en `RETOMAR.md`); es la única con arquitecto y QA, y la que usa el funciona
    `rtv-1.0-simple` (`6d307a2`) añade pacing UART, trama corta y T-C41 guiado, pero sale de ese mismo
    `31e6214` y repite su par `versionCode 10013` / `Cov_3.6.8_calibrar` (defecto, `CLAUDE.md` §6):
    antes de tocarla, rebasar sobre `316a6bc` y darle versión propia.
-2. **A4c.** Defectos vistos por el funcional que van a la SPEC antes que al
-   código: la app vuelve a ofrecer códigos ya aceptados; no dice en qué paso va y el operador acaba
-   forzando el cierre (pierde el acta, `Base.java:254-262`); T-C41 depende de cuándo se pulse OK y manda
-   a reconectar a mano; el `pruebas.txt` del ZIP es el de la tanda anterior. Va también la etiqueta
-   `Retro Coviandina Calibrar` y el fichero `RETRO-COVIANDINA-calibrar-<versionName>-<versionCode>.apk`,
-   que la 3.6.5 entregada todavía no lleva.
+2. **A4c.** Defectos del funcional, a la SPEC antes que al código: ofrece códigos ya aceptados; no dice
+   en qué paso va y el operador fuerza el cierre y pierde el acta (`Base.java:254-262`); T-C41 depende de
+   cuándo se pulse OK y manda a reconectar a mano; el `pruebas.txt` del ZIP es de la tanda anterior. Va
+   también la etiqueta `Retro Coviandina Calibrar` y su fichero, que la 3.6.5 no lleva.
 3. **A5a. Aprobada** (TOMA-SEL-LISTA): 46 patrones, en `06_Calibracion/SLV-002/PROPUESTA-Toma-Corta.md`.
 4. **A5b (al cerrar A4b).** Certificado PDF, verificación de 10 patrones y toma corta, con SPEC,
    arquitecto, código y QA. Repetir o Saltar con su motivo (REPETIR-PREGUNTA), firma DPI (FIRMA-DPI) y
    elección del **tipo de lámina**, que el certificado dice por tipo y color.
 
-**Carril B — app de usuario.** Incremento 1 "Medir y exportar". Regla que dejó el revisor Fable
-(FABLE-USR, A-09): la medida, la pregunta y el resultado viven en `dominio/EstadoMedida`, no en la pantalla.
+**Carril B — app de usuario.** Incremento 1 "Medir y exportar"; la medida, la pregunta y el resultado
+viven en `dominio/EstadoMedida`, no en la pantalla (FABLE-USR, A-09).
 
 1. **B7 (siguiente).** APK lista: `RETRO-COVIANDINA-usuario-0.3.7-10.apk` (`418991f`, arquitecto y QA
    APTO, misma firma que la instalada: se actualiza sin desinstalar). Prueba de Diego en dos teléfonos
    (Android ≤9 y ≥10): giro con la pregunta abierta, giro midiendo, Atrás desde Medir, apagar el equipo,
    exportar; después, a Julio.
+**Manuales y paquete (rama `bb`, sin fundir).** Cuatro manuales y la hoja previa, validados por dos
+agentes. Falta: el PIN "obligatorio" (`MANUAL-...-Calibrar:90`, PA-13 lo deja en suspenso), la cita del
+baudio (va a `uart2.c:115-118` y `uart1.c:124-127`) y `HUELLAS-ENTREGA-V3.6.txt`, con rutas y un ZIP que
+no existen. Velocidad del módulo, por validar.
 2. **B8.** Incremento 2 "señal a señal" (histórico e inventario por CSV; sin dictamen, UMBRAL-CSV).
 
 ## Puertas P1-P12

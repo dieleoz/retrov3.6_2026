@@ -40,6 +40,7 @@ acta son de cada equipo físico. Entre equipos se reutilizan catálogo, método,
 | [`ARQUITECTURA.map`](ARQUITECTURA.map) | Mapa del sistema y referencias cruzadas entre documentos y código |
 | [`RUNBOOK.md`](RUNBOOK.md) | Calibrar un equipo V3 con la V3.6, fase a fase |
 | [`HISTORIA.md`](HISTORIA.md) | Cómo se llegó aquí y qué se concluyó mal |
+| `05_Documentacion/MANUAL-*` | Manuales por audiencia: interno, del equipo y de las apps; citan la SPEC |
 | `05_Documentacion/SPEC-*.md` | Requisitos: firmware (`SPEC-V3.6`), calibración, app única, app corta |
 | `05_Documentacion/TDD-V3.6.md`, `MATRIZ-SPEC-codigo-V3.6.md` | Pruebas y cruce SPEC ↔ código |
 | `05_Documentacion/REVISION-*.md`, `QA-*.md` | Revisiones de arquitectura y QA de cada versión |

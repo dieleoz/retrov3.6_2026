@@ -98,6 +98,7 @@ Modelos: opus sólo para `arquitecto-iot`; el resto sonnet o haiku; Fable, sólo
 | `CLAUDE.md` | Estas reglas; la primera línea, el commit del Orquestador | 200 líneas |
 | `HISTORIA.md` | Cómo se llegó aquí y **qué se concluyó mal**, con la errónea junto a la buena | — |
 | `ARQUITECTURA.map` | Mapa del sistema (§M1-§M4, §M6) e índice de referencias cruzadas (§M5) | 1000 líneas |
+| `05_Documentacion/MANUAL-*` | Manuales por audiencia: interno, del equipo y de la app. **Citan la SPEC, no repiten sus cifras** | Los escribe un agente y los valida otro |
 | `.claude/particularidades/` | Lo propio de cada skill `orquestador:*`, con su mismo nombre | Sin cifras vigentes |
 
 Ninguno es una bitácora. Si `ROADMAP.md` y `RETOMAR.md` discrepan, gana el registro (`git log`, md5,

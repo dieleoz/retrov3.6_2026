@@ -82,3 +82,11 @@ Los errores concretos, con la errónea junto a la buena, en `HISTORIA.md`.
 - **Y una del diagnóstico:** un fallo que no se repite no tiene causa hasta que se mida. Ese día se dio
   por buena tres veces una causa distinta y ninguna resistió el registro.
 - **Destino:** SUBE a `entregar` (instrucciones de campo) y a la V4.6 por `APRENDIDO-DE-V3.6.md`.
+
+## A-11 — Un validador automático en verde no es un visto bueno
+- **Pasó:** `coherencia_manual.py` dio "0 bloqueantes" tres veces sobre manuales que afirmaban 115200
+  baudios donde el binario grabado dice 9600, 16 muestras donde el código promedia 15, 32 bits donde hay
+  `double`, y que publicaban el PIN de fábrica. El script mira jerga y sellos, no cifras ni credenciales.
+- **Lección:** el verde del script es una condición, no el veredicto. Quien escribe no valida, y el que
+  valida abre el fichero citado y comprueba la línea. Un dato vive en la SPEC; el manual lo cita.
+- **Destino:** SUBE a `manual` y a la V4.6 por `APRENDIDO-DE-V3.6.md`.
