@@ -16,11 +16,14 @@ desarrollo de la línea V3.6 (PIC18F47K42), evitando tener que repetir el proces
 - **Tarjeta electrónica principal:** Placa rotulada "SATLUX H-IoT" (originalmente concebida para el proyecto
   Horizontal IoT, adaptada en producción 2020 para el Vertical).
 - **Pantalla gráfica táctil:** Módulo inteligente STONE de segunda generación, conectado a la UART secundaria del
-  microcontrolador a 115200 baudios (`uart_stone.c:87-101`).
+  microcontrolador configurada a 9600 baudios (8N1) en el binario grabado
+  (`dist/default/production/RetroVertical_V3.6.X.production.lst:35500-35507`, BRG 416 con reloj de 16 MHz). La
+  velocidad del módulo es configurable en su firmware y queda pendiente de validar contra el equipo físico.
 - **Canal de comunicación Bluetooth:** Módulo serie conectado a la UART1 del PIC configurada a 9600 baudios (8N1),
   según se especifica en `05_Documentacion/PROTOCOLO-V3.6.md:16`.
-- **Sensor fotométrico:** Fotodiodo de silicio conectado a canal analógico ADC (`measurement.c:208-250`), con
-  promediado por hardware de 16 muestras más desplazamiento de 200 cuentas (`measurement.c:212`).
+- **Sensor fotométrico:** Fotodiodo de silicio conectado a canal analógico ADC (`measurement.c:208-250`). El
+  promedio suma los índices 1 a 15 (`measurement.c:234-237`) y el desplazamiento de +200 cuentas (`línea 247`)
+  se aplica sobre un filtro EMA de software de 600 muestras (`líneas 239-245`).
 
 ### 1.2 Binarios de Entrega Autorizados y Trazabilidad
 
@@ -63,11 +66,12 @@ La memoria EEPROM organiza los parámetros de calibración y metrología a parti
 Los índices corresponden a las 12 funciones de calibración históricas:
 - Códigos 1 a 8: Blanco tipo I, Amarillo tipo I, Blanco microprismático, etc.
 - Códigos a a d: Canales extendidos de color según `calibracion_v36.h`.
-- Los códigos 1 y 2 son patrones base reservados de fábrica y no se sobreescriben durante calibraciones rutinarias.
+- Los códigos 1 y 2 corresponden a patrones base; la decisión de no sobreescribirlos corresponde a esta campaña
+  específica de calibración y no a una restricción física indeleble del firmware.
 
 ### 3.2 Algoritmo de Evaluación Polinómica
-La evaluación se ejecuta en 32 bits de precisión sin esquema Horner para preservar estricta identidad numérica con la
-base de 2020 (`calibracion_v36.c:229-234`):
+La evaluación se ejecuta en tipo `double` (64 bits) sin esquema Horner para preservar estricta identidad numérica
+con la base de 2020 (`calibracion_v36.c:229-234`):
 ```c
 resultado = ((c3 * x * x * x + c2 * x * x) + c1 * x) + c0;
 ```
@@ -90,10 +94,11 @@ máximo de 48 bytes y caducidad automática de 2 segundos ante tramas incompleta
 - `#GC#`: Consulta la fecha de calibración (`#GC,<AAAA-MM-DD>#` o `#GC,NONE#`).
 
 ### 4.2 Comandos de Administración (Requieren `#L,<pin>#`)
-- `#L,<pin>#`: Autentica sesión de administración. El PIN de fábrica es `2026`. Al acumular 5 fallos consecutivos, el
-  firmware entra en estado de bloqueo permanente (`#ERR,BLOQUEADO#`) hasta reiniciar el equipo.
-- `#P,<pin_actual>,<pin_nuevo>#`: Modifica el PIN de acceso. Conforme a `RF-CAL-29`, es obligatorio cambiar el PIN
-  de fábrica antes de la primera calibración en campo.
+- `#L,<pin>#`: Autentica sesión de administración (`#L,<pin>#`; el PIN lo entrega DPI). Al acumular 5 fallos
+  consecutivos, el firmware entra en estado de bloqueo permanente (`#ERR,BLOQUEADO#`) hasta reiniciar el equipo.
+- `#P,<pin_actual>,<pin_nuevo>#`: Modifica el PIN de acceso. La exigencia de cambiar el PIN de fábrica queda en
+  suspenso hasta que se implemente el rol de superadministrador (`SPEC-Calibracion-V3.6.md:911,1030`, PA-13); hoy
+  no existe un control activo en el firmware que impida operar con el PIN inicial si no se ha modificado.
 - `#S,<k>,<c3>,<c2>,<c1>,<c0>#`: Escribe coeficientes en memoria RAM y EEPROM (`calibracion_v36.c:658`).
 - `#SC,<AAAA-MM-DD>#`: Escribe la fecha de calibración en la dirección `0x200`.
 - `#SN,<serie>#`: Escribe el número de serie en la dirección `0x1EE`.
