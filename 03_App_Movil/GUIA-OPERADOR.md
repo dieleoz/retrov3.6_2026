@@ -1,40 +1,35 @@
-# Guía del operador — app RTV 3.6.17
+# Guía Rápida del Operador — App "Retro Coviandina"
 
-Una página. Sirve para el retrorreflectómetro vertical con la app RTV 3.6.17.
+Hoja rápida de bolsillo para el operador de campo en carretera con la app de usuario V3.6.
 
-## Antes de empezar
+## 1. Antes de empezar en carretera
 
-1. Encienda el equipo y déjelo 10 minutos encendido antes de medir.
-2. Abra la app y toque su equipo en la lista (por ejemplo `COVIANDINA_SLV-002…`).
-3. La app comprueba el equipo sola. Espere a que diga APTO.
+1. Encienda el retrorreflectómetro vertical y déjelo 10 minutos encendido para estabilización térmica.
+2. Abra la aplicación `Retro Coviandina` en su teléfono.
+3. Toque su equipo en la lista de dispositivos Bluetooth emparejados.
+4. Espere a que la app complete la verificación de versión y número de serie.
 
-## Los botones
+## 2. Medición de señales (Cero Tecleo)
 
-**Tomar muestras**
+1. Seleccione el color de la lámina retrorreflectiva en la pantalla (Blanco, Amarillo, Rojo, etc.).
+2. Asiente la boca del retrorreflectómetro plana y firme contra la señal, tapando toda luz exterior.
+3. Oprima el botón **Medir** en la pantalla del teléfono o pulse el gatillo físico del equipo.
+4. Realice al menos 3 disparos en distintos puntos de la señal; la app promedia sola.
 
-- La pantalla dice arriba, en grande, qué banco se está midiendo y cuánto falta. Por ejemplo: "Banco
-  REPRESENTATIVO: quedan 51 patrones, unos 82 min".
-- En cada paso la app pide un patrón. Colóquelo, no toque el gatillo y pulse **OK**.
-- Lo que ya estaba medido cuenta y no se repite.
-- Al final de cada sesión el archivo de datos se guarda solo en la carpeta `Descargas/RTV` del teléfono.
-- Al terminar el banco, la app abre el menú para enviar el archivo.
-- Si un patrón quedó mal colocado, pulse **Rehacer** y vuelva a medirlo.
+## 3. Si la app pregunta "Repetir o Saltar"
 
-**Guardar / Compartir**
+- Si una lectura fue cero, saturó por luz solar o el equipo se movió, la app abrirá una pregunta.
+- **Repetir:** Reacomode el equipo bien apoyado contra la señal y vuelva a disparar.
+- **Saltar:** Si la señal está destruida o no se puede medir, pulse saltar para anular ese punto.
 
-- Guarda en `Descargas/RTV` los dos archivos de datos: el ligero y el completo.
-- Abre el menú para enviarlos por correo o por mensajería. Envíe los dos.
+## 4. Al terminar el recorrido (Exportar)
 
-**Calibrar**
+1. En la pantalla principal, pulse **Exportar**.
+2. La app genera un paquete ZIP en la carpeta `Descargas` con las medidas, inventario y tramas.
+3. Comparta el archivo ZIP por correo o por mensaje a la oficina técnica.
 
-- Úselo solo cuando Diego lo indique.
-- La app pide los patrones uno a uno y enseña cada acta. Pulse **Aceptar** si está de acuerdo.
-- Al terminar, guarda el informe y los archivos en `Descargas/RTV` y abre el menú para enviarlos.
+## 5. Si algo sale mal
 
-## Si algo sale mal
-
-1. **El equipo no responde o se desconecta.** Apague el equipo, espere 5 segundos, enciéndalo y vuelva a tocarlo en la
-   lista. Lo que ya midió no se pierde: al volver a **Tomar muestras**, la app sigue donde iba.
-2. **La pantalla dice "batería baja" o no deja seguir.** Cambie la batería y vuelva a pulsar el botón. Si la app avisa
-   de algo que no entiende, no insista: pulse **Guardar / Compartir**, envíe los archivos y llame a Diego.
-3. **La app pide una "firma de Diego" o dice "sin restaurar".** No haga nada más con ese equipo: llame a Diego.
+1. **El equipo no responde o se desconecta:** Apague el equipo 5 segundos, enciéndalo y reconecte desde la app.
+2. **Error al actualizar:** NUNCA desinstale la aplicación previa; instale la APK encima para no perder los datos.
+3. **Batería baja en la pantalla del equipo:** Conecte el cargador suministrado por DPI hasta carga completa.
