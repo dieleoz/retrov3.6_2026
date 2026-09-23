@@ -5,11 +5,11 @@ Destinado a inspectores de tránsito, técnicos viales, operadores de terreno y 
 
 > [!NOTE]
 > **Puntos pendientes de medición y verificación física (no medidos):**
-> - **Geometría óptica (C-06):** La geometría de observación y entrada (0,2° / −4°) es una propuesta pendiente
->   de confirmación (`SPEC-App-Usuario-V3.6.md:634-639`) y permanece abierta en `ROADMAP.md` (C-06). No se
->   afirma como dato cerrado hasta cotejar el certificado de los patrones y comprobar en el equipo físico.
-> - **Modelo de pantalla STONE:** Contradicción abierta entre STA035WT-01 y STVA035WT(-01) (`HISTORIA.md`). Se
->   cierra mirando la etiqueta física del módulo en el instrumento.
+> - **Geometría óptica:** La geometría de observación y entrada (0,2° / −4°) es una propuesta pendiente
+>   de confirmación técnica en el equipo físico. No se afirma como dato cerrado hasta cotejar el certificado
+>   de los patrones y comprobar en el instrumento.
+> - **Modelo de pantalla STONE:** Contradicción abierta entre variantes de pantalla gráfica. Se cierra
+>   mirando la etiqueta física del módulo en el instrumento.
 
 ---
 
@@ -22,7 +22,7 @@ retrorreflectivas aplicadas en señales de tránsito verticales.
 ### Especificaciones Técnicas y Metrológicas:
 - **Magnitud medida:** Coeficiente de retrorreflexión RA, expresado en unidades de candelas por lux por metro
   cuadrado (cd / (lx * m2)).
-- **Geometría óptica:** Pendiente de confirmación física (ver nota en cabecera; C-06 abierta en ROADMAP.md).
+- **Geometría óptica:** Pendiente de confirmación física (ver nota en cabecera).
 - **Normativa de referencia:** Especificaciones NTC 4739 y ASTM E1710 para señalización vertical.
 - **Sistema de iluminación y captura:**
   - Fuente de luz: Emisor de estado sólido LED estabilizado espectralmente.
