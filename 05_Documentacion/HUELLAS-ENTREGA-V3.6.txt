@@ -1,0 +1,25 @@
+HUELLAS DE ENTREGA — RETRORREFLECTOMETRO VERTICAL V3.6
+Fecha: 2026-09-23
+Commit base: 6266ac8
+Paquete ZIP: ENTREGA-RTV-V3.6.2-20260923-6266ac8.zip
+Tamano ZIP: 3397629 bytes
+MD5 ZIP: 00752c60f15a551db0a4128dd163d206
+SHA-256 ZIP: a5ee31e3b96a4c2164cf2bfbafd41e8f9cf810aec69aeb15031659eea7f5ff9e
+
+CONTENIDO DEL PAQUETE Y HUELLAS INDIVIDUALES:
+- Firmware: RetroVertical_V3.6.hex
+  MD5: 9d5d5e3951c8aa83d1465f16f3733d27
+- APK Usuario: RETRO-COVIANDINA-usuario-0.3.7-10.apk
+  MD5: 6aecf3ac2251db29f78b74d324b920cc
+- APK Calibracion: Cov_3.6.5_calibrar.apk
+  MD5: dc0beaf5e110a72b7cbb288e4011cb68
+- Documento: manuales/MANUAL-Usuario-App-Cliente-V3.6.docx
+  SHA-256: 6cd8bba152dc32d9a2b18e13b8b5374e77346646470b44f249660fa60eeae540
+- Documento: manuales/MANUAL-Usuario-App-Calibrar-V3.6.docx
+  SHA-256: 0c037f58dbe742eba456c5416b0d8962859a14c04463d94dbadfa39847930083
+- Documento: manuales/MANUAL-Operacion-Retrorreflectometro-Vertical-V3.6.docx
+  SHA-256: 84e1fe27a570fab5d7731a3d10af419130bd58e308097eb653277d0ef7fff305
+- Documento: manuales/MANUAL-Interno-KnowHow-V3.6.docx
+  SHA-256: 86597c5b00dc624bbf26c645aed4aa390e0badd5d50f66ddedd150b7367e836f
+- Documento: manuales/HOJA-PREVIA-CAMPO-V3.6.md
+  SHA-256: 8bff454cc3eb89b8014663ddf3e64b9b504958877d2af2e3acf86fc2a5c64a8f

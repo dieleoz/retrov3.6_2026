@@ -1,7 +1,18 @@
-# Manual de Usuario — Aplicación de Calibración "Retro Coviandina Calibrar"
+# Manual de Usuario — Aplicación Móvil de Calibración "RTV Calibra"
 
 Manual técnico de la aplicación móvil de calibración para el Retrorreflectómetro Vertical V3.6.
 Destinado al personal de metrología, técnicos de laboratorio y soporte técnico de DPI Ingeniería & Consultoría.
+
+> [!NOTE]
+> **Versión documentada y etiqueta en pantalla:**
+> - **Etiqueta en pantalla:** `RTV Calibra` (nombre visible en el lanzador de aplicaciones de Android).
+> - **Versión documentada:** `Cov_3.6.5_calibrar` (código de versión `10010`).
+> - **Identificador de paquete:** `com.dpi.retrov36.calibra`.
+> - **Archivo binario instalador:** `Cov_3.6.5_calibrar.apk`.
+> - **Huella MD5:** `dc0beaf5e110a72b7cbb288e4011cb68`.
+> - **Aviso de trazabilidad:** El renombrado formal a "Retro Coviandina Calibrar" corresponde a una tarea
+>   programada de la línea de desarrollo; este manual describe con fidelidad la versión que el operador
+>   visualiza y ejecuta hoy en el teléfono móvil.
 
 ---
 
@@ -18,11 +29,12 @@ microcontrolador PIC18F47K42 ni herramientas de compilación en campo.
   cíclica CRC-16/CCITT.
 - **Acceso mediante protocolo seguro:** Las modificaciones se ejecutan en modo administrador mediante tramas ASCII
   delimitadas por `#`, autenticadas por código PIN y validadas por hardware antes de su activación definitiva.
-- **Identificación de la aplicación:**
+- **Identificación del binario entregado:**
+  - **Nombre en lanzador de Android:** `RTV Calibra`
+  - **Versión de la aplicación:** `Cov_3.6.5_calibrar` (código de versión `10010`)
+  - **Archivo APK:** `Cov_3.6.5_calibrar.apk`
+  - **Huella MD5 del APK:** `dc0beaf5e110a72b7cbb288e4011cb68`
   - **Identificador de paquete:** `com.dpi.retrov36.calibra`
-  - **Versión de campo operativa:** `Cov_3.6.5_calibrar` (código de versión `10010`)
-  - **Etiqueta en pantalla:** `Retro Coviandina Calibrar` (o `RTV Calibra`)
-  - **Archivo entregable de nueva generación:** `RETRO-COVIANDINA-calibrar-<versionName>-<versionCode>.apk`
 
 ---
 
@@ -51,7 +63,7 @@ Conexión  →  Cargar ZIP  →  Revisar listos  →  Calibrar  →  Re-medir  �
 
 ### Paso 1: Conexión con el Retrorreflectómetro
 1. Encienda el equipo y verifique que la pantalla STONE se encuentre activa.
-2. Abra la aplicación de calibración en el dispositivo móvil.
+2. Abra la aplicación `RTV Calibra` en el dispositivo móvil.
 3. Seleccione el retrorreflectómetro en la lista de dispositivos Bluetooth emparejados.
 4. La aplicación enviará la orden `#V#` para comprobar el firmware V3.6 y leerá el número de serie (`#GN#`).
 5. Espere a que la aplicación confirme el enlace con indicador verde.

@@ -13,5 +13,8 @@ local.properties
 # Registro de MPLAB X y cachés de Python
 MPLABXLog.xml
 __pycache__/
+# Paquetes comprimidos de entrega (se distribuyen fuera de git, ver entregar §9)
+*.zip
+entregas/
 # Permisos locales de Claude Code (por máquina)
 .claude/settings.local.json

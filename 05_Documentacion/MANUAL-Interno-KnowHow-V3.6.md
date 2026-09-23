@@ -22,6 +22,14 @@ desarrollo de la línea V3.6 (PIC18F47K42), evitando tener que repetir el proces
 - **Sensor fotométrico:** Fotodiodo de silicio conectado a canal analógico ADC (`measurement.c:208-250`), con
   promediado por hardware de 16 muestras más desplazamiento de 200 cuentas (`measurement.c:212`).
 
+### 1.2 Binarios de Entrega Autorizados y Trazabilidad
+
+| Componente | Archivo binario | Versión / Código | Huella MD5 | Audiencia / Manual |
+| :--- | :--- | :---: | :--- | :--- |
+| **Firmware PIC** | `RetroVertical_V3.6.hex` | V3.6.2 (XC8 v2.10) | `9d5d5e3951c8aa83d1465f16f3733d27` | Operación de Instrumento |
+| **App Cliente** | `RETRO-COVIANDINA-usuario-0.3.7-10.apk` | 0.3.7 (código 10) | `6aecf3ac2251db29f78b74d324b920cc` | Operador de Campo ("Retro Coviandina") |
+| **App Calibración** | `Cov_3.6.5_calibrar.apk` | 3.6.5 (código 10010) | `dc0beaf5e110a72b7cbb288e4011cb68` | Metrología y Laboratorio ("RTV Calibra") |
+
 ---
 
 ## 2. Firmware V3.6 frente a la Base de 2020
@@ -111,7 +119,8 @@ El sistema se compone de dos aplicaciones con alcances estrictamente separados:
 ### 5.2 Aplicación de Calibración (`RetroV36`)
 - **Directorio de código:** `03_App_Movil/RetroV36/`.
 - **Paquete:** `com.dpi.retrov36.calibra`.
-- **Versión de campo validada:** `Cov_3.6.5_calibrar.apk` (código 10010, commit `316a6bc`).
+- **Etiqueta en pantalla:** `RTV Calibra`.
+- **Versión de campo validada:** `Cov_3.6.5_calibrar.apk` (código 10010, MD5 `dc0beaf5e110a72b7cbb288e4011cb68`).
 - **Flujo guiado:** Importa el paquete ZIP de campaña, aplica banco previo, escribe en EEPROM y verifica tolerancias
   según regla `RF-COV-12` (±5 % para código 8 blanco y ±10 % para código b amarillo).
 - **Cierre formal:** Emite actas técnicas y paquete de soporte para respaldo del certificado de calibración emitido

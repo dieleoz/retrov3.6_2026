@@ -29,6 +29,8 @@ retrorreflectivas aplicadas en señales de tránsito verticales.
   - Sensor de detección: Fotodiodo de silicio de alta estabilidad con corrección de respuesta fotópica CIE V(lambda)
     para igualar la curva de sensibilidad del ojo humano estándar.
 - **Microcontrolador principal:** Microchip PIC18F47K42 en placa "SATLUX H-IoT".
+- **Binario de firmware:** `RetroVertical_V3.6.hex` (versión V3.6.2).
+- **Huella MD5 del firmware:** `9d5d5e3951c8aa83d1465f16f3733d27`.
 - **Interfaz visual:** Pantalla gráfica táctil STONE de segunda generación (modelo exacto pendiente de
   verificar en etiqueta física).
 - **Comunicación inalámbrica:** Enlace Bluetooth UART1 integrado a velocidad fija de 9600 baudios (8N1).

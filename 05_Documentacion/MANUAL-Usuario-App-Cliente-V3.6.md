@@ -15,6 +15,7 @@ Bluetooth, registrar las lecturas de retrorreflexión de señales de tránsito y
 - **Identificador de paquete:** `com.dpi.retrousuario.coviandina`
 - **Versión de la aplicación:** 0.3.7 (código de versión `10`)
 - **Archivo instalador:** `RETRO-COVIANDINA-usuario-0.3.7-10.apk`
+- **Huella MD5 del instalador:** `6aecf3ac2251db29f78b74d324b920cc`
 - **Sistema operativo requerido:** Android 7.0 (API 24) o superior.
 - **Permisos requeridos por el sistema:**
   - **Ubicación precisa (`ACCESS_FINE_LOCATION`):** requerida por el sistema Android para escanear y conectar por
