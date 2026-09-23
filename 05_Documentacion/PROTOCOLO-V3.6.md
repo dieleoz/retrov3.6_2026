@@ -39,7 +39,7 @@ Tramas ASCII **entre `#` y `#`**, campos separados por `,`, **como máximo 48 by
 
 | Petición | Respuesta | Requiere admin |
 | :--- | :--- | :---: |
-| `#V#` | `#V,3.6,<AAAA-MM-DD>,<CAL\|DEF>#`: `CAL` si hay calibración válida en EEPROM, `DEF` si usa las de fábrica | No |
+| `#V#` | `#V,3.6,<AAAA-MM-DD>,<CAL\|DEF>,<mascaraHex>#`: 5 campos; máscara hex 4 dígitos (`calibracion_v36.c:636`) | No |
 | `#L,<pin>#` | `#OK#` o `#ERR,PIN#`. Desbloquea el modo admin hasta `#Q#` o apagar | — |
 | `#Q#` | `#OK#`. Bloquea | No |
 | `#G,<k>#` (k = `1`-`8`, `a`-`d`) | `#G,<k>,<c3>,<c2>,<c1>,<c0>#` | No |

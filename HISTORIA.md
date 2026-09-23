@@ -53,6 +53,7 @@ indicio sin cruzarlo con una segunda prueba.**
 | El ZIP que sostiene la curva "está en el repositorio" | Estaba sólo en `07 pruebas/` hasta el 21-sep | `git ls-files` |
 | `#K#` "especificado, no implementado" (skill STONE) | **Implementado** | `calibracion_v36.c:797` |
 | `targetSdk` "urgente" (encargo) o "sólo si se publica" | **No se publica**: no obliga | APPS-DPI |
+| `#V#` 4 campos en protocolo | Firmware manda 5 con máscara (`calibracion_v36.c:636`) | Protocolo puesto a 5 campos |
 
 ## Pruebas que no demostraban nada (19-sep, noche)
 

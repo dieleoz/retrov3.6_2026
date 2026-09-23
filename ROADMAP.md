@@ -64,7 +64,7 @@ md5 en `RETOMAR.md`); es la única con arquitecto y QA, y la que usa el funciona
 | :--- | :--- |
 | P1 Especificación · P2 Arquitectura · P3 Compilación reproducible · P6 Autorización | Cerradas |
 | P4 Firmware · P7 Grabación | Cerradas para la 3.6.2 |
-| P5 App · P9 Validación del arquitecto | **Abiertas** (carriles A y B) |
+| P5 App · P9 Validación del arquitecto | Carril B Inc. 1 cerradas (0.3.7 APTO); abiertas para Carril A y B Inc. 2 |
 | P8 Calibración de SLV-002 | Cerrada para 1, 2, 8 y b (máscara 0283); **abierta** para 3, 4, 5 y 6 |
 | P10-P11 Producción · P12 Informe y registros | Pendientes (A5, B) |
 
@@ -96,5 +96,3 @@ No se eligen: se cierran midiendo o con registro. Las cerradas están en `HISTOR
   SERIE-2 lo cambia a `SLV-002-2026`.
 - **Modelo de pantalla:** STA035WT-01 frente a STVA035WT(-01) (`HISTORIA.md`). Se mira la etiqueta.
 - **Numeración:** "P10-P14" nombra puertas del proceso y revisiones de arquitectura de la app.
-- **Formato de `#V#`:** `PROTOCOLO-V3.6.md:42` da cuatro campos; el firmware manda cinco, con la máscara
-  (`calibracion_v36.c:636-641`). Manda el protocolo (`CLAUDE.md` §5): o se corrige el protocolo o el firmware.
