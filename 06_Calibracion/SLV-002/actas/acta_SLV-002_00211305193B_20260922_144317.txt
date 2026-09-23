@@ -1,0 +1,48 @@
+App RTV Cov_3.6.5_calibrar (10010)
+ACTA DE CALIBRACIÓN
+Equipo: SLV-002 (MAC 00:21:13:05:19:3B)
+Firmware: V3.6 2026-09-19 (3.6.2) CAL mascara 0003
+Abierta: 2026-09-22T14:35:20-0500
+Tabla de métodos: RF-CAL-37 de SPEC-Calibracion-V3.6.md (1f1c4e3), reglas r5 (c836cae, 6048453)
+Protocolo de disparos (fijo, P9-B3): 5 colocaciones × 4 disparos, 1 de asentamiento por colocación
+Ajuste contra patrones, no calibración trazable. Por debajo del patrón más bajo de cada código la lectura no está calibrada.
+Conformidad: Julio Roberto Ramirez: código b. Calibración automática (RTV Calibra, un solo botón, RF-COV-17) | dispensa RF-CAL-14/15 (PA-24): RF-COV-12 (VERIF-5-10)
+serie: leída del equipo con #GN#
+md5 de la cola: 70ef3b868db85ef75743936a6218935e
+banco: REPRESENTATIVO
+s_rep: s_rep 0.15 % (A5 del inicio del banco, 3 patrones, sesión 1; P22 S052 0.15 %; P28 S053 0.12 %; P4 S054 0.18 %)
+app: RTV Cov_3.6.5_calibrar (10010, sucede a 3.6.16)
+decisiones: PA-24 (SLV-002) = SI, decidida por Diego el 2026-09-19 (06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (8af526d; ampliada y margen en c836cae; RF-CAL-15 estricto en 6048453)), alcance: RF-CAL-14 P39 +15.0 % ±3.0; RF-CAL-14 P49 -10.0 % ±3.0; RF-CAL-15 I +11.5 % ±0.0: Codigo b (rojo tipo I): se escribe con recta anclada en oscuro pese a incumplir RF-CAL-14 (P39 +15 %, P49 -10 %, techo con +-3) y RF-CAL-15 (RMS de tipo I 11,5 % estricto, sin margen: fila RF-CAL-15-b). Diego: Si, escribirla: mucho mejor que fabrica; ok si de 1 a 4; ok si a todo; PA-14 (SLV-002) = SI, decidida por Diego el 2026-09-19 (06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (8af526d, 37f827d; P81 en c836cae)), alcance: excluye P81: Codigo 5 (azul intenso): recta anclada en oscuro con la cobertura relajada; P81 sale del ajuste y queda solo de verificacion y re-medida. Diego, ~14:10, confirmado ~14:15: Si, relajar la regla y ajustarlo con una recta que pase por el negro, como el amarillo; ~15:40: ok si de 1 a 4; REMEDIDA-b (SLV-002): sustituida por VERIF-5-10 (RF-COV-12) en corto, no se aplica; PROTOCOLO-AJUSTE (SLV-002) = PRECISO, decidida por Diego el 2026-09-19 (06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (6048453)): Los patrones de AJUSTE de los codigos que se escriben (8, b, 5), P81 y las re-medidas se miden en preciso, 5 x 4; el resto, 1 x 4. Diego, ~17:10: ok si a todo; TIPO-I-REPETIR (SLV-002) = SI, decidida por Diego el 2026-09-19 (06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (6048453)): P34, P37, P43, P44, P38, P39 y P49 se repiten en preciso; los demas tipo I medidos a las 15:10 (3 x 3) valen. Diego, ~17:10: ok si a todo; PRECISO-5x9 (SLV-002) = SI, decidida por Diego el 2026-09-19 (06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (c38ad02)): Las series con K >= 5 y M >= 4 (por ejemplo, las de 5 x 9 de la manana) cuentan como preciso (Protocolo.incumple; efecto en la media <= 0,19 %, REVISION-P15). Diego: si, cuentan como preciso; VERIF-5-10 (SLV-002) = CERTIFICADO, decidida por Diego el 2026-09-21 (06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (nota 3, filas del 21-sep-2026)): Verificacion final y re-medida tras escribir cada codigo (la b incluida: sustituye a REMEDIDA-b/RF-CAL-18 en la app de calibrar). Por patron: el valor certificado, los rangos a +-5% y a +-10%, lo medido y donde cae. Conforme dentro de +-10%; el certificado dice ademas si esta dentro de +-5%. Diego: 10 ok, es para validar lo que llevas; el certificado lo indica a +-5% tal valor y a +-10% tal valor; pues ambos, al final da igual, es sacar el valor; la misma regla para todos los codigos, la b incluida; FECHA-EQUIPO (SLV-002) = UNICA, decidida por Diego el 2026-09-21 (06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (nota 5, filas del 21-sep-2026)): #SC graba la fecha de la ultima calibracion en la EEPROM (PROTOCOLO-V3.6.md:51-52); el historial de ano en ano son los ZIP de cada calibracion, archivados, y cargarlos es opcional. Diego: la fecha se guarda en el firmware, no? el equipo la captura asi como el nombre; seria sacar un .zip de calibracion y la cargo o no, optativo; a la fecha de hoy o de cuando se le de al boton calibrar, ese dia se genera el acta y sale
+código 5: PA-14: PA-14 (SLV-002) = SI, decidida por Diego el 2026-09-19 (06_Calibracion/SLV-002/DECISIONES-Diego-2026-09-19.md (8af526d, 37f827d; P81 en c836cae)), alcance: excluye P81: Codigo 5 (azul intenso): recta anclada en oscuro con la cobertura relajada; P81 sale del ajuste y queda solo de verificacion y re-medida. Diego, ~14:10, confirmado ~14:15: Si, relajar la regla y ajustarlo con una recta que pase por el negro, como el amarillo; ~15:40: ok si de 1 a 4
+código b: b (rojo, lámina tipo I): RF-COV-12 (VERIF-5-10), conforme dentro de ±10 % del certificado, re-medida P49.
+T-C41 apagado: propio
+heredados (T-C41): OK frente a acta de SLV-002 del 19-sep-2026 12:23:26 (ZIP md5 ce1f35fc…) y las actas ACEPTADAS en esta app: #V# #V,3.6,2026-09-19,CAL,0083#; #G,1 igual al acta; #G,2 igual al acta; #G,8 igual al acta; #E,1 coincide; #E,2 coincide; #E,8 coincide; 
+batería: Batería 11,97 V (n = 149)
+batería al inicio: Batería 12,04 V (n = 155)
+batería mínima (n): 149
+oscuro b: Oscuro (x = 570.5): media de S076 y S123, sesión 2
+patrones b: P38 (n = 20), P39 (n = 20), P49 (n = 20)
+series b: S093 S092 S094 S076 S123
+protocolo banco b: P38 5×4, P39 5×4, P49 5×4; re-medida 5×4 (P12, P13)
+rango b: recta anclada: 0-81 (ancla del OSCURO en R = 0 y certificados 46-81 de 3 patrones; tipos [I]). Por encima de 81 la curva extrapola
+#V# posterior: #V,3.6,2026-09-19,CAL,0283#
+#SC: no se reescribe: el equipo ya tiene la fecha de hoy (#GC,2026-09-22# en 125 ms)
+ZIP de soporte (SHA-256): a2cb93d53b7924a5629d3d57cfd222c9754481e71c95451f5014f95b3963573b
+
+Código b (rojo opaco)
+  Método: recta anclada en oscuro (x = 570.5 ; R = 0), Oscuro (x = 570.5): media de S076 y S123, sesión 2; tabla b (rojo, lámina tipo I): RF-COV-12 (VERIF-5-10), conforme dentro de ±10 % del certificado, re-medida P49.
+  Curva certificada = leída con #G tras #S (P9-B9): #G,b,0.00000000E+00,0.00000000E+00,3.20071149E-01,-1.82592605E+02#
+  Conformidad de Julio Roberto Ramirez. Calibración automática (RTV Calibra, un solo botón, RF-COV-17)
+  #E en 5 puntos: coincide con la curva enviada (±1)
+  Oscuro del código b (x = 570.5, Oscuro (x = 570.5): media de S076 y S123, sesión 2): R 0.0 (fábrica 3.4), P9-B13
+  Intento 1 (2026-09-22T14:39:13-0500): NO_VALIDA - colocación no válida: par 1 con d = -4.0 (umbral 3.0); el equipo se movió entre 'e' y el código
+  Intento 2 (2026-09-22T14:39:44-0500): NO_VALIDA - colocación no válida: par 1 con d = +5.0 (umbral 3.0); el equipo se movió entre 'e' y el código
+  Intento 3 (2026-09-22T14:40:33-0500): NO_VALIDA - colocación no válida: par 1 con d = +4.0 (umbral 3.0); el equipo se movió entre 'e' y el código
+  Intento 4 (2026-09-22T14:40:57-0500): NO_VALIDA - colocación no válida: par 1 con d = +4.0 (umbral 3.0); el equipo se movió entre 'e' y el código
+  Intento 5 (2026-09-22T14:41:19-0500): NO_VALIDA - colocación no válida: par 3 con d = -4.0 (umbral 3.0); el equipo se movió entre 'e' y el código
+  Intento 6 (2026-09-22T14:41:42-0500): CONFORME - P49: certificado 81 (±5 %: 77.0–85.1; ±10 %: 72.9–89.1), medido R 75.7 (-6.5 %); dentro de ±5 %: no; dentro de ±10 % (RF-COV-12, VERIF-5-10: sin el criterio de s_rep): OK
+Persistencia: OK - #V# #V,3.6,2026-09-19,CAL,0283#; código b: #G igual, #E coincide; #G,1 igual al acta; #G,2 igual al acta; #G,8 igual al acta; 
+Verificación final: OK - #V# #V,3.6,2026-09-19,CAL,0283#; código b igual a lo certificado; #G,1 igual al acta; #G,2 igual al acta; #G,8 igual al acta; 
+
+Estado: ACEPTADA 2026-09-22T14:43:17-0500
+Fecha de calibración en el equipo (#SC/#GC): 2026-09-22

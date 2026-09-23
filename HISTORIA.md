@@ -53,6 +53,7 @@ indicio sin cruzarlo con una segunda prueba.**
 | El ZIP que sostiene la curva "está en el repositorio" | Estaba sólo en `07 pruebas/` hasta el 21-sep | `git ls-files` |
 | `#K#` "especificado, no implementado" (skill STONE) | **Implementado** | `calibracion_v36.c:797` |
 | `targetSdk` "urgente" (encargo) o "sólo si se publica" | **No se publica**: no obliga | APPS-DPI |
+| `#V#` 4 campos en protocolo | Firmware manda 5 con máscara (`calibracion_v36.c:636`) | Protocolo puesto a 5 campos |
 
 ## Pruebas que no demostraban nada (19-sep, noche)
 
@@ -69,3 +70,33 @@ Una prueba que asevera no demuestra nada si el valor esperado salió del propio 
 
 Este fichero (l.16) dice **STA035WT-01** (el `ARQUITECTURA.map` antiguo y el `README.md` lo decían hasta el 21-sep); `04_Pantalla_STONE/SOFTWARE-STONE.md:14`
 y `01_Firmware/lecturas_equipos/V3-2/IDENTIFICACION.md:8` dicen **STVA035WT(-01)**. Se mira la etiqueta.
+
+## 22-sep-2026: el 8 y la b, seis intentos en campo
+
+El funcional de ITVIAL escribió los códigos 8 y b de SLV-002 con `Cov_3.6.5_calibrar` a la sexta
+sesión. Los cinco primeros intentos no escribieron nada (`06_Calibracion/SLV-002/campanas/HUELLAS.txt`,
+capa cruda en `07 pruebas/2209*`):
+
+| Hora | Qué paró la escritura |
+| :--- | :--- |
+| 10:42 | Cuatro `#L` con `ERR,PIN`: el operador no tenía el PIN. El firmware se bloquea al quinto (`calibracion_v36.c:645-656`) |
+| 10:49 y 10:56 | T-C41: pulsó OK antes de apagar. El equipo aún contestó `#Q#` → `#OK#` con el diálogo abierto |
+| 11:41 y 13:35 | `#S,8` → `#ERR,FORMATO#` en 139 y 127 ms; la app restauró con `#F,8#` |
+| 14:32 | **Entró**: la misma trama → `#OK#` en 333 ms. `#SC,2026-09-22#`, `#S,b` → `#OK#`; máscara `0283` |
+
+**Lo que se concluyó mal, tres veces, antes de acertar:**
+
+- *"Android tarda 8-12 s en ver caer el enlace y por eso falló T-C41."* **Falso:** a las 10:55 el equipo
+  respondió `#Q#` → `#OK#` **después** del OK del operador (`rtv36_20260922_105411` l. 579-582), luego
+  estaba encendido. Lo cierto: pulsó OK antes de apagar.
+- *"El `ERR,FORMATO` es la notación `E+00`, el signo o la longitud."* **Falso:** los códigos 1 y 2 se
+  escribieron el 19-sep con tramas de 66 bytes de la misma forma (`rtv36_20260919_114644` l. 1660-1663).
+- *"Es el desbordamiento del anillo RX de 64 bytes, demostrado."* **No demostrado:** la misma trama de 66
+  bytes entró a las 14:32 en una sola ráfaga. Es transitorio y **la causa sigue sin identificar**; el
+  anillo (`uart_module.c:57`) es hipótesis. Quedó escrito como hecho en `RETOMAR.md` y se corrigió
+  (`83217e1`).
+
+**Y lo que sí quedó medido:** el equipo repite (9 patrones, ±2 cuentas entre el 19 y el 22-sep) y la
+correlación entre certificado y lectura es +0,98 en amarillo y +0,96 en rojo, pero **negativa** en azul
+y verde dentro del rango de trabajo (−0,68 y −0,42): P18 (XI, cert 84) lee 36 y P112 (XI, cert 101) lee
+25. Contradicción C-08 del `ROADMAP.md`, abierta.

@@ -1,8 +1,10 @@
 # SPEC — App de usuario (campo) V3.6: flujo y pantallas (r7)
 
-**Nada de esto está medido contra un equipo ni un teléfono; el incremento 1 está programado (RetroUsuario
-0.3.x) y sin probar en teléfono.** **r7: decisiones de Diego (DECISIONES notas 16-18): ninguna repetición
-es automática ni muda (RF-USR-04), `exigir_362` decidido y la app de usuario no dictamina (UMBRAL-CSV).**
+**Incremento 1 completado en `RetroUsuario 0.3.7` (versionCode 10, commit `418991f`); 152/152 tests JVM en verde;
+arquitecto y QA APTO. Entregable `RETRO-COVIANDINA-usuario-0.3.7-10.apk`, etiqueta visible "Retro Coviandina",
+applicationId `com.dpi.retrousuario.coviandina`. Pendiente B7 (prueba en teléfono).**
+**r7: decisiones de Diego (DECISIONES notas 16-18): ninguna repetición es automática ni muda (RF-USR-04),
+`exigir_362` decidido y la app de usuario no dictamina (UMBRAL-CSV).**
 **r6, 21-sep-2026: cierra las condiciones del `arquitecto-iot` sobre la r5 (APTO CON CONDICIONES al
 incremento 1, base `39c754f`; condiciones C1-C5 del informe correspondiente).** Cambios de fondo sobre
 r5: (C1, ALTO) la garantía de "respuesta tardía descartada" (RF-USR-16) se **acota a la ventana
@@ -43,9 +45,9 @@ al reabrir. Detalle numérico y de verificación en `TDD-V3.6.md` §8. Fuentes: 
 
 ## 0. Incrementos
 
-**Incremento 1 — "Medir y exportar".** Se programa primero: no depende de ninguna propuesta ▸
-pendiente de confirmación de Diego más allá de los parámetros de plazo/silencio (RF-USR-16) y de la
-exigencia de firmware 3.6.2 (M-3), que sólo cambian un número, no el diseño.
+**Incremento 1 — "Medir y exportar".** Completado en `RetroUsuario 0.3.7` (versionCode 10, commit `418991f`).
+Incorpora regla FABLE-USR (`dominio.EstadoMedida`), `PreguntaOperador.Decision.ABANDONAR` (cierra arq C1),
+152 tests JVM (107 requisito / 45 comportamiento). Validado con APTO de Arquitecto y APTO de QA.
 - **Requisitos:** RF-USR-01, RF-USR-02, RF-USR-03, RF-USR-04, RF-USR-05 (sólo el modo por defecto),
   RF-USR-06, RF-USR-15, RF-USR-15 bis, RF-USR-16.
 - **Fichas (TDD §8):** T-USR-01, T-USR-01b, T-USR-01c, T-USR-02, T-USR-03, T-USR-03b, T-USR-04,

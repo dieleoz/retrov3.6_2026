@@ -249,8 +249,10 @@ los bloqueados, con su motivo; la b, "después del 8".
 **RF-COV-15 — Funciona sola.** No supone la app de campo instalada ni remite a ella en sus textos (B-2).
 Todo lo que necesita (catálogo, colas, decisiones) va en sus assets.
 
-**RF-COV-16 — Nombre de versión.** `Cov_<versión>_calibrar` (petición de Diego); `versionCode` propio,
-distinto del de cualquier APK anterior del mismo paquete.
+**RF-COV-16 — Nombres fijados por dueño.** Para nuevas versiones entregables (desde A4c): etiqueta visible
+`"Retro Coviandina Calibrar"` (reemplaza a `"RTV Calibra"`), fichero entregable
+`RETRO-COVIANDINA-calibrar-<versionName>-<versionCode>.apk`, y `versionCode` propio estrictamente monótono
+creciente, distinto del de cualquier APK anterior del mismo paquete.
 
 **RF-COV-18 — La fecha anterior se lee antes de grabar la nueva.** Antes de `#SC` la app lee `#GC#`. Si no
 responde (plazo vencido) o responde algo que no es una fecha ni `NONE`, **no se envía `#SC`**: el acta dice
@@ -287,8 +289,8 @@ devolución de la fecha, en una clase propia. Ningún arreglo hace crecer `Flujo
 hereda el cambio y necesita su propia revisión antes de entregarse.
 
 **Lo que sigue pendiente, fuera de esta revisión:** la verificación final de 10 patrones sobre todos los
-códigos y el "Certificado de calibración" firmado por ITVIAL SAS (VERIF-5-10, CERT-TITULO); la toma de
-muestras (TOMA-50). Van en la app de empresa completa (`ROADMAP.md`, tareas 1 a 4 y 9).
+códigos y la emisión automática del certificado PDF en la app (A5b). El certificado formal de SLV-002 ya
+fue emitido manualmente en PDF (`CERTIFICADO-Calibracion-SLV-002-20260922.pdf`) bajo CERT-TITULO-2 (P-CAL-02).
 
 ## 7. Lo que esta SPEC NO ha comprobado
 

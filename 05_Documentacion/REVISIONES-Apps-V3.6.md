@@ -25,6 +25,11 @@ completos quedaron en el directorio temporal de la sesión; aquí se archiva lo 
   `CalibrarActivity.java:113-115,370-372`) sin guarda de corto, y `motivoNoEscribir` alcanzable en corto
   (`FlujoCalibracion.java:836-837`, filtro `"código " + k`). Propuesta del arquitecto para romper el bucle:
   ocultar el acta en corto y un único filtro en la frontera de la app corta, no más arreglos punto a punto.
+- **Cov_3.6.8_calibrar** (`31e6214`) — arquitecto APTO con condiciones; QA NO APTO. C1-C2 de la 3.6.7
+  cerradas; 411/411; las 6 roturas del filtro cazadas. El filtro no está en la frontera: `CortoActivity.java:184`
+  pinta "va después del acta ACEPTADA del código 8" (`AppCorta.java:145`) sin filtrar; `preguntar` de
+  `CalibrarActivity.java:244-246` y la pantalla de Pruebas (`PruebasActivity.java:223,304-305`) tampoco pasan.
+  Cierre: el filtro en `Base` (toda escritura a pantalla en corto), no por Activity.
 
 ## App de usuario (`03_App_Movil/RetroUsuario`)
 
@@ -49,8 +54,8 @@ completos quedaron en el directorio temporal de la sesión; aquí se archiva lo 
   - **C3 (arq):** SPEC atrasada; cerrada en `SPEC-App-Usuario-V3.6.md` §4 bis.
   - **QA:** quitar `marcarCaido()` del catch de `EnlaceBluetooth.leerSinParar` no lo detecta ninguna prueba
     (126/126 en verde): la capa Android no tiene arnés. Pide prueba con un `InputStream` doble y, en
-- **0.3.7** (`bb`) — **arquitecto APTO / QA APTO**. Entregable a Diego para prueba en dos teléfonos
-  (B7) y despacho al cliente (Coviandina).
+- **0.3.7** (`418991f`, rama `retro-usuario`) — **arquitecto APTO / QA APTO**. Entregable a Diego para
+  prueba en dos teléfonos (B7) y despacho al cliente (Coviandina).
   - **QA:** 152/152 tests JVM reproducidos y verificados (107 requisito / 45 comportamiento).
   - **Anotación arq (`EstadoMedida.java:172`):** no bloquea la 0.3.7. Abandonar entre pulsar Medir y
     `ejecutar()` ocurre en ventana de ~1-5 ms (lectura GPS en caché) y `MedirActivity` no llama a
@@ -61,7 +66,7 @@ completos quedaron en el directorio temporal de la sesión; aquí se archiva lo 
     `c990adf69d888a41f5ba6d539a0176c80df1e5c3b5f46dca8dea9d0ca7b8075f`.
     Hash por CONTENIDO (orden LC_ALL=C): `b7a3917cb7b3e2367a0efe841533d826b310537fc0c1f13d0ffcfbdd3a402882`.
     MD5: `6aecf3ac2251db29f78b74d324b920cc`.
-- **0.3.6** (`6e59f7b`) — arquitecto APTO con condiciones; QA en curso. Diseño del revisor Fable implementado
+  real 105/43; falta la prueba del aviso con fase LIBRE). Diseño del revisor Fable implementado
   (`dominio/EstadoMedida`). **C1:** salir o cambiar de equipo con la pregunta del cero abierta guarda una fila
   con media 0 (`SerieDisparos.java:98-99`, `SesionMedicion.java:108-114`); la SPEC §4 bis dice "sin fila".
   Anotado: `post(restaurarInterfaz)` sobre una Activity destruida puede lanzar BadTokenException; fase LIBRE

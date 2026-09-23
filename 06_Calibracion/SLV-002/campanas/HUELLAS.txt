@@ -30,3 +30,91 @@ md5    fce014de4528fc9be88f1e0c1e6b4035
 sha256 15fa6ca4e483a31a553c79d0bc639c8362ed5580b9bfac4d3e72c43d905d2f7d
 Registro del HONOR ABR-LX3 con la app 1.0.0-rc3 (10002), NO la 3.6.17. Campana abierta con 0 series; importa el ZIP de las 18:11 en una campana de cola COMPLETO (129 series, 69 pasos hechos, quedan 64). Pruebas del equipo NO APTO (coherencia y repetibilidad). Bateria n = 0 bloquea escrituras; #L enviado, previsualizacion del 8 con recta anclada, #Q al final. No se envio #S: nada escrito. Copiado de Descargas el 21-sep-2026.
 Correccion 21-sep: las pruebas del equipo dieron NO APTO en la primera tanda (l.586) y APTO en la segunda (l.1170); la recta anclada del 8 que se ve es la vista previa de Avanzado, no la del flujo Calibrar.
+
+campana_SLV-002_20260922_104214.zip
+md5    c21ffb4efd427c17fdf423adcdd0c97f
+sha256 918fcaf2c7635be87fbee89d73492c8aa27e4df18208e13cc333e1cc27b885b3
+soporte_SLV-002_20260922_104214.zip
+md5    703f69e5aba012291ca4367a52a32b47
+sha256 d9ceefc47da1d21595876c620bc6696dd8dbd6f30e1a47e2dc04ed140755f2c3
+Intento del funcional (ITVIAL) con Cov_3.6.5_calibrar (10010), 22-sep 09:42-10:42. Importa el ZIP de las 18:11
+(md5 79b23590...). Pruebas del equipo NO APTO a las 09:42 (coherencia y repetibilidad) y APTO a las 10:31 y 10:38.
+Cuatro #L con respuesta ERR,PIN (dos en rtv36_20260922_103125, dos en _103817); ningun #S ni #P enviado:
+nada escrito. Mascara sigue en 0003 (8 y b de fabrica). Copiado de 07 pruebas/220920261043/ el 22-sep-2026.
+
+campana_SLV-002_20260922_104910.zip
+md5    9e016dd8ce27d2bdb5ae47cba501cfa4
+sha256 bf0df78ffb2ba55b12e2e0b39a92f7a1818b1674a43a43072214814ce510587a
+soporte_SLV-002_20260922_104910.zip
+md5    e572929291d63a792c0d0b4c2cf39943
+sha256 66368bba58664f914df53ef6f31dae3c67e371206b154fb299b95e15ae487145
+Segundo intento del funcional, 22-sep 10:46-10:49, Cov_3.6.5_calibrar. #L aceptado (OK en 252 ms). T-C41 falla:
+el operador pulso OK en "Apagar y encender" sin haber apagado (el enlace cae 2 s despues del #Q, rtv36_20260922_104644
+l. 101030). Acta 20260922_104823 RECHAZADA, vacia; ningun #S enviado: nada escrito. Mascara sigue en 0003.
+Copiado de 07 pruebas/220920261049/ el 22-sep-2026.
+
+campana_SLV-002_20260922_105602.zip
+md5    d8d6ed00bdaedd0ef61191a383ff0f74
+sha256 ee69f866c75ce86735d103f8305e688b088051f66b0f1c5784d79c502123b434
+soporte_SLV-002_20260922_105602.zip
+md5    58cf3b066b161d720d0b2c6b9e2e34ed
+sha256 6dcd3de33e969325fb79cda87282c6b039bd53fb82a771ef0a4ba85b9bf71775
+Tercer intento del funcional, 22-sep 10:54-10:56, Cov_3.6.5_calibrar. #L aceptado (201 ms). OK en "Apagar y encender"
+a los 5,6 s; el equipo aun contesta #Q# -> #OK# (rtv36_20260922_105411 l. 579-582): estaba encendido al pulsar OK.
+El enlace cae a las 87941 ms, 6,1 s despues. Acta 20260922_105532 RECHAZADA, vacia; ningun #S: nada escrito.
+Copiado de 07 pruebas/220920261056/ el 22-sep-2026.
+
+campana_SLV-002_20260922_114230.zip
+md5    1b7b68538b22cd3ac4299bbadca7645a
+sha256 fca2caf92312d5692c8fb7d741353231452daed31770e88fd097e49d7c9d2522
+soporte_SLV-002_20260922_114231.zip
+md5    fecc02f0fafa3a2e844b66775e8586ca
+sha256 53a761f4737d08e8ba0e15eb29ae4ec9576a47b4eaad6dba6a4f82803edaf672
+Cuarto intento del funcional, 22-sep 11:37-11:42, Cov_3.6.5_calibrar. T-C41 PASA (apagado propio y heredados 1 y 2
+confirmados). #L aceptado (52 ms). Escritura #S,8 rechazada con #ERR,FORMATO# en 139 ms; la app restaura con #F,8#
+(#OK# en 167 ms). Curva 8 sigue de fabrica. Acta 20260922_114210 RECHAZADA (vacia). Mascara 0003. Copiado de
+07 pruebas/220920261143/ el 22-sep-2026.
+Trama enviada: #S,8,0.00000000E+00,0.00000000E+00,2.11652640E-01,-1.20446226E+02#
+(rtv36_20260922_114159 l.107-111); la relectura #G no coincidia con lo enviado.
+CONTRADICCION ABIERTA: con el fuente 6a32ca3 esa curva pasa curvaValida (R(600)=+6.5, R(4300)=+789.7, c3=c2=0;
+calibracion_v36.c:407-421) y la trama son 66 bytes < ADMIN_MAX 96 (uart_module.c:61). Se cierra midiendo.
+
+campana_SLV-002_20260922_144415.zip
+md5    6a870da3e83a49656da0b866bccae9b4
+sha256 898d98d870a582e54251b3af4d806f25dc9af6e8a75edeb73ebff7e2f9d166e9
+soporte_SLV-002_20260922_144415.zip
+md5    39b4373dbb5539a247cfe08623dc5e0d
+sha256 0370ba07079aee683a7337f801eecf57e61f479c5b03f432b445282c6c6ab015
+CALIBRACION COMPLETADA, 22-sep 14:32-14:44, Cov_3.6.5_calibrar, operador Julio Roberto Ramirez (ITVIAL).
+#S,8,0.00000000E+00,0.00000000E+00,2.11652640E-01,-1.20446226E+02# -> #OK# en 333 ms (rtv36_20260922_143203).
+#SC,2026-09-22# -> #OK# (rtv36_20260922_143510). #S,b,...,3.20071157E-01,-1.82592593E+02# -> #OK# en 309 ms
+(rtv36_20260922_143635). Mascara 0003 -> 0083 -> 0283 (codigos 1, 2, 8 y b ajustados).
+Acta 20260922_143520 (codigo 8) ACEPTADA: P43 certificado 122, medido 118.5 (-2.9 %), dentro de +-5 %.
+Acta 20260922_144317 (codigo b) ACEPTADA: P49 certificado 81, medido 75.7 (-6.5 %), dentro de +-10 % (RF-COV-12).
+CIERRA LA CONTRADICCION DEL ERR,FORMATO: la MISMA trama de 66 bytes, con los mismos coeficientes, fue rechazada
+tres veces (11:41, 13:35 y la de las 13:55 sin ZIP) y aceptada a las 14:32. No era la curva, ni la notacion, ni
+la longitud, ni el anillo de 64 bytes por si solo: es transitorio. Copiado de 07 pruebas/220920261445/ el 22-sep-2026.
+
+campana_SLV-002_20260922_145615.zip
+md5    e7301148c07e95f322752e1ec6eab968
+sha256 b23664062ec5b06eb7d81d7774b2a051e66539834c62abac540d1f87022fb6e0
+soporte_SLV-002_20260922_145615.zip
+md5    0f61b37fba6484f5cbbdc8e828e98aa3
+sha256 65e95a8debfde257eb336e841510fbe3543d0c19a7ace71c93fe1c8a169ee5f5
+Sesion posterior a la calibracion, 22-sep 14:53-14:56. Pruebas del equipo APTO con mascara ya en 0283.
+El funcional volvio a pulsar Calibrar: "Calibrado: ninguno"; los unicos codigos que la app ofrecia se rechazan
+por RF-CAL-14/15 (azul, verde, rojo y naranja intensos). Ningun #S: nada escrito, el equipo sigue en 0283.
+La app volvio a listar el 8 y la b como "listos para calibrar" pese a estar ya escritos y aceptados (defecto).
+Copiado de 07 pruebas/220920260517/ el 22-sep-2026.
+
+CERTIFICADO-Calibracion-SLV-002-20260922.docx
+md5    fafd57fc4d0653485a78749f38e27e4f
+CERTIFICADO-Calibracion-SLV-002-20260922.pdf
+md5    fb5f7ad625d85e7ab16fd35caa88009a
+Certificado para el cliente, en el formato de ITVIAL (membrete y pie de PLANTILLA ACTA DE ENTREGA.docx,
+D:\@Proyect\IT\old\...\WORD\INFRAESTRUCTURA Y TECNOLOGIA\IT VIAL SAS\). Titulado "CERTIFICADO DE
+CALIBRACION" por CERT-TITULO-2 (Diego, 22-sep), con la declaracion de alcance bajo el titulo: laboratorio
+no acreditado ISO/IEC 17025 y sin incertidumbre. Transcribe las dos actas .txt de la app, cotejadas cifra a
+cifra. Se entrega junto con soporte_SLV-002_20260922_144415.zip. Sin rellenar: ciudad de firma, cedula y
+cargo del firmante y datos del cliente. Sustituye al ACTA-Calibracion del mismo dia (mismo contenido,
+otro titulo).
