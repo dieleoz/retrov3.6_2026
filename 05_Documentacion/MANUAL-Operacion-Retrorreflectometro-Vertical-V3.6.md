@@ -3,28 +3,34 @@
 Manual de operación técnica y mantenimiento del instrumento de medición para la línea V3.6.
 Destinado a inspectores de tránsito, técnicos viales, operadores de terreno y personal de laboratorio.
 
+> [!NOTE]
+> **Puntos pendientes de medición y verificación física (no medidos):**
+> - **Geometría óptica (C-06):** La geometría de observación y entrada (0,2° / −4°) es una propuesta pendiente
+>   de confirmación (`SPEC-App-Usuario-V3.6.md:634-639`) y permanece abierta en `ROADMAP.md` (C-06). No se
+>   afirma como dato cerrado hasta cotejar el certificado de los patrones y comprobar en el equipo físico.
+> - **Modelo de pantalla STONE:** Contradicción abierta entre STA035WT-01 y STVA035WT(-01) (`HISTORIA.md`). Se
+>   cierra mirando la etiqueta física del módulo en el instrumento.
+
 ---
 
 ## 1. Principio Físico y Normativa de Medición
 
 El Retrorreflectómetro Vertical SAT-LUX/V3 K42 es un instrumento optoelectrónico portátil de precisión diseñado para
-medir en terreno y en laboratorio el coeficiente de retrorreflexión $R_A$ (o $R'$) sobre láminas y películas
+medir en terreno y en laboratorio el coeficiente de retrorreflexión RA (o R') sobre láminas y películas
 retrorreflectivas aplicadas en señales de tránsito verticales.
 
 ### Especificaciones Técnicas y Metrológicas:
-- **Magnitud medida:** Coeficiente de retrorreflexión $R_A$, expresado en unidades de candelas por lux por metro
-  cuadrado ($cd \cdot lx^{-1} \cdot m^{-2}$).
-- **Geometría óptica normalizada:**
-  - Ángulo de observación ($\alpha$): **0,2°**.
-  - Ángulo de entrada ($\beta$): **−4°** (o equivalente normal según diseño de banco).
-  - Geometría estandarizada conforme a los requisitos de la norma técnica colombiana NTC 4739 y las especificaciones
-    internacionales ASTM E1710.
+- **Magnitud medida:** Coeficiente de retrorreflexión RA, expresado en unidades de candelas por lux por metro
+  cuadrado (cd / (lx * m2)).
+- **Geometría óptica:** Pendiente de confirmación física (ver nota en cabecera; C-06 abierta en ROADMAP.md).
+- **Normativa de referencia:** Especificaciones NTC 4739 y ASTM E1710 para señalización vertical.
 - **Sistema de iluminación y captura:**
   - Fuente de luz: Emisor de estado sólido LED estabilizado espectralmente.
-  - Sensor de detección: Fotodiodo de silicio de alta estabilidad con corrección de respuesta fotópica $V(\lambda)$
-    para igualar la curva de sensibilidad del ojo humano estándar CIE.
+  - Sensor de detección: Fotodiodo de silicio de alta estabilidad con corrección de respuesta fotópica CIE V(lambda)
+    para igualar la curva de sensibilidad del ojo humano estándar.
 - **Microcontrolador principal:** Microchip PIC18F47K42 en placa "SATLUX H-IoT".
-- **Interfaz visual:** Pantalla gráfica táctil a color STONE STA035WT-01 de 2.ª generación.
+- **Interfaz visual:** Pantalla gráfica táctil STONE de segunda generación (modelo exacto pendiente de
+  verificar en etiqueta física).
 - **Comunicación inalámbrica:** Enlace Bluetooth UART1 integrado a velocidad fija de 9600 baudios (8N1).
 
 ---
@@ -38,7 +44,7 @@ El equipo se compone de los siguientes elementos principales:
    forma manual con un solo dedo.
 3. **Ventana óptica de medición:** Ubicada en la base frontal inferior del instrumento. Dispone de un marco elástico
    de goma perimetral que actúa como sello de estanqueidad contra el ingreso de luz solar o luminarias parásitas.
-4. **Pantalla táctil STONE (STA035WT-01):** Ubicada en la parte superior. Muestra el estado del sistema, el nivel
+4. **Pantalla táctil STONE:** Ubicada en la parte superior. Muestra el estado del sistema, el nivel
    de carga de la batería y los valores de retrorreflexión de cada disparo.
 5. **Panel de control e interfaces:**
    - Interruptor general de alimentación (ON/OFF).
@@ -55,10 +61,8 @@ El equipo se compone de los siguientes elementos principales:
    lente y el marco elástico de goma se encuentren completamente limpios y libres de partículas abrasivas.
 2. **Encendido:** Accione el interruptor de encendido. La pantalla STONE se iluminará y desplegará la interfaz
    principal tras completar la inicialización del microcontrolador PIC18F47K42.
-3. **Estabilización térmica (Requisito Metrológico):**
-   - Mantenga el instrumento encendido durante al menos 10 a 15 minutos antes de registrar lecturas oficiales.
-   - Este periodo garantiza que la fuente emisora LED y el circuito amplificador del fotodetector alcancen su
-     temperatura de régimen estable, eliminando derivas térmicas en las lecturas.
+3. **Inicialización del sistema:** Espere a que el equipo complete su rutina de inicio y la pantalla STONE
+   muestre la interfaz lista para operar antes de iniciar las mediciones.
 4. **Comprobación de la batería:** Observe el indicador de carga en pantalla. Si el equipo reporta nivel bajo,
    recárguelo antes de salir a campo para evitar apagados repentinos durante una serie de medidas.
 
@@ -100,7 +104,7 @@ El retrorreflectómetro es un equipo óptico de alta precisión y debe ser trata
 - **Protección contra factores ambientales:**
   - No utilice el equipo bajo lluvia intensa ni en presencia de condensación visible sobre las lentes.
   - Si el equipo pasa de un vehículo con aire acondicionado a un ambiente cálido y húmedo, permita que se aclimate
-    durante 15 minutos para evaporar cualquier rocío antes de encenderlo.
+    a la temperatura ambiente para evaporar cualquier rocío antes de encenderlo.
 - **Transporte y almacenamiento:**
   - Transporte siempre el instrumento dentro de su maletín rígido acolchado de protección suministrado por DPI.
   - Nunca deje el instrumento expuesto al sol directo dentro de la cabina de un vehículo cerrado.

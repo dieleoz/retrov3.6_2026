@@ -30,8 +30,8 @@ microcontrolador PIC18F47K42 ni herramientas de compilación en campo.
 
 Antes de iniciar cualquier sesión metrológica en laboratorio o en banco de calibración:
 
-1. **Aclimatación del instrumento:** Encienda el retrorreflectómetro vertical al menos 15 minutos antes de la
-   primera toma de datos para garantizar la estabilización térmica del sensor fotométrico y la fuente óptica LED.
+1. **Preparación del instrumento:** Encienda el retrorreflectómetro vertical antes de iniciar la primera toma de
+   datos para verificar la operatividad del sensor fotométrico y la fuente óptica.
 2. **Ambiente controlado:** El laboratorio o recinto debe encontrarse libre de corrientes de polvo, a temperatura
    controlada y sin incidencia de luz solar directa sobre las bocas de medición.
 3. **Patrones de calibración certificados:** Tenga a disposición los patrones planos de retrorreflexión certificados
@@ -74,7 +74,8 @@ Bajo el botón de carga, la aplicación muestra de forma transparente el diagnó
 1. Pulse el botón principal **Calibrar**.
 2. Ingrese el nombre completo del técnico responsable de la calibración (este dato se plasmará en el acta técnica).
 3. La aplicación realiza de forma automática:
-   - Apertura de sesión de administrador enviando el PIN (`#L,2026#`).
+   - Apertura de sesión de administrador enviando el PIN (`#L,<pin>#`; el PIN lo entrega DPI).
+     RF-CAL-29 exige además cambiar el PIN de fábrica antes de la primera escritura.
    - Envío de los coeficientes calculados mediante tramas `#S,<k>,<c3>,<c2>,<c1>,<c0>#`.
    - Grabación y validación de integridad en la memoria EEPROM.
 

@@ -4,7 +4,7 @@ Hoja rápida de bolsillo para el operador de campo en carretera con la app de us
 
 ## 1. Antes de empezar en carretera
 
-1. Encienda el retrorreflectómetro vertical y déjelo 10 minutos encendido para estabilización térmica.
+1. Encienda el retrorreflectómetro vertical antes de iniciar la jornada de medición.
 2. Abra la aplicación `Retro Coviandina` en su teléfono.
 3. Toque su equipo en la lista de dispositivos Bluetooth emparejados.
 4. Espere a que la app complete la verificación de versión y número de serie.
