@@ -5,11 +5,12 @@ Destinado a operadores de campo, técnicos viales e interventoría.
 
 ---
 
-## 1. Identificación y Requisitos del Teléfono
+## 1. Identificación y Alcance del Sistema
 
-La aplicación móvil de campo permite conectar el retrorreflectómetro vertical mediante Bluetooth, registrar las
-lecturas de retrorreflexión de señales viales y exportar los registros de campo en paquetes comprimidos.
+La aplicación móvil de campo "Retro Coviandina" permite conectar el retrorreflectómetro vertical mediante
+Bluetooth, registrar las lecturas de retrorreflexión de señales de tránsito y exportar los registros técnicos.
 
+- **Instrumento compatible:** Retrorreflectómetro Vertical V3.6 (firmware de la línea V3.6).
 - **Nombre en pantalla:** `Retro Coviandina`
 - **Identificador de paquete:** `com.dpi.retrousuario.coviandina`
 - **Versión de la aplicación:** 0.3.7 (código de versión `10`)
@@ -19,6 +20,15 @@ lecturas de retrorreflexión de señales viales y exportar los registros de camp
   - **Ubicación precisa (`ACCESS_FINE_LOCATION`):** requerida por el sistema Android para escanear y conectar por
     Bluetooth, y para georreferenciar las coordenadas geográficas de cada señal inspeccionada.
   - **Bluetooth:** requerido para enlazar con el instrumento a 9600 baudios (8N1).
+
+> [!NOTE]
+> **Alcance operativo y estado de medición:**
+> - **Qué hace:** Registra disparos de medición, calcula promedios por color, georreferencia con GPS y exporta el
+>   paquete ZIP auditado con los archivos de medidas, inventario y tramas.
+> - **Qué NO hace:** No calibra ni modifica los coeficientes ni la memoria EEPROM del equipo (labor reservada a la
+>   aplicación técnica de laboratorio de DPI). Tampoco sustituye la inspección visual del estado físico de la señal.
+> - **Estado de los datos:** Las lecturas fotométricas provienen directamente del sensor del instrumento físico. La
+>   precisión y disponibilidad de las coordenadas dependen de la antena GPS del teléfono del operador.
 
 ---
 

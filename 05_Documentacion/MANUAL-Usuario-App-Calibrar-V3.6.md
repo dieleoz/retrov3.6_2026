@@ -75,14 +75,14 @@ Bajo el botón de carga, la aplicación muestra de forma transparente el diagnó
 2. Ingrese el nombre completo del técnico responsable de la calibración (este dato se plasmará en el acta técnica).
 3. La aplicación realiza de forma automática:
    - Apertura de sesión de administrador enviando el PIN (`#L,<pin>#`; el PIN lo entrega DPI).
-     RF-CAL-29 exige además cambiar el PIN de fábrica antes de la primera escritura.
+     Por seguridad y normativa interna, es obligatorio cambiar el PIN de fábrica antes de la primera escritura.
    - Envío de los coeficientes calculados mediante tramas `#S,<k>,<c3>,<c2>,<c1>,<c0>#`.
    - Grabación y validación de integridad en la memoria EEPROM.
 
 ### Paso 5: Re-medida y Verificación de Conformidad
 Una vez escritos los coeficientes en el instrumento, la aplicación guía al operador para colocar los patrones de
 control y ejecutar las lecturas de verificación:
-- **Criterio de conformidad metrológica estricta (regla RF-COV-12):**
+- **Criterio de conformidad metrológica estricta:**
   - **Canal 8 (blanco):** La desviación relativa entre el valor medido por el equipo y el valor certificado del
     patrón debe situarse obligatoriamente dentro de un margen máximo de **±5 %**.
   - **Canal b (amarillo):** La desviación relativa debe situarse dentro de un margen máximo de **±10 %**.
